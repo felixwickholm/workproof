@@ -1,6 +1,6 @@
 import type { Challenge } from "@/lib/domain/types";
-import { Card, Eyebrow } from "./ui/card";
-import { CodeBlock } from "./ui/code-block";
+import { TaskMaterialView } from "@/components/proof";
+import { Eyebrow } from "@/components/ui/card";
 
 /** The brief, the one question, then the material to work on. The question comes before the code so it is never two screens down. */
 export function TaskMaterial({ challenge }: { challenge: Challenge }) {
@@ -12,16 +12,7 @@ export function TaskMaterial({ challenge }: { challenge: Challenge }) {
         <Eyebrow>Your task</Eyebrow>
         <p className="text-headline mt-2 font-semibold text-pretty">{challenge.deliverable}</p>
       </div>
-      {material ? (
-        material.kind === "code" ? (
-          <CodeBlock title={material.title} code={material.body} />
-        ) : (
-          <Card className="p-4">
-            <p className="text-footnote font-medium text-label-2">{material.title}</p>
-            <p className="text-body mt-2 whitespace-pre-wrap text-pretty">{material.body}</p>
-          </Card>
-        )
-      ) : null}
+      {material ? <TaskMaterialView material={material} /> : null}
     </div>
   );
 }

@@ -1,48 +1,127 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useRef, useState, type ReactNode } from "react";
-import { AnswerQuote } from "@/components/answer-quote";
-import { BlindProofFull } from "@/components/blind-proof";
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
+import { joinedCode } from "@/components/table/table-copy";
 import { StepSlide } from "@/components/step-slide";
-import { TaskMaterial } from "@/components/task-material";
 import { Button } from "@/components/ui/button";
-import { cx } from "@/components/ui/cx";
-import { Field, TextArea } from "@/components/ui/field";
-import { Screen, StepTitle, TwoPane } from "@/components/ui/screen";
-import { StepProgress } from "@/components/ui/step-progress";
 import { TimerChip } from "@/components/ui/timer-chip";
 import { api, errorText } from "@/lib/client/api";
-import { getSavedIdentity, getTalentId, saveIdentity } from "@/lib/client/local";
+import { getTalentId } from "@/lib/client/local";
 import { backInFlow, useFlowHistory } from "@/lib/client/use-flow-history";
-import type { Challenge, OwnProof } from "@/lib/domain/types";
-import { LIMITS } from "@/lib/http/limits";
+import type { OwnProof } from "@/lib/domain/types";
+import { FindingStep } from "./finding-step";
+import { JobStep } from "./job-step";
+import { PrimaryAction } from "./primary-action";
+import { Reveal } from "./reveal";
+import { TableInviteCard } from "./table-invite";
+import { practiceLine } from "./try-copy";
+import { TryFrame, type Back } from "./try-frame";
+import { clearTry, parseSavedTry, readSavedTry, saveTry, type Answer, type Taster } from "./try-state";
+import { useTableInvite } from "./use-table-invite";
+import { ExplainStep, NameStep, TaskStep } from "./work-steps";
 
-const suggestions = ["AI engineer", "Backend developer", "Data scientist", "Product manager", "UX designer", "Robotics engineer"];
+type Step = "job" | "finding" | "task" | "explain" | "name" | "result";
+/** The steps a person moves through; "finding" is a wait inside the first one. */
+const ORDER: Step[] = ["job", "task", "explain", "name", "result"];
 
-type Step = "job" | "task" | "explain" | "name" | "result";
-const order: Step[] = ["job", "task", "explain", "name", "result"];
+/** Long enough to read the line, short enough to feel quick. */
+const FINDING_AT_LEAST_MS = 900;
+const FALLBACK_QUESTION = "Why did you choose this approach?";
 
+/** Whether this phone shares a table's demo: "inactive" when it came with a code the server does not know. */
+type TableLink = "none" | "joined" | "inactive";
+
+const empty: Answer = { text: "", spoken: false };
+const noop = () => () => {};
+const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+
+/**
+ * The 2-minute practice task, one question per screen: dream job, the task, one follow-up,
+ * a first name, then the reveal of what a company would read. Nothing goes to a company. At a
+ * table, the proof shows on the big screen as a label and a task, and the table may invite.
+ */
 export function TryFlow() {
-  const router = useRouter();
   const [step, setStep] = useState<Step>("job");
   const [direction, setDirection] = useState<1 | -1>(1);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [dreamJob, setDreamJob] = useState("");
-  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [job, setJob] = useState("");
+  const [challenge, setChallenge] = useState<Taster | null>(null);
   /** The job the current task was made for, so going back and forward keeps the same task. */
   const [taskFor, setTaskFor] = useState("");
   const [startedAt, setStartedAt] = useState(0);
-  const [answer, setAnswer] = useState("");
+  const [answer, setAnswer] = useState<Answer>(empty);
   const [question, setQuestion] = useState("");
-  const [explain, setExplain] = useState("");
+  const [explain, setExplain] = useState<Answer>(empty);
+  /** Only in this page's memory: used once to hide the name, and to prefill an acceptance. */
   const [name, setName] = useState("");
   const [proof, setProof] = useState<OwnProof | null>(null);
+  const [sentName, setSentName] = useState("");
+  const [table, setTable] = useState<TableLink>("none");
+
+  const tableInvite = useTableInvite(table === "joined" && step === "result" && proof ? proof.proofId : null);
+
+  // A phone that came from the table's code checks it really shares the table's sandbox.
+  useEffect(() => {
+    const code = joinedCode(window.location.search);
+    if (!code) return;
+    api
+      .demoSession()
+      .then((session) => setTable(session.code === code ? "joined" : "inactive"))
+      .catch(() => setTable("inactive"));
+  }, []);
+
+  // A refresh mid-task comes back to the same question with the same words. The saved text is read
+  // on the first render in the browser (the server has none) and copied into the flow once, before
+  // anything new is saved over it.
+  const inBrowser = useSyncExternalStore(noop, () => true, () => false);
+  const [restored, setRestored] = useState(false);
+  if (inBrowser && !restored) {
+    setRestored(true);
+    const saved = parseSavedTry(readSavedTry());
+    if (saved) {
+      setJob(saved.job);
+      setChallenge(saved.challenge);
+      setTaskFor(saved.job);
+      setStartedAt(saved.startedAt);
+      setAnswer(saved.answer);
+      setQuestion(saved.question);
+      setExplain(saved.explain);
+      setStep(saved.step);
+    }
+  }
+
+  useEffect(() => {
+    if (!challenge || (step !== "task" && step !== "explain" && step !== "name")) return;
+    const save = () => saveTry({ step, job: taskFor, challenge, startedAt, answer, question, explain });
+    const t = window.setTimeout(save, 300);
+    window.addEventListener("pagehide", save);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener("pagehide", save);
+    };
+  }, [step, taskFor, challenge, startedAt, answer, question, explain]);
+
+  /**
+   * The input a Continue has just left. From the press on, late keys and autofill on the old
+   * screen are ignored, so what was sent is what the next screen quotes.
+   */
+  const frozen = useRef<Step | null>(null);
+  const freeze = (left: Step) => {
+    frozen.current = left;
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+  };
+  const editAnswer = (next: Answer) => {
+    if (frozen.current !== "task") setAnswer(next);
+  };
+  const editExplain = (next: Answer) => {
+    if (frozen.current !== "explain") setExplain(next);
+  };
 
   const go = (next: Step) => {
-    setDirection(order.indexOf(next) > order.indexOf(step) ? 1 : -1);
+    if (frozen.current === next) frozen.current = null;
+    setDirection(ORDER.indexOf(next) >= ORDER.indexOf(step) ? 1 : -1);
     setError(null);
     setStep(next);
     window.scrollTo({ top: 0 });
@@ -50,7 +129,7 @@ export function TryFlow() {
 
   /** One request at a time: a double tap or a repeated Enter never sends twice. */
   const inFlight = useRef(false);
-  async function run(action: () => Promise<void>) {
+  async function run(action: () => Promise<void>, onError?: () => void) {
     if (inFlight.current) return;
     inFlight.current = true;
     setBusy(true);
@@ -58,6 +137,7 @@ export function TryFlow() {
     try {
       await action();
     } catch (e) {
+      onError?.();
       setError(errorText(e));
     } finally {
       inFlight.current = false;
@@ -65,60 +145,94 @@ export function TryFlow() {
     }
   }
 
-  const startTask = () =>
-    run(async () => {
-      const job = dreamJob.trim();
-      if (job.length < 2) return;
-      if (!challenge || job !== taskFor) {
-        const next = await api.taster(job);
+  const start = (picked?: string) => {
+    const wanted = (picked ?? job).trim();
+    if (wanted.length < 2) return;
+    if (challenge && wanted === taskFor) return go("task");
+    return run(
+      async () => {
+        setStep("finding");
+        const [next] = await Promise.all([api.taster(wanted), wait(FINDING_AT_LEAST_MS)]);
         setChallenge(next);
-        setTaskFor(job);
+        setTaskFor(wanted);
         setStartedAt(Date.now());
-        setAnswer("");
-      }
-      go("task");
-    });
+        setAnswer(empty);
+        setExplain(empty);
+        go("task");
+      },
+      () => setStep("job"),
+    );
+  };
 
-  const submitAnswer = () =>
+  // The follow-up never blocks the flow: if it cannot be written, a plain question stands in.
+  const toExplain = () => {
+    if (!challenge || !answer.text.trim()) return;
+    freeze("task");
+    const written = answer.text.trim();
+    return run(
+      async () => {
+        const questions = await api
+          .followups(challenge.id, written)
+          .then((r) => r.questions)
+          .catch(() => []);
+        setQuestion(questions[0] ?? FALLBACK_QUESTION);
+        go("explain");
+      },
+      () => {
+        frozen.current = null;
+      },
+    );
+  };
+
+  const toName = () => {
+    if (!explain.text.trim()) return;
+    freeze("explain");
+    go("name");
+  };
+
+  const send = (withName: boolean) =>
     run(async () => {
       if (!challenge) return;
-      const { questions } = await api.followups(challenge.id, answer.trim());
-      setQuestion(questions[0] ?? "Why did you choose this approach?");
-      setName((current) => current || getSavedIdentity().name);
-      go("explain");
-    });
-
-  const submitProof = () =>
-    run(async () => {
-      if (!challenge) return;
-      const first = name.trim();
-      if (first) saveIdentity(first);
+      const first = withName ? name.trim() : "";
       const res = await api.submit({
         challengeId: challenge.id,
         talent: { id: getTalentId(), name: first, contact: "" },
-        answer: answer.trim(),
-        explain: [{ question, answer: explain.trim() }],
+        answer: answer.text.trim(),
+        explain: [{ question, answer: explain.text.trim(), ...(explain.spoken ? { spoken: true } : {}) }],
+        ...(answer.spoken ? { spoken: true } : {}),
         shareWithSimilar: false,
       });
+      clearTry();
+      setSentName(first);
       setProof(res.proof);
       go("result");
     });
 
-  // The browser's back and forward move between steps. A sent proof cannot be reopened for editing.
-  useFlowHistory(step, (popped) => {
+  /** A fresh start, for the next visitor or the next job. */
+  const restart = () => {
+    clearTry();
+    frozen.current = null;
+    setProof(null);
+    setChallenge(null);
+    setTaskFor("");
+    setJob("");
+    setAnswer(empty);
+    setExplain(empty);
+    setSentName("");
+    go("job");
+  };
+
+  // The browser's back and forward move between steps. A sent proof starts over instead of reopening.
+  useFlowHistory(step === "finding" ? "job" : step, (popped) => {
     const next = popped as Step;
-    if (proof && next !== "result") return router.replace("/passport");
+    if (proof && next !== "result") return restart();
     const ready = next === "job" || (next === "task" && challenge) || ((next === "explain" || next === "name") && question);
-    if (order.includes(next) && ready) go(next);
+    if (ORDER.includes(next) && ready) go(next);
   });
 
-  const index = order.indexOf(step);
-  const back =
-    step === "job"
-      ? { href: "/" }
-      : step === "result"
-        ? undefined
-        : { onBack: () => backInFlow(() => go(order[index - 1])) };
+  const index = ORDER.indexOf(step === "finding" ? "job" : step);
+  const back: Back | undefined =
+    step === "job" ? { href: "/" } : step === "result" || step === "finding" ? undefined : { onBack: () => backInFlow(() => go(ORDER[index - 1])) };
 
   const errorLine = error ? (
     <p role="alert" className="text-footnote mb-3 text-center text-label-2">
@@ -127,154 +241,90 @@ export function TryFlow() {
   ) : null;
 
   let content: ReactNode = null;
-  let bottom: ReactNode = null;
+  let action: ReactNode = null;
 
   if (step === "job") {
-    content = (
-      <>
-        <StepTitle sub="You get a short task from that job. It takes about 2 minutes.">What&apos;s your dream job?</StepTitle>
-        <Field
-          label="Dream job"
-          hideLabel
-          value={dreamJob}
-          onChange={setDreamJob}
-          placeholder="For example, AI engineer"
-          maxLength={LIMITS.dreamJob}
-          autoFocus
-          onEnter={startTask}
-        />
-        <div className="mt-4 flex flex-wrap gap-2">
-          {suggestions.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setDreamJob(s)}
-              aria-pressed={dreamJob === s}
-              className={cx(
-                "press text-subhead h-11 rounded-full px-4 font-medium transition-colors duration-150",
-                dreamJob === s ? "bg-raised text-label shadow-[inset_0_0_0_1px_var(--color-white)]" : "bg-surface text-label",
-              )}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      </>
-    );
-    bottom = (
+    content = <JobStep job={job} onJob={setJob} onStart={start} tableInactive={table === "inactive"} />;
+    action = (
       <>
         {errorLine}
-        <Button onClick={startTask} disabled={dreamJob.trim().length < 2} loading={busy}>
-          {busy ? "Making your task" : "Continue"}
-        </Button>
+        <PrimaryAction onClick={() => start()} rule={job.trim().length < 2 ? "Type a job to continue." : null} busy={busy}>
+          Find my task
+        </PrimaryAction>
+        {/* In the pinned bar, so the promise is in view before anything is typed. */}
+        <p className="text-caption text-center text-pretty text-label-2">No sign-up. 2 minutes. {practiceLine(table === "joined")}</p>
       </>
     );
   }
 
+  if (step === "finding") content = <FindingStep job={job} />;
+
   if (step === "task" && challenge) {
-    content = (
-      <>
-        <TwoPane
-          task={
-            <>
-              <StepTitle>{challenge.title}</StepTitle>
-              <TaskMaterial challenge={challenge} />
-            </>
-          }
-          answer={
-            <>
-              <TextArea label="Your answer" value={answer} onChange={setAnswer} placeholder="Write your answer" minRows={5} maxLength={LIMITS.answer} />
-              {challenge.aiAllowed ? (
-                <p className="text-footnote mt-2 px-4 text-label-2">AI allowed. Use it the way you would at work.</p>
-              ) : null}
-            </>
-          }
-        />
-      </>
-    );
-    bottom = (
+    content = <TaskStep challenge={challenge} job={taskFor} generic={Boolean(challenge.note)} answer={answer} onAnswer={editAnswer} />;
+    action = (
       <>
         {errorLine}
-        <Button onClick={submitAnswer} disabled={!answer.trim()} loading={busy}>
-          Submit
-        </Button>
+        <PrimaryAction onClick={() => void toExplain()} rule={answer.text.trim() ? null : "Write your answer to continue."} busy={busy}>
+          Continue
+        </PrimaryAction>
       </>
     );
   }
 
   if (step === "explain") {
-    content = (
-      <>
-        <StepTitle long={question.length > 60}>{question}</StepTitle>
-        <AnswerQuote text={answer} />
-        <TextArea label="Your explanation" hideLabel value={explain} onChange={setExplain} placeholder="A few sentences is enough" maxLength={LIMITS.explain} autoFocus />
-      </>
-    );
-    bottom = (
-      <>
-        {errorLine}
-        <Button onClick={() => go("name")} disabled={!explain.trim()}>
-          Continue
-        </Button>
-      </>
+    content = <ExplainStep question={question} answer={answer.text} explain={explain} onExplain={editExplain} />;
+    action = (
+      <PrimaryAction onClick={toName} rule={explain.text.trim() ? null : "Answer the question to continue."}>
+        Continue
+      </PrimaryAction>
     );
   }
 
   if (step === "name") {
-    content = (
-      <>
-        <StepTitle sub="So the company can greet you, if you both say yes. You can skip this.">
-          What&apos;s your first name?
-        </StepTitle>
-        <Field label="First name" hideLabel value={name} onChange={setName} placeholder="First name" autoComplete="given-name" maxLength={LIMITS.name} autoFocus onEnter={submitProof} />
-      </>
-    );
-    bottom = (
+    const named = name.trim().length > 0;
+    content = <NameStep name={name} onName={setName} onSend={() => send(true)} />;
+    action = (
       <>
         {errorLine}
-        <Button onClick={submitProof} loading={busy}>
-          {name.trim() ? "Show my proof" : "Skip and show my proof"}
-        </Button>
+        <div className="flex gap-2 pb-2">
+          {named ? (
+            <Button variant="secondary" onClick={() => send(false)} disabled={busy} className="h-[52px]! w-auto! px-5">
+              Skip
+            </Button>
+          ) : null}
+          <Button onClick={() => send(true)} loading={busy} className="h-[52px]! flex-1">
+            {named ? "Send" : "Skip and send"}
+          </Button>
+        </div>
       </>
     );
   }
 
   if (step === "result" && proof) {
     content = (
-      <>
-        <p className="text-subhead inline-flex h-7 items-center rounded-full bg-surface px-3 font-medium text-label-2">
-          Practice proof. Not sent to any company.
-        </p>
-        <h1 className="text-large-title mt-3 font-bold text-balance">This is what a company would see.</h1>
-        <p className="text-body mt-2 mb-6 text-label-2 text-pretty">
-          Next, pick a real task. A person at that company reads your work and decides who to meet.
-        </p>
-        <BlindProofFull proof={proof} reveal />
-      </>
+      <Reveal
+        proof={proof}
+        written={{ answer: answer.text.trim(), explain: explain.text.trim() }}
+        onTable={table === "joined"}
+        nameGiven={sentName.length > 0}
+        onAnotherJob={restart}
+      />
     );
-    bottom = (
-      <div className="flex flex-col-reverse gap-2 min-[360px]:flex-row min-[360px]:gap-3">
-        <Button href="/passport" variant="secondary" className="min-[360px]:w-auto! min-[360px]:px-6">
-          My proofs
-        </Button>
-        <Button href="/challenges" className="min-[360px]:flex-1">
-          See real tasks
-        </Button>
-      </div>
-    );
+    if (tableInvite.invite) {
+      action = <TableInviteCard invite={tableInvite.invite} firstName={sentName} onAccept={tableInvite.accept} onDecline={tableInvite.decline} />;
+    }
   }
 
   return (
-    <Screen
+    <TryFrame
       back={back}
-      center={step === "result" ? null : <StepProgress total={4} current={index} />}
+      progress={step === "result" ? undefined : { current: index + 1, total: ORDER.length }}
       right={step === "task" && challenge ? <TimerChip minutes={challenge.minutes} startedAt={startedAt} /> : null}
-      bottom={bottom}
-      wide={step === "task"}
+      action={action}
     >
-      <StepSlide stepKey={step} direction={direction}>
+      <StepSlide stepKey={step} direction={direction} className="flex flex-1 flex-col">
         {content}
       </StepSlide>
-    </Screen>
+    </TryFrame>
   );
 }
