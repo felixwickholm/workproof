@@ -3,7 +3,7 @@ import { buildSeed } from "@/lib/seed";
 import { createMemoryStore } from "./memory";
 import type { ProofStore } from "./types";
 
-export type { EventInfo, ProofStore, StoreData } from "./types";
+export type { ProofStore, StoreData } from "./types";
 
 const holder = globalThis as typeof globalThis & { __tryoutStore?: ProofStore };
 

@@ -1,7 +1,7 @@
 import type { Challenge, Decision, Submission } from "@/lib/domain/types";
 
 /** A proof needs this many shared core skills before another employer may see it. */
-export const MIN_SHARED_SKILLS = 2;
+const MIN_SHARED_SKILLS = 2;
 
 export interface SecondLookInput {
   submission: Submission;
@@ -22,7 +22,7 @@ export interface SecondLookMatch {
  * The owners released the proof when none of them chose to meet and either one of them
  * passed or the response window ran out without any decision.
  */
-export function ownersReleased(input: Omit<SecondLookInput, "challenges">): boolean {
+function ownersReleased(input: Omit<SecondLookInput, "challenges">): boolean {
   const { submission, challenge, decisions, responseWindowHours, now } = input;
   const ownerDecisions = decisions.filter(
     (d) => d.proofId === submission.id && challenge.companyIds.includes(d.companyId),
@@ -34,7 +34,7 @@ export function ownersReleased(input: Omit<SecondLookInput, "challenges">): bool
 }
 
 /** Labels of core skills shared by two challenges. Compares challenges, never people. */
-export function sharedSkills(a: Challenge, b: Challenge): string[] {
+function sharedSkills(a: Challenge, b: Challenge): string[] {
   const ids = new Set(b.coreSkills.map((s) => s.id));
   return a.coreSkills.filter((s) => ids.has(s.id)).map((s) => s.label);
 }

@@ -5,7 +5,7 @@ const text = (max: number) => z.string().max(max);
 
 const skill = z.object({ id: z.string().min(1).max(60), label: text(80), why: text(300) });
 
-export const challengeDraftSchema = z.object({
+const challengeDraftSchema = z.object({
   title: z.string().min(3).max(120),
   need: text(2000),
   coreSkills: z.array(skill).min(3).max(5),
@@ -30,15 +30,23 @@ export const approveRequest = z.object({
 
 export const tasterRequest = z.object({ dreamJob: z.string().trim().min(2).max(LIMITS.dreamJob) });
 
-export const followUpRequest = z.object({ challengeId: z.string().min(1), answer: z.string().max(LIMITS.answer) });
+export const followUpRequest = z.object({
+  challengeId: z.string().min(1).max(100),
+  answer: z.string().max(LIMITS.answer),
+  /** Optional: the author's own name and contact, so they are removed before the question writer reads the answer. */
+  talent: z.object({ name: text(LIMITS.name), contact: text(LIMITS.contact) }).optional(),
+});
 
 export const submissionRequest = z.object({
   challengeId: z.string().min(1),
   talent: z.object({ id: z.string().min(1).max(100), name: text(LIMITS.name), contact: text(LIMITS.contact) }),
   answer: z.string().min(1).max(LIMITS.answer),
   explain: z.array(z.object({ question: text(600), answer: text(LIMITS.explain) })).max(4).default([]),
-  shareWithSimilar: z.boolean(),
+  /** Opt-in. Missing means no. */
+  shareWithSimilar: z.boolean().default(false),
 });
+
+export const sharingRequest = z.object({ talentId: z.string().min(1).max(100), share: z.boolean() });
 
 export const decisionRequest = z.object({
   proofId: z.string().min(1),

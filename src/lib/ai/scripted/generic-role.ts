@@ -1,38 +1,14 @@
-import { findJudgement } from "@/lib/guard/no-judgement";
-import { protectedNames } from "@/lib/guard/protected";
 import type { RoleTemplate } from "./role-template";
 
-/**
- * Turns a person's dream job, such as "I want to be a beekeeper", into a short role name for a taster.
- * Never used on a company's need: an event challenge is built only from neutral templates.
- */
-export function roleNameFrom(text: string): string {
-  const name = text
-    .split(/[,.;:\n]/)[0]
-    .replace(/^\s*(?:we|i)?\s*(?:need|are looking for|am looking for|looking for|want to be|want|would like to be|dream job is|my dream job is|tarvitsemme|etsimme)\s+/i, "")
-    .replace(/^(?:an?|someone|somebody|to be an?|to be)\s+/i, "")
-    .split(/\s+(?:who|that|with|for|to|joka)\s+/i)[0]
-    .trim()
-    .split(/\s+/)
-    .slice(0, 5)
-    .join(" ")
-    .toLowerCase();
-  const safe =
-    name.length >= 2 &&
-    name.length <= 48 &&
-    findJudgement(name).length === 0 &&
-    protectedNames(name).length === 0 &&
-    !/[<>{}[\]]/.test(name);
-  return safe ? name : "this role";
-}
+/** Shown on a company draft built from this template, so a person rewrites the brief before publishing. */
+export const GENERIC_NOTE = "No close match in the task library. Edit the brief before you publish.";
 
 /**
  * A template for roles outside the library. The task asks for judgment on an AI-drafted plan.
- * The event challenge uses no words from the company's need, so nothing the company wrote about
- * a person can reach the brief or the material. Only the taster names the role, from the person's own dream job.
+ * It uses no words from the company's need or the person's dream job, so nothing typed about
+ * a person can reach the brief or the material, and an unusual job name never reads oddly in it.
  */
-export function genericRole(dreamJob = ""): RoleTemplate {
-  const role = roleNameFrom(dreamJob);
+export function genericRole(): RoleTemplate {
   return {
     id: "generic",
     title: "A role",
@@ -76,40 +52,37 @@ export function genericRole(dreamJob = ""): RoleTemplate {
       flaws: [
         {
           label: "the new process launched before talking to the people who use it",
-          topic: "the new process",
           cues: ["process", "week 3", "too early", "too soon", "whole department", "ask the people", "talk to", "pilot"],
         },
         {
           label: "goals with no way to tell whether they were met",
-          topic: "the goals",
           cues: ["goal", "measure", "measurable", "how do we know", "vague", "metric", "baseline", "success"],
         },
         {
           label: "urgent problems that are never named or checked with anyone",
-          topic: "the urgent problems",
           cues: ["urgent", "which problems", "three problems", "who decides", "named", "week 2", "agree"],
         },
       ],
     },
     taster: {
-      title: "Fix an AI-drafted reply",
+      title: "Spot the problem in a plan",
       format: "review",
-      brief: `You work as ${role === "this role" ? "a member of the team" : `a ${role}`}. An AI assistant drafted this reply to someone who reported a delay.`,
+      brief: "A colleague asked an AI assistant for next week's plan and wants to send it to the team as it is. Read it first.",
       material: {
         kind: "text",
-        title: "Draft reply",
+        title: "Plan for next week (AI draft)",
         body: [
-          "Thanks for flagging the delay.",
-          "We have fixed the cause and it will not happen again.",
-          "Let me know if anything else comes up.",
+          "Monday: order the new equipment.",
+          "Tuesday: set it up and show the team how it works.",
+          "Wednesday: use it for every customer from the morning on.",
+          "Friday: ask customers what they think.",
         ].join("\n"),
       },
-      deliverable: "What would you change before sending it, and why?",
+      deliverable: "What would you change before this plan goes out, and why?",
       flaws: [
         {
-          label: "a promise made before the cause is known",
-          topic: "the promise in the reply",
-          cues: ["promise", "not happen again", "cause", "do we know", "check", "overpromis", "guarantee"],
+          label: "every customer moves to the new setup before anyone has tried it",
+          cues: ["every customer", "wednesday", "try", "pilot", "test", "too fast", "too soon", "rush", "first", "small", "deliver", "arrive"],
         },
       ],
     },

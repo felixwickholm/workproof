@@ -52,17 +52,14 @@ export const marketingSpecialist: RoleTemplate = {
     flaws: [
       {
         label: "sign-ups counted by each platform's own pixel, so one person can be counted twice",
-        topic: "how sign-ups are counted",
         cues: ["pixel", "double count", "counted twice", "overlap", "1 330", "dedupl", "own pixel", "total"],
       },
       {
         label: "a 1-day last-click window that ignores longer decisions",
-        topic: "the attribution window",
         cues: ["last click", "last-click", "1-day", "window", "attribution", "multi-touch", "first touch"],
       },
       {
         label: "newsletter sign-ups that include existing trial users",
-        topic: "which sign-ups are included",
         cues: ["newsletter", "existing", "trial users", "already", "new customers", "incremental"],
       },
     ],
@@ -84,7 +81,6 @@ export const marketingSpecialist: RoleTemplate = {
     flaws: [
       {
         label: "a sales increase credited to the ad without a comparison",
-        topic: "the comparison for the sales increase",
         cues: ["causation", "correlation", "cause", "other reasons", "season", "comparison", "control", "baseline"],
       },
     ],

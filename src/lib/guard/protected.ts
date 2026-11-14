@@ -1,3 +1,6 @@
+import { unicodeWords } from "@/lib/util/regex";
+import { protectedScanCopies } from "./normalise";
+
 /**
  * Protected attributes: wishes that describe a person instead of the work. English, Finnish and Swedish.
  * They never become skills and never reach any text a talent or reviewer sees.
@@ -9,7 +12,8 @@ function words(source: string): RegExp {
   return new RegExp(`(?<![\\p{L}\\p{N}])(?:${source})(?![\\p{L}\\p{N}])`, "iu");
 }
 
-const NUMBER_WORDS = "twenty|thirty|forty|fifty|sixty|kaksikymmentä|kolmekymmentä|neljäkymmentä|viisikymmentä|tjugo|trettio|fyrtio|femtio";
+const NUMBER_WORDS =
+  "(?:twenty|thirty|forty|fifty|sixty)(?:[- ](?:one|two|three|four|five|six|seven|eight|nine))?|kaksikymmentä|kolmekymmentä|neljäkymmentä|viisikymmentä|tjugo|trettio|fyrtio|femtio";
 
 const PROTECTED: { name: string; pattern: RegExp }[] = [
   {
@@ -18,15 +22,17 @@ const PROTECTED: { name: string; pattern: RegExp }[] = [
       [
         "young|younger|youngest|youthful|youth|elderly|mature|aged?|ageing|aging",
         // "under 30" is an age only where no unit follows: "under 30 ms" is a latency.
-        `(?:under|over|below|above|alle|yli|över)\\s+(?:\\d{2}|${NUMBER_WORDS})(?=\\s*(?:$|[,.;)]|and\\b|or\\b|ja\\b|och\\b|years?\\b|yrs\\b|y\\.?o\\b|vuot\\p{L}*|år\\b|-?vuotia\\p{L}*))(?:\\s*(?:years?|yrs|y\\.?o\\.?|vuotta|vuotias\\p{L}*|år))?`,
-        `(?:max(?:imum)?|min(?:imum)?|at most|at least|enintään|korkeintaan|högst|minst)\\s+(?:\\d{2}|${NUMBER_WORDS})\\s*(?:years? old|yrs old|y\\.?o\\.?|-?vuotia\\p{L}*|år gammal|åriga?)`,
-        "\\d{2}\\s*[-–]\\s*\\d{2}\\s*(?:years?|yrs|vuotta|vuotia\\p{L}*|år|-?åriga?)",
-        "\\d{2}\\s*(?:years? old|yo|y\\.o\\.|-?vuotia\\p{L}*|-?åriga?)",
+        `(?:under|over|below|above|alle|yli|över)\\s{1,5}(?:\\d{2}|${NUMBER_WORDS})(?=\\s{0,5}(?:$|[,.;)]|and\\b|or\\b|ja\\b|och\\b|years?\\b|yrs\\b|y\\.?o\\b|vuot\\p{L}{0,40}|år\\b|-?vuotia\\p{L}{0,40}))(?:\\s{0,5}(?:years?|yrs|y\\.?o\\.?|vuotta|vuotias\\p{L}{0,40}|år))?`,
+        `(?:max(?:imum)?|min(?:imum)?|at most|at least|enintään|korkeintaan|högst|minst)\\s{1,5}(?:\\d{2}|${NUMBER_WORDS})\\s{0,5}(?:years? old|yrs old|y\\.?o\\.?|-?vuotia\\p{L}{0,40}|år gammal|åriga?)`,
+        "\\d{2}\\s{0,5}[-–]\\s{0,5}\\d{2}\\s{0,5}(?:years?|yrs|vuotta|vuotia\\p{L}{0,40}|år|-?åriga?)",
+        "\\d{2}\\s{0,5}(?:years? old|yo|y\\.o\\.|-?vuotia\\p{L}{0,40}|-?åriga?)",
         "years old|born (?:in|after|before) (?:19|20)\\d{2}|born in the (?:80s|90s|00s|eighties|nineties)",
         "digital[- ]natives?|millennials?|gen(?:eration)?[- ]?(?:z|y|x|alpha)|zoomers?|boomers?",
-        "recent(?:ly)?[- ]grad\\p{L}*|fresh[- ]grad\\p{L}*|new[- ]grad\\p{L}*|graduated recently|just graduated|vastavalmistu\\p{L}*|nyutexaminerad\\p{L}*|nyligen utexaminerad\\p{L}*",
-        "energetic|energinen|energis\\p{L}*|energisk\\p{L}*|nuorekas|nuor\\p{L}*|ung|unga|ungdomlig\\p{L}*|yngre",
-        "senior citizens?|retired|retirees?|pensioners?|eläkeläi\\p{L}*|ikä\\p{L}*|iältään|ålder\\p{L}*",
+        "recent(?:ly)?[- ]grad\\p{L}{0,40}|fresh[- ]grad\\p{L}{0,40}|new[- ]grad\\p{L}{0,40}|graduated recently|just graduated|vastavalmistu\\p{L}{0,40}|nyutexaminerad\\p{L}{0,40}|nyligen utexaminerad\\p{L}{0,40}",
+        "energetic|energinen|energis\\p{L}{0,40}|energisk\\p{L}{0,40}|nuorekas|nuor\\p{L}{0,40}|ung|unga|ungdomlig\\p{L}{0,40}|yngre",
+        "senior citizens?|retired|retirees?|(?:pre-)?retirement|pensioners?|eläkeläi\\p{L}{0,40}|ikä\\p{L}{0,40}|iältään|ålder\\p{L}{0,40}",
+        "date of birth|birth ?(?:date|year|day)|year of birth|dob|syntymä(?:aika|vuosi|päivä)\\p{L}{0,40}|födelse(?:år|datum|dag)\\p{L}{0,40}",
+        "(?:\\d{2}|aged?) (?:or|and) (?:younger|older|under|over)|aged? between|fresh (?:mindset|blood|eyes)|young blood",
       ].join("|"),
     ),
   },
@@ -34,9 +40,10 @@ const PROTECTED: { name: string; pattern: RegExp }[] = [
     name: "native language",
     pattern: words(
       [
-        "(?<!cloud[- ]|react |non[- ])natives?(?![- ](?:app|apps|mobile|ios|android|code|modules?|integrations?|sdk|build|binar\\p{L}*|libraries|library|ui|tools?|units?|format|resolution|speed))",
-        "mother[- ]tongue|first language|native language|native speakers?|äidinkiel\\p{L}*|modersmål\\p{L}*|förstaspråk\\p{L}*",
-        "[\\p{L}]+-speaking|suomea puhuv\\p{L}*|ruotsia puhuv\\p{L}*|svensktalande|finsktalande",
+        "(?<!cloud[- ]|react |non[- ])natives?(?![- ](?:app|apps|mobile|ios|android|code|modules?|integrations?|sdk|build|binar\\p{L}{0,40}|libraries|library|ui|tools?|units?|format|resolution|speed))",
+        "mother[- ]tongue|first language|native language|native speakers?|äidinkiel\\p{L}{0,40}|modersmål\\p{L}{0,40}|förstaspråk\\p{L}{0,40}",
+        "accent[- ]free|accentless|(?:no|without an?|neutral|native|foreign|strong|heavy|local) accent|aksentiton\\p{L}{0,40}|utan brytning|brytning",
+        "[\\p{L}]+-speaking|suomea puhuv\\p{L}{0,40}|ruotsia puhuv\\p{L}{0,40}|svensktalande|finsktalande",
       ].join("|"),
     ),
   },
@@ -45,17 +52,19 @@ const PROTECTED: { name: string; pattern: RegExp }[] = [
     pattern: words(
       [
         "nationality|nationalities|citizens?|citizenship|passport holders?|born in|[\\p{L}]+-born|native[- ]born",
-        "locals?(?![- ](?:storage|first|development|dev|server|cache|files?|network|models?|data|environment|machine|setup|branch|government|authorit\\p{L}*|council|business\\p{L}*|shops?|stores?|time))",
-        "lives in|living in|lives nearby|from the area|asuu|asuva\\p{L}*|bor i",
-        "ethnic\\p{L}*|racial|white(?![- ](?:board|paper|label|list|space|box|hat|noise))|caucasian|immigrants?|foreigners?|maahanmuuttaja\\p{L}*|ulkomaalai\\p{L}*|invandrare",
-        "kansalai\\p{L}*|kansallisuu\\p{L}*|suomalai\\p{L}*|kantasuomalai\\p{L}*|syntyperäi\\p{L}*|medborgar\\p{L}*|svensk medborgare|finländsk\\p{L}*|nationalitet",
+        "locals?(?![- ](?:storage|first|development|dev|server|cache|files?|network|models?|data|db|database|copy|copies|draft\\p{L}{0,10}|state|repo\\p{L}{0,10}|config\\p{L}{0,10}|host|variables?|var|environment|machine|setup|branch|government|authorit\\p{L}{0,40}|council|business\\p{L}{0,40}|shops?|stores?|time|queue|clock|path|port|build|test\\p{L}{0,10}))",
+        "lives in|living in|lives nearby|from the area|asuu|asuva\\p{L}{0,40}|bor i",
+        "born and raised|raised (?:here|locally|in)|grew up (?:here|locally|in)|född (?:i|och uppvuxen)|uppvuxen i|syntynyt (?:ja kasvanut )?\\p{L}{1,40}(?:ssa|ssä)",
+        "(?:\\p{L}{1,40} )?passports?(?:[- ]holders?)?(?![.-]?js)|[\\p{L}]+-sounding (?:sur)?names?|(?:sur)?names? that sounds?",
+        "ethnic\\p{L}{0,40}|racial|white(?![- ](?:board|paper|label|list|space|box|hat|noise))|caucasian|immigrants?|foreigners?|maahanmuuttaja\\p{L}{0,40}|ulkomaalai\\p{L}{0,40}|invandrare",
+        "kansalai\\p{L}{0,40}|kansallisuu\\p{L}{0,40}|suomalai\\p{L}{0,40}|kantasuomalai\\p{L}{0,40}|syntyperäi\\p{L}{0,40}|medborgar\\p{L}{0,40}|svensk medborgare|finländsk\\p{L}{0,40}|nationalitet",
       ].join("|"),
     ),
   },
   {
     name: "gender",
     pattern: words(
-      "male|female|man|woman|men|women|guy|guys|girl|girls|boy|boys|lady|ladies|gentleman|gentlemen|he|she|him|his|hers|mies|miehiä|miestä|miehen|nainen|naisia|naista|naisen|tyttö\\p{L}*|kvinna|kvinnor|kvinnlig|manlig|tjej\\p{L}*|kill(?:e|ar)",
+      "gender|sex|sukupuol\\p{L}{0,40}|kön|male|female|man(?! pages?)|woman|men|women|guy|guys|girl|girls|boy|boys|lady|ladies|gentleman|gentlemen|he|she|him|his|hers|mies|miehiä|miestä|miehen|nainen|naisia|naista|naisen|tyttö\\p{L}{0,40}|kvinna|kvinnor|kvinnlig|manlig|tjej\\p{L}{0,40}|kill(?:e|ar)",
     ),
   },
   {
@@ -63,15 +72,17 @@ const PROTECTED: { name: string; pattern: RegExp }[] = [
     pattern: words(
       [
         "no kids|no children|without kids|without children|has kids|has children|childless|family (?:man|woman|person|commitments?|status|plans|situation|obligations|life)|no family",
-        "single(?=\\s*(?:$|[,.;)]|and\\b|or\\b|(?:parent|mother|father|mom|mum|dad)s?\\b))",
-        "married|unmarried|spouse|pregnan\\p{L}*|maternity|paternity|parental leave|perheetön|lapseton|ei lapsia|lapseto\\p{L}*|raskaa\\p{L}*|perhetilan\\p{L}*|äitiysloma\\p{L}*|perhevapaa\\p{L}*|naimisi\\p{L}*|barnfri|barnlös|inga barn|graviditet\\p{L}*|föräldraledig\\p{L}*",
+        "single(?=\\s{0,5}(?:$|[,.;)]|and\\b|or\\b|(?:parent|mother|father|mom|mum|dad)s?\\b))",
+        "marital|marriage|siviilisääty\\p{L}{0,40}|civilstånd|(?:plan|plans|planning|intend\\p{L}{0,40}) (?:to have|on having|for) (?:kids|children|a baby|a family|pregnancy)|(?:kids|children|a baby) soon",
+        "småbarn|(?:inga|inte har|utan) barn|ei ole perhettä|perhettä|perheelli\\p{L}{0,40}|perhetilan\\p{L}{0,40}",
+        "married|unmarried|spouse|pregnan\\p{L}{0,40}|maternity|paternity|parental leave|perheetön|lapseton|ei lapsia|lapseto\\p{L}{0,40}|raskaa\\p{L}{0,40}|perhetilan\\p{L}{0,40}|äitiysloma\\p{L}{0,40}|perhevapaa\\p{L}{0,40}|naimisi\\p{L}{0,40}|barnfri|barnlös|inga barn|graviditet\\p{L}{0,40}|föräldraledig\\p{L}{0,40}",
       ].join("|"),
     ),
   },
   {
     name: "religion",
     pattern: words(
-      "religio\\p{L}*|christian\\p{L}*|muslim\\p{L}*|islam\\p{L}*|jewish|jew|hindu\\p{L}*|buddhist\\p{L}*|catholic\\p{L}*|lutheran\\p{L}*|church[- ]?goer|believer|atheist|uskon\\p{L}*|uskova\\p{L}*|kristi\\p{L}*|muslimi\\p{L}*|kristen|kristna|religiös\\p{L}*|troende",
+      "religio\\p{L}{0,40}|christian\\p{L}{0,40}|muslim\\p{L}{0,40}|islam\\p{L}{0,40}|jewish|jew|hindu\\p{L}{0,40}|buddhist\\p{L}{0,40}|catholic\\p{L}{0,40}|lutheran\\p{L}{0,40}|church[- ]?goer|believer|atheist|uskon\\p{L}{0,40}|uskova\\p{L}{0,40}|kristi\\p{L}{0,40}|muslimi\\p{L}{0,40}|kristen|kristna|religiös\\p{L}{0,40}|troende",
     ),
   },
   {
@@ -79,8 +90,8 @@ const PROTECTED: { name: string; pattern: RegExp }[] = [
     pattern: words(
       [
         "(?:top|elite|prestigious|leading|ivy|best|good|top[- ]tier|well[- ]known|famous|renowned)[- ](?:league[- ])?(?:university|universities|school|schools|college|colleges|institutions?)",
-        "ivy league|oxbridge|huippuyliopisto\\p{L}*|eliittiyliopisto\\p{L}*|toppuniversitet\\p{L}*",
-        "aalto|hanken|mit|stanford|oxford|cambridge|harvard|yale|princeton|kth|eth|helsingin yliopisto\\p{L}*|university of helsinki",
+        "ivy league|oxbridge|huippuyliopisto\\p{L}{0,40}|eliittiyliopisto\\p{L}{0,40}|toppuniversitet\\p{L}{0,40}",
+        "aalto|hanken|mit|stanford|oxford|cambridge|harvard|yale|princeton|kth|eth|helsingin yliopisto\\p{L}{0,40}|university of helsinki",
       ].join("|"),
     ),
   },
@@ -88,28 +99,33 @@ const PROTECTED: { name: string; pattern: RegExp }[] = [
     name: "photo or appearance",
     pattern: words(
       [
-        "(?:photo|photos|photograph|picture|valokuva\\p{L}*|kuva|foto|bild) (?:with|of|on|in|for|attached to|hakemu\\p{L}*|med) (?:the |your |an? )?(?:application|applicant|cv|resume|yourself|candidate|hakemu\\p{L}*|ansökan)",
-        "with (?:a )?photo|headshot|good[- ]looking|attractive|presentable|appearance|pleasant look\\p{L}*|beautiful|pretty|handsome|slim|tall|well[- ]groomed",
-        "ulkonäkö\\p{L}*|ulkoasu|edustava\\p{L}*|hyvännäköi\\p{L}*|utseende\\p{L}*|snygg\\p{L}*|valokuva\\p{L}*",
+        "(?:photo|photos|photograph|picture|valokuva\\p{L}{0,40}|kuva|foto|bild) (?:with|of|on|in|for|attached to|hakemu\\p{L}{0,40}|med) (?:the |your |an? )?(?:application|applicant|cv|resume|yourself|candidate|hakemu\\p{L}{0,40}|ansökan)",
+        "(?:recent|current|your|attach a) (?:photo|picture|headshot)s?(?! (?:of the (?!applicant|candidate)|gallery|upload\\p{L}{0,40}|editing|app|feature|library|viewer))|clean[- ]shaven|beard\\p{L}{0,40}|well[- ]dressed|tattoo\\p{L}{0,40}|piercing\\p{L}{0,40}|headscarf|hijab",
+        "with (?:a )?photo|headshot|good[- ]looking|attractive|presentable|appearance|pleasant look\\p{L}{0,40}|beautiful|pretty|handsome|slim|tall|well[- ]groomed",
+        "ulkonäkö\\p{L}{0,40}|ulkoasu|edustava\\p{L}{0,40}|hyvännäköi\\p{L}{0,40}|utseende\\p{L}{0,40}|snygg\\p{L}{0,40}|valokuva\\p{L}{0,40}",
       ].join("|"),
     ),
   },
   {
     name: "health or disability",
     pattern: words(
-      "healthy|health status|good health|in good shape|physically fit|disabilit\\p{L}*|disabled|handicap\\p{L}*|no (?:health )?(?:issues|conditions|illness\\p{L}*)|sick leave|terveydentila\\p{L}*|hyvä terveys|hyväkuntoi\\p{L}*|vamma\\p{L}*|sairausloma\\p{L}*|frisk|funktionsneds\\p{L}*|hälsotillstånd",
+      "healthy|health status|good health|in good shape|physically fit|disabilit\\p{L}{0,40}|disabled|handicap\\p{L}{0,40}|no (?:health )?(?:issues|conditions|illness\\p{L}{0,40})|sick leave|terveydentila\\p{L}{0,40}|hyvä terveys|hyväkuntoi\\p{L}{0,40}|vamma\\p{L}{0,40}|sairausloma\\p{L}{0,40}|frisk|funktionsneds\\p{L}{0,40}|hälsotillstånd",
     ),
   },
   {
     name: "culture fit",
     pattern: words(
-      "culture fit|cultural fit|team fit|fits? (?:in )?(?:with )?(?:our|the) (?:culture|team|vibe|crowd)|like[- ]minded|one of us|our kind of person|kulttuurisopivuu\\p{L}*|sopii (?:meidän )?kulttuuriin|sopii (?:meidän )?(?:porukkaan|tiimiin|joukkoon)|passar in\\p{L}*|kulturell\\p{L}* passform",
+      "culture fit|cultural fit|team fit|fits? (?:in )?(?:with )?(?:our|the) (?:culture|team|vibe|crowd)|like[- ]minded|one of us|our kind of person|kulttuurisopivuu\\p{L}{0,40}|sopii (?:meidän )?kulttuuriin|sopii (?:meidän )?(?:porukkaan|tiimiin|joukkoon)|passar in\\p{L}{0,40}|kulturell\\p{L}{0,40} passform",
     ),
+  },
+  {
+    name: "career gaps",
+    pattern: words("career gaps?|gaps? in (?:the |your |their )?(?:cv|career|employment|work history)|continuous (?:employment|career)|aukko\\p{L}{0,40} (?:työhistoriassa|urassa)|luckor? i cv"),
   },
   {
     name: "military service",
     pattern: words(
-      "military service|national service|armed forces|served in the army|asevelvollisuu\\p{L}*|varusmie\\p{L}*|intti|armeija\\p{L}*|siviilipalvelu\\p{L}*|värnplikt\\p{L}*|militärtjänst\\p{L}*",
+      "military service|national service|armed forces|served in the army|asepalvelu\\p{L}{0,40}|asevelvollisuu\\p{L}{0,40}|varusmie\\p{L}{0,40}|intti|armeija\\p{L}{0,40}|siviilipalvelu\\p{L}{0,40}|värnplikt\\p{L}{0,40}|militärtjänst\\p{L}{0,40}",
     ),
   },
 ];
@@ -117,19 +133,13 @@ const PROTECTED: { name: string; pattern: RegExp }[] = [
 /** Every neutral attribute name the "Not used" note may contain. */
 export const PROTECTED_NAMES: readonly string[] = [...PROTECTED.map(({ name }) => name), "wishes about the person"];
 
-/** Neutral names of the protected attributes the text mentions. */
+/**
+ * Neutral names of the protected attributes the text mentions. The text is scanned in normalised
+ * copies (lookalike letters, spacing, leetspeak, identifiers such as `isMale`), so tricks do not hide a word.
+ */
 export function protectedNames(text: string): string[] {
-  const flat = text.replace(/\s+/g, " ");
-  return PROTECTED.filter(({ pattern }) => pattern.test(flat)).map(({ name }) => name);
-}
-
-/** The words that matched, for tests and error messages. */
-export function protectedMatches(text: string): string[] {
-  const flat = text.replace(/\s+/g, " ");
-  return PROTECTED.flatMap(({ pattern }) => {
-    const found = pattern.exec(flat);
-    return found ? [found[0]] : [];
-  });
+  const copies = protectedScanCopies(text.replace(/\s{1,5}/g, " "));
+  return PROTECTED.filter(({ pattern }) => copies.some((copy) => unicodeWords(pattern).test(copy))).map(({ name }) => name);
 }
 
 /**
@@ -138,11 +148,14 @@ export function protectedMatches(text: string): string[] {
  */
 export function workingLanguage(text: string): string | undefined {
   if (protectedNames(text).includes("native language")) return undefined;
-  const found =
-    /\b(?:works?|working|work with \w+) in (finnish|swedish|english)\b/i.exec(text) ??
-    /\bworking language(?: is|:)?\s+(finnish|swedish|english)\b/i.exec(text) ??
-    /\btyökiel\p{L}*\s+(?:on\s+)?(suomi|ruotsi|englanti)\b/iu.exec(text) ??
-    /\barbetsspråk\p{L}*\s+(?:är\s+)?(finska|svenska|engelska)\b/iu.exec(text);
+  const found = [
+    /\b(?:works?|working|work with \w{1,30}) in (finnish|swedish|english)\b/i,
+    /\bworking language(?: is|:)?\s{1,5}(finnish|swedish|english)\b/i,
+    /\btyökiel\p{L}{0,40}\s{1,5}(?:on\s{1,5})?(suomi|ruotsi|englanti)\b/iu,
+    /\barbetsspråk\p{L}{0,40}\s{1,5}(?:är\s{1,5})?(finska|svenska|engelska)\b/iu,
+  ]
+    .map((pattern) => unicodeWords(pattern).exec(text))
+    .find(Boolean);
   if (!found) return undefined;
   const names: Record<string, string> = {
     finnish: "Finnish", swedish: "Swedish", english: "English", suomi: "Finnish", ruotsi: "Swedish",

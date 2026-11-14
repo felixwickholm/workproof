@@ -11,6 +11,7 @@ import { POST as followUpsRoute } from "@/app/api/followups/route";
 import { POST as acceptRoute } from "@/app/api/meetings/[id]/accept/route";
 import { POST as confirmRoute } from "@/app/api/meetings/[id]/confirm/route";
 import { GET as passportRoute } from "@/app/api/passport/[talentId]/route";
+import { POST as sharingRoute } from "@/app/api/proofs/[proofId]/sharing/route";
 import { POST as submissionsRoute } from "@/app/api/submissions/route";
 import { POST as tasterRoute } from "@/app/api/taster/route";
 import type {
@@ -70,11 +71,14 @@ describe("Flow: from need to a confirmed Second look meeting", () => {
         talent: TALENT,
         answer,
         explain: followUps.json.questions.map((question) => ({ question, answer: "The leak first, because it changes every other number." })),
-        shareWithSimilar: true,
       },
     });
     const proof = submitted.json.proof;
     step("submission returns a blind proof", submitted.status === 200 && !JSON.stringify(proof).includes("Noor"));
+
+    const before = (await call<PassportEntry[]>(passportRoute, { params: { talentId: TALENT.id } })).json.find((e) => e.proof.proofId === proof.proofId);
+    const shared = await call<{ sharing: boolean }>(sharingRoute, { body: { talentId: TALENT.id, share: true }, params: { proofId: proof.proofId } });
+    step("Second look is off until the person turns it on", before?.sharing === false && shared.json.sharing === true);
 
     const queueA = (await call<ReviewQueue>(queueRoute, { params: { id: A } })).json;
     step("company A sees it in its own queue", queueA.proofs.some((p) => p.proofId === proof.proofId));
@@ -131,6 +135,6 @@ describe("Flow: from need to a confirmed Second look meeting", () => {
         t.secondLookMeetings === b.secondLookMeetings + 1 &&
         t.automatedDecisions === 0,
     );
-    expect(steps.length).toBe(16);
+    expect(steps.length).toBe(17);
   });
 });

@@ -41,6 +41,8 @@ export async function confirmMeeting(meetingId: string, who: ConfirmSide): Promi
     }
     if (meeting.status === "invited") throw new ServiceError(409, "The meeting has not been accepted yet");
 
+    const already = who.side === "talent" ? meeting.talentConfirmedMet : meeting.companyConfirmedMet;
+    if (already) return meeting;
     if (who.side === "talent") meeting.talentConfirmedMet = true;
     else meeting.companyConfirmedMet = true;
     if (meeting.talentConfirmedMet && meeting.companyConfirmedMet) meeting.status = "met";

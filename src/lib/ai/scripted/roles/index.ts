@@ -50,7 +50,3 @@ export const ROLES: readonly RoleTemplate[] = [
   nurse,
   teacher,
 ];
-
-export function roleById(id: string): RoleTemplate | undefined {
-  return ROLES.find((role) => role.id === id);
-}

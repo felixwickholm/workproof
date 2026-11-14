@@ -4,7 +4,7 @@ export const dataAnalyst: RoleTemplate = {
   id: "data-analyst",
   title: "Data analyst",
   keywords: [
-    "data analyst", "business analyst", "bi analyst", "analytics", "power bi", "tableau", "looker",
+    "data analyst", "business analyst", "bi analyst", "analyst", "analytics", "power bi", "tableau", "looker",
     "dashboard", "data-analyytikko", "data analyytikko", "analyytikko", "raportointi", "tietoanalyytikko",
   ],
   skills: ["sql", "metrics-definition", "data-visualisation", "data-quality", "stakeholder-communication"],
@@ -50,17 +50,14 @@ export const dataAnalyst: RoleTemplate = {
     flaws: [
       {
         label: "the denominator that counts only cancelled customers",
-        topic: "the churn denominator",
         cues: ["denominator", "where s.cancelled_at", "only cancelled", "always 1", "100%", "active customers", "customers at the start", "divide"],
       },
       {
         label: "customers with several subscriptions counted more than once",
-        topic: "how customers are counted",
         cues: ["several subscriptions", "multiple subscriptions", "duplicate", "distinct", "count(distinct", "join multiplies", "more than once", "fan out"],
       },
       {
         label: "no clear definition of who counts as churned",
-        topic: "the churn definition",
         cues: ["definition", "define churn", "downgrade", "pause", "reactivat", "came back", "what counts", "yearly"],
       },
     ],
@@ -82,7 +79,6 @@ export const dataAnalyst: RoleTemplate = {
     flaws: [
       {
         label: "the bar chart axis that does not start at zero",
-        topic: "the chart axis",
         cues: ["axis", "zero", "baseline", "950", "truncat", "exaggerat", "misleading", "bar chart"],
       },
     ],

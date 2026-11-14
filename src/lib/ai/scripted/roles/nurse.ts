@@ -56,17 +56,14 @@ export const nurse: RoleTemplate = {
     flaws: [
       {
         label: "insulin planned as usual after a low blood glucose and half a meal",
-        topic: "the insulin plan",
         cues: ["glucose", "3.9", "hypo", "insulin", "low sugar", "half of dinner", "check before"],
       },
       {
         label: "a weight gain of over 2 kg in a heart failure patient left without comment",
-        topic: "the weight change",
         cues: ["weight", "2.2", "2 kg", "fluid", "heart failure", "71.4", "doctor"],
       },
       {
         label: "the antibiotic time hidden behind \"see chart\" and an oxygen value from six hours ago",
-        topic: "the antibiotic time and oxygen value",
         cues: ["see chart", "last dose", "antibiotic", "saturation", "91", "15:00", "old value", "stable"],
       },
     ],
@@ -88,7 +85,6 @@ export const nurse: RoleTemplate = {
     flaws: [
       {
         label: "an antibiotic started before allergies were checked",
-        topic: "the allergy check",
         cues: ["allerg", "ask", "check", "reaction", "anaphyla", "before the next dose"],
       },
     ],

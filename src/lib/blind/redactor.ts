@@ -1,4 +1,5 @@
 import type { RedactionReport } from "@/lib/domain/types";
+import { unicodeWords } from "@/lib/util/regex";
 
 export type Bucket = keyof RedactionReport;
 
@@ -9,7 +10,7 @@ export const HIDDEN = "[hidden]";
 export const L = "(?<![\\p{L}\\p{N}_])";
 export const R = "(?![\\p{L}\\p{N}_])";
 /** A capitalised word, for example "Nordwave" or "O'Neill". */
-export const CAP = "\\p{Lu}[\\p{L}\\p{N}&'’.-]*";
+export const CAP = "\\p{Lu}[\\p{L}\\p{N}&'’.-]{0,40}";
 
 export function escape(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
@@ -44,7 +45,7 @@ export function caseless(alternatives: string): string {
     .join("|");
 }
 
-export function emptyReport(): RedactionReport {
+function emptyReport(): RedactionReport {
   return { names: 0, contacts: 0, places: 0, schools: 0, employers: 0, other: 0 };
 }
 
@@ -63,9 +64,9 @@ export class Redactor {
   report = emptyReport();
   constructor(public text: string) {}
 
-  /** Replaces each match, or only its first capture group when the pattern has one. */
+  /** Replaces each match, or only its first capture group when the pattern has one. Word edges are Unicode-aware. */
   replace(pattern: RegExp, bucket: Bucket, accept: (match: string) => boolean = () => true): void {
-    this.text = this.text.replace(pattern, (whole: string, ...rest: unknown[]) => {
+    this.text = this.text.replace(unicodeWords(pattern), (whole: string, ...rest: unknown[]) => {
       const group = typeof rest[0] === "string" ? rest[0] : undefined;
       const target = group ?? whole;
       if (!target.trim() || target.includes(HIDDEN) || !accept(target)) return whole;

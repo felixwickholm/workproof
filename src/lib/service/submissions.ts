@@ -1,10 +1,11 @@
-import { getTaskDesigner } from "@/lib/ai";
 import { blindWork } from "@/lib/blind/blind-work";
+import { atAGlance } from "@/lib/blind/glance";
 import { toOwnProof } from "@/lib/blind/project";
 import type { ExplainAnswer, OwnProof, Submission, Talent } from "@/lib/domain/types";
 import { getStore } from "@/lib/store";
 import { newId } from "@/lib/util/hash";
-import { DESCRIBE_ACTION, HIDE_ACTION } from "./ai-work";
+import { HIDE_ACTION, SHAPE_ACTION } from "./ai-work";
+import { makeRoom } from "./capacity";
 import { appendAudit, clock, findOrThrow, ServiceError } from "./support";
 import { rememberTalent } from "./talent";
 
@@ -26,9 +27,10 @@ export async function submitWork(input: SubmitInput): Promise<OwnProof> {
     throw new ServiceError(400, "Name and contact are needed so the company can reach you after a match");
   }
 
-  // The blind layer runs before the AI sees the work, so the summary never sees identity.
-  const blind = blindWork(input.answer, input.explain, { name: input.talent.name, contact: input.talent.contact });
-  const summary = await getTaskDesigner().summariseWork(challenge, blind.work, blind.explain);
+  const companies = snapshot.companies.map((c) => c.name);
+  const blind = blindWork(input.answer, input.explain, { name: input.talent.name, contact: input.talent.contact, companies });
+  // Code, not AI: the shape of the blind text, the same for right and wrong answers.
+  const glance = atAGlance(blind.work, blind.explain);
 
   const submittedAt = clock.now().toISOString();
   const submission: Submission = {
@@ -42,12 +44,13 @@ export async function submitWork(input: SubmitInput): Promise<OwnProof> {
   };
 
   return store.update((data) => {
+    makeRoom(data);
     const proof = toOwnProof({
       proofId: submission.id,
       challenge,
       work: blind.work,
       explain: blind.explain,
-      aiSummary: summary,
+      aiSummary: glance,
       redactions: blind.report,
       submittedAt,
       takenLabels: new Set(data.proofs.map((p) => p.label)),
@@ -63,17 +66,17 @@ export async function submitWork(input: SubmitInput): Promise<OwnProof> {
       detail: `${proof.label}: ${hidden} detail${hidden === 1 ? "" : "s"} hidden before any reviewer or AI model read it.`,
     });
     appendAudit(data, {
-      actor: "ai",
-      by: "Work describer",
-      action: DESCRIBE_ACTION,
-      detail: `${proof.label}: a neutral summary of what the work contains. No score, no ranking.`,
+      actor: "system",
+      by: "At a glance",
+      action: SHAPE_ACTION,
+      detail: `${proof.label}: counted points, words and code. Nothing about quality.`,
     });
     if (input.shareWithSimilar && challenge.kind === "event") {
       appendAudit(data, {
         actor: "system",
         by: "Second look",
         action: "Recorded consent",
-        detail: `${proof.label} may be shown to other employers with the same core skills if the first employer passes.`,
+        detail: `${proof.label} may be shown to other employers with the same core skills if the first employer passes or does not answer in time.`,
       });
     }
     return proof;

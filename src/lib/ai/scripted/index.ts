@@ -1,7 +1,6 @@
 import type { TaskDesigner } from "../task-designer";
 import { draftFromNeed, tasterFor } from "./compose";
 import { followUpQuestions } from "./follow-ups";
-import { describeWork } from "./summarise";
 
 /** Deterministic designer built on the role library. Runs without any API key. */
 export const scriptedDesigner: TaskDesigner = {
@@ -14,8 +13,5 @@ export const scriptedDesigner: TaskDesigner = {
   },
   async followUps(challenge, answer) {
     return followUpQuestions(challenge, answer);
-  },
-  async summariseWork(challenge, answer, explain) {
-    return describeWork(challenge, answer, explain);
   },
 };

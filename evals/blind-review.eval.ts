@@ -7,6 +7,7 @@ import { POST as acceptRoute } from "@/app/api/meetings/[id]/accept/route";
 import { POST as submissionsRoute } from "@/app/api/submissions/route";
 import type { BlindProof, Decision, Meeting, ReviewQueue } from "@/lib/domain/types";
 import { REDACTION_CASES } from "./fixtures/redaction-cases";
+import { REDACTION_CASES_2 } from "./fixtures/redaction-cases-2";
 import { SUBMISSIONS } from "./fixtures/submissions";
 import { getStore } from "@/lib/store";
 import { call, keysDeep, record } from "./helpers";
@@ -102,10 +103,36 @@ describe("Eval 2: blind review", () => {
     expect(leaked).toEqual([]);
   });
 
+  it("hides identity in 72 more forms from a second review, except the limits the README names", async () => {
+    const leaked: string[] = [];
+    const limits: string[] = [];
+    for (const [i, c] of REDACTION_CASES_2.entries()) {
+      const { json } = await call<{ proof: BlindProof }>(submissionsRoute, {
+        body: {
+          challengeId: CHALLENGE,
+          talent: { id: `eval-case2-${i}`, name: c.name ?? "Sanna Virtanen", contact: c.contact ?? "sanna.virtanen@example.org" },
+          answer: c.answer,
+          explain: c.explain ?? [],
+          shareWithSimilar: false,
+        },
+      });
+      const blob = `${json.proof.work}\n${json.proof.explain.map((e) => `${e.question} ${e.answer}`).join("\n")}`.toLowerCase();
+      const found = c.leaks.filter((needle) => blob.includes(needle.toLowerCase()));
+      if (found.length === 0) continue;
+      (c.knownLimit ? limits : leaked).push(`${c.title}: ${found.join(", ")}`);
+    }
+    const hidden = REDACTION_CASES_2.length - leaked.length - limits.length;
+    record(EVAL, "second review cases hidden", `${hidden}/${REDACTION_CASES_2.length} (${limits.length} known limits)`, leaked.length === 0);
+    expect(REDACTION_CASES_2).toHaveLength(72);
+    expect(leaked).toEqual([]);
+  });
+
   it("keeps ordinary words and technical terms intact", async () => {
     const cases = [
       { name: "Will May", answer: "I will split by attempt. It may leak otherwise, and that will hurt." },
       { name: "An Le", answer: "This is an obvious leak. Use an attempt id." },
+      { name: "Mark Price", answer: "The price is wrong. Will this hold? May be not." },
+      { name: "Sanna Virtanen", answer: "```python\nuser = request.session.me\napp = flask.app\ncfg = settings.dev\n```\nSee https://scikit-learn.org/stable/ for GroupKFold." },
       {
         name: "Leila Haddad",
         answer: "I am Confident this is fine. This is GroupShuffleSplit at Scale. Ask for Approval. Run it at Night. Use Pandas for this. Look at Figure 2. I'm Running Python.",

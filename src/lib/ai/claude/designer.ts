@@ -1,11 +1,12 @@
 import { z } from "zod";
 import type { ChallengeDraft } from "@/lib/domain/types";
 import { neutralSetAside, NOT_USED_PREFIX, talentNeed } from "@/lib/guard/check-draft";
+import { matchRole } from "../scripted/match-role";
 import { SKILL_IDS, SKILLS, toSkill, type SkillId } from "@/lib/skills/vocabulary";
 import { EVENT_MINUTES, TASTER_MINUTES } from "../scripted/compose";
 import { parseNeed } from "../scripted/parse-need";
 import type { TaskDesigner } from "../task-designer";
-import { draftPrompt, followUpPrompt, summaryPrompt, SYSTEM, tasterPrompt } from "./prompts";
+import { draftPrompt, followUpPrompt, SYSTEM, tasterPrompt } from "./prompts";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
 const DEFAULT_MODEL = "claude-opus-5-5";
@@ -24,28 +25,9 @@ const taskSchema = z.object({
   setAside: z.array(z.string()).default([]),
 });
 
-const topic = z.string().min(3).max(80);
-const summarySchema = z.object({
-  topics: z.array(topic).max(4),
-  changes: z.array(topic).max(4).default([]),
-  notMentioned: z.array(topic).max(2).default([]),
-});
-
-function joinTopics(items: string[]): string {
-  return items.length <= 1 ? items.join("") : `${items.slice(0, -1).join(", ")} and ${items[items.length - 1]}`;
-}
-
-/** The model returns topics only; the sentences are written here, so the summary cannot count or judge. */
-function renderSummary(parts: z.infer<typeof summarySchema>): string {
-  const clean = (items: string[]) => items.map((t) => t.trim().replace(/[.!?]+$/, "")).filter(Boolean);
-  const topics = clean(parts.topics);
-  const changes = clean(parts.changes);
-  const missing = clean(parts.notMentioned);
-  return [
-    topics.length > 0 ? `Discusses ${joinTopics(topics)}.` : "Discusses the material in general terms.",
-    changes.length > 0 ? `Proposes a change to ${joinTopics(changes)}.` : "Describes problems without proposing changes.",
-    ...(missing.length > 0 ? [`Does not mention ${joinTopics(missing)}.`] : []),
-  ].join(" ");
+/** Follow-up questions: exactly the asked number, short, and each one a question. */
+function followUpSchema(count: number) {
+  return z.object({ questions: z.array(z.string().trim().min(5).max(240).regex(/\?$/)).length(count) });
 }
 
 async function ask(prompt: string, apiKey: string, model: string): Promise<unknown> {
@@ -96,27 +78,24 @@ export function claudeDesigner(apiKey: string, model = DEFAULT_MODEL): TaskDesig
     name: "claude",
     async draftChallenge(need) {
       const parsed = parseNeed(need, []);
-      // The model reads the need only after protected wishes are removed, and only if the rest is neutral.
-      const prompt = talentNeed(parsed.cleanedNeed, undefined, parsed.wishedSkills, parsed.workingLanguages);
-      const raw = await ask(draftPrompt(prompt), apiKey, model);
-      const shown = (skills: SkillId[]) => talentNeed(parsed.cleanedNeed, undefined, skills, parsed.workingLanguages);
+      const role = matchRole(need);
+      // The model never reads the company's sentence: only the role and the skills found in it.
+      const skills = parsed.wishedSkills.length > 0 ? parsed.wishedSkills : (role?.skills ?? []);
+      const raw = await ask(draftPrompt(talentNeed(role?.title, skills, parsed.workingLanguages)), apiKey, model);
+      const shown = (kept: SkillId[]) => talentNeed(role?.title, kept, parsed.workingLanguages);
       return toDraft(raw, { need: shown, kind: "event", minutes: EVENT_MINUTES }, parsed.notUsed);
     },
     async taster(dreamJob) {
       const raw = await ask(tasterPrompt(dreamJob), apiKey, model);
-      const need = (skills: SkillId[]) => talentNeed(dreamJob.slice(0, 120), undefined, skills);
+      const need = (skills: SkillId[]) => talentNeed(matchRole(dreamJob)?.title, skills);
       const draft = toDraft(raw, { need, kind: "taster", minutes: TASTER_MINUTES }, []);
       return { ...draft, setAside: [] };
     },
     async followUps(challenge, answer) {
       const count = challenge.kind === "taster" ? 1 : 2;
       const raw = await ask(followUpPrompt(challenge.brief, answer, count), apiKey, model);
-      const { questions } = z.object({ questions: z.array(z.string().min(5).max(300)).min(count) }).parse(raw);
-      return questions.slice(0, count);
-    },
-    async summariseWork(challenge, answer, explain) {
-      const raw = await ask(summaryPrompt(challenge.brief, answer, explain.map((e) => e.answer).join("\n")), apiKey, model);
-      return renderSummary(summarySchema.parse(raw));
+      // Any other shape throws, and the guarded wrapper answers with the scripted questions instead.
+      return followUpSchema(count).parse(raw).questions;
     },
   };
 }

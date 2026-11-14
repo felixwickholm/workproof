@@ -1,8 +1,9 @@
 import { connection } from "next/server";
 import { z, ZodError } from "zod";
 import { ServiceError } from "@/lib/service/support";
+import { limitRate, readLimitedText } from "./request-guard";
 
-export function errorResponse(status: number, error: string): Response {
+function errorResponse(status: number, error: string): Response {
   return Response.json({ error }, { status });
 }
 
@@ -14,7 +15,9 @@ export async function handle(run: () => Promise<unknown>): Promise<Response> {
     if (error instanceof ServiceError) return errorResponse(error.status, error.message);
     if (error instanceof ZodError) {
       const issue = error.issues[0];
-      return errorResponse(400, `Invalid input${issue?.path.length ? ` at ${issue.path.join(".")}` : ""}: ${issue?.message ?? "check the request"}`);
+      const where = issue?.path.length ? ` at ${issue.path.join(".")}` : "";
+      const detail = (issue?.message ?? "check the request").replace(/^Invalid input:?\s*/i, "") || "check the request";
+      return errorResponse(400, `Invalid input${where}: ${detail}`);
     }
     if (error instanceof SyntaxError) return errorResponse(400, "The request body is not valid JSON");
     console.error(error);
@@ -22,8 +25,10 @@ export async function handle(run: () => Promise<unknown>): Promise<Response> {
   }
 }
 
+/** Rate-limits the caller, caps the body size and parses it with the schema. */
 export async function readBody<T extends z.ZodType>(request: Request, schema: T): Promise<z.infer<T>> {
-  return schema.parse(await request.json());
+  limitRate(request);
+  return schema.parse(JSON.parse(await readLimitedText(request)));
 }
 
 /**

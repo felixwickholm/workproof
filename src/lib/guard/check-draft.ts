@@ -1,6 +1,8 @@
 import type { ChallengeDraft } from "@/lib/domain/types";
 import { isSkillId, SKILLS, type SkillId } from "@/lib/skills/vocabulary";
+import { unicodeWords } from "@/lib/util/regex";
 import { findJudgement } from "./no-judgement";
+import { normaliseForScan } from "./normalise";
 import { PROTECTED_NAMES, protectedNames } from "./protected";
 
 /** The set-aside note that names protected wishes, for example "Not used: age, gender (not skills)". */
@@ -12,14 +14,17 @@ export function isNeutral(text: string): boolean {
 }
 
 /**
- * The need as talent sees it. The company's cleaned sentence is shown only when a final scan finds
- * nothing protected or judging in it; otherwise the need is rebuilt from the role and the core skills.
+ * The need as talent sees it, always rebuilt from the role and the core skills in one fixed form.
+ * The company's own sentence never reaches talent, so no word list has to catch every bias in it.
  */
-export function talentNeed(cleaned: string, role: string | undefined, skills: SkillId[], languages: string[] = []): string {
-  const sentence = cleaned.trim();
-  if (sentence.length >= 3 && isNeutral(sentence)) return sentence;
-  const labels = skills.map((id) => SKILLS[id].label);
-  return [`${role ?? "A role"}: ${labels.join(", ")}`, ...languages].join(". ");
+export function talentNeed(role: string | undefined, skills: SkillId[], languages: string[] = []): string {
+  const labels = skills.map((id) => SKILLS[id].label).join(", ");
+  return [role ? `${role}: ${labels}` : `Core skills: ${labels}`, ...languages].join(". ");
+}
+
+/** Working languages kept in the set-aside list, in their fixed neutral form. */
+export function workingLanguagesIn(setAside: string[]): string[] {
+  return setAside.flatMap((line) => /^(Working language: (?:Finnish|Swedish|English)):/.exec(line)?.[1] ?? []);
 }
 
 /** True for a well-formed "Not used: a, b (not skills)" note that lists only neutral attribute names. */
@@ -55,6 +60,10 @@ function textFields(draft: ChallengeDraft): { field: string; text: string }[] {
   ];
 }
 
+/** A review guide says what good work shows. Numbers, points and counting would turn it into a scale. */
+const GUIDE_SCALE =
+  /\d|\b(?:points? (?:for|each|per)|count (?:how|the number)|how many|only if|on a scale|scale of|scores?|scoring|rate (?:each|the|them|it|how)|rating|grade|grading|marks? (?:for|out)|out of|pisteet|pistettä|arvosana\p{L}{0,10}|poäng|betyg)\b/iu;
+
 /**
  * Every reason a draft may not be published, in plain words. Empty when the draft is fine.
  * Runs on AI drafts and again on the server before a human-approved draft is published.
@@ -67,6 +76,8 @@ export function draftProblems(draft: ChallengeDraft): string[] {
     const named = protectedNames(text);
     if (named.length > 0) problems.push(`The ${field} asks about ${named.join(", ")}, which is not a skill`);
   }
+  const scaled = draft.reviewGuide.find((g) => unicodeWords(GUIDE_SCALE).test(normaliseForScan(g.lookFor)));
+  if (scaled) problems.push("The review guide must say what good work shows, without points, counts or scales");
   const ids = draft.coreSkills.map((s) => s.id);
   if (ids.length < 3 || ids.length > 5) problems.push("A challenge needs 3 to 5 core skills");
   const unknown = ids.filter((id) => !isSkillId(id));

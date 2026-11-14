@@ -15,6 +15,7 @@ describe("memory store", () => {
     await store.update((data) => {
       data.companies[0].blurb = "Changed";
     });
+    store.flush();
     expect(JSON.parse(readFileSync(file, "utf8")).companies[0].blurb).toBe("Changed");
     const reloaded = createMemoryStore(() => buildSeed(now), file);
     expect((await reloaded.read()).companies[0].blurb).toBe("Changed");
@@ -34,12 +35,14 @@ describe("memory store", () => {
 describe("seed", () => {
   const data = buildSeed(now);
 
-  it("is synthetic Espoo Talent Day with 3 companies, 4 challenges and 8 proofs", () => {
+  it("is synthetic Espoo Talent Day with 3 companies, 5 challenges and 10 proofs", () => {
     expect(data.event.name).toBe("Espoo Talent Day");
     expect(data.companies).toHaveLength(3);
-    expect(data.challenges).toHaveLength(4);
+    expect(data.challenges).toHaveLength(5);
+    expect(data.challenges.some((c) => c.title === "Review an AI-drafted project plan")).toBe(true);
     expect(data.challenges.some((c) => c.companyIds.length > 1)).toBe(true);
-    expect(data.proofs).toHaveLength(8);
+    expect(data.proofs).toHaveLength(10);
+    expect(new Set(data.decisions.map((d) => `${d.companyId}:${d.reviewer}`)).size).toBe(3);
   });
 
   it("leaves the demo proof undecided in the first company's queue, not yet in Second look", () => {

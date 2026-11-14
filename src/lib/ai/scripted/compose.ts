@@ -1,7 +1,7 @@
 import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
-import { neutralSetAside, NOT_USED_PREFIX, talentNeed } from "@/lib/guard/check-draft";
-import { SKILLS, toSkill, type SkillId } from "@/lib/skills/vocabulary";
-import { genericRole } from "./generic-role";
+import { neutralSetAside, NOT_USED_PREFIX, talentNeed, workingLanguagesIn } from "@/lib/guard/check-draft";
+import { isSkillId, SKILLS, toSkill, type SkillId } from "@/lib/skills/vocabulary";
+import { GENERIC_NOTE, genericRole } from "./generic-role";
 import { matchRole } from "./match-role";
 import { parseNeed } from "./parse-need";
 import type { RoleTemplate, TaskTemplate } from "./role-template";
@@ -63,6 +63,7 @@ function roleForSkills(wished: SkillId[]): RoleTemplate | undefined {
 
 export function draftFromNeed(need: string): ChallengeDraft {
   const role = matchRole(need) ?? roleForSkills(parseNeed(need, []).wishedSkills) ?? genericRole();
+  const generic = role.id === "generic";
   const parsed = parseNeed(need, role.keywords);
   const { kept, dropped } = chooseSkills(role, parsed.wishedSkills, parsed.wishes.length);
 
@@ -76,19 +77,20 @@ export function draftFromNeed(need: string): ChallengeDraft {
   const notUsed = [...parsed.notUsed, ...(otherWishes.length < parsed.otherWishes.length ? ["wishes about the person"] : [])];
   if (notUsed.length > 0) setAside.push(`${NOT_USED_PREFIX} ${notUsed.join(", ")} (not skills)`);
 
-  return toDraft(role, role.challenge, kept, {
-    need: talentNeed(parsed.cleanedNeed, role.title, kept, parsed.workingLanguages),
+  const draft = toDraft(role, role.challenge, kept, {
+    need: talentNeed(generic ? undefined : role.title, kept, parsed.workingLanguages),
     setAside,
     kind: "event",
     minutes: EVENT_MINUTES,
   });
+  return generic ? { ...draft, note: GENERIC_NOTE } : draft;
 }
 
 export function tasterFor(dreamJob: string): ChallengeDraft {
-  const role = matchRole(dreamJob) ?? genericRole(dreamJob);
+  const role = matchRole(dreamJob) ?? genericRole();
   const skills = role.skills.slice(0, 3);
   return toDraft(role, role.taster, skills, {
-    need: talentNeed(dreamJob.slice(0, 120), role.title, skills),
+    need: talentNeed(role.id === "generic" ? undefined : role.title, skills),
     setAside: [],
     kind: "taster",
     minutes: TASTER_MINUTES,
@@ -107,7 +109,18 @@ export function roleFor(challenge: ChallengeRef): RoleTemplate {
     const task = taskOf(role, challenge);
     return task.title === challenge.title && task.material.title === challenge.material?.title;
   });
-  return known ?? genericRole(challenge.kind === "taster" ? challenge.need : "");
+  return known ?? genericRole();
+}
+
+/**
+ * The talent-visible need for a draft about to be published, rebuilt on the server from the
+ * library role (when the card still matches one), the core skills and the working languages.
+ * Whatever need the request carries is ignored.
+ */
+export function publishedNeed(draft: ChallengeDraft): string {
+  const role = roleFor(draft);
+  const skills = draft.coreSkills.map((s) => s.id).filter(isSkillId);
+  return talentNeed(role.id === "generic" ? undefined : role.title, skills, workingLanguagesIn(draft.setAside));
 }
 
 /** The planted flaws for a challenge, or none when it was written by hand or by a model. */

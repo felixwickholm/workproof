@@ -1,3 +1,4 @@
+import { isFinnishStem } from "@/lib/skills/finnish-stems";
 import type { RoleTemplate } from "./role-template";
 import { ROLES } from "./roles";
 
@@ -5,11 +6,14 @@ export function normalise(text: string): string {
   return text.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-/** Short terms ("ml", "qa", "pm") must stand alone; longer terms may sit inside Finnish compounds. */
+/**
+ * Finnish stems may sit inside compounds ("potilasturvallisuus"). Every other term matches whole
+ * words only, with an English plural allowed, so "career" never matches "care".
+ */
 export function containsTerm(text: string, term: string): boolean {
-  if (term.length > 3) return text.includes(term);
+  if (term.length > 3 && isFinnishStem(term)) return text.includes(term);
   const escaped = term.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
-  return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, "u").test(text);
+  return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?:s|es)?(?![\\p{L}\\p{N}])`, "u").test(text);
 }
 
 /**

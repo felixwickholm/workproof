@@ -19,7 +19,7 @@ export function proofLabel(proofId: string, taken: ReadonlySet<string> = new Set
   }
 }
 
-export function hiddenTotal(report: RedactionReport): number {
+function hiddenTotal(report: RedactionReport): number {
   return Object.values(report).reduce((sum, n) => sum + n, 0);
 }
 

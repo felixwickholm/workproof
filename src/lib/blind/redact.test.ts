@@ -91,3 +91,33 @@ describe("blind projections", () => {
     expect([...taken].some((label) => /^Proof [A-Z]\d{2}$/.test(label))).toBe(true);
   });
 });
+
+describe("redact, second review", () => {
+  const known = { name: "Sanna Virtanen", contact: "sanna.virtanen@example.org" };
+  const hidden = (text: string, extra = {}) => redact(text, { ...known, ...extra }).text;
+
+  it("finds the author's name inside identifiers, file names and constants", () => {
+    for (const code of ["sanna_virtanen_split = 1", "eval_by_virtanen = 1", "const sannaVirtanenSplit = 1", "SANNA_VIRTANEN_KEY = 2", 'df.to_csv("virtanen_results.csv")']) {
+      expect(hidden(code)).not.toMatch(/sanna|virtanen/i);
+    }
+    expect(hidden("will_retry = may_fail()", { name: "Will May" })).toBe("will_retry = may_fail()");
+    expect(hidden("The price is wrong.", { name: "Mark Price" })).toBe("The price is wrong.");
+  });
+
+  it("finds spaced and digit forms of the name, and phone numbers in Finnish words", () => {
+    expect(hidden("S a n n a  V i r t a n e n / S4nn4 V1rt4n3n")).not.toMatch(/S a n n a|V i r t|S4nn4|V1rt4n3n/);
+    expect(hidden("Soita: nolla neljä nolla yksi kaksi kolme neljä viisi kuusi seitsemän")).not.toMatch(/nolla neljä/);
+  });
+
+  it("hides status, a lone gender in a group, degree years and non-Latin name lines", () => {
+    const text = hidden(
+      "I'm on a residence permit. I need visa sponsorship. I came as an asylum seeker. I'm the only woman on my team. MSc in 1998, BSc 2001.\nمع تحياتي، يوسف العلي",
+    );
+    expect(text).not.toMatch(/residence permit|visa sponsorship|asylum|only woman|1998|2001|يوسف/);
+    expect(hidden("We accept Visa and Mastercard.")).toBe("We accept Visa and Mastercard.");
+  });
+
+  it("hides the names of event companies", () => {
+    expect(hidden("I applied to Tuulos last year.", { companies: ["Tuulos Robotics"] })).toBe("I applied to [hidden] last year.");
+  });
+});

@@ -3,6 +3,7 @@ import { collectText, findJudgement } from "@/lib/guard/no-judgement";
 import { isSkillId } from "@/lib/skills/vocabulary";
 import { genericRole } from "./generic-role";
 import { matchRole } from "./match-role";
+import { skillsIn } from "./parse-need";
 import { ROLES } from "./roles";
 
 const lines = (body: string) => body.split("\n").length;
@@ -14,7 +15,7 @@ describe("role library", () => {
     expect(new Set(ROLES.map((r) => r.id)).size).toBe(ROLES.length);
   });
 
-  for (const role of [...ROLES, genericRole("We need a beekeeper for our rooftop hives")]) {
+  for (const role of [...ROLES, genericRole()]) {
     describe(role.id, () => {
       it("uses 4 or 5 known skills", () => {
         expect(role.skills.length).toBeGreaterThanOrEqual(4);
@@ -68,5 +69,17 @@ describe("matchRole", () => {
 
   it("returns nothing for unknown roles", () => {
     expect(matchRole("beekeeper")).toBeUndefined();
+  });
+});
+
+describe("skill matching", () => {
+  it("matches English terms as whole words, so career never means care", () => {
+    expect(skillsIn("Data analyst with no career gaps, SQL and dashboards")).not.toContain("patient-safety");
+    expect(skillsIn("careful and impatient")).not.toContain("patient-safety");
+    expect(skillsIn("care home")).toContain("patient-safety");
+  });
+
+  it("keeps matching Finnish compounds", () => {
+    expect(skillsIn("potilasturvallisuus ja hoitotyö")).toContain("patient-safety");
   });
 });

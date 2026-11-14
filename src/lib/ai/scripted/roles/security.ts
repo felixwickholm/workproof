@@ -4,7 +4,7 @@ export const securityEngineer: RoleTemplate = {
   id: "security-engineer",
   title: "Security engineer",
   keywords: [
-    "security engineer", "application security", "appsec", "cybersecurity", "cyber security",
+    "security engineer", "security analyst", "soc analyst", "application security", "appsec", "cybersecurity", "cyber security",
     "penetration testing", "pentest", "infosec", "tietoturva", "tietoturva-asiantuntija", "kyberturvallisuus",
   ],
   skills: ["security-thinking", "threat-modelling", "code-review", "ai-assisted-work", "compliance"],
@@ -57,17 +57,14 @@ export const securityEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the guessable reset token from Math.random",
-        topic: "how the token is made",
         cues: ["math.random", "random", "guess", "predictable", "entropy", "crypto", "randombytes", "token length"],
       },
       {
         label: "the token that never expires and can be reused",
-        topic: "token expiry and reuse",
         cues: ["expire", "expiry", "expiration", "reuse", "reused", "single use", "one-time", "delete the token", "createdat"],
       },
       {
         label: "the reset link built from the Host header",
-        topic: "how the reset link is built",
         cues: ["host header", "req.headers.host", "host", "poison", "attacker domain", "configured domain"],
       },
     ],
@@ -91,7 +88,6 @@ export const securityEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the SQL query built by string concatenation",
-        topic: "how the query is built",
         cues: ["injection", "sql injection", "concatenat", "parameter", "prepared statement", "placeholder", "escape"],
       },
     ],

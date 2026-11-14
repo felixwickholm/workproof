@@ -58,17 +58,14 @@ export const backendEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the outbound call without a timeout",
-        topic: "timeouts",
         cues: ["timeout", "time out", "abortcontroller", "abort", "hang", "slow provider", "waits forever"],
       },
       {
         label: "the retry loop without a limit or backoff",
-        topic: "the retry loop",
         cues: ["while (true)", "infinite", "unbounded", "backoff", "retry limit", "max attempts", "loop forever", "retries"],
       },
       {
         label: "the missing idempotency key and input checks that allow double or invalid charges",
-        topic: "duplicate and invalid charges",
         cues: ["idempot", "double charge", "charged twice", "duplicate", "validate", "validation", "negative", "amountcents", "zod", "schema"],
       },
     ],
@@ -91,7 +88,6 @@ export const backendEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the missing check that the address belongs to the logged-in user",
-        topic: "who may change the address",
         cues: ["owner", "belongs", "user id", "userid", "authoriz", "other user", "anyone", "idor", "access control"],
       },
     ],

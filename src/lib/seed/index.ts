@@ -1,15 +1,17 @@
+import { randomUUID } from "node:crypto";
 import { draftFromNeed } from "@/lib/ai/scripted/compose";
 import { followUpQuestions } from "@/lib/ai/scripted/follow-ups";
-import { describeWork } from "@/lib/ai/scripted/summarise";
 import { blindWork } from "@/lib/blind/blind-work";
+import { atAGlance } from "@/lib/blind/glance";
 import { toOwnProof } from "@/lib/blind/project";
 import { redact } from "@/lib/blind/redact";
 import type { AuditEvent, Challenge, Decision, Meeting } from "@/lib/domain/types";
-import { FOLLOW_UP_ACTION } from "@/lib/service/ai-work";
+import { DRAFT_ACTION, FOLLOW_UP_ACTION, HIDE_ACTION, SHAPE_ACTION } from "@/lib/service/ai-work";
 import { meetingSlot } from "@/lib/service/decisions";
 import { rememberTalent } from "@/lib/service/talent";
 import type { StoreData } from "@/lib/store/types";
-import { COMPANIES, SEED_CHALLENGES } from "./companies";
+import { omit } from "@/lib/util/object";
+import { COMPANIES, REVIEWERS, SEED_CHALLENGES } from "./companies";
 import { SEED_PROOFS } from "./proofs";
 
 const MINUTE = 60_000;
@@ -28,7 +30,7 @@ export function buildSeed(now: Date): StoreData {
 
   const challenges: Record<string, Challenge> = {};
   for (const seed of SEED_CHALLENGES) {
-    const draft = draftFromNeed(seed.need);
+    const draft = omit(draftFromNeed(seed.need), ["note"]);
     const createdMsAgo = seed.daysBeforeEvent * DAY;
     challenges[seed.key] = {
       ...draft,
@@ -41,7 +43,7 @@ export function buildSeed(now: Date): StoreData {
     log(createdMsAgo + 20 * MINUTE, {
       actor: "ai",
       by: "Task drafter",
-      action: "Drafted a Problem Card",
+      action: DRAFT_ACTION,
       detail: `"${draft.title}": ${draft.coreSkills.length} core skills kept, ${draft.setAside.length} wishes set aside. Waiting for a human to approve.`,
     });
     log(createdMsAgo, {
@@ -65,8 +67,12 @@ export function buildSeed(now: Date): StoreData {
     audit,
   };
 
+  // Talent ids are private keys, so every reset gives the synthetic people new random ones.
+  const talentIds = new Map<string, string>();
   for (const seed of SEED_PROOFS) {
     const challenge = challenges[seed.challenge];
+    const talentId = talentIds.get(seed.talent.id) ?? `t_${randomUUID()}`;
+    talentIds.set(seed.talent.id, talentId);
     const known = { name: seed.talent.name, contact: seed.talent.contact };
     // Like live submissions, the follow-up writer reads the answer only after the blind layer.
     const questions = followUpQuestions(challenge, redact(seed.answer, known).text);
@@ -79,17 +85,17 @@ export function buildSeed(now: Date): StoreData {
       challenge,
       work: blind.work,
       explain: blind.explain,
-      aiSummary: describeWork(challenge, blind.work, blind.explain),
+      aiSummary: atAGlance(blind.work, blind.explain),
       redactions: blind.report,
       submittedAt,
       takenLabels: new Set(data.proofs.map((p) => p.label)),
     });
 
-    rememberTalent(data.talents, seed.talent, true);
+    rememberTalent(data.talents, { ...seed.talent, id: talentId }, true);
     data.submissions.push({
       id: seed.id,
       challengeId: challenge.id,
-      talentId: seed.talent.id,
+      talentId,
       answer: seed.answer,
       explain,
       shareWithSimilar: seed.shareWithSimilar,
@@ -106,31 +112,32 @@ export function buildSeed(now: Date): StoreData {
     log(seed.minutesAgo * MINUTE, {
       actor: "system",
       by: "Blind layer",
-      action: "Hid identity from the work",
+      action: HIDE_ACTION,
       detail: `${proof.label}: ${hidden} detail${hidden === 1 ? "" : "s"} hidden before any reviewer or AI model read it.`,
     });
     log(seed.minutesAgo * MINUTE - 1000, {
-      actor: "ai",
-      by: "Work describer",
-      action: "Described the work",
-      detail: `${proof.label}: a neutral summary of what the work contains. No score, no ranking.`,
+      actor: "system",
+      by: "At a glance",
+      action: SHAPE_ACTION,
+      detail: `${proof.label}: counted points, words and code. Nothing about quality.`,
     });
 
     const decision = seed.decision;
     if (!decision) continue;
     const company = COMPANIES.find((c) => c.id === decision.companyId);
+    const reviewer = REVIEWERS[decision.companyId];
     data.decisions.push({
       id: `dec_${seed.id}`,
       proofId: seed.id,
       companyId: decision.companyId,
-      reviewer: decision.reviewer,
+      reviewer,
       decision: decision.kind,
       feedback: decision.feedback,
       decidedAt: at(decision.minutesAgo * MINUTE),
     });
     log(decision.minutesAgo * MINUTE, {
       actor: "human",
-      by: decision.reviewer,
+      by: reviewer,
       action: decision.kind === "meet" ? "Chose to meet" : "Passed with feedback",
       detail: `${company?.name} on ${proof.label}. Feedback sent to the person.`,
     });

@@ -67,7 +67,7 @@ export function buildQueue(data: StoreData, companyId: string, now: Date): Revie
 }
 
 /** The person's own proofs, newest first, with every human response they received. */
-export function buildPassport(data: StoreData, talentId: string, now: Date): PassportEntry[] {
+function buildPassport(data: StoreData, talentId: string, now: Date): PassportEntry[] {
   const companyName = (id: string) => data.companies.find((c) => c.id === id)?.name ?? "An employer";
   return data.submissions
     .filter((s) => s.talentId === talentId)
@@ -98,6 +98,7 @@ export function buildPassport(data: StoreData, talentId: string, now: Date): Pas
           seenByHumans: new Set(decisions.map((d) => `${d.companyId}:${d.reviewer.toLowerCase()}`)).size,
           responses,
           sharedWith: [...shared].map(companyName),
+          sharing: challenge.kind === "event" && submission.shareWithSimilar,
         },
       ];
     });
@@ -137,7 +138,7 @@ function employerRecord(data: StoreData, company: Company): EmployerRecord {
 }
 
 /** Outcomes for the city. Decisions are only ever made by people, so automated decisions are 0 by type. */
-export function buildCityOverview(data: StoreData): CityOverview {
+function buildCityOverview(data: StoreData): CityOverview {
   const eventChallenges = data.challenges.filter((c) => c.kind === "event" && c.approvedBy);
   const eventIds = new Set(eventChallenges.map((c) => c.id));
   const ownerOf = new Map(eventChallenges.map((c) => [c.id, c.companyIds]));

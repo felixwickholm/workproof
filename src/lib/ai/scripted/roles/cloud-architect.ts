@@ -51,17 +51,14 @@ export const cloudArchitect: RoleTemplate = {
     flaws: [
       {
         label: "the single virtual machine and single zone as points of failure",
-        topic: "points of failure",
         cues: ["single point", "one vm", "single vm", "virtual machine", "availability zone", "one zone", "multi-az", "redundan", "failover", "load balancer"],
       },
       {
         label: "readings dropped on error instead of being buffered",
-        topic: "what happens to readings on error",
         cues: ["drop", "dropped", "lost", "buffer", "queue", "retry", "store and forward", "data loss", "billing gap"],
       },
       {
         label: "one shared key built into all device firmware",
-        topic: "device keys",
         cues: ["shared key", "same key", "firmware", "per-device", "per device", "certificate", "rotate", "rotation", "credential"],
       },
     ],
@@ -84,7 +81,6 @@ export const cloudArchitect: RoleTemplate = {
     flaws: [
       {
         label: "no restore test",
-        topic: "restore testing",
         cues: ["restore test", "test the restore", "tested", "never tested", "practice", "drill", "verify", "recovery time"],
       },
     ],

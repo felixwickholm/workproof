@@ -50,17 +50,14 @@ export const quantumResearcher: RoleTemplate = {
     flaws: [
       {
         label: "the comparison with an August baseline on a differently calibrated chip",
-        topic: "the baseline",
         cues: ["baseline", "august", "recalibrat", "same day", "same conditions", "control", "side by side", "different conditions"],
       },
       {
         label: "a single run with no error bars",
-        topic: "repeat runs and error bars",
         cues: ["one run", "single run", "1 run", "error bar", "variance", "uncertainty", "repeat", "noise", "confidence interval", "statistic"],
       },
       {
         label: "the claim that the gain carries over to larger circuits and chips",
-        topic: "the claim about larger circuits",
         cues: ["extrapolat", "larger circuits", "100-qubit", "generali", "overclaim", "not shown", "next-generation", "removes the main source"],
       },
     ],
@@ -82,7 +79,6 @@ export const quantumResearcher: RoleTemplate = {
     flaws: [
       {
         label: "a claim drawn from one selected qubit",
-        topic: "the qubit selection",
         cues: ["one qubit", "single qubit", "selected", "cherry", "cherry-pick", "all qubits", "median", "average", "representative"],
       },
     ],

@@ -19,6 +19,13 @@ export const COMPANIES: Company[] = [
   },
 ];
 
+/** Each company's own reviewer. Synthetic names. */
+export const REVIEWERS: Record<string, string> = {
+  "co-tuulos": "Anna Koivisto",
+  "co-saarnivo": "Mira Salo",
+  "co-kivira": "Tomas Berg",
+};
+
 /** Synthetic needs, written the way companies tend to write them. The first one carries bias bait on purpose. */
 export const SEED_CHALLENGES = [
   {
@@ -31,7 +38,7 @@ export const SEED_CHALLENGES = [
   {
     key: "saarnivo-forecast",
     companyIds: ["co-saarnivo"],
-    approvedBy: "Jussi Rantala",
+    approvedBy: "Mira Salo",
     daysBeforeEvent: 3,
     need: "Data scientist for load forecasting: model evaluation, data quality, experiment design and clear communication with the operations team",
   },
@@ -48,6 +55,13 @@ export const SEED_CHALLENGES = [
     approvedBy: "Tomas Berg",
     daysBeforeEvent: 1,
     need: "Backend developer for our payments API: API design, error handling, security, testing",
+  },
+  {
+    key: "kivira-pm",
+    companyIds: ["co-kivira"],
+    approvedBy: "Tomas Berg",
+    daysBeforeEvent: 2,
+    need: "Technical project manager for a customer integration: planning, risk management, stakeholder communication",
   },
 ] as const;
 

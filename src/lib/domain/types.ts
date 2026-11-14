@@ -30,7 +30,7 @@ export interface Challenge {
   /** More than one company means a pooled challenge: one piece of work, several employers. */
   companyIds: string[];
   title: string;
-  /** The need as the company first said it. */
+  /** The need as talent sees it: rebuilt from the role and core skills, never the company's own sentence. */
   need: string;
   coreSkills: Skill[];
   /** Requirements the draft set aside so the role keeps 3-5 core skills. */
@@ -50,7 +50,12 @@ export interface Challenge {
   createdAt: string;
 }
 
-export type ChallengeDraft = Omit<Challenge, "id" | "approvedBy" | "createdAt" | "companyIds">;
+export type ChallengeDraft = Omit<Challenge, "id" | "approvedBy" | "createdAt" | "companyIds"> & {
+  /** The company's own sentence, returned only to the company's draft screen. Never published. */
+  yourWords?: string;
+  /** A note for the company, for example when no library role matched. Never published. */
+  note?: string;
+};
 
 /** The only place a person's identity is stored. */
 export interface Talent {
@@ -73,7 +78,7 @@ export interface Submission {
   talentId: string;
   answer: string;
   explain: ExplainAnswer[];
-  /** The person agrees that other employers with the same need may see the blind proof. */
+  /** Opt-in: other employers with matching tasks may see the blind proof. The person can withdraw it. */
   shareWithSimilar: boolean;
   submittedAt: string;
 }
@@ -97,7 +102,10 @@ export interface BlindProof {
   skills: Skill[];
   work: string;
   explain: ExplainAnswer[];
-  /** Describes the work, never the person. Always shown with an AI label. */
+  /**
+   * "At a glance": the shape of the work (points, length, code, opening words), built by code.
+   * Not written by AI and never about quality. The name is kept for API compatibility.
+   */
   aiSummary: string;
   /** How many personal details were hidden, as one total. Categories stay with the author. */
   hiddenCount: number;
@@ -159,6 +167,8 @@ export interface PassportEntry {
   }[];
   /** Employers with the same need who can now see this proof. */
   sharedWith: string[];
+  /** Whether the person currently lets other employers see this proof through Second look. Event proofs only. */
+  sharing: boolean;
 }
 
 export interface ReviewQueue {

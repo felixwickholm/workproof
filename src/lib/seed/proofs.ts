@@ -15,7 +15,6 @@ export interface SeedProof {
   explainAnswers: string[];
   decision?: {
     companyId: string;
-    reviewer: string;
     kind: DecisionKind;
     feedback: string;
     minutesAgo: number;
@@ -24,10 +23,10 @@ export interface SeedProof {
 }
 
 /**
- * The demo persona: an ML engineer whose proof waits, undecided, in the first company's queue.
- * Talent ids are private keys, so seed ids are random strings, never names.
+ * The demo persona, Leila, is an ML engineer whose proof waits, undecided, in the first company's queue.
+ * Talent ids are private keys: `buildSeed` replaces the placeholder ids below with random ones on every reset.
  */
-const DEMO_TALENT_ID = "t_4deac0aaba3520e34c57009d";
+const DEMO_TALENT_ID = "t_seed_01";
 
 export const SEED_PROOFS: SeedProof[] = [
   {
@@ -50,7 +49,7 @@ export const SEED_PROOFS: SeedProof[] = [
   },
   {
     id: "proof_seed_02",
-    talent: { id: "t_c056a611e272ed78aafcd364", name: "Joonas Peltonen", contact: "+358 50 000 1102" },
+    talent: { id: "t_seed_02", name: "Joonas Peltonen", contact: "+358 50 000 1102" },
     challenge: "tuulos-ml",
     minutesAgo: 190,
     shareWithSimilar: true,
@@ -65,7 +64,6 @@ export const SEED_PROOFS: SeedProof[] = [
     ],
     decision: {
       companyId: "co-tuulos",
-      reviewer: "Anna Koivisto",
       kind: "meet",
       feedback: "You found the leak in the split and the shadow-mode idea is close to how we test on site. We would like to talk about rollout on our robots.",
       minutesAgo: 60,
@@ -74,7 +72,7 @@ export const SEED_PROOFS: SeedProof[] = [
   },
   {
     id: "proof_seed_03",
-    talent: { id: "t_54d92c353709508e7d775b69", name: "Aino Mäkelä", contact: "aino.makela@example.org" },
+    talent: { id: "t_seed_03", name: "Aino Mäkelä", contact: "aino.makela@example.org" },
     challenge: "tuulos-ml",
     minutesAgo: 300,
     shareWithSimilar: false,
@@ -89,15 +87,14 @@ export const SEED_PROOFS: SeedProof[] = [
     ],
     decision: {
       companyId: "co-tuulos",
-      reviewer: "Anna Koivisto",
       kind: "pass",
-      feedback: "Thank you for the clear write-up. For this role we needed a look at how the model was tested: the split and the metric. Your notes on structure are useful for code reviews.",
+      feedback: "Thank you for the clear write-up. This role starts with two weeks of model testing on our robots, so we are looking first at how the model was tested. Your notes on code structure would help any team's reviews.",
       minutesAgo: 120,
     },
   },
   {
     id: "proof_seed_04",
-    talent: { id: "t_5832e491493c58965c1ad94c", name: "Ravi Menon", contact: "ravi.menon@example.org" },
+    talent: { id: "t_seed_04", name: "Ravi Menon", contact: "ravi.menon@example.org" },
     challenge: "saarnivo-forecast",
     minutesAgo: 30,
     shareWithSimilar: true,
@@ -113,7 +110,7 @@ export const SEED_PROOFS: SeedProof[] = [
   },
   {
     id: "proof_seed_05",
-    talent: { id: "t_8894c4b1e9c4e638b8adf686", name: "Elsa Lindqvist", contact: "+358 40 000 2205" },
+    talent: { id: "t_seed_05", name: "Elsa Lindqvist", contact: "+358 40 000 2205" },
     challenge: "saarnivo-forecast",
     minutesAgo: 420,
     shareWithSimilar: true,
@@ -128,15 +125,14 @@ export const SEED_PROOFS: SeedProof[] = [
     ],
     decision: {
       companyId: "co-saarnivo",
-      reviewer: "Jussi Rantala",
       kind: "pass",
-      feedback: "Your point on the error metric and the plot for operators were useful. We passed because we need someone who can start on site this month. Your proof stays open to other employers.",
+      feedback: "Your point on the error metric and the plot for operators were useful. This role needs daily work in our control room during the winter peak, which starts this month, and we have already filled that shift. Your proof stays open to other employers.",
       minutesAgo: 240,
     },
   },
   {
     id: "proof_seed_06",
-    talent: { id: "t_e1de71d469cc3ed26450c039", name: "Oskari Laine", contact: "oskari.laine@example.org" },
+    talent: { id: "t_seed_06", name: "Oskari Laine", contact: "oskari.laine@example.org" },
     challenge: "pooled-data",
     minutesAgo: 80 * 60,
     shareWithSimilar: false,
@@ -151,7 +147,7 @@ export const SEED_PROOFS: SeedProof[] = [
   },
   {
     id: "proof_seed_07",
-    talent: { id: "t_248f723bd7078d3c6e092deb", name: "Mei Tanaka", contact: "mei.tanaka@example.org" },
+    talent: { id: "t_seed_07", name: "Mei Tanaka", contact: "mei.tanaka@example.org" },
     challenge: "pooled-data",
     minutesAgo: 30 * 60,
     shareWithSimilar: true,
@@ -167,16 +163,15 @@ export const SEED_PROOFS: SeedProof[] = [
     ],
     decision: {
       companyId: "co-saarnivo",
-      reviewer: "Mira Salo",
       kind: "meet",
-      feedback: "You found all three problems and the row count check is something we have wanted for a while. We would like to meet and walk through our pipelines together.",
+      feedback: "Your point on the timezone and the row count check is something we have wanted for a while. We would like to meet and walk through our pipelines together.",
       minutesAgo: 26 * 60,
       meeting: "met",
     },
   },
   {
     id: "proof_seed_08",
-    talent: { id: "t_425c1964a4396e6525facaa3", name: "Daniel Okafor", contact: "daniel.okafor@example.org" },
+    talent: { id: "t_seed_08", name: "Daniel Okafor", contact: "daniel.okafor@example.org" },
     challenge: "kivira-backend",
     minutesAgo: 26 * 60,
     shareWithSimilar: true,
@@ -192,11 +187,49 @@ export const SEED_PROOFS: SeedProof[] = [
     ],
     decision: {
       companyId: "co-kivira",
-      reviewer: "Tomas Berg",
       kind: "meet",
       feedback: "You connected the app retries to the double charge, which is the incident we had last spring. We would like to meet and talk about our payment flow.",
       minutesAgo: 20 * 60,
       meeting: "accepted",
+    },
+  },
+  {
+    id: "proof_seed_09",
+    talent: { id: "t_seed_09", name: "Hanna Virta", contact: "hanna.virta@example.org" },
+    challenge: "kivira-pm",
+    minutesAgo: 40,
+    shareWithSimilar: true,
+    answer: [
+      "1. The integration build starts in week 2, but API access only arrives in week 3, and nobody owns getting it. Name an owner and move the access request to week 1, before the build.",
+      "2. 'Risks: none identified' will not reassure the customer. I would list the vendor access, the security review in week 6 and tester availability in week 7, each with an owner.",
+      "3. There is no buffer before a fixed date. Move the security review earlier or add a spare week between testing and go-live.",
+      "4. Monthly status email is too slow for an 8-week project. Weekly, short, with the open risks on top.",
+    ].join("\n"),
+    explainAnswers: [
+      "The missing owner comes first, because without access the whole build waits and the date slips.",
+      "If the customer moved the pilot a week earlier, I would cut the alerts to one screen and keep the security review.",
+    ],
+  },
+  {
+    id: "proof_seed_10",
+    talent: { id: "t_seed_10", name: "Samuel Osei", contact: "samuel.osei@example.org" },
+    challenge: "kivira-pm",
+    minutesAgo: 6 * 60,
+    shareWithSimilar: false,
+    answer: [
+      "The plan looks fine in shape, but the order is off: the backend team cannot build the integration before the vendor gives API access in week 3.",
+      "I would ask the vendor for a sandbox in week 1 and write down who chases it.",
+      "Customer testers in week 7 should be confirmed now, not assumed.",
+    ].join("\n"),
+    explainAnswers: [
+      "I looked at dependencies first because that is where fixed dates usually break.",
+      "With one backend developer away, I would drop the mobile alerts from the pilot scope and add them after go-live.",
+    ],
+    decision: {
+      companyId: "co-kivira",
+      kind: "pass",
+      feedback: "Thank you, the point on the vendor sandbox was practical. This role leads the customer's on-site acceptance week in Tampere in March, and we have already agreed that week with another project lead. We hope to post a similar task in the spring.",
+      minutesAgo: 3 * 60,
     },
   },
 ];

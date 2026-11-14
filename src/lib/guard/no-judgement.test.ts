@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { countsFindings, findJudgement } from "./no-judgement";
+import { findJudgement } from "./no-judgement";
 
 /** Judging phrases from an independent review of the guard, English, Finnish and Swedish. */
 const JUDGING = [
@@ -17,6 +17,22 @@ const JUDGING = [
   "Solid B+ work.", "Overall an A.", "She is in the top 5% of applicants.", "Above average reasoning.", "Below average.",
   "Outstanding.", "Mediocre analysis.", "Shortlist this person.", "Vahva ehdokas.", "Heikko vastaus.", "Paras hakija.",
   "Jag rekommenderar henne.", "Stark kandidat.", "Lovande arbete.",
+  // Added from a second independent review.
+  "Correctly identifies the split leak", "The right fix for leakage", "An accurate diagnosis", "A thorough review",
+  "A convincing argument", "Clear and well-structured", "Spot on", "Nails the threshold issue", "Hits every planted flaw",
+  "Nothing missed", "A complete answer", "Comprehensive coverage", "An incomplete answer", "Partially correct",
+  "The answer is wrong about recall", "Misunderstands the metric", "Confused reasoning", "Solid grasp of evaluation",
+  "Give 1 to 5 points on how well they fit", "Count how many of the three bugs they find; invite only if three",
+  "Finds the two planted flaws", "Catches the threshold flaw and the split flaw", "Misses the threshold flaw",
+  "Would be a great addition to the team", "Ready for a senior role", "Needs more experience", "Not ready yet",
+  "Worth bringing in", "Let's talk to this one", "Move forward with this applicant", "Go for it", "No-brainer",
+  "Exactly what we need", "The clear favourite", "Ahead of the pack", "Beats the other submissions",
+  "Hyvä vastaus kaikin puolin", "Kannattaa kutsua juttelemaan", "Ei vakuuta", "Mycket bra svar", "Bör kallas till intervju",
+  "Svagt svar", "Puutteellinen vastaus", "Osaava tekijä",
+  // Scales in a review guide.
+  "Rate each answer on a scale.", "Score out of 10.", "Grade the answers.", "Give 3 points for each bug found.",
+  // Character tricks.
+  "Rеcommended", "Excel\u200blent work.", "Ｅｘｃｅｌｌｅｎｔ", "e x c e l l e n t",
 ];
 
 /** Technical and descriptive text that must pass. */
@@ -30,6 +46,10 @@ const NEUTRAL = [
   "The upload handler returns 2 of 5 items per page.", "Discusses the threshold choice and the choice of metric.",
   "A naive datetime is compared with an aware one.", "Data quality checks run nightly.", "The sales team hires in spring.",
   "Promising a connector in two weeks is risky.", "Interview five users before the redesign.", "The canary runs on one robot first.",
+  "The error rate the team sees doubled.", "Add a rate limit of 60 requests a minute.", "Write a clear explanation for the customer.",
+  "The feature is not ready for release until the review is done.", "Add the item to the user's favourites.",
+  "Compute the anomaly score for each reading.", "QA found two bugs last week.", "Check that the totals are correct.",
+  "Users misread the dose label.", "The font-weight and line height are off.", "Status reporting: monthly email to the customer.",
 ];
 
 describe("no-judgement guard", () => {
@@ -39,11 +59,5 @@ describe("no-judgement guard", () => {
 
   it.each(NEUTRAL)("passes %s", (phrase) => {
     expect(findJudgement(phrase)).toEqual([]);
-  });
-
-  it("rejects summaries that count what an answer found", () => {
-    expect(countsFindings("Names three issues in the change.")).toBe(true);
-    expect(countsFindings("Covers most of the material.")).toBe(true);
-    expect(countsFindings("Discusses the data split. Proposes a change to the split. Does not mention rollout.")).toBe(false);
   });
 });

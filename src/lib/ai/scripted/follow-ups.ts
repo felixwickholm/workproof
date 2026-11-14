@@ -21,7 +21,7 @@ function sentencesOf(text: string): string[] {
 }
 
 /** A short phrase from the answer, preferably where it talks about a planted flaw. */
-export function quoteFrom(challenge: Challenge, answer: string): string | undefined {
+function quoteFrom(challenge: Challenge, answer: string): string | undefined {
   const sentences = sentencesOf(answer);
   if (sentences.length === 0) return undefined;
   const cues = flawsFor(challenge).flatMap((flaw) => flaw.cues);

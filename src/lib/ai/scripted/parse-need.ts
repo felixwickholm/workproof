@@ -23,14 +23,12 @@ export interface ParsedNeed {
   cleanedNeed: string;
 }
 
-export function splitWishes(need: string): string[] {
+function splitWishes(need: string): string[] {
   return need
     .split(/[,;\n•]|:\s|\.\s|\s+and\s+|\s+ja\s+|\s+\+\s+|\s+plus\s+|\s+who\s+|\s+joka\s+/i)
     .map((part) => part.replace(/^[\s\-*\d.)]+/, "").replace(/[\s.]+$/, "").trim())
     .filter((part) => part.length >= 2);
 }
-
-export { protectedNames };
 
 export function skillsIn(text: string): SkillId[] {
   const lower = normalise(text);

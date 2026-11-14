@@ -56,17 +56,14 @@ export const qaEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the assertion that passes even when checkout fails",
-        topic: "the test assertion",
         cues: ["assert", "expect", "tocontain", "url", "always pass", "passes anyway", "confirmation", "order number", "does not check"],
       },
       {
         label: "the fixed sleeps that make the test slow and flaky",
-        topic: "waiting in the test",
         cues: ["waitfortimeout", "sleep", "fixed wait", "flaky", "3000", "5000", "wait for", "auto-wait"],
       },
       {
         label: "no check that the discount changed the total",
-        topic: "the discount check",
         cues: ["discount", "total", "price", "autumn20", "applied", "amount"],
       },
     ],
@@ -91,7 +88,6 @@ export const qaEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the check on a locator object that is always truthy",
-        topic: "the locator check",
         cues: ["locator", "truthy", "tobetruthy", "always true", "tobevisible", "await expect", "object", "never fails"],
       },
     ],

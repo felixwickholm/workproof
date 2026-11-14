@@ -55,17 +55,14 @@ export const devopsEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the database password in plain text in the manifest",
-        topic: "the database password",
         cues: ["secret", "password", "plain text", "plaintext", "credential", "vault", "secretkeyref"],
       },
       {
         label: "the single replica with no probes, so a restart or bad pod drops traffic",
-        topic: "replicas and probes",
         cues: ["replica", "readiness", "liveness", "probe", "single", "downtime", "health check", "rolling"],
       },
       {
         label: "the latest image tag that makes deploys unrepeatable",
-        topic: "the image tag",
         cues: ["latest", "tag", "pin", "digest", "version", "rollback", "reproducib"],
       },
     ],
@@ -88,7 +85,6 @@ export const devopsEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the alert on a total counter that pages for any single error",
-        topic: "the alert rule",
         cues: ["rate", "counter", "total", "any error", "noise", "noisy", "threshold", "ratio", "for: 0m", "page"],
       },
     ],

@@ -46,8 +46,9 @@ export const api = {
   challenge: (id: string) => request<Challenge>(`/api/challenges/${encodeURIComponent(id)}`),
   companies: () => request<Company[]>("/api/companies"),
   taster: (dreamJob: string) => request<Challenge>("/api/taster", { method: "POST", body: { dreamJob } }),
-  followups: (challengeId: string, answer: string) =>
-    request<{ questions: string[] }>("/api/followups", { method: "POST", body: { challengeId, answer } }),
+  /** Pass the person's name and contact when known, so they are removed before questions are written. */
+  followups: (challengeId: string, answer: string, talent?: { name: string; contact: string }) =>
+    request<{ questions: string[] }>("/api/followups", { method: "POST", body: { challengeId, answer, talent } }),
   submit: (input: {
     challengeId: string;
     talent: { id: string; name: string; contact: string };
@@ -63,6 +64,12 @@ export const api = {
     request<Meeting>(`/api/meetings/${encodeURIComponent(id)}/confirm`, {
       method: "POST",
       body: { side: "talent", talentId },
+    }),
+  /** Turns Second look on or off for one of the person's own proofs. */
+  setSharing: (proofId: string, talentId: string, share: boolean) =>
+    request<{ proofId: string; sharing: boolean }>(`/api/proofs/${encodeURIComponent(proofId)}/sharing`, {
+      method: "POST",
+      body: { talentId, share },
     }),
   city: () => request<CityOverview>("/api/city"),
   resetDemo: () => request<unknown>("/api/demo/reset", { method: "POST" }),

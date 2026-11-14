@@ -22,6 +22,9 @@ const PHRASES: { skill: SkillId; pattern: RegExp }[] = [
   { skill: "stakeholder-communication", pattern: /\b(?:keep \w+ (?:\w+ )?informed|present\w* (?:\w+ )?to|report\w* to)\b/ },
   { skill: "user-research", pattern: /\b(?:talk\w* to (?:our )?(?:users|customers)|find out what (?:users|customers|people) need)\b/ },
   { skill: "interaction-design", pattern: /\b(?:sign[- ]?up|checkout|onboarding|booking) (?:flow|page|form)s?\b|\beasier to use\b/ },
+  // Business numbers held as data: "heating prices and billing data", "our sales figures".
+  { skill: "metrics-definition", pattern: /\b(?:prices?|pricing|billing|invoices?|invoicing|tariffs?|sales|revenue|costs?|consumption|usage|churn)\b[^.;]{0,40}\b(?:data|figures|numbers|reports?|metrics)\b/ },
+  { skill: "data-quality", pattern: /\b(?:billing|invoice|meter|sales|customer|price|pricing)\s(?:data|records|figures)\b/ },
   { skill: "data-visualisation", pattern: /\b(?:charts?|graphs?|dashboards?)\b/ },
   { skill: "safety-thinking", pattern: /\b(?:hurt|injur\w*|unsafe|safely)\b/ },
   { skill: "prioritisation", pattern: /\b(?:what to (?:build|do|fix) first|what matters most)\b/ },

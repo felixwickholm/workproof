@@ -1,14 +1,20 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import type { ProofStore, StoreData } from "./types";
 
+/** Writes wait this long, so a burst of requests causes one write. */
+const WRITE_DELAY_MS = 250;
+
 /**
- * In-memory store with optional JSON persistence. When the file cannot be written
- * (for example on a read-only file system) it keeps working from memory.
+ * In-memory store with optional JSON persistence. Reads share the live data without copying;
+ * updates work on a copy, so a failed change leaves nothing half done. Writes are debounced,
+ * atomic (temporary file, then rename) and flushed when the process exits. When the file cannot
+ * be written, for example on a read-only file system, the store keeps working from memory.
  */
 export function createMemoryStore(initial: () => StoreData, file?: string): ProofStore {
   let persist = Boolean(file);
   let data = load();
+  let timer: ReturnType<typeof setTimeout> | undefined;
 
   function load(): StoreData {
     if (file && existsSync(file)) {
@@ -16,36 +22,50 @@ export function createMemoryStore(initial: () => StoreData, file?: string): Proo
         const parsed = JSON.parse(readFileSync(file, "utf8")) as StoreData;
         if (parsed.version === 1) return parsed;
       } catch {
-        // A damaged file is replaced by fresh data on the next write.
+        console.warn(`Tryout: ${file} could not be read; starting from the demo data.`);
       }
     }
     return initial();
   }
 
-  function save(): void {
+  function flush(): void {
+    if (timer) clearTimeout(timer);
+    timer = undefined;
     if (!persist || !file) return;
     try {
       mkdirSync(dirname(file), { recursive: true });
-      writeFileSync(file, JSON.stringify(data, null, 2));
-    } catch {
+      const temporary = `${file}.${process.pid}.tmp`;
+      writeFileSync(temporary, JSON.stringify(data));
+      renameSync(temporary, file);
+    } catch (error) {
       persist = false;
+      console.warn(`Tryout: cannot write ${file}; keeping data in memory only. ${error instanceof Error ? error.message : ""}`);
     }
   }
 
+  function save(): void {
+    if (!persist || !file || timer) return;
+    timer = setTimeout(flush, WRITE_DELAY_MS);
+    timer.unref?.();
+  }
+
+  if (file) process.once("exit", flush);
+
   return {
     async read() {
-      return structuredClone(data);
+      return data;
     },
     async update(change) {
       const next = structuredClone(data);
       const result = change(next);
       data = next;
       save();
-      return structuredClone(result);
+      return result;
     },
     async replace(next) {
       data = structuredClone(next);
       save();
     },
+    flush,
   };
 }

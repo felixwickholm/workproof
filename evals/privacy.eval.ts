@@ -10,8 +10,11 @@ import { POST as resetRoute } from "@/app/api/demo/reset/route";
 import { POST as followUpsRoute } from "@/app/api/followups/route";
 import { POST as acceptRoute } from "@/app/api/meetings/[id]/accept/route";
 import { POST as confirmRoute } from "@/app/api/meetings/[id]/confirm/route";
+import { GET as passportRoute } from "@/app/api/passport/[talentId]/route";
+import { POST as sharingRoute } from "@/app/api/proofs/[proofId]/sharing/route";
 import { POST as submissionsRoute } from "@/app/api/submissions/route";
-import type { BlindProof, Challenge, ChallengeDraft, Company, Decision, Meeting, ReviewQueue } from "@/lib/domain/types";
+import type { BlindProof, Challenge, ChallengeDraft, Company, Decision, Meeting, PassportEntry, ReviewQueue } from "@/lib/domain/types";
+import { MAX_BODY_BYTES, POSTS_PER_MINUTE } from "@/lib/http/limits";
 import { getStore } from "@/lib/store";
 import { call, record } from "./helpers";
 
@@ -117,5 +120,59 @@ describe("Eval 4: consent and privacy", () => {
     const leaked = json.questions.some((q) => /Sanna|Virtanen|example\.org/.test(q));
     record(EVAL, "follow-ups read the redacted answer", leaked ? "identity in a question" : "no identity", !leaked);
     expect(leaked).toBe(false);
+  });
+
+  it("Second look is off until the person turns it on, and turning it off takes the proof out again", async () => {
+    const person = { id: "t_eval_sharing_1d2e", name: "Ilona Koski", contact: "ilona@example.org" };
+    const submitted = await call<{ proof: BlindProof }>(submissionsRoute, {
+      body: { challengeId: "ch-tuulos-ml", talent: person, answer: "Split by grasp attempt so frames of one attempt never reach test.", explain: [] },
+    });
+    const id = submitted.json.proof.proofId;
+    const sharingOf = async () => (await call<PassportEntry[]>(passportRoute, { params: { talentId: person.id } })).json.find((e) => e.proof.proofId === id)?.sharing;
+    const inSecondLook = async () => (await call<ReviewQueue>(queueRoute, { params: { id: "co-saarnivo" } })).json.secondLook.some((p) => p.proofId === id);
+
+    const offByDefault = (await sharingOf()) === false;
+    const stranger = await call(sharingRoute, { body: { talentId: "t_guess", share: true }, params: { proofId: id } });
+    const on = await call(sharingRoute, { body: { talentId: person.id, share: true }, params: { proofId: id } });
+    await call(decisionsRoute, {
+      body: { proofId: id, companyId: COMPANY, reviewer: "Anna Koivisto", decision: "pass", feedback: "Thank you. This role starts with on-site robot testing this month." },
+    });
+    const shownAfterPass = await inSecondLook();
+    const off = await call(sharingRoute, { body: { talentId: person.id, share: false }, params: { proofId: id } });
+    const goneAfterWithdraw = !(await inSecondLook());
+    const decideAfter = await call(decisionsRoute, {
+      body: { proofId: id, companyId: "co-saarnivo", reviewer: "Mira Salo", decision: "meet", feedback: "We would like to talk about the split." },
+    });
+    const ok = offByDefault && stranger.status === 403 && on.status === 200 && shownAfterPass && off.status === 200 && goneAfterWithdraw && decideAfter.status === 403;
+    record(EVAL, "Second look: opt-in, owner-only, withdrawable", `default off ${offByDefault}, stranger ${stranger.status}, after withdraw ${decideAfter.status}`, ok);
+    expect(ok).toBe(true);
+  });
+
+  it("talent never sees the company's own words or set-aside wishes", async () => {
+    const draft = (await call<ChallengeDraft>(draftRoute, { body: { need: "Data analyst with no career gaps, born and raised here, SQL and dashboards" } })).json;
+    const card = await call<Challenge>(approveRoute, { body: { draft: { ...draft, need: "Born and raised here, no career gaps" }, companyId: OTHER, approvedBy: "Eve Example" } });
+    const shown = JSON.stringify((await call<Challenge>(challengeRoute, { params: { id: card.json.id } })).json);
+    const ok = card.status === 200 && draft.yourWords !== undefined && !/born and raised|career gaps/i.test(shown);
+    record(EVAL, "company's own sentence kept from talent", ok ? "rebuilt need only" : "leaked", ok);
+    expect(ok).toBe(true);
+  });
+
+  it("requests are bounded: body size and, for remote callers, rate", async () => {
+    const big = await submissionsRoute(
+      new Request("http://localhost/api", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ junk: "x".repeat(MAX_BODY_BYTES) }) }),
+    );
+    const remote = () =>
+      followUpsRoute(
+        new Request("http://localhost/api", {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.9" },
+          body: JSON.stringify({ challengeId: "ch-tuulos-ml", answer: "Split by attempt." }),
+        }),
+      );
+    let last = 200;
+    for (let i = 0; i <= POSTS_PER_MINUTE; i++) last = (await remote()).status;
+    const ok = big.status === 413 && last === 429;
+    record(EVAL, "body cap and rate limit", `${big.status} / ${last}`, ok);
+    expect(ok).toBe(true);
   });
 });

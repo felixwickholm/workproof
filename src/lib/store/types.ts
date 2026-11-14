@@ -9,7 +9,7 @@ import type {
   Talent,
 } from "@/lib/domain/types";
 
-export interface EventInfo {
+interface EventInfo {
   name: string;
   /** ISO date of the event day. */
   date: string;
@@ -33,11 +33,13 @@ export interface StoreData {
 }
 
 /**
- * Storage for Tryout. Reads return a snapshot; `update` applies a change and persists it.
- * The shape is small enough to keep as one document in any backend.
+ * Storage for Tryout. `read` returns the live data: callers only read it and never change it.
+ * `update` applies a change and persists it. The shape is small enough to keep as one document in any backend.
  */
 export interface ProofStore {
   read(): Promise<StoreData>;
   update<T>(change: (data: StoreData) => T): Promise<T>;
   replace(data: StoreData): Promise<void>;
+  /** Writes pending changes now. */
+  flush(): void;
 }

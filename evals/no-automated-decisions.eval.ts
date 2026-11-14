@@ -7,7 +7,7 @@ import { POST as resetRoute } from "@/app/api/demo/reset/route";
 import { POST as followUpsRoute } from "@/app/api/followups/route";
 import { POST as submissionsRoute } from "@/app/api/submissions/route";
 import type { BlindProof, ChallengeDraft, CityOverview, ReviewQueue } from "@/lib/domain/types";
-import { collectText, countsFindings, findJudgement } from "@/lib/guard/no-judgement";
+import { collectText, findJudgement } from "@/lib/guard/no-judgement";
 import { getStore } from "@/lib/store";
 import { omit } from "@/lib/util/object";
 import { NEEDS } from "./fixtures/needs";
@@ -98,7 +98,7 @@ describe("Eval 3: no automated decisions", () => {
     await call(resetRoute, { method: "POST" });
     for (const need of NEEDS) {
       const { json } = await call<ChallengeDraft>(draftRoute, { body: { need: need.need } });
-      aiTexts.push(...collectText(omit(json, ["setAside", "need"])));
+      aiTexts.push(...collectText(omit(json, ["setAside", "need", "yourWords"])));
     }
     for (const [i, fixture] of SUBMISSIONS.entries()) {
       const { json: f } = await call<{ questions: string[] }>(followUpsRoute, { body: { challengeId: "ch-tuulos-ml", answer: fixture.answer } });
@@ -112,7 +112,6 @@ describe("Eval 3: no automated decisions", () => {
           shareWithSimilar: i % 2 === 0,
         },
       });
-      aiTexts.push(json.proof.aiSummary);
       summaries.push(json.proof.aiSummary);
     }
   });
@@ -134,10 +133,15 @@ describe("Eval 3: no automated decisions", () => {
     expect(hits).toEqual([]);
   });
 
-  it("(b2) no work summary counts what the answer found", () => {
-    const counting = summaries.filter(countsFindings);
-    record(EVAL, "(b2) summaries without counts", `${summaries.length - counting.length}/${summaries.length}`, counting.length === 0);
-    expect(counting).toEqual([]);
+  it("(b2) the reviewer's 'At a glance' line describes shape only, never the content of the work", () => {
+    // Fixed template: points or paragraphs, length, code, follow-ups answered, then the opening words quoted.
+    const shape = /^\d+ (?:points|paragraphs?), (?:about )?\d+ words?\.(?: Includes a code snippet\.)?(?: Follow-up answers: \d\.)?(?: Opens with: '[\s\S]*')?$/;
+    const offTemplate = summaries.filter((line) => !shape.test(line));
+    const topical = summaries.filter((line) => /\b(?:discusses|proposes|mentions|does not mention|split|threshold|metric)\b/i.test(line.split(" Opens with:")[0]));
+    const ok = offTemplate.length === 0 && topical.length === 0;
+    record(EVAL, "(b2) 'At a glance' is structure only", `${summaries.length - offTemplate.length - topical.length}/${summaries.length}`, ok);
+    expect(offTemplate).toEqual([]);
+    expect(topical).toEqual([]);
   });
 
   it("(c) every queue is in arrival order", async () => {

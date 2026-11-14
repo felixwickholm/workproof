@@ -40,7 +40,7 @@ export async function decide(input: DecideInput): Promise<{ decision: Decision; 
     const { submission, proof, challenge } = context(data, input.proofId);
 
     if (data.decisions.some((d) => d.proofId === proof.proofId && d.companyId === company.id)) {
-      throw new ServiceError(409, `${company.name} has already decided on ${proof.label}`);
+      throw new ServiceError(409, `${company.name} has already decided on this proof`);
     }
     const owner = challenge.kind === "event" && challenge.companyIds.includes(company.id);
     const viaSecondLook =
@@ -53,7 +53,7 @@ export async function decide(input: DecideInput): Promise<{ decision: Decision; 
         responseWindowHours: data.event.responseWindowHours,
         now,
       }).some((m) => m.companyId === company.id);
-    if (!owner && !viaSecondLook) throw new ServiceError(403, `${proof.label} is not in the queue of ${company.name}`);
+    if (!owner && !viaSecondLook) throw new ServiceError(403, `This proof is not in the queue of ${company.name}`);
 
     const decision: Decision = {
       id: newId("dec"),

@@ -1,8 +1,10 @@
 import { beforeAll, describe, expect, it } from "vitest";
+import { GET as challengeRoute } from "@/app/api/challenges/[id]/route";
 import { POST as draftRoute } from "@/app/api/challenges/draft/route";
+import { POST as approveRoute } from "@/app/api/challenges/route";
 import { POST as resetRoute } from "@/app/api/demo/reset/route";
-import { protectedNames } from "@/lib/ai/scripted/parse-need";
-import type { ChallengeDraft } from "@/lib/domain/types";
+import { protectedNames } from "@/lib/guard/protected";
+import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
 import { collectText, findJudgement } from "@/lib/guard/no-judgement";
 import { omit } from "@/lib/util/object";
 import { ADVERSARIAL_NEEDS, NEEDS, SENTENCE_NEEDS } from "./fixtures/needs";
@@ -13,7 +15,7 @@ const words = (text: string) => text.trim().split(/\s+/).length;
 
 /** Fields a talent sees. "Set aside" is excluded on purpose: it is where bias bait belongs. */
 function visibleText(draft: ChallengeDraft): string {
-  return collectText(omit(draft, ["setAside"])).join("\n");
+  return collectText(omit(draft, ["setAside", "yourWords", "note"])).join("\n");
 }
 
 /** Every field a talent sees, one entry per field, so a leak names where it happened. */
@@ -115,22 +117,27 @@ describe("Eval 1: task generator", () => {
     expect(misses).toEqual([]);
   });
 
-  it("adversarial needs leak nothing protected into any field a talent sees", async () => {
-    expect(ADVERSARIAL_NEEDS).toHaveLength(27);
+  it("adversarial needs, once published, show none of their planted strings to talent", async () => {
+    expect(ADVERSARIAL_NEEDS).toHaveLength(47);
     const leaks: string[] = [];
-    for (const need of ADVERSARIAL_NEEDS) {
-      const { status, json } = await call<ChallengeDraft>(draftRoute, { body: { need } });
-      if (status !== 200) {
-        leaks.push(`${need.slice(0, 30)}: status ${status}`);
+    let published = 0;
+    for (const { need, planted } of ADVERSARIAL_NEEDS) {
+      const draft = await call<ChallengeDraft>(draftRoute, { body: { need } });
+      const card = await call<Challenge>(approveRoute, { body: { draft: draft.json, companyId: "co-kivira", approvedBy: "Eval Person" } });
+      if (card.status !== 200) {
+        leaks.push(`${need.slice(0, 30)}: publish status ${card.status}`);
         continue;
       }
-      for (const [field, text] of talentFields(json)) {
-        const found = protectedNames(text);
-        if (found.length > 0) leaks.push(`${need.slice(0, 30)}: ${field} (${found.join(", ")})`);
+      published += 1;
+      // What talent reads: the public challenge route, every field of it.
+      const { json } = await call<Challenge>(challengeRoute, { params: { id: card.json.id } });
+      const visible = collectText(json).join("\n");
+      for (const text of planted) {
+        const word = new RegExp(`(?<![\\p{L}\\p{N}])${text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![\\p{L}\\p{N}])`, "iu");
+        if (word.test(visible)) leaks.push(`${need.slice(0, 30)}: "${text}"`);
       }
-      if (!json.setAside.some((s) => s.startsWith("Not used:"))) leaks.push(`${need.slice(0, 30)}: not set aside`);
     }
-    record(EVAL, "adversarial needs: leaks in talent fields", `${leaks.length} in ${ADVERSARIAL_NEEDS.length} needs`, leaks.length === 0);
+    record(EVAL, "adversarial needs: planted strings in published cards", `${leaks.length} in ${ADVERSARIAL_NEEDS.length} needs (${published} published)`, leaks.length === 0);
     expect(leaks).toEqual([]);
   });
 });

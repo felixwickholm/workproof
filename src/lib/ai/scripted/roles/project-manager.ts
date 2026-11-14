@@ -56,17 +56,14 @@ export const projectManager: RoleTemplate = {
     flaws: [
       {
         label: "the build that starts in week 2 while vendor API access arrives in week 3",
-        topic: "the order of the build and the vendor access",
         cues: ["api access", "vendor", "week 3", "dependency", "depends", "before access", "blocked", "order"],
       },
       {
         label: "the missing owner for the vendor API access",
-        topic: "ownership of the vendor access",
         cues: ["owner", "not set", "nobody", "who is responsible", "unassigned", "no owner"],
       },
       {
         label: "a plan with no buffer and no named risks",
-        topic: "buffer and risks in the plan",
         cues: ["buffer", "slack", "no risks", "none identified", "contingency", "margin", "slip", "monthly"],
       },
     ],
@@ -89,7 +86,6 @@ export const projectManager: RoleTemplate = {
     flaws: [
       {
         label: "a green status while a blocking dependency is still open",
-        topic: "the project status",
         cues: ["green", "waiting", "amber", "blocked", "dependency", "on track", "risk", "honest"],
       },
     ],
