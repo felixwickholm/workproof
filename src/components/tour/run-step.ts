@@ -57,8 +57,10 @@ export function bringIntoView(el: HTMLElement, ctx: Pick<StepContext, "cardHeigh
   if (Math.abs(top - window.scrollY) > 1) window.scrollTo({ top, behavior: ctx.reduce || ctx.jump ? "instant" : "smooth" });
 }
 
-/** The role the story company looks for, as its chip on the new challenge screen says it. */
-const STORY_ROLE = /^\s*AI developer\s*$/i;
+/** What the story company tells the assistant, as its starter chip on the new challenge screen says it. */
+const STORY_START = /^\s*An AI developer to find what we should automate first/i;
+/** The answer to the assistant's size question. */
+const STORY_SIZE = /^\s*10 to 30 minutes\s*$/i;
 
 const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
@@ -68,20 +70,19 @@ function buttonSaying(root: HTMLElement, words: RegExp): HTMLButtonElement | nul
 }
 
 /**
- * What the tour does on a page, as the person in the story would: Laura picks "AI developer" and asks
- * for a draft. Each one only presses buttons a person could press; when the page does not have them,
+ * What the tour does on a page, as the person in the story would: Laura tells the assistant what she needs
+ * and answers its question. Each one only presses buttons a person could press; when the page does not have them,
  * it does nothing and the card shows in the middle.
  */
 const ACTS: Record<TourAct, (path: string, signal: AbortSignal) => Promise<void>> = {
   async draftForRole(path, signal) {
     const box = await waitForTarget("company-looking-for", path, signal);
     if (!box || signal.aborted) return;
-    const chip = [...box.querySelectorAll<HTMLElement>("button, [role='radio'], [role='checkbox'], label")].find((el) => STORY_ROLE.test(el.textContent ?? ""));
-    if (chip && chip.getAttribute("aria-checked") !== "true" && chip.getAttribute("aria-pressed") !== "true") chip.click();
-    // The draft button unlocks once the role is picked.
-    for (let i = 0; i < 30 && !signal.aborted; i++) {
-      const draft = buttonSaying(box, /draft my challenge/i);
-      if (draft) return draft.click();
+    buttonSaying(box, STORY_START)?.click();
+    // The assistant asks how big the challenge should be; Laura picks the short one, and the draft follows.
+    for (let i = 0; i < 600 && !signal.aborted; i++) {
+      const size = buttonSaying(box, STORY_SIZE);
+      if (size) return size.click();
       await nextFrame();
     }
   },

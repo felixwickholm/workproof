@@ -33,7 +33,7 @@ const challengeDraftSchema = z.object({
   setAside: z.array(text(300)).max(30),
   format: z.enum(TASK_FORMATS),
   proofKind: z.enum(PROOF_KINDS),
-  minutes: z.number().int().min(2).max(30),
+  minutes: z.number().int().min(2).max(180),
   brief: z.string().min(10).max(LIMITS.brief),
   material: z.object({ kind: z.enum(["code", "text"]), title: text(120), body: text(6000) }).optional(),
   deliverable: z.string().min(5).max(600),
@@ -74,6 +74,15 @@ const challengeDraftSchema = z.object({
 });
 
 export const draftRequest = z.object({ need: z.string().trim().min(10).max(LIMITS.need) });
+
+/** The company's chat so far. A pasted job ad fits in one message; the chat is short by design. */
+export const assistRequest = z.object({
+  messages: z
+    .array(z.object({ from: z.enum(["company", "assistant"]), text: z.string().max(LIMITS.assistText), ask: z.enum(["work", "size"]).optional() }))
+    .min(1)
+    .max(8)
+    .refine((list) => list.some((m) => m.from === "company" && m.text.trim().length >= 2), "Write who you are looking for first"),
+});
 
 export const approveRequest = z.object({
   draft: challengeDraftSchema,

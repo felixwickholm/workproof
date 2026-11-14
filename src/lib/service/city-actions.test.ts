@@ -29,8 +29,8 @@ const reminder = (over: Partial<OwedReminder> = {}): OwedReminder => ({
 
 describe("eventRules", () => {
   it("reads the answer window from the event and the task length from the schema", () => {
-    expect(eventRules(sampleEvent())).toEqual({ responseWindowHours: 48, maxTaskMinutes: 30 });
-    expect(MAX_TASK_MINUTES).toBe(30);
+    expect(eventRules(sampleEvent())).toEqual({ responseWindowHours: 48, maxTaskMinutes: 180 });
+    expect(MAX_TASK_MINUTES).toBe(180);
   });
 });
 
@@ -151,7 +151,7 @@ describe("meeting export", () => {
 describe("buildCityActions", () => {
   it("gives each reminder its ready text and the event's rules", () => {
     const actions = buildCityActions(sampleEvent(), NOW);
-    expect(actions.rules).toEqual({ responseWindowHours: 48, maxTaskMinutes: 30 });
+    expect(actions.rules).toEqual({ responseWindowHours: 48, maxTaskMinutes: 180 });
     expect(actions.reminders[0].text).toBe(reminderText(owedReminders(sampleEvent(), NOW)[0]));
   });
 });

@@ -194,6 +194,8 @@ export type ChallengeDraft = Omit<Challenge, "id" | "approvedBy" | "createdAt" |
   wishes?: WishOutcome[];
   /** The job-ad link the draft was read from. Kept only as `onBehalf.adUrl` when the city publishes it. */
   adUrl?: string;
+  /** An example job description for the company's own ad, drafted with the challenge. Never published. */
+  jobAd?: string;
 };
 
 /** The only place a person's identity is stored. */

@@ -27,7 +27,10 @@ import type {
   TableProof,
   TopProofs,
 } from "@/lib/domain/types";
+import type { AssistMessage, AssistReply } from "@/lib/service/assist";
 import { VISITOR_KEY_HEADER } from "@/lib/service/table-rules";
+
+export type { AssistMessage, AssistReply };
 import { cachedSession, getIdentity, getTalentId, issuedFor, rememberIssue, rememberSession, switchToOwnIdentity } from "./local";
 
 export class ApiError extends Error {
@@ -188,6 +191,8 @@ export function errorText(error: unknown): string {
 /** Company side: draft and publish a challenge, read the blind queue, decide, confirm a meeting. */
 export const companyApi = {
   draft: (need: string) => request<ChallengeDraft>("/api/challenges/draft", { method: "POST", body: { need } }),
+  /** One turn of the new-challenge chat: a short question, or the draft. */
+  assist: (messages: AssistMessage[]) => request<AssistReply>("/api/challenges/assist", { method: "POST", body: { messages } }),
   publish: (input: { draft: ChallengeDraft; companyId: string; approvedBy: string }) =>
     request<Challenge>("/api/challenges", { method: "POST", body: input }),
   queue: (companyId: string) => request<ReviewQueue>(`/api/companies/${encodeURIComponent(companyId)}/queue`),

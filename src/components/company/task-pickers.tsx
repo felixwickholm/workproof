@@ -36,8 +36,12 @@ export function FormatSelect({ value, onChange }: { value: TaskFormat; onChange:
   );
 }
 
-/** Event challenges take 5 to 15 minutes. */
-const MINUTES = [5, 10, 15] as const;
+/** A challenge takes 10 to 30 minutes, or about 2 hours as a bigger event challenge done before the event. */
+const MINUTES = [10, 15, 20, 30, 120] as const;
+
+function minutesLabel(m: number): string {
+  return m >= 60 ? `${m / 60} hours, event challenge` : `${m} min`;
+}
 
 export function MinutesSelect({ value, onChange }: { value: number; onChange: (minutes: number) => void }) {
   const options = MINUTES.includes(value as (typeof MINUTES)[number]) ? MINUTES : [...MINUTES, value].sort((a, b) => a - b);
@@ -45,7 +49,7 @@ export function MinutesSelect({ value, onChange }: { value: number; onChange: (m
     <InlineSelect label="Minutes" value={String(value)} onChange={(e) => onChange(Number(e.target.value))}>
       {options.map((m) => (
         <option key={m} value={m}>
-          {m} min
+          {minutesLabel(m)}
         </option>
       ))}
     </InlineSelect>

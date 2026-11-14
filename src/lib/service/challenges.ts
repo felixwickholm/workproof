@@ -49,8 +49,8 @@ export async function draftChallenge(need: string): Promise<ChallengeDraft> {
   return { ...draft, yourWords: need.trim(), wishes: wishOutcomes(need, draft.coreSkills.map((s) => s.id)) };
 }
 
-/** An event task takes 5 to 15 minutes, so a person can do it before the event without taking a day off. */
-export const EVENT_MINUTES = { min: 5, max: 15 } as const;
+/** An event task takes 5 to 30 minutes, or about 2 hours for a bigger event challenge done before the event. */
+export const EVENT_MINUTES = { min: 5, max: 180 } as const;
 
 export async function approveChallenge(input: { draft: ChallengeDraft; companyId: string; approvedBy: string }): Promise<Challenge> {
   return publish(input);
@@ -68,7 +68,7 @@ async function publish(input: { draft: ChallengeDraft; companyId: string; approv
   // A template id the designer never sets is dropped, so follow-ups fall back on the generic role.
   const templateId = input.draft.templateId && isTemplateId(input.draft.templateId) ? input.draft.templateId : undefined;
   const sent: ChallengeDraft = { ...omit(input.draft, ["templateId"]), ...(templateId ? { templateId } : {}) };
-  const draft: ChallengeDraft = { ...omit(sent, ["yourWords", "note", "wishes", "draftedBy", "facts", "adUrl"]), need: publishedNeed(sent), kind: "event", aiAllowed: true };
+  const draft: ChallengeDraft = { ...omit(sent, ["yourWords", "note", "wishes", "draftedBy", "facts", "adUrl", "jobAd"]), need: publishedNeed(sent), kind: "event", aiAllowed: true };
   const problems = draftProblems(draft);
   if (draft.minutes < EVENT_MINUTES.min || draft.minutes > EVENT_MINUTES.max) problems.push(`An event task takes ${EVENT_MINUTES.min} to ${EVENT_MINUTES.max} minutes`);
   if (draft.format === "choose" && !draft.options) problems.push("A choose task needs its two options");

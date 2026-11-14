@@ -1,0 +1,100 @@
+import { matchRole } from "@/lib/ai/scripted/match-role";
+import { rolesOf } from "@/lib/domain/roles";
+import type { ChallengeDraft } from "@/lib/domain/types";
+import { draftChallenge } from "./challenges";
+
+/**
+ * The company's "new challenge" chat. The company writes anything: a role, a sentence, a messy job ad.
+ * The assistant asks at most two short questions, only when the words leave the work or the size open,
+ * then drafts a challenge and an example job description for a person to edit and approve.
+ */
+
+export type AssistMessage = { from: "company" | "assistant"; text: string; ask?: AskId };
+
+/** The questions the assistant can ask, in the order it asks them. */
+export type AskId = "work" | "size";
+
+export const SHORT_SIZE = "10 to 30 minutes";
+export const EVENT_SIZE = "A bigger event challenge, about 2 hours";
+
+const ASKS: Record<AskId, { text: string; choices?: string[] }> = {
+  work: { text: "What would this person work on in their first month? One sentence is enough." },
+  size: { text: "How big should the challenge be?", choices: [SHORT_SIZE, EVENT_SIZE] },
+};
+
+export type AssistReply =
+  | { kind: "question"; ask: AskId; text: string; choices?: string[] }
+  | { kind: "draft"; draft: ChallengeDraft };
+
+/** Minutes for a bigger event challenge, done before the event. */
+export const EVENT_MINUTES_BIG = 120;
+
+function words(text: string): number {
+  return text.split(/\s+/).filter(Boolean).length;
+}
+
+/** Words that already say how big the challenge is. */
+const SIZE_WORDS = /\b(\d+\s*(min|mins|minutes|h|hours?)|minutes?|hours?|event challenge|bigger|short|quick|tunti|minuutti)/i;
+const BIG_WORDS = /\b(bigger|event challenge|hours?|[2-9]\s*h\b|tunti)/i;
+
+/** The question still open, or null when the assistant can draft. Never more than two questions. */
+export function nextAsk(messages: readonly AssistMessage[]): AskId | null {
+  const asked = new Set(messages.filter((m) => m.from === "assistant" && m.ask).map((m) => m.ask));
+  if (asked.size >= 2) return null;
+  const said = companyWords(messages);
+  // A pasted job ad already says enough; drafting at once is what the company wants.
+  if (words(said) >= 60) return null;
+  if (!asked.has("work") && words(said) < 8) return "work";
+  if (!asked.has("size") && !SIZE_WORDS.test(said)) return "size";
+  return null;
+}
+
+function companyWords(messages: readonly AssistMessage[]): string {
+  return messages
+    .filter((m) => m.from === "company")
+    .map((m) => m.text.trim())
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** True when the company asked for a bigger event challenge. */
+export function wantsBig(messages: readonly AssistMessage[]): boolean {
+  return BIG_WORDS.test(companyWords(messages));
+}
+
+/** An example job description from the draft itself, when the model wrote none. Work and skills only. */
+export function exampleJobAd(draft: ChallengeDraft, role: string | undefined): string {
+  const title = role ?? "New team member";
+  const skills = draft.coreSkills.map((s) => s.label.toLowerCase());
+  const list = skills.length > 1 ? `${skills.slice(0, -1).join(", ")} and ${skills.at(-1)}` : (skills[0] ?? "");
+  const firstWork = draft.coreSkills[0]?.why ?? "";
+  return [
+    `${title}, Espoo`,
+    `We are looking for a ${title.toLowerCase()} to join our team. ${firstWork}`.trim(),
+    `In your first months you work on tasks like this one: ${draft.title.replace(/\.$/, "").toLowerCase()}. The work needs ${list}.`,
+    "Show us how you work: do our short challenge instead of sending a CV first. A person on our team reads every answer we take.",
+  ].join("\n\n");
+}
+
+/** One turn of the chat: a short question, or the draft. */
+export async function assist(messages: readonly AssistMessage[]): Promise<AssistReply> {
+  const ask = nextAsk(messages);
+  if (ask) return { kind: "question", ask, ...ASKS[ask] };
+  const big = wantsBig(messages);
+  const said = companyWords(messages);
+  const need = big ? `${said}\nChallenge size: a bigger event challenge of about 2 hours, done before the event.` : said;
+  const draft = await draftChallenge(need);
+  const role = matchRole(said)?.title;
+  const roles = draft.roles?.length ? draft.roles : rolesOf({ title: draft.title, need: `${said} ${draft.need}` });
+  const minutes = big ? EVENT_MINUTES_BIG : Math.min(30, Math.max(10, draft.minutes));
+  return {
+    kind: "draft",
+    draft: {
+      ...draft,
+      yourWords: said,
+      minutes,
+      ...(roles.length ? { roles } : {}),
+      jobAd: draft.jobAd ?? exampleJobAd(draft, role),
+    },
+  };
+}

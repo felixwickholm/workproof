@@ -1,5 +1,5 @@
-import { X } from "lucide-react";
-import { useId, type ReactNode } from "react";
+import { Check, Copy, X } from "lucide-react";
+import { useId, useState, type ReactNode } from "react";
 import { designerLine } from "@/components/company/ai-designer";
 import { InlineEdit } from "@/components/company/inline-edit";
 import { PlacesStepper } from "@/components/company/places-stepper";
@@ -21,7 +21,7 @@ interface Props {
   onDraft: (draft: ChallengeDraft) => void;
   companyName: string;
   /** Where the draft came from: the job ad link, the role the company picked, or the company's own hand. */
-  source: { kind: "ad"; url: string } | { kind: "role"; role: string } | { kind: "hand"; role: string };
+  source: { kind: "ad"; url: string } | { kind: "chat" };
   /** Why the built-in designer wrote this draft, when a live model is configured. */
   fallback: string | null;
   approvedBy: string;
@@ -47,6 +47,7 @@ function publishWaitsFor(draft: ChallengeDraft, approvedBy: string): string | nu
  */
 export function DraftStep({ draft, onDraft, companyName, source, fallback, approvedBy, onApprovedBy, busy, errorLine, onPublish }: Props) {
   const ruleId = useId();
+  const jobAdId = useId();
   const waitingFor = publishWaitsFor(draft, approvedBy);
   const lookFor = (skillId: string) => draft.reviewGuide.find((g) => g.skillId === skillId)?.lookFor ?? "";
   const editLookFor = (skillId: string, text: string) =>
@@ -137,6 +138,21 @@ export function DraftStep({ draft, onDraft, companyName, source, fallback, appro
         ) : null}
       </article>
 
+      {draft.jobAd !== undefined ? (
+        <section aria-labelledby={jobAdId} className="rounded-card border border-separator bg-surface p-5 min-[900px]:p-8">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 id={jobAdId} className="text-headline font-semibold text-label">
+                Example job description
+              </h3>
+              <p className="text-footnote mt-0.5 text-pretty text-label-2">For your own job ad. It stays with you and is not published with the challenge.</p>
+            </div>
+            <CopyButton text={draft.jobAd} />
+          </div>
+          <InlineEdit label="Example job description" placeholder="Describe the job in a few short paragraphs." value={draft.jobAd} onChange={(jobAd) => onDraft({ ...draft, jobAd })} maxLength={2000} multiline className="text-body mt-4 text-pretty whitespace-pre-line" />
+        </section>
+      ) : null}
+
       <div className="rounded-card border border-separator bg-surface p-5 min-[900px]:p-6">
         <PlacesStepper value={draft.places} onChange={(places) => onDraft({ ...draft, places })} />
       </div>
@@ -161,8 +177,7 @@ export function DraftStep({ draft, onDraft, companyName, source, fallback, appro
 /** Where the draft came from, in one line, and that nothing is public before a person approves it. */
 function sourceLine(draft: ChallengeDraft, source: Props["source"], fallback: string | null): string {
   const approve = "You approve it before anyone sees it.";
-  if (source.kind === "hand") return `You write this challenge for the ${source.role} role. The skills come from the shared list. ${approve}`;
-  const from = source.kind === "ad" ? "from your job ad" : `for the ${source.role} role`;
+  const from = source.kind === "ad" ? "from your job ad" : "from your words";
   return `${designerLine(draft.draftedBy)} ${from}. ${approve}${fallback ? ` ${fallback}` : ""}`;
 }
 
@@ -174,5 +189,25 @@ function DocPart({ label, note, children }: { label: string; note?: string; chil
       {note ? <p className="text-footnote mt-0.5 text-pretty text-label-2">{note}</p> : null}
       <div className="mt-2">{children}</div>
     </section>
+  );
+}
+
+/** Copies the job description; says "Copied" for a moment so the press is felt. */
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        void navigator.clipboard?.writeText(text).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1600);
+        });
+      }}
+      className="press text-subhead inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-full bg-fill px-4 font-medium text-label transition-colors duration-150 hover:bg-label/10"
+    >
+      {copied ? <Check aria-hidden className="size-4" strokeWidth={2} /> : <Copy aria-hidden className="size-4" strokeWidth={1.75} />}
+      <span aria-live="polite">{copied ? "Copied" : "Copy"}</span>
+    </button>
   );
 }

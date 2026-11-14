@@ -57,6 +57,7 @@ function textFields(draft: ChallengeDraft): { field: string; text: string }[] {
     ]),
     ...draft.reviewGuide.map((g) => ({ field: "review guide", text: g.lookFor })),
     ...draft.setAside.filter((line) => !isNotUsedNote(line)).map((line) => ({ field: "set aside", text: line })),
+    ...(draft.jobAd ? [{ field: "job description", text: draft.jobAd }] : []),
   ];
 }
 

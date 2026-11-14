@@ -2,6 +2,8 @@
 export const LIMITS = {
   dreamJob: 200,
   need: 1200,
+  /** One message in the new-challenge chat: room for a pasted job ad. */
+  assistText: 5000,
   approvedBy: 80,
   brief: 1500,
   answer: 8000,

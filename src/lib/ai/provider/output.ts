@@ -21,6 +21,8 @@ export const taskSchema = z.strictObject({
   coreSkills: z.array(z.strictObject({ id: skillId, why: z.string().trim().min(5).max(240) })).min(3).max(5),
   reviewGuide: z.array(z.strictObject({ skillId, lookFor: z.string().trim().min(5).max(400) })).max(5),
   setAside: z.array(z.string().trim().max(200)).max(12),
+  /** An example job description; empty for a practice task. */
+  jobAd: z.string().trim().max(2000).optional(),
 });
 
 export type ModelTask = z.infer<typeof taskSchema>;
@@ -61,6 +63,7 @@ export const TASK_JSON_SCHEMA = object({
   coreSkills: list(object({ id: oneOf(SKILL_IDS), why: text })),
   reviewGuide: list(object({ skillId: oneOf(SKILL_IDS), lookFor: text })),
   setAside: list(text),
+  jobAd: text,
 });
 
 export const FOLLOW_UP_JSON_SCHEMA = object({ questions: list(text) });

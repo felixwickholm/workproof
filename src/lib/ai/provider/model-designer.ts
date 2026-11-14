@@ -67,6 +67,7 @@ function toDraft(task: ModelTask, base: ChallengeDraft, need: (skills: SkillId[]
     aiAllowed: true,
     kind: base.kind,
     ...(base.facts ? { facts: base.facts } : {}),
+    ...(base.kind !== "taster" && task.jobAd ? { jobAd: task.jobAd } : {}),
   };
 }
 
