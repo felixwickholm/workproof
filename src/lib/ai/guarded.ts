@@ -5,7 +5,7 @@ import { protectedNames } from "@/lib/guard/protected";
 import type { TaskDesigner } from "./task-designer";
 
 /** Rejects an AI draft unless every field, the set-aside list included, is neutral and well formed. */
-function checkDraft(draft: ChallengeDraft): void {
+export function checkDraft(draft: ChallengeDraft): void {
   const problems = draftProblems(draft);
   if (problems.length > 0) throw new Error(`Draft rejected: ${problems.join("; ")}`);
 }
@@ -19,7 +19,7 @@ function checkTexts(texts: string[]): void {
 }
 
 /** Follow-up questions: each a short question, neutral, naming nothing protected. */
-function checkQuestions(questions: string[]): void {
+export function checkQuestions(questions: string[]): void {
   if (questions.some((q) => q.length > 240 || !q.trim().endsWith("?"))) throw new Error("A follow-up is not a short question");
   checkTexts(questions);
 }
