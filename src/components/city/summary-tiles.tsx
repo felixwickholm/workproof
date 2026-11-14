@@ -1,26 +1,39 @@
 import { Check } from "lucide-react";
 import type { ReactNode } from "react";
 import type { CityOverview } from "@/lib/domain/types";
+import { formatHours } from "./format";
 
 type Totals = CityOverview["totals"];
 
-const tiles: { key: keyof Totals | "feedbackOwed"; label: string }[] = [
+const tiles: { key: "challenges" | "proofs" | "meetingsInvited" | "secondLookMeetings" | "feedbackOwed"; label: string }[] = [
   { key: "challenges", label: "Tasks live" },
   { key: "proofs", label: "Proofs sent" },
   { key: "meetingsInvited", label: "People invited to meet" },
-  { key: "meetingsConfirmedByBoth", label: "Meetings confirmed by both sides" },
   { key: "secondLookMeetings", label: "Second look meetings" },
   { key: "feedbackOwed", label: "Feedback owed" },
 ];
 
 /**
- * The one picture first: every decision at the event was made by a person, none automated.
- * Then the outcome numbers, each labelled in plain words.
+ * The city's question first: did people get an answer, how fast, and did meetings happen.
+ * Then the one picture of who decides: people, never automation. Then the other numbers.
  */
 export function SummaryTiles({ totals, feedbackOwed }: { totals: Totals; feedbackOwed: number }) {
   const values = { ...totals, feedbackOwed };
   return (
     <div className="flex flex-col gap-3">
+      <section aria-label="Answers for people" className="grid grid-cols-1 gap-3 min-[600px]:grid-cols-3">
+        <Tile
+          label="People who got an answer"
+          value={
+            <>
+              {totals.proofsAnswered}
+              <span className="text-title-3 font-semibold text-label-2"> of {totals.proofs} proofs</span>
+            </>
+          }
+        />
+        <Tile label="Median reply time" value={formatHours(totals.medianHoursToFirstAnswer)} />
+        <Tile label="Meetings confirmed by both sides" value={totals.meetingsConfirmedByBoth} />
+      </section>
       <section aria-label="Decisions at the event" className="grid grid-cols-2 overflow-hidden rounded-card bg-surface">
         <Hero label="Human decisions" value={totals.humanDecisions} accent />
         <div className="shadow-[inset_0.5px_0_0_var(--color-separator)]">
@@ -53,7 +66,7 @@ function Hero({ label, value, accent, children }: { label: string; value: number
   );
 }
 
-function Tile({ label, value }: { label: string; value: number }) {
+function Tile({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div data-total={label} className="flex flex-col gap-2 rounded-card bg-surface p-4">
       <p data-value className="tnum text-[32px] leading-none font-semibold tracking-[-0.03em]">
@@ -69,7 +82,7 @@ export function SummaryTilesSkeleton() {
     <div aria-busy className="flex flex-col gap-3">
       <div className="h-[176px] rounded-card bg-surface min-[900px]:h-[220px]" />
       <div className="grid grid-cols-2 gap-3 min-[900px]:grid-cols-3">
-        {Array.from({ length: 6 }, (_, i) => (
+        {Array.from({ length: 5 }, (_, i) => (
           <div key={i} className="min-h-[96px] rounded-card bg-surface" />
         ))}
       </div>

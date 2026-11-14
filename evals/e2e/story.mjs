@@ -15,7 +15,7 @@ export async function runStory(browser, phone) {
   const main = page.locator("main").filter({ visible: true });
 
   const expectStep = async (n) => {
-    await coach.getByText(new RegExp(`^${n} of 7$`)).waitFor({ timeout: 10_000 });
+    await coach.getByText(new RegExp(`^${n}(\\.\\d+)? of 7$`)).waitFor({ timeout: 10_000 });
   };
   /** The bar must not sit on top of the page's main action or the field being typed in. */
   const assertNotCovering = async (target, what) => {
@@ -46,7 +46,7 @@ export async function runStory(browser, phone) {
 
   await suite.step("s1 Play the story", async () => {
     await page.goto(`${BASE_URL}/`);
-    await tap(page.getByRole("button", { name: "Play the 2-minute story" }));
+    await tap(page.getByRole("button", { name: "Play the story (3 min)" }));
     await page.waitForURL(/\/challenges$/);
     await expectStep(1);
     await checkScreen(page, errors, "story 1");
@@ -68,6 +68,10 @@ export async function runStory(browser, phone) {
   });
   await suite.step("s3 work, both follow-ups and details, all filled in", async () => {
     await guide("Fill in her answer");
+    // Filling only fills: she reads her answer, then taps the page's own button.
+    const done = page.getByRole("button", { name: "I'm done" });
+    await coach.getByText("Tap I'm done.").waitFor();
+    await tap(done);
     await page.getByRole("textbox", { name: "Your explanation" }).waitFor();
     for (let question = 0; question < 2; question++) {
       const heading = await main.locator("h1").first().textContent();
@@ -95,13 +99,15 @@ export async function runStory(browser, phone) {
     await expectStep(4);
     await checkScreen(page, errors, "story 4");
   });
-  await suite.step("s5 Tuulos passes with a reason", async () => {
+  await suite.step("s5 Tuulos says not now, with a reason", async () => {
     await page.waitForURL(/\/company\/review\/.+/);
-    const pass = page.getByRole("button", { name: "Pass", exact: true });
-    await assertNotCovering(pass, "Pass button");
-    await tap(pass);
+    const notNow = page.getByRole("button", { name: "Not now", exact: true });
+    await assertNotCovering(notNow, "Not now button");
+    await tap(notNow);
     reviewers.push((await guide(/^Fill in .+'s note$/)).replace(/^Fill in (.+)'s note$/, "$1"));
-    await page.getByRole("dialog", { name: "Feedback sent" }).waitFor();
+    await tap(page.getByRole("dialog").getByRole("button", { name: "Send feedback" }));
+    const sent = page.getByRole("dialog", { name: "Feedback sent" });
+    await sent.getByText("We filled this role on Thursday.", { exact: false }).waitFor();
     await expectStep(5);
     await checkScreen(page, errors, "story 5");
   });
@@ -112,7 +118,8 @@ export async function runStory(browser, phone) {
     await assertNotCovering(meet, "Meet button");
     await tap(meet);
     reviewers.push((await guide(/^Fill in .+'s note$/)).replace(/^Fill in (.+)'s note$/, "$1"));
-    await page.getByRole("dialog", { name: "Invitation sent" }).waitFor();
+    await tap(page.getByRole("dialog").getByRole("button", { name: "Send invitation" }));
+    await page.getByRole("dialog", { name: "Invitation sent" }).getByText("You checked how the test set was built", { exact: false }).waitFor();
     await expectStep(6);
     await checkScreen(page, errors, "story 6");
   });
@@ -135,7 +142,7 @@ export async function runStory(browser, phone) {
     for (const name of reviewers) expect(text.includes(name), `${name} is not named in the city's audit log`);
     await checkScreen(page, errors, "story end");
     notes.push(`story: ${taps} taps, ${((Date.now() - started) / 1000).toFixed(0)}s with a script (no reading time)`);
-    expect(taps <= 18, `the story takes ${taps} taps`);
+    expect(taps <= 20, `the story takes ${taps} taps`);
   });
   await suite.step("s9 fold and unfold the bar", async () => {
     await coach.getByRole("button", { name: "Fold the story guide" }).click();

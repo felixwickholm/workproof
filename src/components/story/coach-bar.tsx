@@ -123,7 +123,8 @@ export function CoachBar() {
 
   const total = storySteps.length;
   const collapsed = Boolean(state?.collapsed);
-  const counter = state?.ended ? "The end" : `${(state?.index ?? 0) + 1} of ${total}`;
+  const sub = useSubStep(state?.index ?? -1, state && !state.ended ? (here ? (hintNow ?? "here") : "go") : undefined, pathname);
+  const counter = state?.ended ? "The end" : `${(state?.index ?? 0) + 1}${sub > 0 ? `.${sub + 1}` : ""} of ${total}`;
   const controls = <Controls onCollapse={() => setCollapsed(true)} onClose={close} />;
 
   // One main action on screen: the guide's button, or the page's own, never both.
@@ -203,16 +204,22 @@ export function CoachBar() {
           aria-live="polite"
           className={cx(
             // Solid, not glass: this card floats over page text, which must never show through.
-            "highlight fixed z-50 bg-[#2c2c2e] shadow-[0_8px_32px_rgba(0,0,0,0.6)]",
+            "highlight fixed z-50 bg-[#2c2c2e]",
             collapsed
-              ? "right-3 rounded-full min-[900px]:right-6"
-              : "inset-x-3 mx-auto max-w-[416px] rounded-card px-4 pb-1.5 min-[900px]:inset-x-auto min-[900px]:right-6 min-[900px]:w-[380px]",
+              ? "right-3 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.6)] min-[900px]:right-6"
+              : wide
+                ? "right-6 w-[380px] rounded-card px-4 pb-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
+                : // On a phone it docks edge to edge: on top of the page's bottom bar, or under the top edge while a sheet is open.
+                  cx("inset-x-0 px-4", overSheet ? "rounded-b-card pt-safe pb-1.5" : cx("rounded-t-card", clearance > 0 ? "pb-1.5" : "pb-[calc(6px+env(safe-area-inset-bottom,0px))]")),
           )}
           style={
-            // Over a sheet on a phone the guide moves to the top, so the sheet's buttons stay free.
-            overSheet && !wide
-              ? { top: "calc(12px + env(safe-area-inset-top, 0px))", bottom: "auto" }
-              : { bottom: clearance > 0 && !overSheet ? `${clearance + 8}px` : "calc(12px + env(safe-area-inset-bottom, 0px))" }
+            collapsed
+              ? { bottom: clearance > 0 && !overSheet ? `${clearance + 8}px` : "calc(12px + env(safe-area-inset-bottom, 0px))" }
+              : wide
+                ? { bottom: clearance > 0 && !overSheet ? `${clearance + 8}px` : "24px" }
+                : overSheet
+                  ? { top: 0, bottom: "auto" }
+                  : { bottom: `${clearance}px` }
           }
           initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -315,6 +322,30 @@ function Pill({
       {children}
     </button>
   );
+}
+
+/**
+ * Counts the screens inside one story step, so the counter moves on every screen change
+ * ("2 of 7", "2.2 of 7", "2.3 of 7"). Starts again at each step.
+ */
+function useSubStep(index: number, hint: string | undefined, pathname: string) {
+  const [seen, setSeen] = useState<{ index: number; keys: string[] }>({ index, keys: [] });
+  if (seen.index !== index) setSeen({ index, keys: [] });
+  // A screen counts once its instruction has held for a moment, so passing states while a page loads do not.
+  // The visible heading is part of the key, so two screens with the same instruction still count twice.
+  useEffect(() => {
+    if (!hint) return;
+    let last = "";
+    const id = window.setInterval(() => {
+      const heading = Array.from(document.querySelectorAll("main h1")).find((h) => h.getBoundingClientRect().width > 0)?.textContent ?? "";
+      const key = `${pathname}|${heading}|${hint}`;
+      // Counted on the second matching read, about 350ms after it appeared.
+      if (key === last) setSeen((prev) => (prev.index !== index || prev.keys.includes(key) ? prev : { index, keys: [...prev.keys, key] }));
+      last = key;
+    }, 350);
+    return () => window.clearInterval(id);
+  }, [index, hint, pathname]);
+  return Math.max(0, seen.keys.length - 1);
 }
 
 const WIDE = "(min-width: 900px)";

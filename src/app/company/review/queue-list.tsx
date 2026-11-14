@@ -71,7 +71,7 @@ export function QueueList({ selectedId }: { selectedId: string | null }) {
 
           <Section label="Second look" count={queue.secondLook.length} note={SECOND_LOOK_LINE}>
             {queue.secondLook.length === 0 ? (
-              <Empty>Nothing here yet. Work another employer passed on shows up here when it matches your skills.</Empty>
+              <Empty>Nothing here yet. Work another employer said not now to shows up here when it matches your skills.</Empty>
             ) : (
               <QueueGroup>
                 {queue.secondLook.map((p) => (

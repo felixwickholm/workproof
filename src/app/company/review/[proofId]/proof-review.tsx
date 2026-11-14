@@ -18,7 +18,7 @@ import { useResource } from "@/lib/client/use-resource";
 import type { DecisionKind } from "@/lib/domain/types";
 import { findInQueue, useReview } from "../review-context";
 
-/** One blind proof, read against the review guide, then Pass or Meet with written feedback. */
+/** One blind proof, read against the review guide, then Not now or Meet with written feedback. */
 export function ProofReview({ params }: { params: Promise<{ proofId: string }> }) {
   const proofId = decodeURIComponent(use(params).proofId);
   const { queue, company, reload, now } = useReview();
@@ -110,7 +110,7 @@ export function ProofReview({ params }: { params: Promise<{ proofId: string }> }
         <div className="glass highlight pb-safe sticky bottom-0 z-10">
           <div className="mx-auto grid w-full max-w-[440px] grid-cols-2 gap-3 px-5 pt-3 pb-3 min-[900px]:max-w-[1040px] min-[900px]:px-8">
             <Button variant="secondary" onClick={() => setSheet("pass")}>
-              Pass
+              Not now
             </Button>
             <Button variant="secondary" onClick={() => setSheet("meet")}>
               Meet

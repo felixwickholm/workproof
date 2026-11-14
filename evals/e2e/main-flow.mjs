@@ -163,12 +163,12 @@ export async function runMainFlow(browser, phone) {
     await checkScreen(page, errors, "/company/review");
     await assertIdentityHidden("Tuulos queue");
   });
-  await suite.step("d2 Tuulos passes with feedback", async () => {
+  await suite.step("d2 Tuulos says not now, with feedback", async () => {
     await page.getByRole("link", { name: new RegExp(`^${label}\\b`) }).click();
-    await page.getByRole("button", { name: "Pass", exact: true }).waitFor();
+    await page.getByRole("button", { name: "Not now", exact: true }).waitFor();
     await assertIdentityHidden("Tuulos proof");
     await checkScreen(page, errors, "/company/review/[proof]");
-    await page.getByRole("button", { name: "Pass", exact: true }).click();
+    await page.getByRole("button", { name: "Not now", exact: true }).click();
     const sheet = page.getByRole("dialog");
     await type(sheet.getByRole("textbox", { name: "Your name" }), "Anna Koivisto");
     await type(sheet.getByRole("textbox", { name: "Feedback for them" }), "Clear reading of the split. We need someone on site this month.");

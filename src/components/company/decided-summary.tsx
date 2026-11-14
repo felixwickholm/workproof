@@ -14,7 +14,7 @@ type Entry = ReviewQueue["decided"][number];
 /** The decision a person made, and where the meeting stands. */
 export function DecisionLine({ entry }: { entry: Entry }) {
   const { decision, meeting } = entry;
-  if (decision.decision === "pass") return <p className="text-footnote font-semibold text-label-2">Passed, feedback sent</p>;
+  if (decision.decision === "pass") return <p className="text-footnote font-semibold text-label-2">Not now, with a reason</p>;
   if (meeting?.status === "met") return <HumanTag>Met, confirmed by both</HumanTag>;
   if (meeting?.status === "accepted") return <HumanTag>Meeting accepted</HumanTag>;
   return <HumanTag>Invited to meet</HumanTag>;

@@ -17,6 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StepProgress } from "@/components/ui/step-progress";
 import { Switch } from "@/components/ui/switch";
 import { TimerChip } from "@/components/ui/timer-chip";
+import { useStory } from "@/components/story/story-provider";
 import { api, errorText } from "@/lib/client/api";
 import { clearDraft, getSavedIdentity, getTalentId, loadDraft, saveDraft, saveIdentity } from "@/lib/client/local";
 import { backInFlow, useFlowHistory } from "@/lib/client/use-flow-history";
@@ -27,7 +28,7 @@ import { LIMITS } from "@/lib/http/limits";
 type Step = "work" | "q0" | "q1" | "identity" | "result";
 const order: Step[] = ["work", "q0", "q1", "identity", "result"];
 
-const SHARE_LABEL = "Let other employers with matching tasks see this proof if this one passes or does not answer in 48 hours";
+const SHARE_LABEL = "Let other employers with matching tasks see this proof if this one says not now or does not answer in 48 hours";
 
 const nextSteps = [
   "A person at the company reads it without your name.",
@@ -38,6 +39,7 @@ const nextSteps = [
 export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const inStory = Boolean(useStory().state);
   const [step, setStep] = useState<Step>("work");
   const [direction, setDirection] = useState<1 | -1>(1);
   const [busy, setBusy] = useState(false);
@@ -296,7 +298,8 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
       <Screen
         back={back}
         center={step === "result" ? null : <StepProgress total={4} current={index} />}
-        right={step === "work" && startedAt > 0 ? <TimerChip minutes={challenge.minutes} startedAt={startedAt} /> : null}
+        // The story skips the clock: a countdown means nothing to someone watching a demo.
+        right={step === "work" && startedAt > 0 && !inStory ? <TimerChip minutes={challenge.minutes} startedAt={startedAt} /> : null}
         bottom={bottom}
         wide={step === "work"}
       >

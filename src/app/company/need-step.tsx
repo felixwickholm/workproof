@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
-import { CompanySwitcher, CompanySwitcherSkeleton } from "@/components/company/company-switcher";
+import { PostingAs } from "@/components/company/posting-as";
 import { Button } from "@/components/ui/button";
-import { Eyebrow } from "@/components/ui/card";
 import { cx } from "@/components/ui/cx";
 import { TextArea } from "@/components/ui/field";
 import { StepTitle } from "@/components/ui/screen";
@@ -39,6 +38,7 @@ export function needStep({ need, onNeed, companies, companyId, onCompany, busy, 
   const ready = need.trim().length >= 10;
   const content = (
     <>
+      <PostingAs companies={companies} value={companyId} onChange={onCompany} />
       <StepTitle sub="Write it the way you would tell a colleague. AI drafts a 20-minute task from it, and you approve it.">
         What do you need?
       </StepTitle>
@@ -68,14 +68,6 @@ export function needStep({ need, onNeed, companies, companyId, onCompany, busy, 
         ))}
       </div>
 
-      <div className="mt-8">
-        <Eyebrow className="mb-2 px-4">Posting for</Eyebrow>
-        {companies ? (
-          <CompanySwitcher companies={companies} value={companyId} onChange={onCompany} label="Posting for" />
-        ) : (
-          <CompanySwitcherSkeleton />
-        )}
-      </div>
     </>
   );
   const bottom = (

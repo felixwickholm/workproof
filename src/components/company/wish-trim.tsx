@@ -7,21 +7,27 @@ import { countWishes, isNotUsed, notUsedNames, splitAside } from "./format";
 
 const MIN_SKILLS = 3;
 
-/** "You listed N wishes. These M are the job." with a strip that shows the cut at a glance. */
-export function TrimHeadline({ skills, setAside }: { skills: Skill[]; setAside: string[] }) {
-  const wishes = Math.max(countWishes(skills.length, setAside), skills.length);
+/**
+ * "You listed N wishes. These M are the job." N is the count of wishes in the company's own
+ * sentence, from the server. Without it the line says "several" rather than guess a number.
+ */
+export function TrimHeadline({ skills, setAside, wishCount }: { skills: Skill[]; setAside: string[]; wishCount?: number }) {
   const kept = skills.length;
+  const aside = countWishes(0, setAside);
+  const wishes = wishCount && wishCount > 0 ? wishCount : null;
   return (
     <Card className="highlight">
       <p className="text-title-3 font-bold text-pretty">
-        You listed {wishes} {wishes === 1 ? "wish" : "wishes"}.{" "}
-        <span className="text-label-2">{kept === wishes ? `All ${kept} are the job.` : `These ${kept} are the job.`}</span>
+        {wishes ? `You listed ${wishes} ${wishes === 1 ? "wish" : "wishes"}.` : "You listed several wishes."}{" "}
+        <span className="text-label-2">{aside === 0 ? `All ${kept} skills here are the job.` : `These ${kept} skills are the job.`}</span>
       </p>
-      <div aria-hidden className="mt-4 flex gap-1">
-        {Array.from({ length: wishes }, (_, i) => (
-          <span key={i} className={i < kept ? "h-1.5 flex-1 rounded-full bg-white" : "h-1.5 flex-1 rounded-full bg-fill"} />
-        ))}
-      </div>
+      {wishes ? (
+        <div aria-hidden className="mt-4 flex gap-1">
+          {Array.from({ length: wishes }, (_, i) => (
+            <span key={i} className={i < wishes - Math.min(aside, wishes) ? "h-1.5 flex-1 rounded-full bg-white" : "h-1.5 flex-1 rounded-full bg-fill"} />
+          ))}
+        </div>
+      ) : null}
     </Card>
   );
 }

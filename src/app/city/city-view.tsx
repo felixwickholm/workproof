@@ -59,9 +59,15 @@ export function CityView() {
         </Section>
       </div>
 
-      <div className="mt-12 flex justify-center">
-        <ResetDemo onDone={reload} />
-      </div>
+      {/* For presenters only, so it sits folded at the very bottom. */}
+      <details className="mt-16 pt-4 shadow-[inset_0_0.5px_0_var(--color-separator)]">
+        <summary className="press text-footnote flex min-h-11 cursor-pointer list-none items-center justify-center font-medium text-label-3 [&::-webkit-details-marker]:hidden">
+          Demo controls
+        </summary>
+        <div className="mt-2 flex justify-center">
+          <ResetDemo onDone={reload} />
+        </div>
+      </details>
     </CityFrame>
   );
 }

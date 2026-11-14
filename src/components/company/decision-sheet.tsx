@@ -38,7 +38,7 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided, onDone
   const [feedback, setFeedback] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sent, setSent] = useState<{ kind: DecisionKind; meeting?: Meeting } | null>(null);
+  const [sent, setSent] = useState<{ kind: DecisionKind; meeting?: Meeting; note: string } | null>(null);
   /** The kind it was opened with, kept while the sheet slides away. */
   const [openedAs, setOpenedAs] = useState<DecisionKind | null>(kind);
   const [wasOpen, setWasOpen] = useState(kind !== null);
@@ -69,7 +69,7 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided, onDone
       const name = reviewer.trim();
       saveReviewer(company.id, name);
       const res = await companyApi.decide({ proofId: proof.proofId, companyId: company.id, reviewer: name, decision: openedAs, feedback: feedback.trim() });
-      setSent({ kind: openedAs, meeting: res.meeting });
+      setSent({ kind: openedAs, meeting: res.meeting, note: feedback.trim() });
       await onDecided();
     } catch (e) {
       setError(companyErrorText(e));
@@ -87,14 +87,14 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided, onDone
       : "Feedback sent"
     : decision === "meet"
       ? `Meet ${proof.label}`
-      : `Pass on ${proof.label}`;
+      : `Not now for ${proof.label}`;
 
   const moment = sent?.kind === "meet";
   return (
     <Sheet open={kind !== null} onClose={onClose} title={title} size={moment ? "full" : "auto"} hideTitle={moment}>
       <div className={moment ? "flex flex-1 flex-col" : "-mx-5 max-h-[calc(85dvh-80px)] overflow-y-auto px-5"}>
         {sent ? (
-          <Sent kind={sent.kind} meeting={sent.meeting} proof={proof} company={company} onDone={onDone} />
+          <Sent kind={sent.kind} meeting={sent.meeting} note={sent.note} reviewer={reviewer.trim()} proof={proof} company={company} onDone={onDone} />
         ) : (
           <div className="flex flex-col gap-4">
             <Field label="Your name" value={reviewer} onChange={setReviewer} placeholder="Reviewer name" autoComplete="name" maxLength={LIMITS.reviewer} fill="reviewer" />
@@ -140,6 +140,16 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided, onDone
   );
 }
 
+/** The note exactly as it was sent, so the reviewer sees what the person will read. */
+function SentNote({ reviewer, note }: { reviewer: string; note: string }) {
+  return (
+    <figure className="rounded-inner bg-raised px-4 py-3">
+      <figcaption className="text-footnote font-semibold text-label-2">{reviewer ? `${reviewer.split(" ")[0]} wrote` : "You wrote"}</figcaption>
+      <blockquote className="text-subhead mt-1 text-label text-pretty">{note}</blockquote>
+    </figure>
+  );
+}
+
 /** The reviewer's name from the company's own data, when the event set one up. */
 function seededReviewer(company: Company): string {
   const value = (company as Company & { reviewer?: unknown }).reviewer;
@@ -150,13 +160,30 @@ function seededReviewer(company: Company): string {
  * A calm confirmation. A meeting gets the whole screen: the proof and the company joined by
  * the human decision, the slot, and the one green check. Feedback after a pass stays small.
  */
-function Sent({ kind, meeting, proof, company, onDone }: { kind: DecisionKind; meeting?: Meeting; proof: BlindProof; company: Company; onDone: () => void }) {
+function Sent({
+  kind,
+  meeting,
+  note,
+  reviewer,
+  proof,
+  company,
+  onDone,
+}: {
+  kind: DecisionKind;
+  meeting?: Meeting;
+  note: string;
+  reviewer: string;
+  proof: BlindProof;
+  company: Company;
+  onDone: () => void;
+}) {
   const reduce = useReducedMotion();
   const ease = [0.23, 1, 0.32, 1] as const;
   if (kind === "pass") {
     return (
       <motion.div initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, ease }}>
-        <p className="text-body text-pretty">
+        <SentNote reviewer={reviewer} note={note} />
+        <p className="text-body mt-4 text-pretty">
           They will read your note. If the person agreed, other employers with the same skills can now see this proof under Second look.
         </p>
         <Button onClick={onDone} className="mt-6">
@@ -204,6 +231,9 @@ function Sent({ kind, meeting, proof, company, onDone }: { kind: DecisionKind; m
             </p>
           ) : null}
           <p className="text-body mt-3 text-label-2 text-pretty">Their name appears when they accept.</p>
+          <div className="mt-6 text-left">
+            <SentNote reviewer={reviewer} note={note} />
+          </div>
         </motion.div>
       </div>
       <Button onClick={onDone} className="mt-6">

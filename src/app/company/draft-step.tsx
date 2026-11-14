@@ -63,7 +63,7 @@ export function draftStep({ draft, onDraft, companyName, approvedBy, onApprovedB
       </blockquote>
 
       <Section label="Skills">
-        <TrimHeadline skills={draft.coreSkills} setAside={draft.setAside} />
+        <TrimHeadline skills={draft.coreSkills} setAside={draft.setAside} wishCount={draft.wishCount} />
         <div className="mt-3">
           <CoreSkillList skills={draft.coreSkills} onRemove={removeSkill} />
         </div>

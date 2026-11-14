@@ -12,14 +12,14 @@ import type { PassportEntry } from "@/lib/domain/types";
 
 type Response = PassportEntry["responses"][number];
 
-/** Practice tasks take 2 minutes (TASTER_MINUTES on the server) and are never shown to employers. */
-const TASTER_MINUTES = 2;
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
 
 /** One proof as a pass: header strip, the challenge, a small fact grid, then one row per company. */
 export function ProofPass({ entry, onChanged }: { entry: PassportEntry; onChanged: () => Promise<void> }) {
   const { proof, challenge, seenByHumans, responses, sharedWith } = entry;
+  // Practice tasks are never shown to employers, so they never wait for a review.
+  const practice = challenge.kind === "taster";
   const code = proof.label.replace(/^Proof\s*/i, "");
 
   return (
@@ -47,7 +47,11 @@ export function ProofPass({ entry, onChanged }: { entry: PassportEntry; onChange
       <Perforation />
 
       <ul className="[--row-inset:20px]">
-        {responses.length === 0 ? (
+        {practice ? (
+          <li className="row relative flex min-h-14 items-center gap-3 px-5 py-3">
+            <p className="text-body">Practice proof. Not sent to any company.</p>
+          </li>
+        ) : responses.length === 0 ? (
           <li className="row relative flex min-h-14 items-center gap-3 px-5 py-3">
             <Clock aria-hidden className="size-5 shrink-0 text-label-2" strokeWidth={1.8} />
             <div>
@@ -58,7 +62,7 @@ export function ProofPass({ entry, onChanged }: { entry: PassportEntry; onChange
         ) : (
           responses.map((r, i) => <ResponseRow key={`${r.companyName}-${i}`} response={r} onChanged={onChanged} />)
         )}
-        {challenge.minutes > TASTER_MINUTES ? (
+        {!practice ? (
           <SharingRow proofId={proof.proofId} sharing={entry.sharing} sharedWith={sharedWith} onChanged={onChanged} />
         ) : null}
       </ul>
@@ -144,7 +148,7 @@ function ResponseRow({ response, onChanged }: { response: Response; onChanged: (
   let action: ReactNode = null;
 
   if (decision === "pass") {
-    status = <p className="text-subhead text-label-2">Passed. Their reason:</p>;
+    status = <p className="text-subhead text-label-2">Not now. Their reason:</p>;
   } else if (!meeting || meeting.status === "invited") {
     status = <HumanTag>Wants to meet</HumanTag>;
     if (meeting) {

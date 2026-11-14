@@ -71,7 +71,7 @@ const chosen = (name: string) => `[role="radio"][aria-label="${name}"][aria-chec
 
 /** Point at the page's own main button once it can be tapped. The guide then has no button. */
 const tapPrimary = (page: PageState): Guide =>
-  page.primary ? { hint: `Tap ${page.primary}.`, target: "[data-primary]" } : {};
+  page.primary ? { hint: `Tap ${page.primary}.`, target: page.dialog ? '[aria-modal="true"] [data-primary]' : "[data-primary]" } : {};
 
 const fill = (label: string, hint?: string): Guide => ({ hint, action: { label, kind: "fill" } });
 
@@ -81,7 +81,7 @@ function workGuide(page: PageState): Guide {
   }
   switch (page.fillable) {
     case "answer":
-      return fill("Fill in her answer");
+      return fill("Fill in her answer", "The code tests a model on data it has already seen. Leila spots that.");
     case "explain-0":
     case "explain-1":
       return fill("Fill in her reply", "Two questions about her own answer show the reviewer how she thinks.");
@@ -94,22 +94,27 @@ function workGuide(page: PageState): Guide {
 
 function tuulosGuide(page: PageState): Guide {
   const reviewer = page.reviewerFirst ?? storyReviewers[TUULOS].split(" ")[0];
-  if (page.dialog?.startsWith("Pass on") && page.fillable) {
-    return fill(`Fill in ${reviewer}'s note`, "She explains the pass, so nobody is left without an answer.");
+  if (page.dialog?.startsWith("Not now for")) {
+    if (page.fillable) return fill(`Fill in ${reviewer}'s note`, `${reviewer} says not now, and must say why. Nobody is left without an answer.`);
+    return { ...tapPrimary(page), hint: `Read ${reviewer}'s note. Tap ${page.primary ?? "Send feedback"}.` };
   }
-  if (page.dialog === "Feedback sent") return { action: { label: "Open it at Saarnivo", kind: "saarnivo" } };
-  if (page.exists(chosen("Tuulos Robotics")) && page.has("text:Pass")) {
-    return { hint: "Tuulos filled the role this week. Tap Pass.", target: "text:Pass" };
+  if (page.dialog === "Feedback sent") return { hint: `This is the note Leila gets.`, action: { label: "Open it at Saarnivo", kind: "saarnivo" } };
+  if (page.exists(chosen("Tuulos Robotics")) && page.has("text:Not now")) {
+    return { hint: `${reviewer}, a team lead at Tuulos Robotics, filled the role this week. Tap Not now.`, target: "text:Not now" };
   }
   return { action: { label: "Open her proof at Tuulos", kind: "tuulos" } };
 }
 
 function saarnivoGuide(page: PageState): Guide {
   const reviewer = page.reviewerFirst ?? storyReviewers[SAARNIVO].split(" ")[0];
-  if (page.dialog?.startsWith("Meet") && page.fillable) return fill(`Fill in ${reviewer}'s note`);
-  if (page.dialog === "Invitation sent") return { action: { label: "Open her proofs", kind: "passport" } };
+  if (page.dialog?.startsWith("Meet")) {
+    if (page.fillable) return fill(`Fill in ${reviewer}'s note`, `${reviewer} writes why she wants to meet.`);
+    return { ...tapPrimary(page), hint: `Read ${reviewer}'s note. Tap ${page.primary ?? "Send invitation"}.` };
+  }
+  if (page.dialog === "Feedback sent") return { hint: "Leila gets this note.", action: { label: "Open it at Saarnivo", kind: "saarnivo" } };
+  if (page.dialog === "Invitation sent") return { hint: `${reviewer}'s note goes to Leila with the time.`, action: { label: "Open her proofs", kind: "passport" } };
   if (page.exists(chosen("Saarnivo Grid")) && page.has("text:Meet")) {
-    return { hint: "Tap Meet.", target: "text:Meet" };
+    return { hint: `${reviewer}, who hires for Saarnivo Grid, wants to talk. Tap Meet.`, target: "text:Meet" };
   }
   return { action: { label: "Open it at Saarnivo", kind: "saarnivo" } };
 }
@@ -189,7 +194,7 @@ export const sampleAnswers: Record<string, string> = {
   name: "Leila Haddad",
   contact: "leila.haddad@example.com",
   "note-pass":
-    "We filled this role on Thursday. Your point about splitting by grasp attempt was clear and correct, so I am passing it on.",
+    "We filled this role on Thursday. Your point about splitting by grasp attempt was clear and correct. I hope another team here picks it up.",
   "note-meet":
     "You checked how the test set was built before trusting the number. Our heat demand forecasts have the same trap. I would like to hear how you would set up the split for us.",
 };

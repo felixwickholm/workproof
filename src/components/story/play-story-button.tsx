@@ -18,7 +18,7 @@ export function PlayStoryButton() {
       className="press text-headline flex h-12 w-full items-center justify-center gap-2 rounded-full font-semibold text-label shadow-[inset_0_0_0_1px_var(--color-label-3)] transition-colors duration-150 active:bg-surface"
     >
       <Play aria-hidden className="size-4 fill-current" strokeWidth={2} />
-      Play the 2-minute story
+      Play the story (3 min)
     </button>
   );
 }
