@@ -20,8 +20,10 @@ import { useResource } from "@/lib/client/use-resource";
 import type { ReviewQueue } from "@/lib/domain/types";
 import { findInQueue, useReview } from "../review-context";
 
-/** Work beside the score once the pane fits a reading measure plus the 360px score panel. */
-const SIDE_BY_SIDE = "@min-[820px]:grid @min-[820px]:grid-cols-[minmax(0,1fr)_360px] @min-[820px]:items-start @min-[820px]:gap-7";
+/** Work beside the score once the pane fits a reading measure plus the 400px score panel. */
+const SIDE_BY_SIDE = "@min-[960px]:grid @min-[960px]:grid-cols-[minmax(0,1fr)_400px] @min-[960px]:items-start @min-[960px]:gap-16";
+/** The work's reading measure: about 70 characters of 18px text. */
+const MEASURE = "max-w-[720px]";
 
 /** One blind work: read it, score each skill, say why, then invite, not now, or score only. */
 export function ProofReview({ params }: { params: Promise<{ proofId: string }> }) {
@@ -62,7 +64,7 @@ export function ProofReview({ params }: { params: Promise<{ proofId: string }> }
   return (
     <div className="@container">
       <div className={SIDE_BY_SIDE}>
-        <div className="rise min-w-0">
+        <div className={`rise min-w-0 ${MEASURE}`}>
           {item.kind === "second" ? <SharedNote line={`Shared with you. Same skills: ${item.proof.sharedSkills.join(", ")}.`} /> : null}
           {item.kind === "recommended" ? <SharedNote line={`Recommended by ${item.proof.recommendedBy}.`} /> : null}
           <WorkPane
@@ -111,7 +113,7 @@ function ScoreSlot({ decided, children }: { decided: boolean; children: ReactNod
         animate={{ opacity: 1, transform: "translateY(0px)" }}
         exit={{ opacity: 0, transition: { duration: 0.12 } }}
         transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
-        className="mt-8 flex flex-col gap-4 @min-[820px]:mt-0"
+        className="mt-14 flex flex-col gap-6 @min-[960px]:mt-0"
       >
         {children}
       </motion.div>
@@ -120,7 +122,7 @@ function ScoreSlot({ decided, children }: { decided: boolean; children: ReactNod
 }
 
 function SharedNote({ line }: { line: string }) {
-  return <p className="text-subhead mb-6 rounded-inner bg-surface px-4 py-3 text-pretty text-label">{line}</p>;
+  return <p className="text-body mb-8 rounded-inner bg-surface px-5 py-4 text-pretty text-label">{line}</p>;
 }
 
 /** After a score, the next work that waits, so the reviewer is never at a dead end. */
@@ -149,16 +151,16 @@ export function ReviewSkeleton() {
   return (
     <div className="@container">
       <div aria-busy className={SIDE_BY_SIDE}>
-        <div className="flex flex-col gap-3">
+        <div className={`flex flex-col gap-3 ${MEASURE}`}>
           <Skeleton className="h-8 w-32" />
           <Skeleton className="h-3.5 w-72" />
           <div className="mt-8 flex flex-col gap-3">
             {[90, 100, 84, 96, 70, 88, 92, 64].map((width) => (
-              <span key={width} aria-hidden className="block h-3.5 rounded-full bg-fill" style={{ width: `${width}%` }} />
+              <span key={width} aria-hidden className="block h-4 rounded-full bg-fill" style={{ width: `${width}%` }} />
             ))}
           </div>
         </div>
-        <div className="mt-8 flex flex-col gap-6 rounded-card border border-separator bg-surface p-6 @min-[820px]:mt-0">
+        <div className="mt-14 flex flex-col gap-6 rounded-card bg-surface p-6 @min-[960px]:mt-0 min-[900px]:p-7">
           <div className="flex justify-between">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-10 w-28" />
@@ -168,7 +170,7 @@ export function ReviewSkeleton() {
               <Skeleton className="h-4 w-40" />
               <div className="grid grid-cols-5 gap-1.5">
                 {[0, 1, 2, 3, 4].map((j) => (
-                  <span key={j} className="h-12 rounded-[12px] bg-fill" />
+                  <span key={j} className="h-14 rounded-[14px] bg-fill" />
                 ))}
               </div>
             </div>

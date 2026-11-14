@@ -54,31 +54,35 @@ export function ScoredView({ entry, challenge, companyId, onChanged }: Props) {
   const bothMet = meeting && meeting.companyConfirmedMet && meeting.talentConfirmedMet;
 
   return (
-    <section data-tour="score" aria-label="Your score" className="flex flex-col gap-6 rounded-card border border-separator bg-surface p-5 min-[900px]:p-6">
+    <section data-tour="score" aria-label="Your score" className="flex flex-col gap-8 rounded-card bg-surface p-5 min-[900px]:p-7">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-section text-label">Your score</h2>
-          <p className="text-footnote mt-0.5 text-label-2">
+          <h2 className="text-h3 text-label">Your score</h2>
+          <p className="text-subhead mt-1 text-label-2">
             {decision.reviewer} · <TimeAgo at={decision.decidedAt} />
           </p>
         </div>
         {typeof decision.total === "number" ? (
           <p className="tnum text-[40px] leading-[44px] font-normal text-label">
             {formatTotal(decision.total)}
-            <span className="text-subhead ml-1 text-label-2">of 10</span>
+            <span className="text-body ml-1.5 text-label-2">of 10</span>
           </p>
         ) : null}
       </div>
 
-      {decision.scores && challenge ? <SkillMarks scores={decision.scores} skills={challenge.coreSkills} /> : null}
+      {decision.scores && challenge ? (
+        <div className="rounded-[16px] bg-raised p-5 min-[900px]:p-6">
+          <SkillMarks scores={decision.scores} skills={challenge.coreSkills} />
+        </div>
+      ) : null}
 
       <figure>
-        <figcaption className="text-footnote text-label-2">Your words to the person</figcaption>
-        <blockquote className="mt-1 font-heading text-lead text-pretty text-label">&ldquo;{decision.feedback}&rdquo;</blockquote>
+        <figcaption className="text-subhead text-label-2">Your words to the person</figcaption>
+        <blockquote className="mt-2 font-heading text-lead text-pretty text-label">&ldquo;{decision.feedback}&rdquo;</blockquote>
       </figure>
 
-      <div className="border-t border-separator pt-5">
-        <p className="text-headline font-semibold text-label">{rowState(entry)}</p>
+      <div className="rounded-[16px] bg-raised p-5 min-[900px]:p-6">
+        <p className="text-section text-label">{rowState(entry)}</p>
         {decision.decision === "hold" ? (
           <div className="mt-3 grid grid-cols-2 gap-3">
             <Button variant="secondary" loading={busy === "pass"} onClick={() => void decideHold("pass")}>

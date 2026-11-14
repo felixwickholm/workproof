@@ -12,7 +12,7 @@ import { QueueList } from "./queue-list";
 
 const BASE = "/company/review";
 /** Below this width the list and the open work take turns, one region at a time. */
-const NARROW = "(max-width: 1299px)";
+const NARROW = "(max-width: 899px)";
 const CAPTION = "Oldest first.";
 
 /** The proof id in the URL, or null on the queue itself. */
@@ -20,15 +20,15 @@ function selectedFrom(pathname: string): string | null {
   return pathname.startsWith(`${BASE}/`) ? decodeURIComponent(pathname.slice(BASE.length + 1)) : null;
 }
 
-/** From 1300px: a fixed 232px list beside the open work, which takes the rest of the column. */
-const GRID = "min-[1300px]:grid min-[1300px]:grid-cols-[232px_minmax(0,1fr)] min-[1300px]:items-start min-[1300px]:gap-6";
-/** From 1300px the list scrolls on its own and stays in view while the work scrolls. */
-const LIST = "min-[1300px]:sticky min-[1300px]:top-6 min-[1300px]:max-h-[calc(100dvh-48px)] min-[1300px]:overflow-y-auto min-[1300px]:overscroll-contain";
+/** From 900px the list is a switcher above the open work, so the work gets the page's full width. */
+const STACK = "min-[900px]:flex min-[900px]:flex-col min-[900px]:gap-14";
+/** From 900px the list sits in its own grey band, one line per work. */
+const LIST = "min-[900px]:rounded-card min-[900px]:bg-surface min-[900px]:px-8 min-[900px]:pt-5 min-[900px]:pb-7";
 
 /**
- * Scoring as an inbox. From 1300px: the list in a fixed column with its own scroll, the open work
- * beside it. Narrower, one region at a time: the list, then the work pushed over it with a way back
- * to the same place in the list. Render it inside Suspense: it reads the URL.
+ * Scoring as an inbox. From 900px: the list as a switcher band above the open work, which reads at
+ * full width with the score beside it. On a phone, one region at a time: the list, then the work
+ * pushed over it with a way back to the same place in the list. Render it inside Suspense: it reads the URL.
  */
 export function ReviewShell({ children }: { children: ReactNode }) {
   const selectedId = selectedFrom(usePathname());
@@ -43,23 +43,23 @@ export function ReviewShell({ children }: { children: ReactNode }) {
   return (
     <Screen
       page
-      title={<span className={cx(detail && "max-[1299px]:sr-only")}>Score work</span>}
-      subtitle={<span className={cx(detail && "max-[1299px]:hidden")}>{CAPTION}</span>}
+      title={<span className={cx(detail && "max-[899px]:sr-only")}>Score work</span>}
+      subtitle={<span className={cx(detail && "max-[899px]:hidden")}>{CAPTION}</span>}
     >
-      <div className={cx(GRID, detail && "max-[1299px]:-mt-14")}>
+      <div className={cx(STACK, detail && "max-[899px]:-mt-14")}>
         <aside
           data-tour="queue"
           aria-label="Work to score"
           onClickCapture={() => {
             if (window.matchMedia(NARROW).matches) listScroll.current = window.scrollY;
           }}
-          className={cx(detail && "max-[1299px]:hidden", LIST)}
+          className={cx(detail && "max-[899px]:hidden", LIST)}
         >
           <QueueList selectedId={selectedId} />
         </aside>
-        <div className={cx("min-w-0", !detail && "max-[1299px]:hidden")}>
+        <div className={cx("min-w-0", !detail && "max-[899px]:hidden")}>
           {detail ? (
-            <TopBar className="-mx-4 mb-2 min-[1300px]:hidden min-[900px]:mx-0">
+            <TopBar className="-mx-4 mb-2 min-[900px]:hidden">
               <div className="flex h-11 items-center px-2">
                 <Link href={BASE} className="press flex h-11 items-center pr-3 text-label">
                   <ChevronLeft aria-hidden className="size-6" strokeWidth={1.75} />
@@ -79,17 +79,16 @@ export function ReviewShell({ children }: { children: ReactNode }) {
 export function ReviewShellFallback() {
   return (
     <Screen page title="Score work" subtitle={CAPTION}>
-      <div aria-busy className={GRID}>
-        <div className="flex flex-col gap-3">
-          <Skeleton className="h-4 w-56" />
+      <div aria-busy className={STACK}>
+        <div className={cx("flex flex-col gap-3 min-[900px]:flex-row min-[900px]:flex-wrap", LIST)}>
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="flex flex-col gap-2 px-3 py-3">
-              <Skeleton className="h-4 w-40" />
-              <Skeleton className="h-3 w-56" />
+            <div key={i} className="flex flex-col gap-2 px-4 py-4 min-[900px]:p-0">
+              <Skeleton className="h-4 w-40 min-[900px]:h-12 min-[900px]:w-36 min-[900px]:rounded-full" />
+              <Skeleton className="h-3 w-56 min-[900px]:hidden" />
             </div>
           ))}
         </div>
-        <div className="hidden h-[520px] rounded-card bg-surface min-[1300px]:block" />
+        <div className="hidden h-[520px] rounded-card bg-surface min-[900px]:block" />
       </div>
     </Screen>
   );

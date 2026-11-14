@@ -95,38 +95,26 @@ export function ScorePanel({ proof, challenge, company, onScored, className }: P
   }
 
   return (
-    <section data-tour="score" aria-label="Your score" className={cx("rounded-card border border-separator bg-surface p-5 min-[900px]:p-6", className)}>
-      <div className="flex items-end justify-between gap-4">
-        <h2 className="text-section text-label">Your score</h2>
-        <p aria-live="polite" className="tnum text-[40px] leading-[44px] font-normal text-label">
-          {total === null ? (
-            <span className="text-subhead text-label-2">{scoredSoFar(points, skills)}</span>
-          ) : (
-            <>
-              {formatTotal(total)}
-              <span className="text-subhead ml-1 text-label-2">of 10</span>
-            </>
-          )}
-        </p>
-      </div>
+    <section data-tour="score" aria-label="Your score" className={cx("rounded-card bg-surface p-5 min-[900px]:p-7", className)}>
+      <h2 className="text-h3 text-label">Your score</h2>
 
-      <ol className="mt-5 flex flex-col gap-6">
+      <ol className="mt-6 flex flex-col gap-3">
         {skills.map((skill) => (
-          <li key={skill.id}>
-            <p className="text-headline font-semibold text-label">{skill.label}</p>
-            {lookFor(skill.id) ? <p className="text-subhead mt-0.5 mb-3 text-pretty text-label-2">{lookFor(skill.id)}</p> : <div className="mb-3" />}
-            <ScoreScale label={skill.label} value={points[skill.id]} onChange={(p) => setPoints((prev) => ({ ...prev, [skill.id]: p }))} />
+          <li key={skill.id} className="rounded-[16px] bg-raised p-5 min-[900px]:p-6">
+            <p className="text-section text-label">{skill.label}</p>
+            {lookFor(skill.id) ? <p className="text-subhead mt-1.5 text-pretty text-label-2">{lookFor(skill.id)}</p> : null}
+            <ScoreScale label={skill.label} value={points[skill.id]} onChange={(p) => setPoints((prev) => ({ ...prev, [skill.id]: p }))} className="mt-5" />
           </li>
         ))}
       </ol>
 
-      <div className="mt-6 border-t border-separator pt-5">
+      <div className="mt-10">
         <TextArea
           label="Say why"
           value={reason}
           onChange={setReason}
           placeholder="What did the work show? What would you ask them next?"
-          minRows={3}
+          minRows={4}
           maxLength={LIMITS.feedback}
         />
         <p className="text-footnote tnum mt-2 flex justify-between gap-3 text-label-2">
@@ -139,11 +127,11 @@ export function ScorePanel({ proof, challenge, company, onScored, className }: P
         </p>
       </div>
 
-      <div className="mt-4">
+      <div className="mt-6">
         {editingName ? (
           <Field label="Your name" value={reviewer} onChange={setReviewer} placeholder="The person who scores" autoComplete="name" maxLength={LIMITS.reviewer} />
         ) : (
-          <p className="text-subhead flex flex-wrap items-center gap-x-1.5 text-label-2">
+          <p className="text-body flex flex-wrap items-center gap-x-1.5 text-label-2">
             Signed <span className="font-medium text-label">{reviewer}</span>
             <span aria-hidden>·</span>
             <button type="button" onClick={() => setEditingName(true)} className={linkButton}>
@@ -166,14 +154,28 @@ export function ScorePanel({ proof, challenge, company, onScored, className }: P
         ) : null}
       </div>
 
-      <div className="mt-5 border-t border-separator pt-5">
-        <p className="text-subhead text-pretty text-label" aria-live="polite">
+      {/* The summary: the total as it builds and the three buttons. From 900px it stays in view while the skills scroll past. */}
+      <div className="-mx-5 -mb-5 mt-8 rounded-b-card bg-surface px-5 pt-6 pb-5 min-[900px]:sticky min-[900px]:bottom-0 min-[900px]:-mx-7 min-[900px]:-mb-7 min-[900px]:px-7 min-[900px]:pb-7 min-[900px]:shadow-[0_-16px_24px_-20px_rgba(1,17,53,0.25)]">
+        <div className="flex items-end justify-between gap-4">
+          <p className="text-headline text-label">Total</p>
+          <p aria-live="polite" className="tnum text-[40px] leading-[44px] font-normal text-label">
+            {total === null ? (
+              <span className="text-body text-label-2">{scoredSoFar(points, skills)}</span>
+            ) : (
+              <>
+                {formatTotal(total)}
+                <span className="text-body ml-1.5 text-label-2">of 10</span>
+              </>
+            )}
+          </p>
+        </div>
+        <p className="text-subhead mt-3 text-pretty text-label" aria-live="polite">
           {ready ? READY_LINE : SCORE_RULE}
         </p>
         <span id={reasonId} className="sr-only">
           {waitingFor ?? READY_LINE}
         </span>
-        <div className="mt-3 grid grid-cols-2 gap-3">
+        <div className="mt-4 grid grid-cols-2 gap-3">
           <LockedButton tone="neutral" locked={!ready} busy={sending === "pass"} reasonId={reasonId} onClick={() => void send("pass")}>
             Not now
           </LockedButton>

@@ -6,7 +6,7 @@ const sideBySide = (left, right) => left && right && left.x + left.width <= righ
 
 /**
  * The key screens again on a laptop (1440 x 900), where they change layout: the material beside the
- * answer in a session, a challenge's top work one row per work, the work list beside the open work,
+ * answer in a session, a challenge's top work one row per work, the work list above the open work,
  * the city's funnel, and the comparison slider.
  */
 export async function runLaptop(browser, device, name) {
@@ -53,7 +53,7 @@ export async function runLaptop(browser, device, name) {
     await checkScreen(page, errors, "leaderboard at 1440");
   });
 
-  await suite.step("Scoring: the work list stays beside the open work", async () => {
+  await suite.step("Scoring: the work list stays above the open work, the score beside it", async () => {
     await page.goto(`${BASE_URL}/company/review`);
     // A laptop never shows an empty reading pane: the oldest work to score opens by itself, named in the address.
     const list = page.getByRole("complementary", { name: "Work to score" });
@@ -64,7 +64,11 @@ export async function runLaptop(browser, device, name) {
     const score = visible(page.getByRole("region", { name: "Your score" }));
     await score.waitFor({ timeout: 15_000 });
     expect(await list.isVisible(), "the list disappears when a work opens");
-    expect(sideBySide(await list.boundingBox(), await score.boundingBox()), "the open work is not beside the list");
+    const listBox = await list.boundingBox();
+    const scoreBox = await score.boundingBox();
+    expect(listBox && scoreBox && listBox.y + listBox.height <= scoreBox.y, "the work list is not above the open work");
+    const work = page.getByRole("article").first();
+    expect(sideBySide(await work.boundingBox(), scoreBox), "the score is not beside the work");
     await checkScreen(page, errors, "scoring at 1440");
   });
 

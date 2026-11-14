@@ -50,8 +50,8 @@ export function QueueList({ selectedId }: { selectedId: string | null }) {
   const shared = sharedRows(queue);
 
   return (
-    <div key={queue.company.id} className="pb-10">
-      <CompanyLine companies={companies} value={companyId} onChange={switchTo} label="Scoring as" className="px-1" />
+    <div key={queue.company.id} className="pb-10 min-[900px]:flex min-[900px]:flex-wrap min-[900px]:gap-x-14 min-[900px]:gap-y-6 min-[900px]:pb-0">
+      <CompanyLine companies={companies} value={companyId} onChange={switchTo} label="Scoring as" className="px-1 min-[900px]:basis-full min-[900px]:px-0" />
 
       <Section label="Waiting for a score" count={queue.proofs.length}>
         {queue.proofs.length === 0 ? (
@@ -65,7 +65,7 @@ export function QueueList({ selectedId }: { selectedId: string | null }) {
             Nothing waits. New work shows up here, oldest first.
           </EmptyState>
         ) : (
-          <ul>
+          <ul className={ROWS}>
             {queue.proofs.map((p) => (
               <QueueRow key={p.proofId} proof={p} unread={unread(p.proofId)} selected={p.proofId === selectedId} />
             ))}
@@ -75,7 +75,7 @@ export function QueueList({ selectedId }: { selectedId: string | null }) {
 
       {shared.length > 0 ? (
         <Section label="Shared with you" count={shared.length}>
-          <ul>
+          <ul className={ROWS}>
             {shared.map(({ proof, line }) => (
               <QueueRow key={proof.proofId} proof={proof} unread={unread(proof.proofId)} selected={proof.proofId === selectedId} status={line} />
             ))}
@@ -85,13 +85,13 @@ export function QueueList({ selectedId }: { selectedId: string | null }) {
 
       {queue.decided.length > 0 ? (
         <Section label="Scored" count={queue.decided.length}>
-          <ul>
+          <ul className={ROWS}>
             {newestFirst(queue.decided).map((entry) => (
               <QueueRow
                 key={entry.decision.id}
                 proof={entry.proof}
                 selected={entry.proof.proofId === selectedId}
-                value={typeof entry.decision.total === "number" ? <span className="text-body text-label">{formatTotal(entry.decision.total)}</span> : undefined}
+                value={typeof entry.decision.total === "number" ? <span className="text-body font-medium">{formatTotal(entry.decision.total)}</span> : undefined}
                 status={rowState(entry)}
               />
             ))}
@@ -101,11 +101,15 @@ export function QueueList({ selectedId }: { selectedId: string | null }) {
 
       {queue.challenges.length > 0 ? (
         <Section label="Top work">
-          <ul>
+          <ul className={ROWS}>
             {queue.challenges.map((c) => (
               <li key={c.id}>
-                <Link href={challengeHref(c.id)} className="text-subhead flex min-h-11 items-center gap-2 rounded-[12px] px-3 py-2 text-label transition-colors duration-150 hover:bg-fill/60">
-                  <span className="min-w-0 flex-1 text-pretty">{c.title}</span>
+                <Link
+                  href={challengeHref(c.id)}
+                  title={c.title}
+                  className="press text-body flex min-h-14 items-center gap-3 rounded-[14px] px-4 py-3 text-label transition-colors duration-150 hover:bg-fill/60 min-[900px]:h-12 min-[900px]:min-h-0 min-[900px]:max-w-[34ch] min-[900px]:rounded-full min-[900px]:bg-raised min-[900px]:py-0 min-[900px]:hover:bg-fill"
+                >
+                  <span className="min-w-0 flex-1 text-pretty min-[900px]:truncate">{c.title}</span>
                   <ChevronRight aria-hidden className="size-4 shrink-0 text-label-2" strokeWidth={1.75} />
                 </Link>
               </li>
@@ -117,12 +121,15 @@ export function QueueList({ selectedId }: { selectedId: string | null }) {
   );
 }
 
+/** On a phone a stack of roomy rows; from 900px one line of chips that wraps. */
+const ROWS = "flex flex-col gap-1 min-[900px]:flex-row min-[900px]:flex-wrap min-[900px]:gap-2";
+
 function Section({ label, count, children }: { label: string; count?: number; children: ReactNode }) {
   return (
-    <section className="mt-6" aria-label={label}>
-      <div className="mb-1.5 flex items-baseline gap-2 px-1">
-        <h2 className="text-section text-label">{label}</h2>
-        {count !== undefined ? <span className="text-footnote tnum text-label-2">{count}</span> : null}
+    <section className="mt-10 min-[900px]:mt-0" aria-label={label}>
+      <div className="mb-3 flex items-baseline gap-2 px-1 min-[900px]:px-0">
+        <h2 className="text-section text-label min-[900px]:text-headline">{label}</h2>
+        {count !== undefined ? <span className="text-subhead tnum text-label-2">{count}</span> : null}
       </div>
       {children}
     </section>

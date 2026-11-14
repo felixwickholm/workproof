@@ -12,13 +12,18 @@ interface Props {
   label: string;
   value: Points | undefined;
   onChange: (points: Points) => void;
+  className?: string;
 }
 
+const FIRST = SCORE_LEVELS[0];
+const LAST = SCORE_LEVELS[SCORE_LEVELS.length - 1];
+
 /**
- * The fixed five-step scale as five large segments. Keys 1 to 5 pick a step, arrows move between
- * them. The chosen step's words show under the row, so every reviewer reads the same meaning.
+ * The fixed five-step scale as five large segments, with the words for 1 and 5 under the ends. Keys
+ * 1 to 5 pick a step, arrows move between them. The chosen step's words show under the row, so every
+ * reviewer reads the same meaning.
  */
-export function ScoreScale({ label, value, onChange }: Props) {
+export function ScoreScale({ label, value, onChange, className }: Props) {
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   const level = SCORE_LEVELS.find((l) => l.points === value);
 
@@ -40,8 +45,8 @@ export function ScoreScale({ label, value, onChange }: Props) {
   }
 
   return (
-    <div>
-      <div role="radiogroup" aria-label={label} onKeyDown={onKey} className="grid grid-cols-5 gap-1.5">
+    <div className={className}>
+      <div role="radiogroup" aria-label={label} onKeyDown={onKey} className="grid grid-cols-5 gap-2">
         {SCORE_LEVELS.map((l) => {
           const on = l.points === value;
           return (
@@ -57,7 +62,7 @@ export function ScoreScale({ label, value, onChange }: Props) {
               tabIndex={on || (value === undefined && l.points === 1) ? 0 : -1}
               onClick={() => pick(l.points)}
               className={cx(
-                "tnum h-12 rounded-[12px] text-[17px] font-semibold transition-[background-color,color,transform] duration-150 ease-(--ease-out) active:scale-[0.97]",
+                "tnum h-14 rounded-[14px] text-[20px] font-semibold transition-[background-color,color,transform] duration-150 ease-(--ease-out) active:scale-[0.97]",
                 on ? "bg-label text-ground" : "bg-fill text-label hover:bg-label/12",
               )}
             >
@@ -66,7 +71,11 @@ export function ScoreScale({ label, value, onChange }: Props) {
           );
         })}
       </div>
-      <p aria-live="polite" className="text-footnote mt-2 min-h-[21px] text-pretty">
+      <p aria-hidden className="text-caption mt-2 flex justify-between gap-4 text-label-2">
+        <span>{FIRST.label}</span>
+        <span className="text-right">{LAST.label}</span>
+      </p>
+      <p aria-live="polite" className="text-body mt-3 min-h-[26px] text-pretty">
         {level ? (
           <>
             <span className="font-semibold text-label">{level.label}.</span> <span className="text-label-2">{level.meaning}</span>
