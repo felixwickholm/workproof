@@ -1,65 +1,73 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { PassDetail } from "@/components/seeker/pass-detail";
+import { ownersFrom, PASS_PX, STRIP_PX } from "@/components/seeker/pass-face";
+import { passportCounts } from "@/components/seeker/pass-state";
+import { PassStack } from "@/components/seeker/pass-stack";
+import { NoPasses, usePassStack } from "@/components/seeker/passport-panel";
+import { useSeekerData } from "@/components/seeker/use-seeker-data";
 import { ErrorState } from "@/components/ui/error-state";
 import { riseAt } from "@/components/ui/rise";
 import { Screen } from "@/components/ui/screen";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/client/api";
-import { getTalentId } from "@/lib/client/local";
-import { useResource } from "@/lib/client/use-resource";
-import { ProofPass } from "./proof-pass";
+import type { SeekerHome } from "@/lib/domain/types";
 
+/** Every proof the person handed in, as a wallet of passes, with the pass in front read beside it. */
 export function Passport() {
-  const [talentId] = useState(() => (typeof window === "undefined" ? "" : getTalentId()));
-  const { data, error, loading, retry, reload } = useResource(talentId ? () => api.passport(talentId) : null, [talentId], {
-    pollMs: 5000,
-  });
-
+  const { data, error, loading, retry } = useSeekerData((talentId) => api.seekerHome(talentId));
   return (
-    <Screen title="My proofs" tabs page>
-      {(loading || !talentId) && !data ? (
-        <div aria-busy className="flex flex-col gap-3 min-[900px]:grid min-[900px]:grid-cols-2 min-[900px]:gap-5">
-          <PassSkeleton />
-          <PassSkeleton />
-        </div>
+    <Screen title="Your proof passport" subtitle={data?.passport.length ? "Every proof you handed in. Tap a pass to bring it to the front." : "Every proof you hand in collects here."} page>
+      {loading && !data ? (
+        <PassportSkeleton />
       ) : error && !data ? (
         <ErrorState error={error} what="your proofs" onRetry={retry} />
-      ) : data && data.length === 0 ? (
-        <Card className="rise min-[900px]:max-w-[480px]">
-          <p className="text-headline font-semibold">No proofs yet</p>
-          <p className="text-subhead mt-1 text-label-2">
-            Do a short task. A company sees the work, not your CV.
-          </p>
-          <Button href="/try" size="sm" className="mt-5">
-            Try a 2-minute task
-          </Button>
-        </Card>
-      ) : (
-        <div className="flex flex-col gap-4 min-[900px]:grid min-[900px]:grid-cols-2 min-[900px]:items-start min-[900px]:gap-5">
-          {data?.map((entry, i) => (
-            <div key={entry.proof.proofId} className="rise" style={riseAt(i)}>
-              <ProofPass entry={entry} onChanged={reload} />
-            </div>
-          ))}
+      ) : data && data.passport.length === 0 ? (
+        <div className="min-[900px]:max-w-[560px]">
+          <NoPasses />
         </div>
-      )}
+      ) : data ? (
+        <Wallet home={data} />
+      ) : null}
     </Screen>
   );
 }
 
-function PassSkeleton() {
+function Wallet({ home }: { home: SeekerHome }) {
+  const { entries, front, open, setFront } = usePassStack(home.passport);
+  const ownersOf = ownersFrom(home.tasks);
+  const reviewerOf = (companyName: string) =>
+    open ? home.invitations.find((i) => i.proofId === open.proof.proofId && i.companyName === companyName)?.reviewer : undefined;
+
   return (
-    <div className="rounded-card bg-surface p-5">
-      <div className="flex items-center gap-3">
-        <span className="size-11 rounded-inner bg-raised" />
-        <Skeleton className="h-4 w-24" />
+    <>
+      <p className="rise text-greeting tnum mb-6 text-label min-[900px]:mb-8">{passportCounts(home.passport)}</p>
+      <div className="grid grid-cols-1 gap-x-12 gap-y-6 min-[900px]:grid-cols-[560px_minmax(0,1fr)] min-[900px]:items-start">
+        <div className="rise" style={riseAt(1)}>
+          <PassStack entries={entries} front={front} onFront={setFront} ownersOf={ownersOf} />
+        </div>
+        {open ? (
+          <section aria-label="The pass in front" className="rise rounded-card bg-surface p-5 min-[900px]:sticky min-[900px]:top-9 min-[900px]:p-6" style={riseAt(2)}>
+            <PassDetail key={open.proof.proofId} entry={open} owners={ownersOf(open)} reviewerOf={reviewerOf} />
+          </section>
+        ) : null}
       </div>
-      <Skeleton className="mt-5 h-5 w-60" />
-      <Skeleton className="mt-3 h-3.5 w-40" />
-      <Skeleton className="mt-6 h-11 w-full rounded-inner" />
+    </>
+  );
+}
+
+function PassportSkeleton() {
+  return (
+    <div aria-busy>
+      <Skeleton className="h-9 w-[min(520px,90%)] min-[900px]:h-12" />
+      <div className="mt-6 grid grid-cols-1 gap-x-12 gap-y-6 min-[900px]:mt-8 min-[900px]:grid-cols-[560px_minmax(0,1fr)]">
+        <div className="relative" style={{ height: 2 * STRIP_PX + PASS_PX }}>
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="absolute inset-x-0 rounded-card bg-surface shadow-[0_-1px_0_var(--color-ground)]" style={{ top: i * STRIP_PX, height: PASS_PX }} />
+          ))}
+        </div>
+        <div className="h-[420px] rounded-card bg-surface" />
+      </div>
     </div>
   );
 }
