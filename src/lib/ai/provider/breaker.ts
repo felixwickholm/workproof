@@ -40,10 +40,13 @@ export function createBreaker(now: () => number = Date.now, state: BreakerState 
   };
 }
 
-const holder = globalThis as typeof globalThis & { __workproofProviderPause?: BreakerState };
+const holder = globalThis as typeof globalThis & { __workproofProviderPauses?: Record<string, BreakerState> };
 
-/** The breaker for this server process. Its state lives on globalThis, since each route bundle has its own copy of this module. */
-export function providerBreaker(): Breaker {
-  holder.__workproofProviderPause ??= {};
-  return createBreaker(Date.now, holder.__workproofProviderPause);
+/**
+ * The breaker of one provider in this server process, so a paused Gemini leaves Claude in use. Its state lives
+ * on globalThis, since each route bundle has its own copy of this module.
+ */
+export function providerBreaker(provider = "default"): Breaker {
+  const pauses = (holder.__workproofProviderPauses ??= {});
+  return createBreaker(Date.now, (pauses[provider] ??= {}));
 }

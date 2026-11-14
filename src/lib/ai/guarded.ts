@@ -67,7 +67,8 @@ export function guarded(primary: TaskDesigner, backup?: Backup): TaskDesigner {
 
   async function draft(method: string, call: (d: TaskDesigner) => Promise<ChallengeDraft>): Promise<ChallengeDraft> {
     const { value, by } = await run(method, call, checkDraft);
-    return { ...value, draftedBy: by };
+    // A backup that is itself a chain already says which of its designers wrote the draft.
+    return { ...value, draftedBy: by !== primary.name && value.draftedBy ? value.draftedBy : by };
   }
 
   return {

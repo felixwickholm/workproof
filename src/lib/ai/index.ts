@@ -3,7 +3,7 @@ import { geminiDesigner } from "./gemini/designer";
 import { guarded } from "./guarded";
 import { providerBreaker, type Breaker } from "./provider/breaker";
 import { providerBudget, type CallBudget } from "./provider/budget";
-import { resolveProvider, type ProviderConfig } from "./provider/select";
+import { resolveChain, type LiveConfig, type ProviderConfig } from "./provider/select";
 import { scriptedDesigner } from "./scripted";
 import type { TaskDesigner } from "./task-designer";
 
@@ -15,12 +15,12 @@ type OnFallback = (method: string, error: unknown) => void;
 function warnFallback(provider: string): OnFallback {
   return (method, error) => {
     const reason = error instanceof Error ? error.message.replace(/\s+/g, " ").slice(0, 200) : "unknown error";
-    console.warn(`${provider} ${method} fell back to the scripted designer: ${reason}`);
+    console.warn(`${provider} ${method} fell back to the next designer: ${reason}`);
   };
 }
 
 /** The unguarded model designer for a live provider. */
-export function modelDesignerFor(config: Exclude<ProviderConfig, { provider: "scripted" }>): TaskDesigner {
+export function modelDesignerFor(config: LiveConfig): TaskDesigner {
   return config.provider === "claude" ? claudeDesigner(config.apiKey, config.model) : geminiDesigner(config.apiKey, config.model);
 }
 
@@ -32,17 +32,26 @@ export function modelDesignerFor(config: Exclude<ProviderConfig, { provider: "sc
 export function createDesigner(
   config: ProviderConfig,
   onFallback: OnFallback = warnFallback(config.provider),
-  breaker: Breaker = providerBreaker(),
+  breaker: Breaker = providerBreaker(config.provider),
   budget: CallBudget = providerBudget(),
+  next: TaskDesigner = guarded(scriptedDesigner),
 ): TaskDesigner {
   if (config.provider === "scripted") return guarded(scriptedDesigner);
-  return guarded(modelDesignerFor(config), { designer: scriptedDesigner, onFallback, breaker, budget });
+  return guarded(modelDesignerFor(config), { designer: next, onFallback, breaker, budget });
 }
 
 /**
- * The scripted designer runs by default. A key in the environment switches a model on with no code change:
- * ANTHROPIC_API_KEY for Claude, GEMINI_API_KEY or GOOGLE_API_KEY for Gemini, AI_PROVIDER to choose.
+ * Every live model in order, each falling back to the next, and the scripted designer last, so a draft always comes back.
+ * Each model has its own breaker; all share one budget of live calls.
+ */
+export function createChain(chain: readonly LiveConfig[]): TaskDesigner {
+  return chain.reduceRight<TaskDesigner>((next, config) => createDesigner(config, undefined, undefined, undefined, next), guarded(scriptedDesigner));
+}
+
+/**
+ * The scripted designer runs when no key is set. A key in the environment switches a model on with no code change:
+ * GEMINI_API_KEY or GOOGLE_API_KEY for Gemini, ANTHROPIC_API_KEY for Claude, AI_PROVIDER to put one first.
  */
 export function getTaskDesigner(): TaskDesigner {
-  return createDesigner(resolveProvider(process.env));
+  return createChain(resolveChain(process.env));
 }

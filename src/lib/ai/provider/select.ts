@@ -8,9 +8,8 @@ export type ProviderName = DraftedBy;
 
 const DEFAULT_MODELS = { claude: "claude-opus-5-5", gemini: "gemini-3.8-flash" } as const;
 
-export type ProviderConfig =
-  | { provider: "scripted" }
-  | { provider: "claude" | "gemini"; apiKey: string; model: string };
+export type LiveConfig = { provider: "claude" | "gemini"; apiKey: string; model: string };
+export type ProviderConfig = { provider: "scripted" } | LiveConfig;
 
 /** What the UI badge shows. Never carries a key or a provider's own error message. */
 export interface AiStatus {
@@ -30,40 +29,44 @@ function read(env: Env, name: string): string | undefined {
   return env[name]?.trim() || undefined;
 }
 
-function live(provider: "claude" | "gemini", apiKey: string | undefined, env: Env): ProviderConfig | undefined {
+function live(provider: "claude" | "gemini", apiKey: string | undefined, env: Env): LiveConfig | undefined {
   if (!apiKey) return undefined;
   const model = read(env, provider === "claude" ? "ANTHROPIC_MODEL" : "GEMINI_MODEL") ?? DEFAULT_MODELS[provider];
   return { provider, apiKey, model };
 }
 
 /**
- * `AI_PROVIDER` forces one designer; a forced model without its key stays scripted.
- * Otherwise the first key found wins, Claude before Gemini. No key means scripted.
+ * The live models in the order they are tried; the scripted designer always answers after the last one.
+ * Gemini comes first, then Claude. `AI_PROVIDER` puts its model first, or "scripted" turns the live models off.
  */
-export function resolveProvider(env: Env): ProviderConfig {
+export function resolveChain(env: Env): LiveConfig[] {
   const claude = live("claude", read(env, "ANTHROPIC_API_KEY"), env);
   const gemini = live("gemini", read(env, "GEMINI_API_KEY") ?? read(env, "GOOGLE_API_KEY"), env);
-  const scripted: ProviderConfig = { provider: "scripted" };
-  switch (read(env, "AI_PROVIDER")?.toLowerCase()) {
-    case "scripted":
-      return scripted;
-    case "claude":
-      return claude ?? scripted;
-    case "gemini":
-      return gemini ?? scripted;
-    default:
-      return claude ?? gemini ?? scripted;
-  }
+  const forced = read(env, "AI_PROVIDER")?.toLowerCase();
+  if (forced === "scripted") return [];
+  const order = forced === "claude" ? [claude, gemini] : [gemini, claude];
+  return order.filter((c): c is LiveConfig => c !== undefined);
 }
 
-export function statusOf(config: ProviderConfig, breaker: Breaker = providerBreaker()): AiStatus {
+/** The first designer of the chain: the model that drafts when it answers. */
+export function resolveProvider(env: Env): ProviderConfig {
+  return resolveChain(env)[0] ?? { provider: "scripted" };
+}
+
+export function statusOf(config: ProviderConfig, breaker: Breaker = providerBreaker(config.provider)): AiStatus {
   if (config.provider === "scripted") return { provider: "scripted", live: false };
   const pause = breaker.pause();
   if (pause) return { provider: config.provider, model: config.model, live: false, pausedUntil: pause.until, pauseReason: pause.reason };
   return { provider: config.provider, model: config.model, live: true };
 }
 
-/** The active designer for the badge and `GET /api/ai/status`. */
-export function aiStatus(env: Env = process.env, breaker: Breaker = providerBreaker()): AiStatus {
-  return statusOf(resolveProvider(env), breaker);
+/**
+ * The active designer for the badge and `GET /api/ai/status`: the first model of the chain that is not paused,
+ * or the first model's pause when every model is paused.
+ */
+export function aiStatus(env: Env = process.env, breakerOf: (provider: ProviderName) => Breaker = providerBreaker): AiStatus {
+  const chain = resolveChain(env);
+  if (chain.length === 0) return { provider: "scripted", live: false };
+  const statuses = chain.map((config) => statusOf(config, breakerOf(config.provider)));
+  return statuses.find((s) => s.live) ?? statuses[0];
 }
