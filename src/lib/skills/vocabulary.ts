@@ -435,6 +435,30 @@ export const SKILLS = {
     lookFor: "Names what could go wrong and how the team would catch it early, for example a person checking the first weeks.",
     synonyms: ["sees the risk", "spots risks", "what could go wrong", "riskien tunnistaminen"],
   },
+  "finds-confusion": {
+    label: "Finds what confuses people",
+    why: "People who get stuck on a form rarely complain. They phone, or they buy somewhere else.",
+    lookFor: "Walks the work as a busy first-time user and names the exact places where people get stuck.",
+    synonyms: ["finds what confuses people", "what confuses people", "usability problems", "usability", "käytettävyys"],
+  },
+  "simple-design": {
+    label: "Simple and clear design",
+    why: "Every extra field and every unclear word costs a customer time.",
+    lookFor: "Removes or merges steps, puts what matters first and uses words the customer already knows.",
+    synonyms: ["simple and clear design", "simple, clear design", "clear design", "simple design", "selkeä ulkoasu"],
+  },
+  "explains-choice": {
+    label: "Explains the choice",
+    why: "The team that builds the change has to know why each part of it matters.",
+    lookFor: "Gives one short reason for each change, tied to a problem in the material.",
+    synonyms: ["explains the choice", "explains choices", "explains why", "design rationale", "perustelee"],
+  },
+  "customer-focus": {
+    label: "Thinks of the customer",
+    why: "The person on the other side is busy and has other work to do.",
+    lookFor: "Describes the change from the customer's side: what they see, what they no longer have to do.",
+    synonyms: ["thinks of the customer", "customer focus", "customer first", "customer-centred", "asiakaslähtöisyys"],
+  },
   "mixed-level-teaching": {
     label: "Teaching mixed levels",
     why: "In one class some pupils are two years ahead and some are new to the language. A lesson start has to reach all of them.",

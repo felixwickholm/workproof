@@ -6,7 +6,7 @@ import type { SeedChallengeKey } from "./challenges";
  * seeded challenge does not type-check until it has roles.
  */
 export const SEED_ROLES: Record<SeedChallengeKey, readonly JobRole[]> = {
-  "halla-automate": ["ai-developer", "software-engineer"],
+  "halla-order-form": ["designer"],
   "saarnivo-chart": ["data-analyst", "ai-developer"],
   "saarnivo-budget": ["financial-analyst", "data-analyst"],
   "tuulos-ml": ["ai-developer", "software-engineer"],
@@ -38,5 +38,5 @@ export const SEED_ROLES: Record<SeedChallengeKey, readonly JobRole[]> = {
   "kivira-checkout": ["software-engineer", "designer"],
 };
 
-/** The demo person, Mikko, is an AI developer: his roles are chosen until the visitor picks their own. */
-export const PERSONA_ROLES: readonly JobRole[] = ["ai-developer"];
+/** The demo person, Mikko, is a designer: his roles are chosen until the visitor picks their own. */
+export const PERSONA_ROLES: readonly JobRole[] = ["designer"];

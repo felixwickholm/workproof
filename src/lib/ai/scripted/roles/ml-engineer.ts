@@ -28,7 +28,7 @@ export const mlEngineer: RoleTemplate = {
   ],
   challenge: {
     minutes: 10,
-    title: "Find the bug in this model test",
+    title: "Find the mistake in a robot's AI test",
     format: "fix",
     proofKind: "code",
     brief:

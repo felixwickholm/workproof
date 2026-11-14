@@ -12,7 +12,7 @@ import { COMPANIES, companyName, REVIEWERS } from "./companies";
 import type { SeedTask } from "./extra-challenges";
 import { mikkoHistory } from "./history";
 import { PEOPLE, PERSONA } from "./people";
-import { AUTOMATION_PROOFS } from "./proofs/automation";
+import { ORDER_FORM_PROOFS } from "./proofs/order-form";
 import { CHIP_PROOFS } from "./proofs/chip";
 import { DATA_PROOFS } from "./proofs/data";
 import { ENGINEERING_PROOFS } from "./proofs/engineering";
@@ -39,7 +39,7 @@ import { seedWriter } from "./writer";
 
 /** Everyone else's work at the event. The same at every story stage. */
 export const WORLD_PROOFS: readonly SeedProof[] = [
-  ...AUTOMATION_PROOFS,
+  ...ORDER_FORM_PROOFS,
   ...DATA_PROOFS,
   ...FINANCE_PROOFS,
   ...LEGAL_AND_SALES_PROOFS,

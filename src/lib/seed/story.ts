@@ -10,16 +10,16 @@ export function stageReached(stage: StoryStage, at: StoryStage): boolean {
 
 /** The story proof. Its id gives the label "Proof K7", which the tour and the landing page use. */
 export const STORY_PROOF_ID = "proof_story_halla_82";
-export const STORY_CHALLENGE_ID = "ch-halla-automate";
+export const STORY_CHALLENGE_ID = "ch-halla-order-form";
 export const STORY_COMPANY_ID = "co-halla";
-/** The finance and AI lead at Halla Supply who scores the story proof and invites Mikko. */
+/** The customer service lead at Halla Supply who scores the story proof and invites Mikko. */
 export const STORY_REVIEWER = "Laura Niemi";
 
 /** Mikko's earlier feature-list cut, answered "not now" with points and a reason. */
 export const MIKKO_EARLIER_ID = "proof_story_product";
 
 /**
- * Mikko Lahtinen is an AI developer with two years of freelance automation work. He has no big employer
+ * Mikko Lahtinen is a designer with two years of freelance web work. He has no big employer
  * and no famous school behind him, and 40 applications got no interview. His earlier proofs: a feature-list cut
  * that got "not now" with points and a reason, and a chart reading that waits for an answer.
  */
@@ -80,26 +80,28 @@ export const MIKKO_EARLIER: SeedProof[] = [
 export const MIKKO_STORY: SeedProof = {
   id: STORY_PROOF_ID,
   person: "mikko",
-  challenge: "halla-automate",
+  challenge: "halla-order-form",
   hoursAgo: 0.92,
   shareWithSimilar: true,
   answer: [
-    "Automate the invoices first.",
-    "900 a month at two minutes each is about 30 hours of typing, and about 18 have a typo. The rule is the same every time: one delivery note, one invoice.",
-    "Not the support chatbot first. Its mistakes go straight to customers, and it needs clean order data anyway.",
-    "Week 1: read 200 old delivery notes with a text reader and match them to the order system. Week 2: the tool drafts the invoices, and a person approves each one.",
-    "Risk: a wrong amount or the wrong customer. For the first month a person approves every invoice, and we compare the totals each week.",
-    "Last spring I built the same flow for Kotiranta Oy. I live in Matinkylä and studied at Metropolia.",
+    "Put the whole order on one page that works on a phone.",
+    "1. Find parts by pump model, with a picture of each part. Installers know the model, not our codes.",
+    "2. Remember the address and the customer number after the first order. Nobody should type them twice.",
+    "3. Show the delivery price next to each choice, so there is no surprise on the next page.",
+    "4. Make Order reference optional and say what it is: your own job number, if you have one.",
+    "5. After sending, show the order number and delivery date, and email them. That answers most of the 40 calls a day.",
+    "6. Add Order the same again, because installers often need the same part twice.",
+    "Last spring I redesigned the order page for Kotiranta Oy. I live in Matinkylä and studied at Metropolia.",
     "Mikko Lahtinen",
   ].join("\n"),
   thinkAloud: {
     transcript:
-      "Okay. Three things to choose from. Support emails, four hundred a week, that's the biggest number, so a chatbot, right? That's what everyone wants. Hmm, no, wait. If the bot gives a wrong delivery date, the customer sees it right away. Let me count the invoices. Nine hundred a month, two minutes each, that's thirty hours. One in fifty has a typo, so eighteen wrong invoices a month. And it's the same rule every time. A person can check them before they go out. Okay, invoices first. The report is only four hours a week, and the product names don't match, so that's a cleaning job. Later.",
+      "Okay. An order form for installers. Four steps. Step one, customer number from the invoice. Hmm, who has an invoice in a van? Step two, product code. That's the big one, they say it themselves, they know the pump model, not the code. So search by model, with pictures. Step three, the address every time. Just save it. Prices on the next page, that's annoying, show them right there. Order reference, required, no help. I'd make it optional. And after send, no order number. Wait, that's the forty calls a day. So the confirmation matters most, actually. One page, on a phone. Okay, let me write it down.",
     seconds: 540,
   },
   explainAnswers: [
-    "The invoices first, because a mistake there can be caught before it leaves the building.",
-    "Then I would start with the notes that are typed, and keep the photos for week 3.",
+    "The order number and the delivery date first, because that is what the 40 calls a day ask about.",
+    "Then I would keep the search by pump model and the confirmation, and leave the rest for next month.",
   ],
   spokenFollowUps: true,
 };
@@ -109,7 +111,8 @@ export const STORY_DECISION: Omit<SeedDecision, "hoursToReply"> & { hoursAgo: nu
   companyId: STORY_COMPANY_ID,
   kind: "meet",
   points: [5, 5, 4, 4],
-  feedback: "You picked the invoices, not the chatbot, and you said why. Your two-week plan is one we could start on Monday.",
+  feedback:
+    "You found the three places where installers give up, and your form is shorter, not busier. Search by pump model and a clear order number are changes we could build this month.",
   hoursAgo: 0.5,
 };
 

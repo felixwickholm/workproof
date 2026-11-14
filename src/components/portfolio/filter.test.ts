@@ -14,7 +14,7 @@ const card = (
   taskTitle: title,
   format,
   skills: skills.map((s) => ({ id: s, label: s })),
-  answer: "Automate the invoices first.",
+  answer: "Find parts by pump model first.",
   submittedAt: "2026-11-14T10:00:00Z",
   responses: [],
 });
@@ -58,7 +58,7 @@ describe("filterCards", () => {
       ),
     ).toEqual(["b"]);
     expect(
-      filterCards(cards, { ...NO_FILTER, text: "invoices halla" }),
+      filterCards(cards, { ...NO_FILTER, text: "pump halla" }),
     ).toHaveLength(3);
   });
 });

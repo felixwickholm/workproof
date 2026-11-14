@@ -50,7 +50,7 @@ Checked on 2026-11-14 with `npm run evidence`: 2024 of 2024 unit tests and 64 of
 <!-- checks:end -->
 End to end (`npm run eval:e2e` on a production build): 150 of 150 steps, 14 November 2026.
 
-<img src="docs/images/hero-light.png" alt="Job seeker home, where the app opens: Hi Mikko. What work do you want?, the role chips with AI developer chosen, the company and time filters, and the first AI developer challenges as listings with company logos" width="100%">
+<img src="docs/images/hero-light.png" alt="Job seeker home, where the app opens: Hi Mikko. What work do you want?, the role chips with Designer chosen, the company and time filters, and the first Designer challenges as listings with company logos" width="100%">
 
 **Do a real challenge. A person at the company scores your work; the AI never scores.** The app opens on the Job seeker home; there is no landing page. Made for Espoo's talent events for business and tech people. Built for the City of Espoo challenge, Junction 2026. Demo data. All people and companies are invented.
 
@@ -208,33 +208,33 @@ The person thinks aloud while working, with no camera; only the text is kept. A 
 
 | Company | Challenges |
 |---|---|
-| Halla Supply | What should we automate first? (Mikko's story, Make) |
+| Halla Supply | Make our order form easier to use (Mikko's story, Make) |
 | Saarnivo Grid | Read this chart. What must the team know? (Read); One number in this budget is wrong. Find it (Fix) |
 | Vesto Controls and Saarnivo Grid | Two customers want the same engineer. Who waits? (Choose) |
-| Tuulos Robotics | Find the bug in this model test (Fix); Make a pick robot stop safely (Fix) |
+| Tuulos Robotics | Find the mistake in a robot's AI test (Fix); Make a warehouse robot stop safely (Fix) |
 | Tuulos Robotics and Kuulas Studio | Cut this feature list to two weeks of work (Make) |
 | Kuulas Studio | Make this booking screen easier. Change three things (Make) |
 | Kivira Labs | One clause puts us at risk. Find it (Fix); Make a payment form work for everyone (Fix) |
-| Harjula Engineering | Sketch how to hold up this wall opening (Make) |
-| Kide Silicon | Which path fails in this timing report? (Read; made by the city from the job ad) |
+| Harjula Engineering | Sketch a safe new door opening in this wall (Make) |
+| Kide Silicon | Which part of this chip is too slow? (Read; made by the city from the job ad) |
 | Revontuli Games | Which video will more people share? (Choose); Find where players quit level 12 (Read) |
 | Hohka Materials | Does this table support the claim? (Read) |
-| Lumo Data | Check a churn model before the client sees it (Read); Test a store assistant's answers (Fix) |
-| Kajo Health | Simplify the nurse's visit screen (Make); Spot the risks in a visit-notes change (Fix) |
+| Lumo Data | Check a forecast of which customers will leave (Read); Test a shop chatbot's answers (Fix) |
+| Kajo Health | Simplify the nurse's visit screen (Make); Spot the risks in a change to nurses' notes (Fix) |
 | Routa Freight | Find why deliveries run late on Tuesdays (Read); Choose the next feature for van drivers (Choose) |
-| Sointu Legal | Review a data processing agreement (Fix) |
+| Sointu Legal | Check a contract about customer data (Fix) |
 | Paju People | Read a staff survey and pick one action (Read); Plan the launch email for a new feature (Make) |
-| Kaste Water | Find why a water sensor drifts (Read); Pick which pilot to fund this spring (Choose) |
-| Kuura Capital | Fix a cash-flow forecast before a loan decision (Fix); Find the risks in a new login flow (Read) |
-| Pilvi Works | Write up last night's outage for the customer (Read); Cut a cloud bill without losing uptime (Choose) |
+| Kaste Water | Find why a water sensor slowly goes wrong (Read); Pick which pilot to fund this spring (Choose) |
+| Kuura Capital | Fix a cash forecast before a bank loan (Fix); Find the risks in a new login screen (Read) |
+| Pilvi Works | Explain last night's service outage to the customer (Read); Cut server costs without the service going down (Choose) |
 
-Eighteen take 10 minutes, eight take 12, three take 15 and one takes 8. Five sample job ads for these companies are at `/ads/[slug]`; on `/company`, press one under "Try a sample ad" to see an ad become a draft. Without an AI key the built-in designer still drafts: 49 professions have their own task today; any other gets the nearest one or a general planning task.
+Eighteen take 10 minutes, eight take 12, three take 15 and one takes 8. Five sample job ads for these companies are at `/ads/[slug]`; on `/company`, press one under "Try a sample ad" to see an ad become a draft. Without an AI key the built-in designer still drafts: 50 professions have their own task today; any other gets the nearest one or a general planning task.
 
 | | | |
 |---|---|---|
-| <img src="docs/images/seeker.png" alt="Job seeker: Halla Supply's challenge What should we automate first? as a listing, with the company logo, the picture of the work, the company facts and See my work, since Mikko did it" width="100%"> | <img src="docs/images/employer.png" alt="Company: Laura Niemi's view of Halla Supply, with 6 people who did the challenge, 3 waiting for a score and the top score of 9.0" width="100%"> | <img src="docs/images/city.png" alt="City of Espoo: the graph from challenge to hire (76 took a challenge, 46 scored, 17 invited, 10 said yes, 6 talked, 5 follow-ups, 3 hired) and the work scored or waiting per company" width="100%"> |
+| <img src="docs/images/seeker.png" alt="Job seeker: Halla Supply's challenge Make our order form easier to use as a listing, with the company logo, the picture of the work, the company facts and See my work, since Mikko did it" width="100%"> | <img src="docs/images/employer.png" alt="Company: Laura Niemi's view of Halla Supply, with 6 people who did the challenge, 3 waiting for a score and the top score of 9.0" width="100%"> | <img src="docs/images/city.png" alt="City of Espoo: the graph from challenge to hire (76 took a challenge, 46 scored, 17 invited, 10 said yes, 6 talked, 5 follow-ups, 3 hired) and the work scored or waiting per company" width="100%"> |
 | Job seeker: a challenge | Company: my challenges | City of Espoo |
-| <img src="docs/images/top-work.png" alt="Top work for What should we automate first?: each piece of work with Laura Niemi's total out of 10 and points per skill; Work K7 is invited and its name stays hidden until the person says yes" width="100%"> | <img src="docs/images/review.png" alt="Score work: Work K7 with personal details shown as hidden, Laura Niemi's points per skill, her total of 9.0 of 10 and her words to the person" width="100%"> | <img src="docs/images/my-work-phone.png" alt="My work on a phone: Mikko's invite from Laura Niemi at Halla Supply with her words, the meeting slot and his score of 9.0 of 10 per skill" width="60%"> |
+| <img src="docs/images/top-work.png" alt="Top work for Make our order form easier to use: each piece of work with Laura Niemi's total out of 10 and points per skill; Work K7 is invited and its name stays hidden until the person says yes" width="100%"> | <img src="docs/images/review.png" alt="Score work: Work K7 with personal details shown as hidden, Laura Niemi's points per skill, her total of 9.0 of 10 and her words to the person" width="100%"> | <img src="docs/images/my-work-phone.png" alt="My work on a phone: Mikko's invite from Laura Niemi at Halla Supply with her words, the meeting slot and his score of 9.0 of 10 per skill" width="60%"> |
 | Top work | Score work | My work on a phone |
 
 <img src="docs/images/hero-dark.png" alt="Job seeker home in the dark theme: the greeting, the role chips and the first challenges" width="100%">

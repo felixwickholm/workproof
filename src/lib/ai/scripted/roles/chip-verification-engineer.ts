@@ -34,7 +34,7 @@ export const chipVerificationEngineer: RoleTemplate = {
   ],
   challenge: {
     minutes: 15,
-    title: "Which path fails in this timing report?",
+    title: "Which part of this chip is too slow?",
     format: "read",
     proofKind: "writing",
     brief:

@@ -292,10 +292,10 @@ describe("Mikko's story", () => {
     expect(storyMeeting(met)).toMatchObject({ status: "met", followUpAgreed: true, companyId: STORY_COMPANY_ID });
   });
 
-  it("scores her answer 9 of 10, by the finance and AI lead, with the reason the tour quotes", () => {
+  it("scores his answer 9 of 10, by the customer service lead, with the reason the tour quotes", () => {
     const decision = stages[2].data.decisions.find((d) => d.proofId === STORY_PROOF_ID);
     expect(decision).toMatchObject({ reviewer: STORY_REVIEWER, decision: "meet", total: 9 });
-    expect(decision?.feedback).toBe("You picked the invoices, not the chatbot, and you said why. Your two-week plan is one we could start on Monday.");
+    expect(decision?.feedback).toBe("You found the three places where installers give up, and your form is shorter, not busier. Search by pump model and a clear order number are changes we could build this month.");
   });
 
   it("gives Mikko two earlier proofs at every stage: one answered not now with points, one waiting", () => {
@@ -326,8 +326,8 @@ describe("Mikko's story", () => {
     expect(blind).not.toHaveProperty("hiddenCount");
     const shown = collectText(blind).join("\n");
     for (const planted of ["Mikko", "Lahtinen", "Matinkylä", "Metropolia", "Kotiranta", "mikko.lahtinen"]) expect(shown).not.toContain(planted);
-    expect(shown).toContain("invoices");
-    expect(blind.thinkAloud?.transcript).toContain("chatbot");
+    expect(shown).toContain("pump model");
+    expect(blind.thinkAloud?.transcript).toContain("forty calls");
     expect(blind.explain[0].spoken).toBe(true);
   });
 });

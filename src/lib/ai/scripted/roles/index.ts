@@ -48,6 +48,7 @@ import { researchScientist } from "./research-scientist";
 import { renovationWorker } from "./tiler";
 import { uxDesigner } from "./ux-designer";
 import { warehouseWorker } from "./warehouse-worker";
+import { webDesigner } from "./web-designer";
 
 /**
  * The task library. Practice tasks on /try accept any job, so the library also keeps jobs that need no
@@ -104,4 +105,5 @@ export const ROLES: readonly RoleTemplate[] = [
   researchScientist,
   chipVerificationEngineer,
   automationDeveloper,
+  webDesigner,
 ];

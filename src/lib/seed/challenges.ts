@@ -9,10 +9,10 @@ import { EXTRA_CHALLENGES } from "./extra-challenges";
  */
 const FIRST_CHALLENGES = [
   {
-    key: "halla-automate",
+    key: "halla-order-form",
     companyIds: ["co-halla"],
     daysBeforeEvent: 3,
-    need: "AI developer: picks what matters, practical plan, sees the risk, clear writing",
+    need: "Designer for our order form: finds what confuses people, simple and clear design, explains the choice, thinks of the customer",
   },
   {
     key: "saarnivo-chart",
