@@ -15,7 +15,7 @@ export const NAME = "WorkProof";
 export const SUMMARY = `WorkProof is for City of Espoo talent events. Companies see real work and score it; the AI never scores. A professional does a short real task from an Espoo company. A named person at the company scores the work from 1 to 5 on each of the task's skills, writes a reason, and chooses Meet or Not now. As a safeguard, the name stays hidden until the professional accepts. Tested: ${FIGURES.plantedReached} planted identity details reached a reviewer.`;
 
 /** The demo event at its default story stage, as the seed builds it (src/lib/seed). */
-export const DEMO_EVENT = { employers: 18, tasks: 30, proofs: 76 } as const;
+export const DEMO_EVENT = { employers: 28, tasks: 40, proofs: 80 } as const;
 
 export const ONE_LINE = "Do a real challenge. A person at the company scores your work; the AI never scores.";
 
@@ -37,7 +37,7 @@ export const KEY_FACTS: readonly string[] = [
   "AI drafts tasks and two follow-up questions. WorkProof has no automated decision feature; each decision carries a reviewer's name and a written reason.",
   `${HIDING_LINE} ${MODEL_INPUT_LINE}`,
   "Made for Espoo's talent events for business and tech people.",
-  `Four formats: Choose, Make, Fix, Read. The demo event has 30 challenges from 18 companies. Without an AI key the built-in designer still drafts: ${ROLES.length} professions have their own task today; any other gets the nearest one or a general planning task.`,
+  `Four formats: Choose, Make, Fix, Read. The demo event has 40 challenges from 28 companies. Without an AI key the built-in designer still drafts: ${ROLES.length} professions have their own task today; any other gets the nearest one or a general planning task.`,
   "No decision without a reason: every recorded decision carries a written reason, and unanswered work stays visible to the city. Nothing forces an employer to decide.",
   `Checked on ${VERIFIED_ON}: ${UNIT_TESTS.passed} of ${UNIT_TESTS.tests} unit tests pass (${UNIT_TESTS.command}); ${EVAL_TESTS.passed} of ${EVAL_TESTS.tests} eval tests pass (${EVAL_TESTS.command}).`,
 ];
@@ -77,7 +77,7 @@ export const CODE_MAP: readonly CodePath[] = [
   { path: "src/lib/matching/second-look.ts", what: "Second look: compares tasks by shared core skills, never people" },
   { path: "src/lib/voice", what: "Voice input: Web Speech API, ElevenLabs or typed; WorkProof stores only the transcript" },
   { path: "src/lib/store", what: "In-memory store and a private demo copy (sandbox) per visitor" },
-  { path: "src/lib/seed", what: "The synthetic event: 18 employers, 30 challenges, 76 pieces of work from 46 people, the scores and decisions" },
+  { path: "src/lib/seed", what: "The synthetic event: 28 employers, 40 challenges, 80 pieces of work from 46 people, the scores and decisions" },
   { path: "evals", what: "Eval suites: task generator, blind review, no automated decisions, privacy, flow, story" },
 ];
 
@@ -214,7 +214,7 @@ export const BOOTH = {
     'On 13 November we asked City of Espoo staff if companies could judge people on a short work task. They had thought of something similar "on a smaller scale" and named three risks. Our answers:',
   answers: [
     { risk: "A company hires only a few.", answer: "With consent, one proof can reach a second employer with the same core skills (Second look), after 48 hours without an answer or after a Not now." },
-    { risk: "Friction must stay low.", answer: "No login and no account. The demo challenges take 8 to 15 minutes. The stated length is capped at 30." },
+    { risk: "Friction must stay low.", answer: "No login and no account. The demo challenges take 8 to 30 minutes. The stated length is capped at 30." },
     { risk: "AI can do the task.", answer: "AI is allowed. Two follow-up questions ask about the person's own choices, and the meeting starts from the work." },
   ],
 } as const;
@@ -279,7 +279,7 @@ export const AUDIENCES: readonly { who: string; mode: string; path: string; does
     who: "Professionals looking for work",
     mode: "Job seeker",
     path: "/",
-    does: "Pick a challenge from an Espoo company, do it in 8 to 15 minutes while thinking aloud, see what the company will read, answer two follow-up questions, then accept or decline an invitation. A declined company never sees the name.",
+    does: "Pick a challenge from an Espoo company, do it in 8 to 30 minutes while thinking aloud, see what the company will read, answer two follow-up questions, then accept or decline an invitation. A declined company never sees the name.",
   },
   {
     who: "Companies hiring at the event",
@@ -371,4 +371,4 @@ export const PRIVACY: readonly string[] = [
 ];
 
 export const SYNTHETIC =
-  'Every person, company, task, proof and decision in the demo is invented, including Mikko Lahtinen and the 18 employers of "Espoo Talent Day". Email addresses use example.org and phone numbers are placeholders. Any likeness to a real person or company is accidental. The seed is in src/lib/seed.';
+  'Every person, company, task, proof and decision in the demo is invented, including Mikko Lahtinen and the 28 employers of "Espoo Talent Day". Email addresses use example.org and phone numbers are placeholders. Any likeness to a real person or company is accidental. The seed is in src/lib/seed.';
