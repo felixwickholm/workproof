@@ -34,14 +34,23 @@ export function normaliseShareCode(value: string | null | undefined): string | u
   return code && CODE.test(code) ? code : undefined;
 }
 
-/** Cookie settings for the sandbox key: never readable by page scripts. */
-export function sandboxCookie(id: string) {
+/** True when the visitor reached the site over HTTPS, directly or through a proxy that says so. */
+export function isSecureRequest(request: Request): boolean {
+  const forwarded = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
+  return (forwarded ?? new URL(request.url).protocol.replace(":", "")) === "https";
+}
+
+/**
+ * Cookie settings for the sandbox key: never readable by page scripts. `secure` follows the request,
+ * because a browser drops a Secure cookie on plain HTTP, which a demo on a local network uses.
+ */
+export function sandboxCookie(id: string, secure: boolean) {
   return {
     name: SANDBOX_COOKIE,
     value: id,
     httpOnly: true,
     sameSite: "lax" as const,
-    secure: process.env.NODE_ENV === "production",
+    secure,
     path: "/",
     maxAge: SANDBOX_LIFETIME_MS / 1000,
   };

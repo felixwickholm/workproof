@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { isSandboxId, newSandboxId, SANDBOX_COOKIE, sandboxCookie } from "@/lib/store/cookie";
+import { isSandboxId, isSecureRequest, newSandboxId, SANDBOX_COOKIE, sandboxCookie } from "@/lib/store/cookie";
 
 const JOIN_PATH = "/api/demo/join";
 
@@ -29,7 +29,7 @@ export function proxy(request: NextRequest) {
   const others = (headers.get("cookie") ?? "").split(";").map((part) => part.trim()).filter((part) => part && !part.startsWith(`${SANDBOX_COOKIE}=`));
   headers.set("cookie", [...others, `${SANDBOX_COOKIE}=${id}`].join("; "));
   const response = NextResponse.next({ request: { headers } });
-  response.cookies.set(sandboxCookie(id));
+  response.cookies.set(sandboxCookie(id, isSecureRequest(request)));
   return response;
 }
 

@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { normaliseShareCode, sandboxCookie } from "@/lib/store/cookie";
+import { isSecureRequest, normaliseShareCode, sandboxCookie } from "@/lib/store/cookie";
 import { sandboxes } from "@/lib/store";
 
 /** Only a path on this site, so the link cannot send a visitor elsewhere. */
@@ -18,6 +18,6 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const code = normaliseShareCode(url.searchParams.get("code"));
   const sandbox = code ? sandboxes().byCode(code, Date.now()) : undefined;
-  if (sandbox) (await cookies()).set(sandboxCookie(sandbox.id));
+  if (sandbox) (await cookies()).set(sandboxCookie(sandbox.id, isSecureRequest(request)));
   return Response.redirect(backTo(url.searchParams.get("to"), request), 303);
 }
