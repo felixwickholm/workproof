@@ -5,7 +5,7 @@ export const fullStackEngineer: RoleTemplate = {
   title: "Full-stack engineer",
   keywords: [
     "full-stack", "full stack", "fullstack", "software engineer", "software developer",
-    "web application", "ohjelmistokehittäjä", "ohjelmistoinsinööri", "sovelluskehittäjä", "koodari",
+    "web application", "ohjelmistokehittäjä", "ohjelmistoinsinööri", "sovelluskehittäjä", "koodari", "programmer", "ohjelmoija",
   ],
   skills: ["code-review", "security-thinking", "data-modelling", "api-design", "testing"],
   why: {
@@ -25,6 +25,7 @@ export const fullStackEngineer: RoleTemplate = {
   challenge: {
     title: "Review an AI-written booking feature",
     format: "review",
+    proofKind: "code",
     brief:
       "Customers book a time slot to pick up equipment. A teammate wrote the booking handler with an AI assistant. It works when one person books at a time. On launch days, many people try to book the same slots within minutes. Please review it before we release it.",
     material: {
@@ -71,6 +72,7 @@ export const fullStackEngineer: RoleTemplate = {
   taster: {
     title: "Spot the problem in a login check",
     format: "review",
+    proofKind: "code",
     brief: "An AI assistant wrote this check for a staff page.",
     material: {
       kind: "code",

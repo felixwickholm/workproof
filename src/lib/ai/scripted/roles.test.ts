@@ -10,8 +10,8 @@ const lines = (body: string) => body.split("\n").length;
 const words = (text: string) => text.trim().split(/\s+/).length;
 
 describe("role library", () => {
-  it("has at least 20 roles with unique ids", () => {
-    expect(ROLES.length).toBeGreaterThanOrEqual(20);
+  it("has at least 36 roles with unique ids", () => {
+    expect(ROLES.length).toBeGreaterThanOrEqual(36);
     expect(new Set(ROLES.map((r) => r.id)).size).toBe(ROLES.length);
   });
 
@@ -35,6 +35,12 @@ describe("role library", () => {
         expect(lines(role.taster.material.body)).toBeLessThanOrEqual(10);
         expect(role.taster.flaws.length).toBe(1);
         expect(role.taster.deliverable.endsWith("?")).toBe(true);
+      });
+
+      it("always accepts words when it asks for a picture, a clip or a voice answer", () => {
+        for (const task of [role.challenge, role.taster]) {
+          if (["photo", "video", "design", "voice"].includes(task.proofKind)) expect(task.deliverable).toMatch(/\b(?:words|write|written|describe|tell)\b/i);
+        }
       });
 
       it("has constraints that read as an if-clause", () => {
@@ -63,6 +69,22 @@ describe("matchRole", () => {
     ["Senior backend developer, Node.js", "backend"],
     ["sairaanhoitaja", "nurse"],
     ["LLM app developer with RAG", "ai-engineer"],
+    ["kotihoitaja", "home-care-coordinator"],
+    ["writer for patient letters", "health-communicator"],
+    ["barista", "cook"],
+    ["laatoittaja", "renovation-worker"],
+    ["sähköasentaja", "electrician"],
+    ["asiakaspalvelija", "customer-service"],
+    ["graphic designer", "graphic-designer"],
+    ["siivooja", "cleaning-supervisor"],
+    ["varhaiskasvatus", "childcare"],
+    ["bus driver", "driver"],
+    ["warehouse worker", "warehouse-worker"],
+    ["myyjä", "sales-assistant"],
+    ["doctor", "nurse"],
+    ["football coach", "teacher"],
+    ["game developer", "frontend"],
+    ["founder", "product-manager"],
   ])("maps %s to %s", (text, id) => {
     expect(matchRole(text)?.id).toBe(id);
   });
@@ -77,6 +99,11 @@ describe("skill matching", () => {
     expect(skillsIn("Data analyst with no career gaps, SQL and dashboards")).not.toContain("patient-safety");
     expect(skillsIn("careful and impatient")).not.toContain("patient-safety");
     expect(skillsIn("care home")).toContain("patient-safety");
+  });
+
+  it("counts a term only once when it sits inside a longer term of another skill", () => {
+    expect(skillsIn("food safety and safety at work")).toEqual(["food-safety", "work-safety"]);
+    expect(skillsIn("shift planning")).toEqual(["shift-planning"]);
   });
 
   it("keeps matching Finnish compounds", () => {

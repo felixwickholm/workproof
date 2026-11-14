@@ -1,4 +1,4 @@
-import type { TaskFormat } from "@/lib/domain/types";
+import type { ProofKind, TaskFormat } from "@/lib/domain/types";
 import type { SkillId } from "@/lib/skills/vocabulary";
 
 /** A flaw planted in the material. Cues let a follow-up question quote the part of an answer about it. */
@@ -12,6 +12,8 @@ interface PlantedFlaw {
 export interface TaskTemplate {
   title: string;
   format: TaskFormat;
+  /** What the person hands in. Photo, video, design and voice tasks always accept words instead. */
+  proofKind: ProofKind;
   /** The situation, written like a message from the team. Under 120 words. */
   brief: string;
   material: { kind: "code" | "text"; title: string; body: string };

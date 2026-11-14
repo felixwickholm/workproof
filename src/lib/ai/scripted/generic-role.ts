@@ -3,6 +3,9 @@ import type { RoleTemplate } from "./role-template";
 /** Shown on a company draft built from this template, so a person rewrites the brief before publishing. */
 export const GENERIC_NOTE = "No close match in the task library. Edit the brief before you publish.";
 
+/** Shown on a taster for a dream job the library has no task for, so the person knows why the task is general. */
+export const NO_EXACT_TASK_NOTE = "There is no task for this exact job yet. This one practises planning, which almost every job needs.";
+
 /** Shown when the draft borrows the nearest library role by skills, so a person adapts the brief. */
 export const nearestNote = (roleTitle: string) =>
   `No close match in the task library. This draft uses the nearest role, ${roleTitle.toLowerCase()}, from the skills you named. Edit the brief before you publish.`;
@@ -27,6 +30,7 @@ export function genericRole(): RoleTemplate {
     challenge: {
       title: "Review an AI-drafted first-month plan",
       format: "review",
+      proofKind: "plan",
       brief: `A new colleague starts with us next month. Their manager asked an AI assistant for a first-month plan and wants to hand it over as it is. We would like someone who knows the work to read it first. Tell us what you would change so the plan is realistic and useful.`,
       material: {
         kind: "text",
@@ -71,7 +75,8 @@ export function genericRole(): RoleTemplate {
     taster: {
       title: "Spot the problem in a plan",
       format: "review",
-      brief: "A colleague asked an AI assistant for next week's plan and wants to send it to the team as it is. Read it first.",
+      proofKind: "plan",
+      brief: "We have no task for this exact job yet, so this one is about planning, which almost every job needs. A colleague asked an AI assistant for next week's plan and wants to send it to the team as it is. Read it first.",
       material: {
         kind: "text",
         title: "Plan for next week (AI draft)",

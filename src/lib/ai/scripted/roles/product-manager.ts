@@ -5,7 +5,7 @@ export const productManager: RoleTemplate = {
   title: "Product manager",
   keywords: [
     "product manager", "product owner", "product management", "pm", "po", "roadmap",
-    "product lead", "tuotepäällikkö", "tuoteomistaja", "tuotekehitys",
+    "product lead", "tuotepäällikkö", "tuoteomistaja", "tuotekehitys", "founder", "startup founder", "entrepreneur", "yrittäjä",
   ],
   skills: ["prioritisation", "metrics-definition", "user-research", "stakeholder-communication", "ai-assisted-work"],
   why: {
@@ -25,6 +25,7 @@ export const productManager: RoleTemplate = {
   challenge: {
     title: "Review an AI-drafted product requirements excerpt",
     format: "review",
+    proofKind: "plan",
     brief:
       "We make a shift planning app for small clinics. Our PM asked an AI assistant to turn last month's feedback into requirements for Q1. The draft goes to engineering on Thursday. Before it does, we would like someone to read it the way the team will.",
     material: {
@@ -74,6 +75,7 @@ export const productManager: RoleTemplate = {
   taster: {
     title: "Read one line of a product goal",
     format: "review",
+    proofKind: "writing",
     brief: "An AI assistant wrote this goal for a new onboarding flow.",
     material: {
       kind: "text",

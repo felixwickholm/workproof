@@ -25,6 +25,7 @@ export const dataScientist: RoleTemplate = {
   challenge: {
     title: "Review an AI-written load forecast evaluation",
     format: "review",
+    proofKind: "code",
     brief:
       "We forecast hourly electricity load for a district grid, one hour ahead. A teammate used an AI assistant to write the evaluation for a new model. It reports a mean error of 1.8% and the operations team wants to switch on Monday. Before we do, we want someone to check how it was tested.",
     material: {
@@ -72,6 +73,7 @@ export const dataScientist: RoleTemplate = {
   taster: {
     title: "Check a forecast chart claim",
     format: "review",
+    proofKind: "writing",
     brief: "An AI assistant summarised a new demand forecast for a planning meeting.",
     material: {
       kind: "text",

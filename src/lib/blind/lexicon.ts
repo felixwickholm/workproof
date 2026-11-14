@@ -52,6 +52,7 @@ export const SCHOOLS = [
   "Technion", "AUB", "Sorbonne", "Polytechnique", "Bocconi", "INSEAD",
   "HY", "TY", "TTY", "JY", "OY", "UEF", "TUNI", "TAU", "Tampere Uni", "Turku Uni", "KU Leuven", "LSE", "KCL",
   "UvA", "TU Wien", "Uni Helsinki", "Helsinki Uni", "Humak", "Diak", "Turku AMK", "Haaga", "Hanken School of Economics",
+  "Kyiv Medical Institute No. 2", "Kyiv Medical Institute", "Medical Institute No. 2",
 ];
 
 /** School names long enough to match in any case: "aalto university", "metropolia". */

@@ -5,7 +5,7 @@ export const teacher: RoleTemplate = {
   title: "Teacher",
   keywords: [
     "teacher", "teaching", "educator", "lecturer", "class teacher", "subject teacher",
-    "opettaja", "luokanopettaja", "aineenopettaja", "lehtori", "opetus",
+    "opettaja", "luokanopettaja", "aineenopettaja", "lehtori", "opetus", "coach", "football coach", "sports coach", "valmentaja",
   ],
   skills: ["lesson-design", "technical-explanation", "prioritisation", "ai-assisted-work"],
   why: {
@@ -25,6 +25,7 @@ export const teacher: RoleTemplate = {
   challenge: {
     title: "Review an AI-drafted lesson plan",
     format: "review",
+    proofKind: "plan",
     brief:
       "A colleague used an AI assistant to plan a 45-minute maths lesson on fractions for year 5. The lesson is tomorrow, and the colleague asked for a second read. Please read it as if you had to teach it.",
     material: {
@@ -65,6 +66,7 @@ export const teacher: RoleTemplate = {
   taster: {
     title: "Read one exam question",
     format: "review",
+    proofKind: "writing",
     brief: "An AI assistant wrote this question for a year 8 science test.",
     material: {
       kind: "text",

@@ -25,6 +25,7 @@ export const securityEngineer: RoleTemplate = {
   challenge: {
     title: "Review an AI-written password reset endpoint",
     format: "review",
+    proofKind: "code",
     brief:
       "We are replacing our password reset flow. A teammate asked an AI assistant for the endpoint below, and it passes the happy-path test. It handles customer accounts, so we want a security review before it goes live next week.",
     material: {
@@ -72,6 +73,7 @@ export const securityEngineer: RoleTemplate = {
   taster: {
     title: "Spot the problem in a login check",
     format: "review",
+    proofKind: "code",
     brief: "An AI assistant wrote this login query. It works in the demo.",
     material: {
       kind: "code",

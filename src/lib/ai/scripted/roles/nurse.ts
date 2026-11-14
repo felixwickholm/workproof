@@ -5,7 +5,7 @@ export const nurse: RoleTemplate = {
   title: "Nurse",
   keywords: [
     "nurse", "nursing", "registered nurse", "practical nurse", "ward", "clinical",
-    "sairaanhoitaja", "hoitaja", "lähihoitaja", "terveydenhoitaja",
+    "sairaanhoitaja", "hoitaja", "lähihoitaja", "terveydenhoitaja", "doctor", "physician", "medical doctor", "lääkäri",
   ],
   skills: ["patient-safety", "stakeholder-communication", "prioritisation", "ai-assisted-work"],
   why: {
@@ -25,6 +25,7 @@ export const nurse: RoleTemplate = {
   challenge: {
     title: "Review an AI-drafted shift handover",
     format: "review",
+    proofKind: "writing",
     brief:
       "Our ward is testing a tool that drafts the handover note from the patient records. The night shift reads it at 21:00. This is a synthetic example from the training ward. Please read it as the nurse who takes over.",
     material: {
@@ -71,6 +72,7 @@ export const nurse: RoleTemplate = {
   taster: {
     title: "Read one handover line",
     format: "review",
+    proofKind: "writing",
     brief: "This line is from a synthetic handover note.",
     material: {
       kind: "text",

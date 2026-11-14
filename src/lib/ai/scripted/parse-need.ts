@@ -32,11 +32,19 @@ function splitWishes(need: string): string[] {
     .filter((part) => part.length >= 2);
 }
 
+/**
+ * Skills named in the text. A term found only inside a longer term of another skill does not count,
+ * so "food safety" names Food safety and not also Safety thinking, and "shift planning" not also Planning.
+ */
 export function skillsIn(text: string): SkillId[] {
   const lower = normalise(text);
-  const named = SKILL_IDS.filter((id) =>
-    [SKILLS[id].label.toLowerCase(), ...SKILLS[id].synonyms].some((term) => containsTerm(lower, term)),
-  );
+  const found = SKILL_IDS.map((id) => ({
+    id,
+    terms: [SKILLS[id].label.toLowerCase(), ...SKILLS[id].synonyms].filter((term) => containsTerm(lower, term)),
+  })).filter((hit) => hit.terms.length > 0);
+  const insideLonger = (id: SkillId, term: string) =>
+    found.some((other) => other.id !== id && other.terms.some((longer) => longer.length > term.length && containsTerm(longer, term)));
+  const named = found.filter((hit) => hit.terms.some((term) => !insideLonger(hit.id, term))).map((hit) => hit.id);
   const described = skillsInSentence(lower).filter((id) => !named.includes(id));
   return [...named, ...described];
 }

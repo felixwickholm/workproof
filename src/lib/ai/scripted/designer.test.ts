@@ -84,6 +84,14 @@ describe("scripted designer", () => {
     const taster = tasterFor("I want to be a beekeeper on rooftops");
     expect(JSON.stringify(taster)).not.toMatch(/beekeeper|rooftop/i);
     expect(taster.title).toBe("Spot the problem in a plan");
+    expect(taster.note).toMatch(/no task for this exact job yet/);
+    expect(taster.brief).toMatch(/no task for this exact job yet/);
+  });
+
+  it("carries what the person hands in", () => {
+    expect(tasterFor("barista").proofKind).toBeDefined();
+    expect(draftFromNeed("Cook for our lunch kitchen: food safety").proofKind).toBe("photo");
+    expect(draftFromNeed("Backend developer for a payments API").proofKind).toBe("code");
   });
 
   it("keeps a working language as a neutral line, never a native-speaker wish", () => {

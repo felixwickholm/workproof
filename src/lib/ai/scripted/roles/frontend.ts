@@ -5,7 +5,7 @@ export const frontendEngineer: RoleTemplate = {
   title: "Frontend engineer",
   keywords: [
     "frontend", "front-end", "front end", "react", "vue", "angular", "web developer", "ui engineer",
-    "frontend-kehittäjä", "käyttöliittymäkehittäjä",
+    "frontend-kehittäjä", "käyttöliittymäkehittäjä", "game developer", "game programmer", "pelinkehittäjä",
   ],
   skills: ["ui-state", "accessibility", "code-review", "performance", "testing"],
   why: {
@@ -25,6 +25,7 @@ export const frontendEngineer: RoleTemplate = {
   challenge: {
     title: "Review an AI-written search component",
     format: "review",
+    proofKind: "code",
     brief:
       "Our staff search for parcels by tracking code. A teammate used an AI assistant to write a new search component. It looks right in a quick demo. Users type fast, the API is sometimes slow, and some staff use only a keyboard. Please review it before it ships.",
     material: {
@@ -73,6 +74,7 @@ export const frontendEngineer: RoleTemplate = {
   taster: {
     title: "Spot the problem in a counter",
     format: "review",
+    proofKind: "code",
     brief: "An AI assistant wrote this button to add items to a cart.",
     material: {
       kind: "code",

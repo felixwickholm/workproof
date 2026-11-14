@@ -25,6 +25,7 @@ export const mobileEngineer: RoleTemplate = {
   challenge: {
     title: "Review an AI-written upload screen",
     format: "review",
+    proofKind: "code",
     brief:
       "Our technicians send a service report with photos after each job. A teammate wrote the new submit logic with an AI assistant. It works on office wifi. In the field, the network drops and people lock the phone right after tapping send. Please review it before release.",
     material: {
@@ -69,6 +70,7 @@ export const mobileEngineer: RoleTemplate = {
   taster: {
     title: "Spot the problem in a location request",
     format: "review",
+    proofKind: "code",
     brief: "An AI assistant wrote this to show nearby service points.",
     material: {
       kind: "code",

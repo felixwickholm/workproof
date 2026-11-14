@@ -25,6 +25,7 @@ export const projectManager: RoleTemplate = {
   challenge: {
     title: "Review an AI-drafted project plan",
     format: "review",
+    proofKind: "plan",
     brief:
       "We are connecting our billing service to a customer's fleet sensor platform. The pilot starts on 2 March and the date cannot move. A colleague used an AI assistant to draft the plan below. It goes to the customer tomorrow. Please read it before it does.",
     material: {
@@ -71,6 +72,7 @@ export const projectManager: RoleTemplate = {
   taster: {
     title: "Check a status update",
     format: "review",
+    proofKind: "writing",
     brief: "This status update goes to a customer today.",
     material: {
       kind: "text",

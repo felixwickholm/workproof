@@ -25,6 +25,7 @@ export const quantumResearcher: RoleTemplate = {
   challenge: {
     title: "Review an AI-drafted results summary",
     format: "review",
+    proofKind: "writing",
     brief:
       "We tested a new error mitigation method on our 20-qubit chip. A teammate asked an AI assistant to turn the lab notes into the summary below for our newsletter to partners. It goes out on Friday. Please check whether the claims hold.",
     material: {
@@ -65,6 +66,7 @@ export const quantumResearcher: RoleTemplate = {
   taster: {
     title: "Spot the problem in a lab claim",
     format: "review",
+    proofKind: "writing",
     brief: "An AI assistant summarised a colleague's measurement for a slide.",
     material: {
       kind: "text",

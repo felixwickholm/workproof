@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="794" height="1123" viewBox="0 0 794 1123" role="img" aria-labelledby="t">
+  <title id="t">Appointment reminder poster in Finnish and English: fasting blood sample on Tuesday 18 November at 8.15, laboratory on the 2nd floor. Three steps: bring an ID card, arrive 10 minutes early, call if you cannot come. Phone number in a teal box.</title>
+  <style>
+    .f { font-family: Inter, 'Helvetica Neue', Arial, sans-serif; }
+    .fi { fill: #1f201d; }
+    .en { fill: #636361; }
+    .ic { fill: none; stroke: #1b6e66; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect width="794" height="1123" fill="#fbfaf7"/>
+  <g class="f">
+    <!-- header -->
+    <rect x="64" y="56" width="10" height="44" rx="5" fill="#1b6e66"/>
+    <text x="90" y="74" font-size="17" font-weight="600" class="fi">Terveysasema</text>
+    <text x="90" y="96" font-size="15" class="en">Health station</text>
+    <text x="730" y="74" text-anchor="end" font-size="15" font-weight="600" class="fi">Muistutus</text>
+    <text x="730" y="96" text-anchor="end" font-size="15" class="en">Reminder</text>
+
+    <!-- what -->
+    <text x="64" y="176" font-size="30" font-weight="600" class="fi">Verinäyte, syömättä</text>
+    <text x="64" y="210" font-size="22" class="en">Fasting blood sample</text>
+
+    <!-- when -->
+    <text x="64" y="320" font-size="88" font-weight="700" fill="#1b6e66" letter-spacing="-2">klo 8.15</text>
+    <text x="64" y="372" font-size="34" font-weight="600" class="fi">tiistai 18.11.</text>
+    <text x="64" y="408" font-size="22" class="en">Tuesday 18 November, 8:15</text>
+
+    <!-- where -->
+    <path class="ic" d="M78 452 c-12 0 -20 9 -20 20 c0 15 20 34 20 34 s20 -19 20 -34 c0 -11 -8 -20 -20 -20z"/>
+    <circle class="ic" cx="78" cy="471" r="6"/>
+    <text x="116" y="470" font-size="21" font-weight="600" class="fi">Laboratorio, 2. kerros</text>
+    <text x="116" y="497" font-size="18" class="en">Laboratory, 2nd floor · Rantakaari 9 B, Espoo</text>
+
+    <!-- fasting rule -->
+    <rect x="64" y="540" width="666" height="112" rx="20" fill="#f6efdc"/>
+    <g transform="translate(96 568)">
+      <circle cx="26" cy="28" r="24" fill="none" stroke="#92400e" stroke-width="3"/>
+      <path d="M17 14 v11 M23 14 v11 M29 14 v11 M17 25 q6 7 12 0 M23 29 v15 M35 14 q7 8 0 17 v13 M10 48 L42 8" stroke="#92400e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </g>
+    <text x="164" y="584" font-size="21" font-weight="600" class="fi">Älä syö 10 tuntiin ennen. Vettä saa juoda.</text>
+    <text x="164" y="614" font-size="18" class="en">Do not eat for 10 hours before. Water is fine.</text>
+
+    <!-- steps -->
+    <g transform="translate(64 700)">
+      <circle cx="22" cy="22" r="22" fill="#1b6e66"/><text x="22" y="30" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">1</text>
+      <rect class="ic" x="70" y="4" width="54" height="38" rx="6"/><circle class="ic" cx="88" cy="20" r="6"/><path class="ic" d="M80 34 q8 -8 16 0 M102 16 h14 M102 26 h10"/>
+      <text x="146" y="20" font-size="21" font-weight="600" class="fi">Ota henkilökortti mukaan.</text>
+      <text x="146" y="46" font-size="18" class="en">Bring an ID card.</text>
+    </g>
+    <line x1="64" y1="776" x2="730" y2="776" stroke="#eaeaea" stroke-width="2"/>
+    <g transform="translate(64 800)">
+      <circle cx="22" cy="22" r="22" fill="#1b6e66"/><text x="22" y="30" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">2</text>
+      <circle class="ic" cx="97" cy="23" r="21"/><path class="ic" d="M97 12 v11 l8 6"/>
+      <text x="146" y="20" font-size="21" font-weight="600" class="fi">Tule 10 minuuttia aikaisemmin.</text>
+      <text x="146" y="46" font-size="18" class="en">Arrive 10 minutes early.</text>
+    </g>
+    <line x1="64" y1="876" x2="730" y2="876" stroke="#eaeaea" stroke-width="2"/>
+    <g transform="translate(64 900)">
+      <circle cx="22" cy="22" r="22" fill="#1b6e66"/><text x="22" y="30" text-anchor="middle" font-size="20" font-weight="700" fill="#fff">3</text>
+      <path class="ic" d="M80 6 h10 l6 12 l-7 5 a26 26 0 0 0 12 12 l5 -7 l12 6 v10 a4 4 0 0 1 -4 4 a36 36 0 0 1 -38 -38 a4 4 0 0 1 4 -4z"/>
+      <text x="146" y="20" font-size="21" font-weight="600" class="fi">Jos et pääse, soita.</text>
+      <text x="146" y="46" font-size="18" class="en">If you cannot come, call us.</text>
+    </g>
+
+    <!-- phone box -->
+    <rect x="64" y="985" width="666" height="86" rx="20" fill="#1b6e66"/>
+    <text x="96" y="1022" font-size="17" fill="#cfe7e3">Ajan siirto · To change the time</text>
+    <text x="96" y="1052" font-size="26" font-weight="700" fill="#ffffff">09 000 1234</text>
+    <text x="698" y="1022" text-anchor="end" font-size="17" fill="#cfe7e3">ma–pe 8–15</text>
+    <text x="698" y="1052" text-anchor="end" font-size="17" fill="#cfe7e3">Mon–Fri 8–15</text>
+  </g>
+</svg>

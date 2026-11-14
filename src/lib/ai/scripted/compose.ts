@@ -1,7 +1,7 @@
 import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
 import { neutralSetAside, NOT_USED_PREFIX, talentNeed, workingLanguagesIn } from "@/lib/guard/check-draft";
 import { isSkillId, SKILLS, toSkill, type SkillId } from "@/lib/skills/vocabulary";
-import { GENERIC_NOTE, genericRole, nearestNote } from "./generic-role";
+import { GENERIC_NOTE, genericRole, nearestNote, NO_EXACT_TASK_NOTE } from "./generic-role";
 import { matchRole } from "./match-role";
 import { parseNeed } from "./parse-need";
 import type { RoleTemplate, TaskTemplate } from "./role-template";
@@ -33,6 +33,7 @@ function toDraft(role: RoleTemplate, task: TaskTemplate, skills: SkillId[], extr
     coreSkills: skills.map((id) => toSkill(id, role.why?.[id])),
     setAside: extra.setAside,
     format: task.format,
+    proofKind: task.proofKind,
     minutes: extra.minutes,
     brief: task.brief,
     material: { ...task.material },
@@ -96,13 +97,15 @@ export function draftFromNeed(need: string): ChallengeDraft {
 
 export function tasterFor(dreamJob: string): ChallengeDraft {
   const role = matchRole(dreamJob) ?? genericRole();
+  const generic = role.id === "generic";
   const skills = role.skills.slice(0, 3);
-  return toDraft(role, role.taster, skills, {
-    need: talentNeed(role.id === "generic" ? undefined : role.title, skills),
+  const draft = toDraft(role, role.taster, skills, {
+    need: talentNeed(generic ? undefined : role.title, skills),
     setAside: [],
     kind: "taster",
     minutes: TASTER_MINUTES,
   });
+  return generic ? { ...draft, note: NO_EXACT_TASK_NOTE } : draft;
 }
 
 type ChallengeRef = Pick<Challenge, "kind" | "material" | "need" | "title">;

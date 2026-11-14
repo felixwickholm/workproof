@@ -6,6 +6,7 @@ export const marketingSpecialist: RoleTemplate = {
   keywords: [
     "marketing", "marketer", "growth marketing", "digital marketing", "performance marketing",
     "campaign manager", "content marketing", "markkinointi", "markkinoija", "markkinointipäällikkö",
+    "influencer", "content creator", "youtuber", "social media manager", "sisällöntuottaja",
   ],
   skills: ["campaign-analysis", "metrics-definition", "experiment-design", "writing-clarity"],
   why: {
@@ -25,6 +26,7 @@ export const marketingSpecialist: RoleTemplate = {
   challenge: {
     title: "Review an AI-written campaign report",
     format: "review",
+    proofKind: "writing",
     brief:
       "We sell accounting software to small companies. An AI assistant wrote the summary of our autumn campaign from the ad platform exports. The board will use it to move next quarter's budget. Please read it before it goes out.",
     material: {
@@ -67,6 +69,7 @@ export const marketingSpecialist: RoleTemplate = {
   taster: {
     title: "Read one campaign claim",
     format: "review",
+    proofKind: "writing",
     brief: "This line is going into a monthly update.",
     material: {
       kind: "text",

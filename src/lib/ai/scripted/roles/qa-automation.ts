@@ -25,6 +25,7 @@ export const qaEngineer: RoleTemplate = {
   challenge: {
     title: "Review an AI-written checkout test",
     format: "review",
+    proofKind: "code",
     brief:
       "We are adding end-to-end tests for checkout. A teammate asked an AI assistant for the Playwright test below. It is green in CI, but last week a broken discount code still reached customers. Before we rely on this test, we want your review.",
     material: {
@@ -71,6 +72,7 @@ export const qaEngineer: RoleTemplate = {
   taster: {
     title: "Spot the problem in a login test",
     format: "review",
+    proofKind: "code",
     brief: "An AI assistant wrote this test. It has never failed.",
     material: {
       kind: "code",

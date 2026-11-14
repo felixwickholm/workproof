@@ -16,6 +16,12 @@ const FINNISH_STEMS: ReadonlySet<string> = new Set([
   "ratkaisuarkkitehti", "kvanttitutkija", "kvanttilaskenta", "tutkija", "fyysikko", "ratkaisumyynti", "myyntiinsinööri",
   "tekninen myynti", "tekninen kirjoittaja", "taloushallinto", "tilitoimisto", "markkinoija", "hoitaja", "opettaja",
   "luokanopettaja", "aineenopettaja", "lehtori", "pilvi", "arkkitehtuuri", "kvantti", "tutkimus", "raportointi", "analytiikka",
+  "kotihoito", "kotihoidon", "kotihoitaja", "selkokieli", "selkokielinen", "hygieniapassi", "omavalvonta", "ruokaturvallisuus",
+  "laatoitus", "laatoittaja", "vedeneristys", "remontti", "puhelinpalvelu", "asiakaspalvelupuhelin", "asiakaspalvelu",
+  "kaupan kassa", "graafinen suunnittelu", "taitto", "visuaalinen", "vuorosuunnittelu", "keräily", "varastonhallinta",
+  "reittisuunnittelu", "ajoreitti", "kuljetus", "varhaiskasvatus", "esiopetus", "kokki", "keittiö", "siivous",
+  "siivooja", "laitoshuoltaja", "rakennus", "kuljettaja", "graafikko", "asentaja", "lastenhoitaja", "myyjä",
+  "terveysviestintä", "koordinaattori", "hoiva-avustaja", "valmentaja", "pelinkehittäjä", "yrittäjä",
 ]);
 
 export function isFinnishStem(term: string): boolean {

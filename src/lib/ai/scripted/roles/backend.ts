@@ -25,6 +25,7 @@ export const backendEngineer: RoleTemplate = {
   challenge: {
     title: "Review an AI-written payment endpoint",
     format: "review",
+    proofKind: "code",
     brief:
       "We added an endpoint that charges a customer for a parcel delivery. A teammate wrote it with an AI assistant and the happy path works in staging. The payment provider has slow periods a few times a week, and the mobile app retries when a request takes long. Please review the change before we merge it.",
     material: {
@@ -73,6 +74,7 @@ export const backendEngineer: RoleTemplate = {
   taster: {
     title: "Spot the problem in a delete endpoint",
     format: "review",
+    proofKind: "code",
     brief: "An AI assistant wrote this endpoint so users can delete a saved address.",
     material: {
       kind: "code",

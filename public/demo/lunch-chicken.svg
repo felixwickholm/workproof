@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900" role="img" aria-labelledby="t">
+  <title id="t">Lunch plate from above: chicken and vegetable stew on rice with steamed carrots and peas. A small card at the plate edge reads Gluteeniton / Gluten-free. No bread on the plate.</title>
+  <defs>
+    <radialGradient id="plate" cx="50%" cy="45%" r="55%"><stop offset="0" stop-color="#fdfcf9"/><stop offset="1" stop-color="#efebe3"/></radialGradient>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#5a4a36" flood-opacity="0.16"/></filter>
+  </defs>
+  <rect width="1200" height="900" fill="#efe8dc"/>
+  <g opacity="0.35" stroke="#e2d8c7" stroke-width="2"><path d="M0 150H1200M0 330H1200M0 510H1200M0 690H1200"/></g>
+  <!-- napkin and fork -->
+  <rect x="930" y="160" width="190" height="560" rx="18" fill="#dfe7e1" filter="url(#sh)"/>
+  <rect x="1012" y="230" width="16" height="330" rx="6" fill="#c9ced3"/>
+  <path d="M990 230 h60 v70 q-30 30 -60 0z" fill="#c9ced3"/>
+  <path d="M1003 230 v55 M1020 230 v55 M1037 230 v55" stroke="#dfe7e1" stroke-width="5"/>
+  <!-- plate -->
+  <circle cx="500" cy="450" r="330" fill="url(#plate)" filter="url(#sh)"/>
+  <circle cx="500" cy="450" r="262" fill="none" stroke="#e5e0d6" stroke-width="3"/>
+  <!-- rice -->
+  <path d="M300 420 q20 -150 200 -160 q180 10 210 150 q20 150 -200 190 q-230 -20 -210 -180z" fill="#efe5cc"/>
+  <g fill="#ffffff" stroke="#e8e1cf" stroke-width="1.5">
+    <ellipse cx="350" cy="380" rx="9" ry="4"/><ellipse cx="380" cy="330" rx="9" ry="4" transform="rotate(30 380 330)"/><ellipse cx="660" cy="400" rx="9" ry="4"/><ellipse cx="640" cy="330" rx="9" ry="4" transform="rotate(-30 640 330)"/><ellipse cx="330" cy="470" rx="9" ry="4" transform="rotate(60 330 470)"/><ellipse cx="680" cy="470" rx="9" ry="4"/><ellipse cx="560" cy="290" rx="9" ry="4"/><ellipse cx="430" cy="300" rx="9" ry="4" transform="rotate(-20 430 300)"/>
+  </g>
+  <!-- stew -->
+  <path d="M370 420 q40 -110 150 -100 q130 10 140 110 q-10 110 -150 120 q-150 -10 -140 -130z" fill="#d9a35a"/>
+  <path d="M390 425 q40 -90 130 -85 q110 10 120 95 q-10 90 -130 100 q-125 -10 -120 -110z" fill="#e6b56b"/>
+  <g fill="#f3e3c4" stroke="#d29d58" stroke-width="3">
+    <rect x="430" y="380" width="56" height="44" rx="14"/><rect x="520" y="370" width="60" height="46" rx="14" transform="rotate(12 550 393)"/><rect x="470" y="450" width="58" height="44" rx="14" transform="rotate(-10 499 472)"/><rect x="560" y="450" width="50" height="40" rx="12"/>
+  </g>
+  <g fill="#e98a3c"><circle cx="420" cy="460" r="13"/><circle cx="610" cy="410" r="12"/><circle cx="535" cy="510" r="12"/></g>
+  <g fill="#7aa64f"><circle cx="500" cy="420" r="7"/><circle cx="455" cy="500" r="6"/><circle cx="590" cy="490" r="6"/></g>
+  <!-- carrots -->
+  <g transform="translate(330 610)">
+    <g fill="#ec8a3a" stroke="#d4732a" stroke-width="2">
+      <rect x="0" y="0" width="90" height="26" rx="13" transform="rotate(-10)"/>
+      <rect x="20" y="34" width="96" height="26" rx="13" transform="rotate(-6)"/>
+      <rect x="45" y="66" width="84" height="26" rx="13" transform="rotate(-2)"/>
+    </g>
+  </g>
+  <!-- peas -->
+  <g fill="#86b85a" stroke="#6c9b44" stroke-width="2">
+    <circle cx="600" cy="640" r="13"/><circle cx="628" cy="625" r="13"/><circle cx="620" cy="655" r="13"/><circle cx="650" cy="645" r="13"/><circle cx="590" cy="668" r="13"/><circle cx="645" cy="672" r="13"/><circle cx="672" cy="620" r="13"/>
+  </g>
+  <!-- label card -->
+  <g transform="rotate(-6 760 770)" filter="url(#sh)">
+    <rect x="640" y="725" width="250" height="92" rx="14" fill="#ffffff" stroke="#5f8f5a" stroke-width="3"/>
+    <circle cx="676" cy="771" r="18" fill="#5f8f5a"/>
+    <path d="M667 771 l7 7 l13 -14" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="706" y="764" font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-size="22" font-weight="700" fill="#1f201d">Gluteeniton</text>
+    <text x="706" y="794" font-family="Inter, 'Helvetica Neue', Arial, sans-serif" font-size="19" fill="#636361">Gluten-free</text>
+  </g>
+</svg>

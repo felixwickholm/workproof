@@ -1,189 +1,120 @@
-import { randomUUID } from "node:crypto";
 import { draftFromNeed } from "@/lib/ai/scripted/compose";
-import { followUpQuestions } from "@/lib/ai/scripted/follow-ups";
-import { blindWork } from "@/lib/blind/blind-work";
-import { atAGlance } from "@/lib/blind/glance";
-import { toOwnProof } from "@/lib/blind/project";
-import { redact } from "@/lib/blind/redact";
-import type { AuditEvent, Challenge, Decision, Meeting } from "@/lib/domain/types";
-import { DRAFT_ACTION, FOLLOW_UP_ACTION, HIDE_ACTION, SHAPE_ACTION } from "@/lib/service/ai-work";
-import { meetingSlot } from "@/lib/service/decisions";
-import { rememberTalent } from "@/lib/service/talent";
+import type { Challenge, StoryStage } from "@/lib/domain/types";
+import { DRAFT_ACTION } from "@/lib/service/ai-work";
 import type { StoreData } from "@/lib/store/types";
 import { omit } from "@/lib/util/object";
-import { COMPANIES, REVIEWERS, SEED_CHALLENGES } from "./companies";
-import { SEED_PROOFS } from "./proofs";
+import { SEED_CHALLENGES, type SeedChallengeKey } from "./challenges";
+import { COMPANIES, companyName, REVIEWERS } from "./companies";
+import { PEOPLE, PERSONA } from "./people";
+import { BUILD_PROOFS } from "./proofs/build";
+import { CALL_AND_DESIGN_PROOFS } from "./proofs/calls-and-design";
+import { CARE_PROOFS } from "./proofs/care";
+import { CLEANING_PROOFS } from "./proofs/cleaning";
+import { FOOD_PROOFS } from "./proofs/food";
+import { MODEL_AND_DATA_PROOFS } from "./proofs/model-and-data";
+import { SOFTWARE_PROOFS } from "./proofs/software";
+import { SECOND_LOOK_DECISIONS } from "./second-look";
+import {
+  ANNA_DECISION,
+  OLENA_ACCEPTED_HOURS_AGO,
+  OLENA_EARLIER,
+  OLENA_STORY,
+  OTSO_SECOND_LOOK,
+  STORY_PROOF_ID,
+  stageReached,
+} from "./story";
+import type { SeedProof } from "./types";
+import { seedWriter } from "./writer";
 
-const MINUTE = 60_000;
-const DAY = 24 * 60 * MINUTE;
+/** Everyone else's work at the event. The same at every story stage. */
+export const WORLD_PROOFS: readonly SeedProof[] = [
+  ...FOOD_PROOFS,
+  ...BUILD_PROOFS,
+  ...CALL_AND_DESIGN_PROOFS,
+  ...CLEANING_PROOFS,
+  ...CARE_PROOFS,
+  ...MODEL_AND_DATA_PROOFS,
+  ...SOFTWARE_PROOFS,
+];
 
-/**
- * A synthetic event, "Espoo Talent Day", built relative to `now` so the demo always looks current.
- * All companies, people and work are invented. Content runs through the same scripted designer
- * and blind layer as live submissions.
- */
-export function buildSeed(now: Date): StoreData {
-  const at = (msAgo: number) => new Date(now.getTime() - msAgo).toISOString();
-  const audit: AuditEvent[] = [];
-  const log = (msAgo: number, event: Omit<AuditEvent, "id" | "at">) =>
-    audit.push({ id: `audit_seed_${String(audit.length + 1).padStart(3, "0")}`, at: at(msAgo), ...event });
+/** The proofs that exist at a story stage, oldest first, the way they arrived. */
+export function proofsAt(stage: StoryStage): SeedProof[] {
+  const story = stageReached(stage, "sent") ? [OLENA_STORY] : [];
+  return [...WORLD_PROOFS, ...OLENA_EARLIER, ...story].sort((a, b) => b.hoursAgo - a.hoursAgo);
+}
 
-  const challenges: Record<string, Challenge> = {};
+function publishChallenges(write: ReturnType<typeof seedWriter>, data: StoreData): Map<SeedChallengeKey, Challenge> {
+  const byKey = new Map<SeedChallengeKey, Challenge>();
   for (const seed of SEED_CHALLENGES) {
     const draft = omit(draftFromNeed(seed.need), ["note"]);
-    const createdMsAgo = seed.daysBeforeEvent * DAY;
-    challenges[seed.key] = {
+    const approvedBy = REVIEWERS[seed.companyIds[0]];
+    const hoursAgo = seed.daysBeforeEvent * 24;
+    const challenge: Challenge = {
       ...draft,
       id: `ch-${seed.key}`,
       companyIds: [...seed.companyIds],
-      approvedBy: seed.approvedBy,
-      createdAt: at(createdMsAgo),
+      approvedBy,
+      createdAt: write.at(hoursAgo),
     };
-    const names = seed.companyIds.map((id) => COMPANIES.find((c) => c.id === id)?.name).join(" and ");
-    log(createdMsAgo + 20 * MINUTE, {
+    byKey.set(seed.key, challenge);
+    data.challenges.push(challenge);
+    write.log(hoursAgo + 1 / 3, {
       actor: "ai",
       by: "Task drafter",
       action: DRAFT_ACTION,
       detail: `"${draft.title}": ${draft.coreSkills.length} core skills kept, ${draft.setAside.length} wishes set aside. Waiting for a human to approve.`,
     });
-    log(createdMsAgo, {
+    write.log(hoursAgo, {
       actor: "human",
-      by: seed.approvedBy,
+      by: approvedBy,
       action: "Approved a Problem Card",
-      detail: `${names} published "${draft.title}".`,
+      detail: `${seed.companyIds.map(companyName).join(" and ")} published "${draft.title}".`,
     });
   }
+  return byKey;
+}
 
+/**
+ * A synthetic event, "Espoo Talent Day", built relative to `now` so the demo always looks current.
+ * All companies, people and work are invented. Content runs through the same scripted designer,
+ * blind layer and decision shape as live data. `stage` sets how far Olena's story has gone.
+ */
+export function buildSeed(now: Date, stage: StoryStage = "invited"): StoreData {
   const data: StoreData = {
     version: 1,
     event: { name: "Espoo Talent Day", date: now.toISOString().slice(0, 10), responseWindowHours: 48 },
     companies: COMPANIES.map((c) => ({ ...c })),
-    challenges: Object.values(challenges),
+    challenges: [],
     talents: [],
     submissions: [],
     proofs: [],
-    decisions: [] as Decision[],
-    meetings: [] as Meeting[],
-    audit,
+    decisions: [],
+    meetings: [],
+    audit: [],
+    demo: { personaTalentId: "", personaName: PEOPLE[PERSONA].name, stage },
   };
+  const write = seedWriter(now, data);
+  const challenges = publishChallenges(write, data);
 
-  // Talent ids are private keys, so every reset gives the synthetic people new random ones.
-  const talentIds = new Map<string, string>();
-  for (const seed of SEED_PROOFS) {
-    const challenge = challenges[seed.challenge];
-    const talentId = talentIds.get(seed.talent.id) ?? `t_${randomUUID()}`;
-    talentIds.set(seed.talent.id, talentId);
-    const known = { name: seed.talent.name, contact: seed.talent.contact };
-    // Like live submissions, the follow-up writer reads the answer only after the blind layer.
-    const questions = followUpQuestions(challenge, redact(seed.answer, known).text);
-    const explain = questions.map((question, i) => ({ question, answer: seed.explainAnswers[i] ?? "" }));
+  const proofs = proofsAt(stage);
+  for (const seed of proofs) write.addProof(seed, challenges.get(seed.challenge) as Challenge);
 
-    const blind = blindWork(seed.answer, explain, known);
-    const submittedAt = at(seed.minutesAgo * MINUTE);
-    const proof = toOwnProof({
-      proofId: seed.id,
-      challenge,
-      work: blind.work,
-      explain: blind.explain,
-      aiSummary: atAGlance(blind.work, blind.explain),
-      redactions: blind.report,
-      submittedAt,
-      takenLabels: new Set(data.proofs.map((p) => p.label)),
-    });
+  for (const seed of proofs) {
+    if (!seed.decision) continue;
+    const { companyId, kind, feedback, hoursToReply, meeting } = seed.decision;
+    const hoursAgo = seed.hoursAgo - hoursToReply;
+    write.addDecision({ proofId: seed.id, companyId, kind, feedback, hoursAgo, meeting });
+    if (kind === "pass" && seed.shareWithSimilar) write.logSecondLookOpened(seed.id, hoursAgo);
+  }
+  for (const look of SECOND_LOOK_DECISIONS) write.addDecision(look, true);
 
-    rememberTalent(data.talents, { ...seed.talent, id: talentId }, true);
-    data.submissions.push({
-      id: seed.id,
-      challengeId: challenge.id,
-      talentId,
-      answer: seed.answer,
-      explain,
-      shareWithSimilar: seed.shareWithSimilar,
-      submittedAt,
-    });
-    data.proofs.push(proof);
-    log(seed.minutesAgo * MINUTE + 2 * MINUTE, {
-      actor: "ai",
-      by: "Follow-up writer",
-      action: FOLLOW_UP_ACTION,
-      detail: `${questions.length} question${questions.length === 1 ? "" : "s"} on "${challenge.title}".`,
-    });
-    const hidden = proof.hiddenCount;
-    log(seed.minutesAgo * MINUTE, {
-      actor: "system",
-      by: "Blind layer",
-      action: HIDE_ACTION,
-      detail: `${proof.label}: ${hidden} detail${hidden === 1 ? "" : "s"} hidden before any reviewer or AI model read it.`,
-    });
-    log(seed.minutesAgo * MINUTE - 1000, {
-      actor: "system",
-      by: "At a glance",
-      action: SHAPE_ACTION,
-      detail: `${proof.label}: counted points, words and code. Nothing about quality.`,
-    });
-
-    const decision = seed.decision;
-    if (!decision) continue;
-    const company = COMPANIES.find((c) => c.id === decision.companyId);
-    const reviewer = REVIEWERS[decision.companyId];
-    data.decisions.push({
-      id: `dec_${seed.id}`,
-      proofId: seed.id,
-      companyId: decision.companyId,
-      reviewer,
-      decision: decision.kind,
-      feedback: decision.feedback,
-      decidedAt: at(decision.minutesAgo * MINUTE),
-    });
-    log(decision.minutesAgo * MINUTE, {
-      actor: "human",
-      by: reviewer,
-      action: decision.kind === "meet" ? "Chose to meet" : "Said not now, with a reason",
-      detail: `${company?.name} on ${proof.label}. Feedback sent to the person.`,
-    });
-    if (decision.meeting) {
-      const met = decision.meeting === "met";
-      data.meetings.push({
-        id: `meet_${seed.id}`,
-        proofId: seed.id,
-        companyId: decision.companyId,
-        slot: meetingSlot(seed.id, decision.companyId),
-        status: decision.meeting,
-        talentConfirmedMet: met,
-        companyConfirmedMet: met,
-      });
-      log(decision.minutesAgo * MINUTE - 1000, {
-        actor: "system",
-        by: "Scheduler",
-        action: "Sent a meeting invite",
-        detail: `${proof.label} invited to meet ${company?.name}. Identity stays hidden until the person accepts.`,
-      });
-      if (decision.meeting !== "invited") {
-        log(decision.minutesAgo * MINUTE - 30 * MINUTE, {
-          actor: "human",
-          by: "Talent",
-          action: "Accepted a meeting",
-          detail: `${proof.label} accepted ${company?.name}. Name and contact are now shared with ${company?.name} only.`,
-        });
-      }
-      if (met) {
-        log(decision.minutesAgo * MINUTE - 120 * MINUTE, {
-          actor: "human",
-          by: company?.name ?? "Company",
-          action: "Confirmed the meeting took place",
-          detail: `${proof.label} and ${company?.name}: confirmed by both sides.`,
-        });
-      }
-    } else if (decision.kind === "pass" && seed.shareWithSimilar) {
-      log(decision.minutesAgo * MINUTE - 1000, {
-        actor: "system",
-        by: "Second look",
-        action: "Shared a blind proof",
-        detail: `${proof.label} is now visible to other employers with the same core skills.`,
-      });
-    }
+  if (stageReached(stage, "invited")) write.addDecision({ proofId: STORY_PROOF_ID, ...ANNA_DECISION });
+  if (stageReached(stage, "met")) {
+    write.acceptMeeting(STORY_PROOF_ID, ANNA_DECISION.companyId, OLENA_ACCEPTED_HOURS_AGO);
+    write.addDecision({ proofId: STORY_PROOF_ID, ...OTSO_SECOND_LOOK }, true);
   }
 
+  data.demo.personaTalentId = write.talentId(PERSONA);
   data.audit.sort((a, b) => a.at.localeCompare(b.at));
   return data;
 }

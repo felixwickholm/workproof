@@ -25,6 +25,7 @@ export const devopsEngineer: RoleTemplate = {
   challenge: {
     title: "Review an AI-written deployment change",
     format: "review",
+    proofKind: "code",
     brief:
       "We are moving the order service to a new Kubernetes setup. A teammate wrote the manifest with an AI assistant and it starts fine in staging. The service handles about 40 requests per second at peak and talks to a managed Postgres. Please review it before we apply it to production.",
     material: {
@@ -70,6 +71,7 @@ export const devopsEngineer: RoleTemplate = {
   taster: {
     title: "Spot the problem in an alert",
     format: "review",
+    proofKind: "code",
     brief: "An AI assistant wrote this alert for the checkout service.",
     material: {
       kind: "code",

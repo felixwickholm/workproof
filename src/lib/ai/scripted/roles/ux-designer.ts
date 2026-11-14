@@ -25,6 +25,7 @@ export const uxDesigner: RoleTemplate = {
   challenge: {
     title: "Review an AI-written booking flow spec",
     format: "review",
+    proofKind: "writing",
     brief:
       "We run online booking for a chain of physiotherapy clinics. A designer used an AI assistant to write the spec for the new mobile booking flow. Developers start on it Monday. Please read it as a user would meet it.",
     material: {
@@ -72,6 +73,7 @@ export const uxDesigner: RoleTemplate = {
   taster: {
     title: "Read one button",
     format: "review",
+    proofKind: "writing",
     brief: "This is the last step of a payment flow in a parking app.",
     material: {
       kind: "text",

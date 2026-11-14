@@ -25,6 +25,7 @@ export const mlEngineer: RoleTemplate = {
   challenge: {
     title: "Review an AI-written model evaluation",
     format: "review",
+    proofKind: "code",
     brief:
       "Our pick robots use a vision model to predict whether a grasp will hold. A teammate asked an AI assistant to write the evaluation for the new model. The report says 97% accuracy and the team wants to ship it on Monday. About 4% of real grasps fail. Before it ships, we would like a second pair of eyes on how it was tested.",
     material: {
@@ -75,6 +76,7 @@ export const mlEngineer: RoleTemplate = {
   taster: {
     title: "Spot the problem in a training script",
     format: "review",
+    proofKind: "code",
     brief: "An AI assistant wrote this to prepare data for a defect detector. It runs without errors.",
     material: {
       kind: "code",

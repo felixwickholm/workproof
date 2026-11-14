@@ -279,6 +279,90 @@ export const SKILLS = {
     lookFor: "Ties activities to the learning goal and checks the plan fits the time and the group.",
     synonyms: ["teaching", "lesson", "curriculum", "pedagogy", "education", "opetus", "pedagogiikka"],
   },
+  "care-visit-planning": {
+    label: "Prioritising care visits",
+    why: "When the day has fewer carers than visits, the order decides who is safe at home tonight.",
+    lookFor: "Keeps the visits where a delay could harm someone, says what moves and who is told.",
+    synonyms: ["home care", "care visits", "care coordination", "care coordinator", "kotihoito", "kotihoidon", "kotikäynti", "hoitokäynti", "hoidon koordinointi"],
+  },
+  "plain-language": {
+    label: "Plain language",
+    why: "People act on a letter or sign only when they understand it the first time they read it.",
+    lookFor: "Uses short sentences and everyday words, puts the action first, and keeps the facts that matter.",
+    synonyms: ["plain language", "easy language", "patient letters", "selkokieli", "selkokielinen", "selkeä kieli"],
+  },
+  "food-safety": {
+    label: "Food safety",
+    why: "One crumb of the wrong flour or one warm hour in the fridge can make a guest ill.",
+    lookFor: "Names the step where the food could become unsafe and shows how it is kept apart, cooled or checked.",
+    synonyms: ["food safety", "kitchen hygiene", "food hygiene", "allergens", "allergen", "haccp", "hygieniapassi", "omavalvonta", "ruokaturvallisuus"],
+  },
+  "surface-preparation": {
+    label: "Preparing surfaces",
+    why: "Tiles, paint and seals last only as long as the surface under them.",
+    lookFor: "Checks the surface before starting, says what was measured or tested, and what would stop the work.",
+    synonyms: ["tiling", "tiler", "waterproofing", "plastering", "laatoitus", "laatoittaja", "vedeneristys", "remontti", "pintakäsittely"],
+  },
+  "work-safety": {
+    label: "Safety at work",
+    why: "Most injuries on a site or in a warehouse come from a step someone skipped when in a hurry.",
+    lookFor: "Names the hazard in the task and the concrete step that removes it before work starts.",
+    synonyms: ["work safety", "occupational safety", "site safety", "safe working", "työturvallisuus", "työsuojelu"],
+  },
+  "electrical-safety": {
+    label: "Electrical safety",
+    why: "A wiring mistake can stay hidden in a wall for years and then start a fire.",
+    lookFor: "Checks isolation, protection and connections, and says how the circuit is tested before use.",
+    synonyms: ["electrical", "electrician", "wiring", "electrical installation", "sähköasentaja", "sähköasennus", "sähköturvallisuus", "sähkötyö"],
+  },
+  "calm-on-the-phone": {
+    label: "Calm on the phone",
+    why: "An upset caller decides in the first half minute whether they are being listened to.",
+    lookFor: "Acknowledges the problem in plain words, says what happens next, and promises only what can be kept.",
+    synonyms: ["on the phone", "phone calls", "call centre", "call center", "contact centre", "helpdesk", "puhelinpalvelu", "asiakaspalvelupuhelin"],
+  },
+  "serving-customers": {
+    label: "Serving customers",
+    why: "A customer remembers how a problem was handled long after they forget the problem.",
+    lookFor: "Finds out what the customer needs, offers a concrete next step, and keeps the tone friendly.",
+    synonyms: ["customer service", "customer support", "retail", "shop assistant", "sales assistant", "asiakaspalvelu", "myymälä", "kaupan kassa"],
+  },
+  "visual-design": {
+    label: "Visual design",
+    why: "Layout, type and colour decide what a reader sees first and whether they find what to do.",
+    lookFor: "Makes the one action stand clear, keeps text readable, and explains each layout choice.",
+    synonyms: ["graphic design", "visual design", "layout", "typography", "branding", "graafinen suunnittelu", "taitto", "visuaalinen"],
+  },
+  "shift-planning": {
+    label: "Shift planning",
+    why: "When someone is missing, a good re-plan protects the work that cannot wait and the people doing it.",
+    lookFor: "Moves work by what must be done tonight, keeps the load fair, and says who is told.",
+    synonyms: ["shift planning", "rota", "rostering", "work shifts", "staff planning", "vuorosuunnittelu", "työvuorot", "työvuorosuunnittelu"],
+  },
+  "stock-handling": {
+    label: "Stock handling",
+    why: "Stock that sits in the wrong place costs walking time on every order and errors on some.",
+    lookFor: "Places goods by how often they move and how heavy they are, and keeps paths and labels clear.",
+    synonyms: ["warehouse work", "warehouse worker", "inventory", "stock handling", "order picking", "varastotyö", "keräily", "varastonhallinta"],
+  },
+  "route-planning": {
+    label: "Route planning",
+    why: "A route that ignores time windows or loading order loses an hour by noon.",
+    lookFor: "Orders stops by time windows and distance, plans the load to match, and leaves room for delays.",
+    synonyms: ["route planning", "delivery routes", "deliveries", "delivery driver", "bus driver", "reittisuunnittelu", "ajoreitti", "kuljetus"],
+  },
+  "early-learning": {
+    label: "Early learning",
+    why: "Small children learn through the day's routines, and families need to trust what happens there.",
+    lookFor: "Starts from the child's day and safety, and writes to families in a warm, factual way.",
+    synonyms: ["early education", "early childhood", "daycare", "kindergarten", "preschool", "varhaiskasvatus", "päiväkoti", "esiopetus"],
+  },
+  "showing-the-work": {
+    label: "Showing how you work",
+    why: "In hands-on work, the order of the steps matters as much as the result.",
+    lookFor: "Shows or describes each step in order and says what is checked before moving on.",
+    synonyms: ["hands-on", "practical work", "demonstrate", "käytännön työ"],
+  },
 } satisfies Record<string, SkillDefinition>;
 
 export type SkillId = keyof typeof SKILLS;

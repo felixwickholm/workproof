@@ -25,6 +25,7 @@ export const dataEngineer: RoleTemplate = {
   challenge: {
     title: "Review an AI-written incremental load",
     format: "review",
+    proofKind: "code",
     brief:
       "Our hourly job copies new meter readings into the reporting table that billing uses. A teammate asked an AI assistant to rewrite it so it only loads new rows. It passed a test run yesterday. Some meters send readings hours late, and the scheduler retries failed runs automatically. Please review it before it replaces the old job.",
     material: {
@@ -71,6 +72,7 @@ export const dataEngineer: RoleTemplate = {
   taster: {
     title: "Spot the problem in a daily count",
     format: "review",
+    proofKind: "code",
     brief: "An AI assistant wrote this query for a daily report of active meters.",
     material: {
       kind: "code",

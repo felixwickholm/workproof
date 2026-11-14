@@ -25,6 +25,7 @@ export const embeddedEngineer: RoleTemplate = {
   challenge: {
     title: "Review an AI-written motor control loop",
     format: "review",
+    proofKind: "code",
     brief:
       "Our mobile robots stop for obstacles using a front distance sensor. A teammate asked an AI assistant to rewrite the drive loop on the motor controller. It ran fine on the test bench. Before it goes to robots that share aisles with people, we want a careful review.",
     material: {
@@ -77,6 +78,7 @@ export const embeddedEngineer: RoleTemplate = {
   taster: {
     title: "Spot the problem in a sensor read",
     format: "review",
+    proofKind: "code",
     brief: "An AI assistant wrote this to read a temperature sensor on a motor driver.",
     material: {
       kind: "code",

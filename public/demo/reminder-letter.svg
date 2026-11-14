@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="794" height="1123" viewBox="0 0 794 1123" role="img" aria-labelledby="t">
+  <title id="t">One-page appointment letter with a teal band on top. The time, Tuesday 18 November at 8.15, stands bold on its own line. Pictograms show bring ID and no food 10 hours before. A small floor plan marks the entrance and the lift to the 2nd-floor laboratory.</title>
+  <style>
+    .f { font-family: Inter, 'Helvetica Neue', Arial, sans-serif; }
+    .fi { fill: #1f201d; }
+    .en { fill: #636361; }
+    .ic { fill: none; stroke: #1b6e66; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+  <rect width="794" height="1123" fill="#ffffff"/>
+  <rect width="794" height="132" fill="#1b6e66"/>
+  <g class="f">
+    <text x="64" y="66" font-size="16" font-weight="600" fill="#cfe7e3">Terveysasema · Health station</text>
+    <text x="64" y="102" font-size="26" font-weight="700" fill="#ffffff">Aika laboratorioon · Laboratory appointment</text>
+
+    <text x="64" y="200" font-size="19" class="fi">Hei, sinulle on varattu aika verinäytteeseen.</text>
+    <text x="64" y="226" font-size="16" class="en">Hello, you have an appointment for a blood sample.</text>
+
+    <!-- time alone on its line -->
+    <rect x="64" y="262" width="666" height="128" rx="20" fill="#f6f6f4"/>
+    <text x="96" y="330" font-size="46" font-weight="700" class="fi">ti 18.11. klo 8.15</text>
+    <text x="96" y="364" font-size="19" class="en">Tuesday 18 November at 8:15</text>
+
+    <!-- pictograms -->
+    <g transform="translate(64 430)">
+      <rect width="323" height="190" rx="20" fill="none" stroke="#eaeaea" stroke-width="2"/>
+      <rect class="ic" x="28" y="30" width="84" height="58" rx="8"/><circle class="ic" cx="54" cy="56" r="10"/><path class="ic" d="M40 78 q14 -14 28 0 M78 50 h22 M78 64 h16"/>
+      <text x="28" y="130" font-size="19" font-weight="600" class="fi">Ota henkilökortti mukaan.</text>
+      <text x="28" y="156" font-size="16" class="en">Bring an ID card.</text>
+    </g>
+    <g transform="translate(407 430)">
+      <rect width="323" height="190" rx="20" fill="#f6efdc"/>
+      <circle cx="70" cy="60" r="32" fill="none" stroke="#92400e" stroke-width="3"/>
+      <path d="M59 42 v14 M66 42 v14 M73 42 v14 M59 56 q7 8 14 0 M66 60 v20 M83 42 q8 10 0 20 v18 M46 86 L94 34" stroke="#92400e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <text x="28" y="130" font-size="19" font-weight="600" class="fi">Älä syö 10 tuntiin ennen.</text>
+      <text x="28" y="156" font-size="16" class="en">No food for 10 hours before.</text>
+      <text x="28" y="178" font-size="16" class="en">Vettä saa juoda · Water is fine.</text>
+    </g>
+
+    <!-- floor plan -->
+    <text x="64" y="676" font-size="19" font-weight="600" class="fi">Rantakaari 9 B, Espoo · Laboratorio, 2. kerros</text>
+    <text x="64" y="702" font-size="16" class="en">Laboratory, 2nd floor. Take the lift on your right.</text>
+    <g transform="translate(64 728)">
+      <rect width="666" height="230" rx="20" fill="#f6f6f4"/>
+      <rect x="40" y="36" width="586" height="158" rx="6" fill="#ffffff" stroke="#c9c6bf" stroke-width="4"/>
+      <line x1="300" y1="36" x2="300" y2="84" stroke="#c9c6bf" stroke-width="4"/>
+      <line x1="440" y1="36" x2="440" y2="194" stroke="#c9c6bf" stroke-width="4"/>
+      <!-- lift -->
+      <rect x="470" y="60" width="110" height="90" rx="8" fill="#cfe3d9" stroke="#1b6e66" stroke-width="3"/>
+      <path d="M512 92 l13 -14 l13 14 M512 118 l13 14 l13 -14" stroke="#1b6e66" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="525" y="176" text-anchor="middle" font-size="15" font-weight="600" fill="#1b6e66">Hissi · Lift</text>
+      <!-- entrance -->
+      <rect x="140" y="188" width="90" height="12" fill="#ffffff"/>
+      <path d="M185 222 v-46 M170 190 l15 -16 l15 16" stroke="#1f201d" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="250" y="216" font-size="15" font-weight="600" class="fi">Sisäänkäynti · Entrance</text>
+      <!-- path -->
+      <path d="M185 160 C200 110 360 110 470 105" stroke="#1b6e66" stroke-width="3" stroke-dasharray="2 10" stroke-linecap="round" fill="none"/>
+      <text x="70" y="80" font-size="14" class="en">Aula · Lobby</text>
+    </g>
+
+    <!-- footer -->
+    <line x1="64" y1="996" x2="730" y2="996" stroke="#eaeaea" stroke-width="2"/>
+    <text x="64" y="1036" font-size="17" font-weight="600" class="fi">Etkö pääse? Soita 09 000 1234, ma–pe 8–15.</text>
+    <text x="64" y="1062" font-size="15" class="en">Cannot come? Call 09 000 1234, Mon–Fri 8–15, and we find a new time.</text>
+  </g>
+</svg>
