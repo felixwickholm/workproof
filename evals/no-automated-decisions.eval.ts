@@ -2,11 +2,14 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { GET as cityRoute } from "@/app/api/city/route";
 import { POST as draftRoute } from "@/app/api/challenges/draft/route";
 import { GET as queueRoute } from "@/app/api/companies/[id]/queue/route";
+import { POST as reviewersRoute } from "@/app/api/companies/[id]/reviewers/route";
 import { POST as decisionsRoute } from "@/app/api/decisions/route";
 import { POST as resetRoute } from "@/app/api/demo/reset/route";
 import { POST as followUpsRoute } from "@/app/api/followups/route";
 import { POST as submissionsRoute } from "@/app/api/submissions/route";
-import type { BlindProof, ChallengeDraft, CityOverview, ReviewQueue } from "@/lib/domain/types";
+import { DECISION_ACTIONS } from "@/lib/domain/decision-rules";
+import { NAMED_PERSON_NEEDED } from "@/lib/domain/guardrails";
+import type { BlindProof, ChallengeDraft, CityOverview, Company, ReviewQueue } from "@/lib/domain/types";
 import { collectText, findJudgement } from "@/lib/guard/no-judgement";
 import { getStore } from "@/lib/store";
 import { omit } from "@/lib/util/object";
@@ -92,17 +95,21 @@ const NEUTRAL = [
 
 describe("Eval 3: no automated decisions", () => {
   const aiTexts: string[] = [];
+  /** Each draft and each set of follow-up questions is one output of the task designer; its text fields go into `aiTexts`. */
+  let designerOutputs = 0;
   const summaries: string[] = [];
 
   beforeAll(async () => {
     await call(resetRoute, { method: "POST" });
     for (const need of NEEDS) {
       const { json } = await call<ChallengeDraft>(draftRoute, { body: { need: need.need } });
-      aiTexts.push(...collectText(omit(json, ["setAside", "need", "yourWords"])));
+      aiTexts.push(...collectText(omit(json, ["setAside", "need", "yourWords", "wishes"])));
+      designerOutputs += 1;
     }
     for (const [i, fixture] of SUBMISSIONS.entries()) {
       const { json: f } = await call<{ questions: string[] }>(followUpsRoute, { body: { challengeId: "ch-tuulos-ml", answer: fixture.answer } });
       aiTexts.push(...f.questions);
+      designerOutputs += 1;
       const { json } = await call<{ proof: BlindProof }>(submissionsRoute, {
         body: {
           challengeId: "ch-tuulos-ml",
@@ -112,15 +119,15 @@ describe("Eval 3: no automated decisions", () => {
           shareWithSimilar: i % 2 === 0,
         },
       });
-      summaries.push(json.proof.aiSummary);
+      summaries.push(json.proof.glance);
     }
   });
 
   it("(a) the guard rejects judging phrases and passes neutral ones", () => {
     const missed = JUDGING.filter((p) => findJudgement(p).length === 0);
     const flagged = NEUTRAL.filter((p) => findJudgement(p).length > 0);
-    record(EVAL, "(a) guard: judging rejected", `${JUDGING.length - missed.length}/${JUDGING.length}`, missed.length === 0);
-    record(EVAL, "(a) guard: neutral passed", `${NEUTRAL.length - flagged.length}/${NEUTRAL.length}`, flagged.length === 0);
+    record(EVAL, "(a) guard: judging rejected", `${JUDGING.length - missed.length} of ${JUDGING.length} judging phrases rejected`, missed.length === 0);
+    record(EVAL, "(a) guard: neutral passed", `${NEUTRAL.length - flagged.length} of ${NEUTRAL.length} neutral phrases passed`, flagged.length === 0);
     expect(JUDGING.length).toBeGreaterThanOrEqual(70);
     expect(NEUTRAL.length).toBeGreaterThanOrEqual(33);
     expect(missed).toEqual([]);
@@ -129,7 +136,12 @@ describe("Eval 3: no automated decisions", () => {
 
   it("(b) every AI output from evals 1 and 2 passes the guard", () => {
     const hits = aiTexts.flatMap(findJudgement);
-    record(EVAL, "(b) AI outputs pass the guard", `${aiTexts.length - hits.length}/${aiTexts.length}`, hits.length === 0);
+    record(
+      EVAL,
+      "(b) designer output passes the guard",
+      `${aiTexts.length - hits.length} of ${aiTexts.length} text fields from ${designerOutputs} designer outputs (${NEEDS.length} drafts, ${SUBMISSIONS.length} follow-up sets)`,
+      hits.length === 0,
+    );
     expect(hits).toEqual([]);
   });
 
@@ -139,7 +151,7 @@ describe("Eval 3: no automated decisions", () => {
     const offTemplate = summaries.filter((line) => !shape.test(line));
     const topical = summaries.filter((line) => /\b(?:discusses|proposes|mentions|does not mention|split|threshold|metric)\b/i.test(line.split(" Opens with:")[0]));
     const ok = offTemplate.length === 0 && topical.length === 0;
-    record(EVAL, "(b2) 'At a glance' is structure only", `${summaries.length - offTemplate.length - topical.length}/${summaries.length}`, ok);
+    record(EVAL, "(b2) 'At a glance' is structure only", `${summaries.length - offTemplate.length - topical.length} of ${summaries.length} lines describe shape only`, ok);
     expect(offTemplate).toEqual([]);
     expect(topical).toEqual([]);
   });
@@ -154,7 +166,7 @@ describe("Eval 3: no automated decisions", () => {
         if (times.join() !== [...times].sort().join()) ordered = false;
       }
     }
-    record(EVAL, "(c) queues in arrival order", ordered ? "yes" : "no", ordered);
+    record(EVAL, "(c) queues in arrival order", ordered ? `every queue of ${companies.length} companies` : "a queue out of order", ordered);
     expect(ordered).toBe(true);
   });
 
@@ -166,16 +178,38 @@ describe("Eval 3: no automated decisions", () => {
     const decisions = (await getStore().read()).decisions;
     const allNamed = decisions.every((d) => d.reviewer.trim() && d.feedback.trim().length >= 20);
     const ok = noName.status === 400 && noFeedback.status === 400 && allNamed;
-    record(EVAL, "(d) decisions need reviewer and feedback", `${noName.status}/${noFeedback.status}, ${decisions.length} stored all named`, ok);
+    record(EVAL, "(d) decisions need reviewer and feedback", `refused: HTTP ${noName.status} for a decision without a name, HTTP ${noFeedback.status} without feedback; ${decisions.length} stored decisions all named`, ok);
     expect(ok).toBe(true);
   });
 
   it("(e) the city reports 0 automated decisions and the audit log agrees", async () => {
     const { json } = await call<CityOverview>(cityRoute);
-    const decisionActions = new Set(["Chose to meet", "Said not now, with a reason"]);
+    const decisionActions = new Set<string>(Object.values(DECISION_ACTIONS));
     const aiDecisions = json.audit.filter((e) => decisionActions.has(e.action) && e.actor !== "human");
     const ok = json.totals.automatedDecisions === 0 && aiDecisions.length === 0 && json.totals.humanDecisions > 0;
-    record(EVAL, "(e) automated decisions", `${json.totals.automatedDecisions} (audit: ${aiDecisions.length} non-human)`, ok);
+    record(EVAL, "(e) automated decisions", `${json.totals.automatedDecisions} automated decisions; ${aiDecisions.length} decision audit lines by a non-human`, ok);
+    expect(ok).toBe(true);
+  });
+
+  it("(f) a decision must name a person registered for the company; software names are refused", async () => {
+    const company = "co-tuulos";
+    const waiting = (await call<ReviewQueue>(queueRoute, { params: { id: company } })).json.proofs;
+    const base = { proofId: waiting[0].proofId, companyId: company, decision: "pass", feedback: "Thank you, this was a clear answer to read." };
+    const bot = await call<{ error: string }>(decisionsRoute, { body: { ...base, reviewer: "AI bot" } });
+    const stranger = await call(decisionsRoute, { body: { ...base, reviewer: "Eeva Example" } });
+    const botReviewer = await call<{ error: string }>(reviewersRoute, { body: { name: "Review bot" }, params: { id: company } });
+    const added = await call<Pick<Company, "reviewers">>(reviewersRoute, { body: { name: "Eeva Example" }, params: { id: company } });
+    const after = await call(decisionsRoute, { body: { ...base, reviewer: "Eeva Example" } });
+    const city = (await call<CityOverview>(cityRoute)).json;
+    const ok =
+      bot.status === 400 && bot.json.error === NAMED_PERSON_NEEDED && stranger.status === 403 && botReviewer.status === 400 &&
+      added.status === 200 && (added.json.reviewers ?? []).includes("Eeva Example") && after.status === 200 && city.totals.automatedDecisions === 0;
+    record(
+      EVAL,
+      "(f) decisions name a registered person",
+      `refused: HTTP ${bot.status} for "AI bot", HTTP ${stranger.status} for an unregistered name, HTTP ${botReviewer.status} for a bot as reviewer; accepted after the explicit step: HTTP ${after.status}`,
+      ok,
+    );
     expect(ok).toBe(true);
   });
 });

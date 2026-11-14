@@ -3,7 +3,7 @@
  * lowercase, code comments, obfuscated emails, handles, ids and personal statements. Each case lists the
  * strings that must not reach a reviewer. The author is always "Leila Haddad", leila@example.org.
  */
-export interface RedactionCase {
+interface RedactionCase {
   title: string;
   answer: string;
   explain?: string;

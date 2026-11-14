@@ -5,7 +5,7 @@ import type { ExplainAnswer } from "@/lib/domain/types";
  * sanna.virtanen@example.org, unless a case says otherwise. Cases marked `knownLimit` are written
  * down in the README "Limits" paragraph: rules cannot find them, and the eval reports them as such.
  */
-export interface RedactionCase2 {
+interface RedactionCase2 {
   title: string;
   answer: string;
   name?: string;

@@ -1,5 +1,5 @@
 /** Synthetic company needs for eval 1. 15 tech, 5 other; 3 fantasy profiles; 3 with bias bait. */
-export interface NeedFixture {
+interface NeedFixture {
   need: string;
   tech: boolean;
   fantasy?: boolean;
@@ -69,7 +69,7 @@ export const SENTENCE_NEEDS: { need: string; skills: string[] }[] = [
 ];
 
 /** A need that asks for something about the person, with the exact strings it plants. */
-export interface AdversarialNeed {
+interface AdversarialNeed {
   need: string;
   /** Whole words or phrases that must not appear in any talent-visible field of the published card. */
   planted: string[];
@@ -129,4 +129,27 @@ export const ADVERSARIAL_NEEDS: AdversarialNeed[] = [
   { need: "Teacher, working language Finnish, lesson planning", planted: [] },
   { need: "Backend developer, EU work permit required by law, Python, APIs", planted: ["work permit"] },
   { need: "Nurse who speaks Finnish at C1 level, patient safety, medication", planted: ["C1"] },
+];
+
+/** A need that states facts about the job: languages, licences, permits, and the people the job serves. */
+interface FactNeed {
+  need: string;
+  /** The fixed-form facts the published task must carry as requirements. */
+  facts: string[];
+}
+
+/**
+ * Languages and licences are legitimate facts about the job. They must reach talent as requirements,
+ * never become skills or set-aside wishes, and words about the people served are never read as an age wish.
+ */
+export const FACT_NEEDS: FactNeed[] = [
+  {
+    need: "We need home care nurses who can handle evening visits on their own and explain medicine changes to elderly clients and their families, with a valid Finnish nurse licence.",
+    facts: ["Nurse licence needed"],
+  },
+  { need: "Customer service for our energy company: calm with angry callers, Finnish not required, work language English", facts: ["Finnish not required", "Work language: English"] },
+  { need: "Delivery driver for home deliveries to senior customers: route planning, driving licence B", facts: ["Driving licence B needed"] },
+  { need: "Backend developer: API design, error handling, testing, work permit needed", facts: ["Right to work in Finland needed"] },
+  { need: "Nurse for the children's ward: patient safety, medication, fluent Finnish needed for patient contact, young patients and their parents", facts: ["Fluent Finnish needed"] },
+  { need: "Kotihoidon sairaanhoitaja: lääkehoito, iäkkäät asiakkaat, sairaanhoitajan laillistus, ajokortti B", facts: ["Nurse licence needed", "Driving licence B needed"] },
 ];

@@ -5,12 +5,14 @@ import { POST as resetRoute } from "@/app/api/demo/reset/route";
 import { POST as followUpsRoute } from "@/app/api/followups/route";
 import { POST as acceptRoute } from "@/app/api/meetings/[id]/accept/route";
 import { POST as submissionsRoute } from "@/app/api/submissions/route";
+import { POST as tasterRoute } from "@/app/api/taster/route";
 import type { BlindProof, Decision, Meeting, ReviewQueue } from "@/lib/domain/types";
 import { REDACTION_CASES } from "./fixtures/redaction-cases";
 import { REDACTION_CASES_2 } from "./fixtures/redaction-cases-2";
 import { SUBMISSIONS } from "./fixtures/submissions";
+import { TABLE_INPUTS, TABLE_KNOWN, TABLE_TECHNICAL } from "./fixtures/table-inputs";
 import { getStore } from "@/lib/store";
-import { call, keysDeep, record } from "./helpers";
+import { call, keysDeep, record, twoFollowUps } from "./helpers";
 
 const EVAL = "2 Blind review";
 const CHALLENGE = "ch-tuulos-ml";
@@ -21,9 +23,15 @@ const TYPED_TOKENS = /\[(?:name|contact|school|place|employer|personal detail)\]
 describe("Eval 2: blind review", () => {
   const proofIds: string[] = [];
   let queue: ReviewQueue;
+  /**
+   * The redaction batches send hundreds of answers. An event task takes a limited number, so they go
+   * to a practice task, which has no limit and runs the same blind layer.
+   */
+  let practiceTask = "";
 
   beforeAll(async () => {
     await call(resetRoute, { method: "POST" });
+    practiceTask = (await call<{ id: string }>(tasterRoute, { body: { dreamJob: "ML engineer" } })).json.id;
     for (const [i, fixture] of SUBMISSIONS.entries()) {
       const { json: followUps } = await call<{ questions: string[] }>(followUpsRoute, {
         body: { challengeId: CHALLENGE, answer: fixture.answer },
@@ -52,21 +60,21 @@ describe("Eval 2: blind review", () => {
     const serialized = JSON.stringify(queue).toLowerCase();
     const leaks = SUBMISSIONS.flatMap((s) => s.planted.filter((p) => serialized.includes(p.toLowerCase())).map((p) => `${s.name}: ${p}`));
     const planted = SUBMISSIONS.reduce((n, s) => n + s.planted.length, 0);
-    record(EVAL, "planted strings in reviewer payload", `${leaks.length} of ${planted}`, leaks.length === 0);
+    record(EVAL, "planted strings in reviewer payload", `${leaks.length} of ${planted} planted strings found`, leaks.length === 0);
     expect(leaks).toEqual([]);
   });
 
   it("proof payloads have no identity keys", () => {
     const keys = new Set(keysDeep([...queue.proofs, ...queue.secondLook]));
     const found = FORBIDDEN_KEYS.filter((k) => keys.has(k));
-    record(EVAL, "identity keys in proof payloads", found.length ? found.join(", ") : "none", found.length === 0);
+    record(EVAL, "identity keys in proof payloads", found.length ? `found: ${found.join(", ")}` : "no identity keys found", found.length === 0);
     expect(found).toEqual([]);
   });
 
   it("identity appears only after the person accepts the meeting", async () => {
     const proofId = proofIds[0];
     const { json } = await call<{ decision: Decision; meeting: Meeting }>(decisionsRoute, {
-      body: { proofId, companyId: COMPANY, reviewer: "Anna Koivisto", decision: "meet", feedback: "Clear reasoning on the split. We would like to talk about it." },
+      body: { proofId, companyId: COMPANY, reviewer: "Elias Virta", decision: "meet", feedback: "Clear reasoning on the split. We would like to talk about it." },
     });
     const before = (await call<ReviewQueue>(queueRoute, { params: { id: COMPANY } })).json;
     const invited = before.decided.find((d) => d.proof.proofId === proofId);
@@ -86,10 +94,10 @@ describe("Eval 2: blind review", () => {
     for (const [i, c] of REDACTION_CASES.entries()) {
       const { json } = await call<{ proof: BlindProof }>(submissionsRoute, {
         body: {
-          challengeId: CHALLENGE,
+          challengeId: practiceTask,
           talent: { id: `eval-case-${i}`, name: "Leila Haddad", contact: "leila@example.org" },
           answer: c.answer,
-          explain: c.explain ? [{ question: "Why?", answer: c.explain }] : [],
+          explain: twoFollowUps(c.explain ? [{ question: "Why?", answer: c.explain }] : []),
           shareWithSimilar: false,
         },
       });
@@ -98,7 +106,7 @@ describe("Eval 2: blind review", () => {
       if (found.length > 0) leaked.push(`${c.title}: ${found.join(", ")}`);
     }
     const passed = REDACTION_CASES.length - leaked.length;
-    record(EVAL, "review cases hidden", `${passed}/${REDACTION_CASES.length}`, leaked.length === 0);
+    record(EVAL, "review cases hidden", `${passed} of ${REDACTION_CASES.length} cases fully hidden`, leaked.length === 0);
     expect(REDACTION_CASES).toHaveLength(54);
     expect(leaked).toEqual([]);
   });
@@ -109,10 +117,10 @@ describe("Eval 2: blind review", () => {
     for (const [i, c] of REDACTION_CASES_2.entries()) {
       const { json } = await call<{ proof: BlindProof }>(submissionsRoute, {
         body: {
-          challengeId: CHALLENGE,
+          challengeId: practiceTask,
           talent: { id: `eval-case2-${i}`, name: c.name ?? "Sanna Virtanen", contact: c.contact ?? "sanna.virtanen@example.org" },
           answer: c.answer,
-          explain: c.explain ?? [],
+          explain: twoFollowUps(c.explain),
           shareWithSimilar: false,
         },
       });
@@ -122,9 +130,37 @@ describe("Eval 2: blind review", () => {
       (c.knownLimit ? limits : leaked).push(`${c.title}: ${found.join(", ")}`);
     }
     const hidden = REDACTION_CASES_2.length - leaked.length - limits.length;
-    record(EVAL, "second review cases hidden", `${hidden}/${REDACTION_CASES_2.length} (${limits.length} known limits)`, leaked.length === 0);
+    record(EVAL, "second review cases hidden", `${hidden} of ${REDACTION_CASES_2.length} cases fully hidden, ${limits.length} known limits`, leaked.length === 0);
     expect(REDACTION_CASES_2).toHaveLength(72);
     expect(leaked).toEqual([]);
+  });
+
+  it(`visitor inputs from the table: ${TABLE_INPUTS.length} forms all hidden, ${TABLE_TECHNICAL.length} technical texts intact`, async () => {
+    const send = async (answer: string, i: number) =>
+      (
+        await call<{ proof: BlindProof }>(submissionsRoute, {
+          body: { challengeId: practiceTask, talent: { id: `eval-table-${i}`, name: TABLE_KNOWN.name, contact: TABLE_KNOWN.contact }, answer, explain: twoFollowUps(), shareWithSimilar: false },
+        })
+      ).json.proof;
+    const leaked: string[] = [];
+    for (const [i, c] of TABLE_INPUTS.entries()) {
+      const work = (await send(c.answer, i)).work.toLowerCase();
+      const found = c.leaks.filter((needle) => work.includes(needle.toLowerCase()));
+      if (found.length > 0) leaked.push(`${c.answer.slice(0, 40)}: ${found.join(", ")}`);
+    }
+    const changed: string[] = [];
+    for (const [i, text] of TABLE_TECHNICAL.entries()) {
+      const work = (await send(text, TABLE_INPUTS.length + i)).work;
+      if (work !== text) changed.push(work);
+    }
+    record(
+      EVAL,
+      "visitor inputs from the table",
+      `${TABLE_INPUTS.length - leaked.length} of ${TABLE_INPUTS.length} forms fully hidden; ${TABLE_TECHNICAL.length - changed.length} of ${TABLE_TECHNICAL.length} technical texts unchanged`,
+      leaked.length === 0 && changed.length === 0,
+    );
+    expect(leaked).toEqual([]);
+    expect(changed).toEqual([]);
   });
 
   it("keeps ordinary words and technical terms intact", async () => {
@@ -141,26 +177,26 @@ describe("Eval 2: blind review", () => {
     const changed: string[] = [];
     for (const [i, c] of cases.entries()) {
       const { json } = await call<{ proof: BlindProof }>(submissionsRoute, {
-        body: { challengeId: CHALLENGE, talent: { id: `eval-fp-${i}`, name: c.name, contact: "x@example.org" }, answer: c.answer, explain: [], shareWithSimilar: false },
+        body: { challengeId: practiceTask, talent: { id: `eval-fp-${i}`, name: c.name, contact: "x@example.org" }, answer: c.answer, explain: twoFollowUps(), shareWithSimilar: false },
       });
       if (json.proof.work !== c.answer) changed.push(json.proof.work);
     }
-    record(EVAL, "technical text left intact", `${cases.length - changed.length}/${cases.length}`, changed.length === 0);
+    record(EVAL, "technical text left intact", `${cases.length - changed.length} of ${cases.length} answers unchanged`, changed.length === 0);
     expect(changed).toEqual([]);
   });
 
-  it("the reviewer sees one neutral token and one total, never categories", async () => {
+  it("the reviewer sees one neutral token, never a count of hidden details or their categories", async () => {
     const { json } = await call<ReviewQueue>(queueRoute, { params: { id: COMPANY } });
     const serialized = JSON.stringify(json);
-    const ok = !TYPED_TOKENS.test(serialized) && !serialized.includes('"redactions"') && json.proofs.every((p) => typeof p.hiddenCount === "number");
-    record(EVAL, "reviewer payload: [hidden] and a total only", ok ? "yes" : "no", ok);
+    const ok = !TYPED_TOKENS.test(serialized) && !serialized.includes('"redactions"') && !serialized.includes('"hiddenCount"') && json.proofs.length > 0;
+    record(EVAL, "reviewer payload: [hidden] only, no count", ok ? "one token, no count, no categories" : "a count, categories or typed tokens shown", ok);
     expect(ok).toBe(true);
   });
 
   it("every proof label is unique", async () => {
     const labels = (await getStore().read()).proofs.map((p) => p.label);
     const unique = new Set(labels).size === labels.length;
-    record(EVAL, "unique proof labels", `${new Set(labels).size} of ${labels.length}`, unique);
+    record(EVAL, "unique proof labels", `${new Set(labels).size} distinct labels for ${labels.length} proofs`, unique);
     expect(unique).toBe(true);
   });
 });

@@ -4,16 +4,16 @@ import { GET as employerHomeRoute } from "@/app/api/companies/[id]/home/route";
 import { GET as queueRoute } from "@/app/api/companies/[id]/queue/route";
 import { GET as sessionRoute } from "@/app/api/demo/session/route";
 import { POST as storyRoute } from "@/app/api/demo/story/route";
-import { GET as seekerHomeRoute } from "@/app/api/seeker/[talentId]/home/route";
+import { GET as seekerHomeRoute } from "@/app/api/seeker/me/home/route";
 import type { CityOverview, DemoSession, EmployerHome, ReviewQueue, SeekerHome, StoryStage } from "@/lib/domain/types";
-import { call, record } from "./helpers";
+import { call, ownKey, record } from "./helpers";
 
 const EVAL = "6 Demo story (API)";
 const KAARI = "co-kaari";
 
 async function atStage(stage: StoryStage) {
   const session = (await call<DemoSession>(storyRoute, { body: { stage } })).json;
-  const home = (await call<SeekerHome>(seekerHomeRoute, { params: { talentId: session.persona.talentId } })).json;
+  const home = (await call<SeekerHome>(seekerHomeRoute, ownKey(session.persona.talentId))).json;
   return { session, home };
 }
 
@@ -30,7 +30,7 @@ describe("Demo story: the server rebuilds each stage", () => {
 
   it("refuses an unknown stage", async () => {
     const { status } = await call(storyRoute, { body: { stage: "hired" } });
-    record(EVAL, "unknown stage refused", String(status), status === 400);
+    record(EVAL, "unknown stage refused", `HTTP ${status} for an unknown stage`, status === 400);
     expect(status).toBe(400);
   });
 
@@ -42,7 +42,7 @@ describe("Demo story: the server rebuilds each stage", () => {
     const ok =
       before.home.passport.length === 2 && before.home.invitations.length === 0 &&
       sent.home.passport.length === 3 && story.length === 1 && queue.proofs.some((p) => p.proofId === story[0]);
-    record(EVAL, "before and sent", `${before.home.passport.length} then ${sent.home.passport.length} proofs, story proof queued ${ok}`, ok);
+    record(EVAL, "before and sent", `${before.home.passport.length} proofs before, ${sent.home.passport.length} after sending; story proof queued: ${ok}`, ok);
     expect(ok).toBe(true);
   });
 
@@ -62,7 +62,7 @@ describe("Demo story: the server rebuilds each stage", () => {
     const kaari = home.invitations.find((i) => i.companyName === "Kaari Home Care");
     const secondLook = home.invitations.find((i) => i.viaSecondLook);
     const ok = kaari?.status !== "invited" && named && secondLook?.companyName === "Otso Health" && after.accepted > before.accepted;
-    record(EVAL, "met: accepted, name shown, Second look invite", `accepted ${before.accepted} -> ${after.accepted}`, ok);
+    record(EVAL, "met: accepted, name shown, Second look invite", `accepted meetings: ${before.accepted} before, ${after.accepted} after`, ok);
     expect(ok).toBe(true);
   });
 

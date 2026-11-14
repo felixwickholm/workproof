@@ -7,15 +7,15 @@ import { protectedNames } from "@/lib/guard/protected";
 import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
 import { collectText, findJudgement } from "@/lib/guard/no-judgement";
 import { omit } from "@/lib/util/object";
-import { ADVERSARIAL_NEEDS, NEEDS, SENTENCE_NEEDS } from "./fixtures/needs";
+import { ADVERSARIAL_NEEDS, FACT_NEEDS, NEEDS, SENTENCE_NEEDS } from "./fixtures/needs";
 import { call, record } from "./helpers";
 
 const EVAL = "1 Task generator";
 const words = (text: string) => text.trim().split(/\s+/).length;
 
-/** Fields a talent sees. "Set aside" is excluded on purpose: it is where bias bait belongs. */
+/** Fields a talent sees. "Set aside" and the company-side wish outcomes are excluded on purpose: they are where bias bait belongs. */
 function visibleText(draft: ChallengeDraft): string {
-  return collectText(omit(draft, ["setAside", "yourWords", "note"])).join("\n");
+  return collectText(omit(draft, ["setAside", "yourWords", "wishes", "note"])).join("\n");
 }
 
 /** Every field a talent sees, one entry per field, so a leak names where it happened. */
@@ -68,7 +68,7 @@ describe("Eval 1: task generator", () => {
       ].filter(Boolean);
       if (problems.length) failures.push(`${need.need.slice(0, 40)}: ${problems.join(", ")}`);
     }
-    record(EVAL, "shape (title, brief, 3-5 skills, minutes, guide)", `${drafts.length - failures.length}/${drafts.length}`, failures.length === 0);
+    record(EVAL, "shape (title, brief, 3-5 skills, minutes, guide)", `${drafts.length - failures.length} of ${drafts.length} drafts in shape`, failures.length === 0);
     expect(failures).toEqual([]);
   });
 
@@ -78,27 +78,27 @@ describe("Eval 1: task generator", () => {
       const bait = (need.bait ?? []).filter((b) => visibleText(draft).toLowerCase().includes(b.toLowerCase()));
       return [...found, ...bait].map((f) => `${need.need.slice(0, 30)}: ${f}`);
     });
-    record(EVAL, "no protected attribute in visible fields", `${leaks.length} leaks`, leaks.length === 0);
+    record(EVAL, "no protected attribute in visible fields", `${leaks.length} protected attributes found in ${drafts.length} drafts`, leaks.length === 0);
     expect(leaks).toEqual([]);
   });
 
   it("bias bait lands in set aside", () => {
     const baited = drafts.filter((d) => d.need.bait);
     const handled = baited.filter((d) => d.draft.setAside.some((s) => s.startsWith("Not used:")));
-    record(EVAL, "bias bait set aside", `${handled.length}/${baited.length}`, handled.length === baited.length);
+    record(EVAL, "bias bait set aside", `${handled.length} of ${baited.length} baited drafts set it aside`, handled.length === baited.length);
     expect(handled).toHaveLength(baited.length);
   });
 
   it("fantasy profiles are cut to a focused card", () => {
     const fantasy = drafts.filter((d) => d.need.fantasy);
     const focused = fantasy.filter((d) => d.draft.coreSkills.length <= 4 && d.draft.setAside.length >= 3);
-    record(EVAL, "fantasy profiles cut to <= 4 skills", `${focused.length}/${fantasy.length}`, focused.length === fantasy.length);
+    record(EVAL, "fantasy profiles cut to <= 4 skills", `${focused.length} of ${fantasy.length} fantasy profiles cut`, focused.length === fantasy.length);
     expect(focused).toHaveLength(fantasy.length);
   });
 
   it("every draft passes the no-judgement guard", () => {
     const hits = drafts.flatMap(({ draft }) => findJudgement(visibleText(draft)));
-    record(EVAL, "drafts pass the guard", `${hits.length} hits`, hits.length === 0);
+    record(EVAL, "drafts pass the guard", `${hits.length} judging phrases found in ${drafts.length} drafts`, hits.length === 0);
     expect(hits).toEqual([]);
   });
 
@@ -113,7 +113,7 @@ describe("Eval 1: task generator", () => {
         misses.push(`${need.slice(0, 40)}: missing ${missing.join(", ") || "none"}; set aside ${notCore.length}`);
       }
     }
-    record(EVAL, "sentence-form needs keep their skills", `${SENTENCE_NEEDS.length - misses.length}/${SENTENCE_NEEDS.length}`, misses.length === 0);
+    record(EVAL, "sentence-form needs keep their skills", `${SENTENCE_NEEDS.length - misses.length} of ${SENTENCE_NEEDS.length} needs kept their skills`, misses.length === 0);
     expect(misses).toEqual([]);
   });
 
@@ -137,7 +137,35 @@ describe("Eval 1: task generator", () => {
         if (word.test(visible)) leaks.push(`${need.slice(0, 30)}: "${text}"`);
       }
     }
-    record(EVAL, "adversarial needs: planted strings in published cards", `${leaks.length} in ${ADVERSARIAL_NEEDS.length} needs (${published} published)`, leaks.length === 0);
+    record(EVAL, "adversarial needs: planted strings in published cards", `${leaks.length} planted strings found in ${published} published cards from ${ADVERSARIAL_NEEDS.length} needs`, leaks.length === 0);
     expect(leaks).toEqual([]);
+  });
+
+  it("languages and licences reach talent as requirements, never as skills or set-aside wishes", async () => {
+    const problems: string[] = [];
+    for (const { need, facts } of FACT_NEEDS) {
+      const draft = await call<ChallengeDraft>(draftRoute, { body: { need } });
+      const label = need.slice(0, 30);
+      if ((draft.json.wishes ?? []).some((w) => w.outcome === "set-aside" && w.text === "age")) problems.push(`${label}: served group set aside as age`);
+      if (draft.json.setAside.some((line) => line.startsWith("Not used:"))) problems.push(`${label}: a fact or served group marked as not used`);
+      if (JSON.stringify(draft.json.facts ?? []) !== JSON.stringify(facts)) problems.push(`${label}: facts ${JSON.stringify(draft.json.facts)}`);
+      const asideText = draft.json.setAside.join(" ");
+      if (/licen[cs]e|laillistus|ajokortti|permit|not required|work language/i.test(asideText)) problems.push(`${label}: a fact in set aside`);
+      const skillText = draft.json.coreSkills.map((s) => s.label).join(" ");
+      if (/licen[cs]e|Finnish|English|permit/i.test(skillText)) problems.push(`${label}: a fact as a skill`);
+
+      const card = await call<Challenge>(approveRoute, { body: { draft: draft.json, companyId: "co-kaari", approvedBy: "Eval Person" } });
+      if (card.status !== 200) {
+        problems.push(`${label}: publish status ${card.status}`);
+        continue;
+      }
+      const { json } = await call<Challenge>(challengeRoute, { params: { id: card.json.id } });
+      if (JSON.stringify(json.requirements ?? []) !== JSON.stringify(facts)) problems.push(`${label}: published requirements ${JSON.stringify(json.requirements)}`);
+      const leaked = protectedNames(collectText(json).join("\n"));
+      if (leaked.length > 0) problems.push(`${label}: ${leaked.join(", ")} on the published card`);
+    }
+    const failed = new Set(problems.map((problem) => problem.split(":")[0])).size;
+    record(EVAL, "job facts published as requirements", `${FACT_NEEDS.length - failed} of ${FACT_NEEDS.length} needs carry their facts as requirements only`, problems.length === 0);
+    expect(problems).toEqual([]);
   });
 });

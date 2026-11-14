@@ -2,7 +2,7 @@
  * Synthetic submissions for eval 2. Each plants identity in the work and lists every planted
  * string, so the eval can assert that none of them reaches a reviewer.
  */
-export interface SubmissionFixture {
+interface SubmissionFixture {
   name: string;
   contact: string;
   answer: string;

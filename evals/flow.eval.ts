@@ -10,7 +10,7 @@ import { POST as resetRoute } from "@/app/api/demo/reset/route";
 import { POST as followUpsRoute } from "@/app/api/followups/route";
 import { POST as acceptRoute } from "@/app/api/meetings/[id]/accept/route";
 import { POST as confirmRoute } from "@/app/api/meetings/[id]/confirm/route";
-import { GET as passportRoute } from "@/app/api/passport/[talentId]/route";
+import { GET as passportRoute } from "@/app/api/passport/me/route";
 import { POST as sharingRoute } from "@/app/api/proofs/[proofId]/sharing/route";
 import { POST as submissionsRoute } from "@/app/api/submissions/route";
 import { POST as tasterRoute } from "@/app/api/taster/route";
@@ -25,7 +25,7 @@ import type {
   PassportEntry,
   ReviewQueue,
 } from "@/lib/domain/types";
-import { call, record } from "./helpers";
+import { call, ownKey, record } from "./helpers";
 
 const EVAL = "5 Flow (API)";
 const A = "co-tuulos";
@@ -53,12 +53,15 @@ describe("Flow: from need to a confirmed Second look meeting", () => {
     const draft = await call<ChallengeDraft>(draftRoute, {
       body: { need: "ML engineer for grasp detection: model evaluation, data quality, code review, young native speaker" },
     });
-    step("AI drafts a Problem Card", draft.status === 200 && draft.json.setAside.some((s) => s.startsWith("Not used")));
+    step("AI drafts a Problem Card", draft.status === 200 && draft.json.setAside.some((s) => s.startsWith("Not used")) && draft.json.draftedBy !== undefined);
 
     const approved = await call<Challenge>(approveRoute, { body: { draft: draft.json, companyId: A, approvedBy: "Anna Koivisto" } });
     const listed = (await call<Challenge[]>(listChallengesRoute)).json;
     const fetched = await call<Challenge>(challengeRoute, { params: { id: approved.json.id } });
-    step("a human approves and it is published", approved.status === 200 && listed.some((c) => c.id === approved.json.id) && fetched.status === 200);
+    step(
+      "a human approves and it is published",
+      approved.status === 200 && listed.some((c) => c.id === approved.json.id) && fetched.status === 200 && !("draftedBy" in fetched.json),
+    );
 
     const answer =
       "The split leaks frames of the same grasp into test, so group by attempt id. The threshold is tuned on the test set; pick it on validation. Accuracy hides the 4% drops, so report recall on dropped grasps.";
@@ -76,7 +79,7 @@ describe("Flow: from need to a confirmed Second look meeting", () => {
     const proof = submitted.json.proof;
     step("submission returns a blind proof", submitted.status === 200 && !JSON.stringify(proof).includes("Noor"));
 
-    const before = (await call<PassportEntry[]>(passportRoute, { params: { talentId: TALENT.id } })).json.find((e) => e.proof.proofId === proof.proofId);
+    const before = (await call<PassportEntry[]>(passportRoute, ownKey(TALENT.id))).json.find((e) => e.proof.proofId === proof.proofId);
     const shared = await call<{ sharing: boolean }>(sharingRoute, { body: { talentId: TALENT.id, share: true }, params: { proofId: proof.proofId } });
     step("Second look is off until the person turns it on", before?.sharing === false && shared.json.sharing === true);
 
@@ -84,10 +87,10 @@ describe("Flow: from need to a confirmed Second look meeting", () => {
     step("company A sees it in its own queue", queueA.proofs.some((p) => p.proofId === proof.proofId));
 
     const passA = await call<{ decision: Decision }>(decisionsRoute, {
-      body: { proofId: proof.proofId, companyId: A, reviewer: "Anna Koivisto", decision: "pass", feedback: "Clear and correct. We need someone on site this month, so we pass for now." },
+      body: { proofId: proof.proofId, companyId: A, reviewer: "Elias Virta", decision: "pass", feedback: "Clear and correct. We need someone on site this month, so we pass for now." },
     });
     const again = await call(decisionsRoute, {
-      body: { proofId: proof.proofId, companyId: A, reviewer: "Anna Koivisto", decision: "meet", feedback: "Changed my mind about this one, sorry." },
+      body: { proofId: proof.proofId, companyId: A, reviewer: "Elias Virta", decision: "meet", feedback: "Changed my mind about this one, sorry." },
     });
     step("company A passes with feedback, once", passA.status === 200 && again.status === 409);
 
@@ -102,14 +105,14 @@ describe("Flow: from need to a confirmed Second look meeting", () => {
     step("company C without shared skills cannot see or decide", !queueC.secondLook.some((p) => p.proofId === proof.proofId) && blocked.status === 403);
 
     const meet = await call<{ decision: Decision; meeting: Meeting }>(decisionsRoute, {
-      body: { proofId: proof.proofId, companyId: B, reviewer: "Jussi Rantala", decision: "meet", feedback: "Your point on the split matches what we see in forecasting. Let us talk." },
+      body: { proofId: proof.proofId, companyId: B, reviewer: "Mira Salo", decision: "meet", feedback: "Your point on the split matches what we see in forecasting. Let us talk." },
     });
     step("company B picks Meet and a slot is set", meet.status === 200 && meet.json.meeting.status === "invited" && /^Sat \d{1,2}:\d{2}, Table \d+$/.test(meet.json.meeting.slot));
 
     const hidden = (await call<ReviewQueue>(queueRoute, { params: { id: B } })).json.decided.find((d) => d.proof.proofId === proof.proofId);
     step("identity hidden while invited", hidden?.identity === undefined);
 
-    const passport = (await call<PassportEntry[]>(passportRoute, { params: { talentId: TALENT.id } })).json;
+    const passport = (await call<PassportEntry[]>(passportRoute, ownKey(TALENT.id))).json;
     const entry = passport.find((e) => e.proof.proofId === proof.proofId);
     step(
       "passport shows both responses",
@@ -136,5 +139,40 @@ describe("Flow: from need to a confirmed Second look meeting", () => {
         t.automatedDecisions === 0,
     );
     expect(steps.length).toBe(17);
+  });
+});
+
+describe("Flow: a task takes a fixed number of answers", () => {
+  it("accepts work until the places are taken, then refuses honestly", async () => {
+    const check = (name: string, ok: boolean) => {
+      record(EVAL, name, ok ? "ok" : "failed", ok);
+      expect(ok, name).toBe(true);
+    };
+    await call(resetRoute, { method: "POST" });
+    const draft = await call<ChallengeDraft>(draftRoute, { body: { need: "Data analyst for our energy forecasts: SQL, data quality, clear charts" } });
+    const tooMany = await call(approveRoute, { body: { draft: { ...draft.json, places: 40 }, companyId: B, approvedBy: "Aino Virtanen" } });
+    check("places outside 5 to 30 are refused", tooMany.status === 400);
+
+    const approved = await call<Challenge>(approveRoute, { body: { draft: { ...draft.json, places: 5 }, companyId: B, approvedBy: "Aino Virtanen" } });
+    const fetched = await call<Challenge>(challengeRoute, { params: { id: approved.json.id } });
+    check("the employer's number of places is published with the task", fetched.json.places === 5);
+
+    const send = (i: number) =>
+      call<{ proof: BlindProof; error?: string }>(submissionsRoute, {
+        body: {
+          challengeId: approved.json.id,
+          talent: { id: `places-talent-${i}`, name: `Person ${i} Example`, contact: `person${i}@example.org` },
+          answer: "Check the late meter readings first, then chart the forecast error per week.",
+          explain: [
+            { question: "Why the late readings first?", answer: "They move every weekly total." },
+            { question: "What would you chart?", answer: "The error per week, so a drift shows." },
+          ],
+        },
+      });
+    const accepted = [];
+    for (let i = 0; i < 5; i++) accepted.push((await send(i)).status);
+    check("all five places take work", accepted.every((status) => status === 200));
+    const sixth = await send(5);
+    check("the sixth answer is refused with 409 and no waiting list", sixth.status === 409 && sixth.json.error === "This task has all its 5 answers. Choose another task.");
   });
 });
