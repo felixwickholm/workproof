@@ -8,7 +8,7 @@ import { createSandboxRegistry, type Sandbox, type SandboxRegistry } from "./san
 import { callerScope, type CallerScope } from "./scope";
 import type { ProofStore } from "./types";
 
-export type { StoreData } from "./types";
+export type { FollowUpIssue, StoreData } from "./types";
 
 /** At most this many visitor sandboxes are kept in memory. */
 const MAX_SANDBOXES = 2000;
@@ -20,9 +20,9 @@ const RECENT_USE_MS = 30 * 60 * 1000;
 export const NO_SANDBOX_MESSAGE = "Open the site first.";
 
 const holder = globalThis as typeof globalThis & {
-  __workprintStore?: ProofStore;
-  __workprintSandboxes?: SandboxRegistry;
-  __workprintSandboxCreation?: WindowLimiter;
+  __workproofStore?: ProofStore;
+  __workproofSandboxes?: SandboxRegistry;
+  __workproofSandboxCreation?: WindowLimiter;
 };
 
 /** File used for persistence. PROOF_DATA_FILE=off keeps everything in memory. */
@@ -34,19 +34,19 @@ function dataFile(): string | undefined {
 
 /** The shared store used without a sandbox. Kept on globalThis so dev hot reload does not reset it. */
 function defaultStore(): ProofStore {
-  holder.__workprintStore ??= createMemoryStore(() => buildSeed(new Date()), dataFile());
-  return holder.__workprintStore;
+  holder.__workproofStore ??= createMemoryStore(() => buildSeed(new Date()), dataFile());
+  return holder.__workproofStore;
 }
 
 /** Every visitor's sandbox. Shared through globalThis, since each route bundle has its own copy of this module. */
 export function sandboxes(): SandboxRegistry {
-  holder.__workprintSandboxes ??= createSandboxRegistry({ max: MAX_SANDBOXES, lifetimeMs: SANDBOX_LIFETIME_MS, protectedMs: RECENT_USE_MS });
-  return holder.__workprintSandboxes;
+  holder.__workproofSandboxes ??= createSandboxRegistry({ max: MAX_SANDBOXES, lifetimeMs: SANDBOX_LIFETIME_MS, protectedMs: RECENT_USE_MS });
+  return holder.__workproofSandboxes;
 }
 
 function creationLimiter(): WindowLimiter {
-  holder.__workprintSandboxCreation ??= createWindowLimiter({ max: SANDBOXES_PER_ADDRESS, windowMs: SANDBOX_WINDOW_MS });
-  return holder.__workprintSandboxCreation;
+  holder.__workproofSandboxCreation ??= createWindowLimiter({ max: SANDBOXES_PER_ADDRESS, windowMs: SANDBOX_WINDOW_MS });
+  return holder.__workproofSandboxCreation;
 }
 
 /** A new sandbox starts at the "invited" story stage, the default for free exploring. */
@@ -68,6 +68,20 @@ function sandboxFor(scope: CallerScope): Sandbox | undefined {
 /** The caller's sandbox, or undefined when the request has none (or there is no request). */
 export async function currentSandbox(): Promise<Sandbox | undefined> {
   return sandboxFor(await callerScope());
+}
+
+/**
+ * Whether the caller may change the event it reads: always outside a request, and in a request only with a live
+ * sandbox. A request without one reads the shared default event, which belongs to nobody.
+ */
+export async function ownsEvent(): Promise<boolean> {
+  const scope = await callerScope();
+  return scope.kind === "outside" || sandboxFor(scope) !== undefined;
+}
+
+/** Refuses up front, before any paid or slow work, a change the store would refuse anyway. */
+export async function assertWritable(): Promise<void> {
+  if (!(await ownsEvent())) throw new ServiceError(401, NO_SANDBOX_MESSAGE);
 }
 
 /** The shared default event, readable by anyone and changed by nobody. */

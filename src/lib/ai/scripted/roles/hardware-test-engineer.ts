@@ -30,8 +30,9 @@ export const hardwareTestEngineer: RoleTemplate = {
     "the oscilloscope is in use by another team",
   ],
   challenge: {
+    minutes: 15,
     title: "Find the dead sensor line on this board",
-    format: "build",
+    format: "make",
     proofKind: "video",
     brief:
       "One of our pick robots stopped at a cold-storage site: the gripper's sensor S3 reads zero. The field team swapped the sensor, and S3 still reads zero. The sensor board is now on your bench with the note below, which an AI assistant summarised from the field ticket. This is a synthetic example.",
@@ -76,7 +77,7 @@ export const hardwareTestEngineer: RoleTemplate = {
   },
   taster: {
     title: "Read one bench note",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "A note left on the test bench.",
     material: {

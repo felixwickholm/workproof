@@ -27,7 +27,7 @@ const json = (body: unknown, cookie: string | null = VISITOR) =>
   new Request("http://localhost/api/voice/speak", {
     method: "POST",
     body: JSON.stringify(body),
-    headers: { "content-type": "application/json", ...(cookie ? { cookie: `workprint_sandbox=${cookie}` } : {}) },
+    headers: { "content-type": "application/json", ...(cookie ? { cookie: `workproof_sandbox=${cookie}` } : {}) },
   });
 
 describe("voice routes without a key", () => {
@@ -49,7 +49,7 @@ describe("voice routes without a key", () => {
     const request = new Request("http://localhost/api/voice/transcribe?lang=en", {
       method: "POST",
       body: new Uint8Array([1, 2, 3]),
-      headers: { "content-type": "audio/webm", cookie: `workprint_sandbox=${VISITOR}` },
+      headers: { "content-type": "audio/webm", cookie: `workproof_sandbox=${VISITOR}` },
     });
     expect((await transcribe(request)).status).toBe(503);
   });

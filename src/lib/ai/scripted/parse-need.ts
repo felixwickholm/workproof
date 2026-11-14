@@ -53,12 +53,21 @@ export interface ParsedNeed {
 /** A list marker before a wish: a dash, a star or "1." and "2)". A number that is part of the wish ("5 years") stays. */
 const LIST_MARKER = /^(?:[\s\-*]|\d{1,2}[.)](?=\s))+/;
 
+/** A line that starts with a list sign: the company listed it as one wish, so its commas and "and" stay inside it. */
+const LISTED_LINE = /^\s*(?:[-*•]|\d{1,2}[.)])\s+/;
+
+const WISH_BREAK = /[,;•]|:\s|\.\s|\s+and\s+|\s+ja\s+|\s+\+\s+|\s+plus\s+|\s+who\s+|\s+joka\s+/i;
+
 function splitWishes(need: string): string[] {
   return need
-    .split(/[,;\n•]|:\s|\.\s|\s+and\s+|\s+ja\s+|\s+\+\s+|\s+plus\s+|\s+who\s+|\s+joka\s+/i)
+    .split("\n")
+    .flatMap((line) => (LISTED_LINE.test(line) ? [line] : line.split(WISH_BREAK)))
     .map((part) => part.replace(LIST_MARKER, "").replace(/[\s.]+$/, "").trim())
     .filter((part) => part.length >= 2);
 }
+
+/** A degree asks for a paper, not for work, even when it names a field: "A degree in electrical engineering". */
+const CREDENTIAL = /\b(?:degree|master'?s|bachelor'?s|msc|bsc|phd|diploma|tutkinto|korkeakoulututkinto|examen)\b/i;
 
 /**
  * Skills named outright by a label or synonym. A term found only inside a longer term of another skill
@@ -110,9 +119,11 @@ function cuedSkill(text: string, role: CueRole | undefined, roleOnly: boolean): 
 
 /**
  * Skills a wish names or describes. Labels and synonyms count first, then work described in a plain
- * sentence. Everyday cue words count only when nothing is named; they also turn a described skill
- * the role does not use into the role's own skill ("explains bills simply" is Plain language for
- * customer service).
+ * sentence. Everyday cue words count only when nothing is named. With a library role, the role reads
+ * its own wishes: when a wish hits one of the role's skills, a skill outside the role that it only names
+ * by a loose word is dropped ("care for how a model is tested" is not Patient safety for an ML engineer),
+ * and a wish that hits none of them becomes the role's own skill when its cue words point there
+ * ("explains bills simply" is Plain language for customer service).
  */
 export function skillsIn(text: string, role?: CueRole): SkillId[] {
   const lower = normalise(text);
@@ -123,11 +134,11 @@ export function skillsIn(text: string, role?: CueRole): SkillId[] {
     const cued = cuedSkill(lower, role, false);
     return cued ? [cued] : [];
   }
-  if (named.length === 0 && role && !found.some((id) => role.skills.includes(id))) {
-    const cued = cuedSkill(lower, role, true);
-    if (cued) return [cued];
-  }
-  return found;
+  if (!role) return found;
+  const inRole = (id: SkillId) => role.skills.includes(id);
+  if (found.some(inRole)) return found.filter((id) => inRole(id) || described.includes(id));
+  const cued = cuedSkill(lower, role, true);
+  return cued ? [cued] : found;
 }
 
 function capitalise(text: string): string {
@@ -172,6 +183,17 @@ function tidy(text: string): string {
 }
 
 /**
+ * The need without its first line when that line only names the role above a list, as a job ad's title
+ * does: "Marketing and communications specialist" picks the role and is not a wish for communication.
+ */
+function withoutRoleLine(need: string, roleKeywords: readonly string[]): string {
+  const [first, ...rest] = need.split("\n");
+  const isRoleLine =
+    rest.some((line) => LISTED_LINE.test(line)) && !LISTED_LINE.test(first) && roleKeywords.some((keyword) => containsTerm(normalise(first), keyword));
+  return isRoleLine ? rest.join("\n") : need;
+}
+
+/**
  * Splits a need into wishes and reads each one. With a library role, the role's skills and cues
  * decide close calls, so a home-care wish about "the day when carers are off sick" is care planning.
  */
@@ -185,7 +207,7 @@ export function parseNeed(need: string, role?: CueRole): ParsedNeed {
   const facts: string[] = [];
   let cleanedNeed = need;
 
-  for (const raw of splitWishes(need)) {
+  for (const raw of splitWishes(withoutRoleLine(need, roleKeywords))) {
     const wish = raw.replace(INTRO, "").replace(/^(?:an?|someone|somebody)\s+/i, "").replace(ABILITY, "").trim();
     if (wish.length < 2 || ONLY_A_PERSON.test(wish)) continue;
     wishes.push(wish);
@@ -194,10 +216,11 @@ export function parseNeed(need: string, role?: CueRole): ParsedNeed {
     const wishFacts = jobFacts(wish);
     for (const fact of wishFacts) if (!facts.includes(fact)) facts.push(fact);
     const blocked = protectedNames(wishFacts.length > 0 ? withoutJobFacts(wish) : wish);
-    const skills = wishFacts.length > 0 ? [] : skillsIn(wish, role);
+    const skills = wishFacts.length > 0 || CREDENTIAL.test(wish) ? [] : skillsIn(wish, role);
     for (const id of skills) if (!wishedSkills.includes(id)) wishedSkills.push(id);
 
-    const describesRole = roleKeywords.some((keyword) => containsTerm(normalise(wish), keyword));
+    // A degree is a wish of its own, even when its field names the role ("A degree in marketing").
+    const describesRole = !CREDENTIAL.test(wish) && roleKeywords.some((keyword) => containsTerm(normalise(wish), keyword));
     // The opening names the role ("Data engineer for our meter data"): it is not a wish of its own.
     const opensWithRole = describesRole && wishes.length === 1;
     const isListed = blocked.length > 0 || (!opensWithRole && (skills.length > 0 || !describesRole));

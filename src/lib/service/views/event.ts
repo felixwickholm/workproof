@@ -22,6 +22,16 @@ export function eventTotals(data: StoreData): { proofs: number; proofsAnswered: 
   return { proofs: proofs.length, ...replyTotals(proofs, data.decisions) };
 }
 
+/**
+ * Distinct people with at least one answered event proof. Private keys are read here and only the count
+ * leaves, so the city learns how many people got an answer without learning who.
+ */
+export function peopleAnswered(data: StoreData): number {
+  const answered = new Set(data.decisions.map((d) => d.proofId));
+  const event = new Set(eventProofs(data).map((p) => p.proofId));
+  return new Set(data.submissions.filter((s) => event.has(s.id) && answered.has(s.id)).map((s) => s.talentId)).size;
+}
+
 /** Hours between two ISO times, one decimal, never negative. */
 export function hoursBetween(from: string, to: string): number {
   return Math.round(Math.max(0, (new Date(to).getTime() - new Date(from).getTime()) / HOUR_MS) * 10) / 10;

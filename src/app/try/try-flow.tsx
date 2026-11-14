@@ -9,6 +9,7 @@ import { api, errorText } from "@/lib/client/api";
 import { getTalentId } from "@/lib/client/local";
 import { backInFlow, useFlowHistory } from "@/lib/client/use-flow-history";
 import type { OwnProof } from "@/lib/domain/types";
+import type { BlindPreview } from "@/lib/service/preview";
 import { FindingStep } from "./finding-step";
 import { JobStep } from "./job-step";
 import { PrimaryAction } from "./primary-action";
@@ -18,11 +19,11 @@ import { practiceLine } from "./try-copy";
 import { TryFrame, type Back } from "./try-frame";
 import { clearTry, parseSavedTry, readSavedTry, saveTry, type Answer, type Taster } from "./try-state";
 import { useTableInvite } from "./use-table-invite";
-import { ExplainStep, NameStep, TaskStep } from "./work-steps";
+import { CheckStep, ExplainStep, NameStep, TaskStep } from "./work-steps";
 
-type Step = "job" | "finding" | "task" | "explain" | "name" | "result";
+type Step = "job" | "finding" | "task" | "explain" | "name" | "check" | "result";
 /** The steps a person moves through; "finding" is a wait inside the first one. */
-const ORDER: Step[] = ["job", "task", "explain", "name", "result"];
+const ORDER: Step[] = ["job", "task", "explain", "name", "check", "result"];
 
 /** Long enough to read the line, short enough to feel quick. */
 const FINDING_AT_LEAST_MS = 900;
@@ -52,10 +53,13 @@ export function TryFlow() {
   const [taskFor, setTaskFor] = useState("");
   const [startedAt, setStartedAt] = useState(0);
   const [answer, setAnswer] = useState<Answer>(empty);
+  const [choice, setChoice] = useState<"a" | "b" | undefined>(undefined);
   const [question, setQuestion] = useState("");
   const [explain, setExplain] = useState<Answer>(empty);
   /** Only in this page's memory: used once to hide the name, and to prefill an acceptance. */
   const [name, setName] = useState("");
+  /** What a company would read, for exactly these words; with the first name it was made with, if any. */
+  const [preview, setPreview] = useState<{ blind: BlindPreview; first: string } | null>(null);
   const [proof, setProof] = useState<OwnProof | null>(null);
   const [sentName, setSentName] = useState("");
   const [table, setTable] = useState<TableLink>("none");
@@ -86,6 +90,7 @@ export function TryFlow() {
       setTaskFor(saved.job);
       setStartedAt(saved.startedAt);
       setAnswer(saved.answer);
+      setChoice(saved.choice);
       setQuestion(saved.question);
       setExplain(saved.explain);
       setStep(saved.step);
@@ -94,14 +99,14 @@ export function TryFlow() {
 
   useEffect(() => {
     if (!challenge || (step !== "task" && step !== "explain" && step !== "name")) return;
-    const save = () => saveTry({ step, job: taskFor, challenge, startedAt, answer, question, explain });
+    const save = () => saveTry({ step, job: taskFor, challenge, startedAt, answer, choice, question, explain });
     const t = window.setTimeout(save, 300);
     window.addEventListener("pagehide", save);
     return () => {
       window.clearTimeout(t);
       window.removeEventListener("pagehide", save);
     };
-  }, [step, taskFor, challenge, startedAt, answer, question, explain]);
+  }, [step, taskFor, challenge, startedAt, answer, choice, question, explain]);
 
   /**
    * The input a Continue has just left. From the press on, late keys and autofill on the old
@@ -123,6 +128,7 @@ export function TryFlow() {
     if (frozen.current === next) frozen.current = null;
     setDirection(ORDER.indexOf(next) >= ORDER.indexOf(step) ? 1 : -1);
     setError(null);
+    if (ORDER.indexOf(next) < ORDER.indexOf("check")) setPreview(null);
     setStep(next);
     window.scrollTo({ top: 0 });
   };
@@ -157,6 +163,7 @@ export function TryFlow() {
         setTaskFor(wanted);
         setStartedAt(Date.now());
         setAnswer(empty);
+        setChoice(undefined);
         setExplain(empty);
         go("task");
       },
@@ -166,7 +173,7 @@ export function TryFlow() {
 
   // The follow-up never blocks the flow: if it cannot be written, a plain question stands in.
   const toExplain = () => {
-    if (!challenge || !answer.text.trim()) return;
+    if (!challenge || !answer.text.trim() || (challenge.options && !choice)) return;
     freeze("task");
     const written = answer.text.trim();
     return run(
@@ -190,16 +197,28 @@ export function TryFlow() {
     go("name");
   };
 
-  const send = (withName: boolean) =>
+  const sentExplain = () => [{ question, answer: explain.text.trim(), ...(explain.spoken ? { spoken: true } : {}) }];
+
+  /** The blind text before sending, so the person can still take out what the rules missed. */
+  const toCheck = (withName: boolean) =>
     run(async () => {
-      if (!challenge) return;
       const first = withName ? name.trim() : "";
+      const blind = await api.preview({ answer: answer.text.trim(), explain: sentExplain(), name: first, contact: "" });
+      setPreview({ blind, first });
+      go("check");
+    });
+
+  const send = () =>
+    run(async () => {
+      if (!challenge || !preview) return;
+      const first = preview.first;
       const res = await api.submit({
         challengeId: challenge.id,
         talent: { id: getTalentId(), name: first, contact: "" },
         answer: answer.text.trim(),
-        explain: [{ question, answer: explain.text.trim(), ...(explain.spoken ? { spoken: true } : {}) }],
+        explain: sentExplain(),
         ...(answer.spoken ? { spoken: true } : {}),
+        ...(choice ? { choice } : {}),
         shareWithSimilar: false,
       });
       clearTry();
@@ -217,6 +236,7 @@ export function TryFlow() {
     setTaskFor("");
     setJob("");
     setAnswer(empty);
+    setChoice(undefined);
     setExplain(empty);
     setSentName("");
     go("job");
@@ -226,7 +246,7 @@ export function TryFlow() {
   useFlowHistory(step === "finding" ? "job" : step, (popped) => {
     const next = popped as Step;
     if (proof && next !== "result") return restart();
-    const ready = next === "job" || (next === "task" && challenge) || ((next === "explain" || next === "name") && question);
+    const ready = next === "job" || (next === "task" && challenge) || ((next === "explain" || next === "name") && question) || (next === "check" && preview);
     if (ORDER.includes(next) && ready) go(next);
   });
 
@@ -260,11 +280,22 @@ export function TryFlow() {
   if (step === "finding") content = <FindingStep job={job} />;
 
   if (step === "task" && challenge) {
-    content = <TaskStep challenge={challenge} job={taskFor} generic={Boolean(challenge.note)} answer={answer} onAnswer={editAnswer} />;
+    content = (
+      <TaskStep
+        challenge={challenge}
+        job={taskFor}
+        generic={Boolean(challenge.note)}
+        answer={answer}
+        onAnswer={editAnswer}
+        choice={choice}
+        onChoice={(id) => frozen.current !== "task" && setChoice(id)}
+      />
+    );
+    const rule = challenge.options && !choice ? "Pick one of the two options to continue." : answer.text.trim() ? null : "Write your answer to continue.";
     action = (
       <>
         {errorLine}
-        <PrimaryAction onClick={() => void toExplain()} rule={answer.text.trim() ? null : "Write your answer to continue."} busy={busy}>
+        <PrimaryAction onClick={() => void toExplain()} rule={rule} busy={busy}>
           Continue
         </PrimaryAction>
       </>
@@ -282,20 +313,33 @@ export function TryFlow() {
 
   if (step === "name") {
     const named = name.trim().length > 0;
-    content = <NameStep name={name} onName={setName} onSend={() => send(true)} />;
+    content = <NameStep name={name} onName={setName} onContinue={() => toCheck(true)} />;
     action = (
       <>
         {errorLine}
         <div className="flex gap-2 pb-2">
           {named ? (
-            <Button variant="secondary" onClick={() => send(false)} disabled={busy} className="h-[52px]! w-auto! px-5">
+            <Button variant="secondary" onClick={() => toCheck(false)} disabled={busy} className="h-[52px]! w-auto! px-5">
               Skip
             </Button>
           ) : null}
-          <Button onClick={() => send(true)} loading={busy} className="h-[52px]! flex-1">
-            {named ? "Send" : "Skip and send"}
+          <Button onClick={() => toCheck(true)} loading={busy} className="h-[52px]! flex-1">
+            {named ? "Continue" : "Skip and continue"}
           </Button>
         </div>
+      </>
+    );
+  }
+
+  if (step === "check" && preview) {
+    content = <CheckStep written={{ answer: answer.text.trim(), explain: explain.text.trim() }} preview={preview.blind} onEdit={() => go("task")} />;
+    action = (
+      <>
+        {errorLine}
+        {/* This step opens only once the preview has loaded, so nothing is sent unseen. */}
+        <Button onClick={send} loading={busy} className="mb-2 h-[52px]! w-full">
+          Send
+        </Button>
       </>
     );
   }

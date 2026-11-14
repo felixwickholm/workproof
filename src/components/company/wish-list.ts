@@ -33,7 +33,7 @@ function capitalise(text: string): string {
 }
 
 /** "Infrastructure as code: not core for this task" becomes the wish and "Not core for this task." */
-export function splitAside(line: string): { wish: string; reason: string } {
+function splitAside(line: string): { wish: string; reason: string } {
   const at = line.indexOf(": ");
   if (at < 0) return { wish: line, reason: "" };
   const sentence = capitalise(line.slice(at + 2).trim());
@@ -82,38 +82,6 @@ export function wishRows(draft: WishDraft): { kept: WishRow[]; facts: WishRow[];
     .filter((s) => !kept.some((r) => r.skillId === s.id))
     .map((s): WishRow => ({ key: `skill-${s.id}`, text: "", pile: "kept", skillId: s.id, skillLabel: s.label, reason: "" }));
   return { kept: [...kept, ...added], facts: rows.filter((r) => r.pile === "fact"), aside: rows.filter((r) => r.pile === "aside") };
-}
-
-/** True when the wish already reads as its skill ("Testing" and Testing), so the row shows the skill alone. */
-export function readsAsSkill(row: WishRow): boolean {
-  return row.text.toLowerCase() === row.skillLabel?.toLowerCase();
-}
-
-/** The company's wishes before the sort, the piles interleaved, so the sort has something to do. */
-export function mixedWishes(kept: readonly WishRow[], aside: readonly WishRow[], facts: readonly WishRow[] = []): WishRow[] {
-  const written = kept.filter((r) => r.text);
-  const mixed: WishRow[] = [];
-  for (let i = 0; i < Math.max(written.length, aside.length, facts.length); i++) {
-    if (aside[i]) mixed.push(aside[i]);
-    if (written[i]) mixed.push(written[i]);
-    if (facts[i]) mixed.push(facts[i]);
-  }
-  return mixed;
-}
-
-/**
- * "You listed 9 wishes. 3 became core skills, 2 are facts about the job, 4 were set aside."
- * A pile with no wishes is left out of the sentence.
- */
-export function wishHeadline(kept: number, aside: number, facts = 0): string {
-  const total = kept + facts + aside;
-  const parts = [
-    kept ? (kept === 1 ? "1 became a core skill" : `${kept} became core skills`) : "",
-    facts ? (facts === 1 ? "1 is a fact about the job" : `${facts} are facts about the job`) : "",
-    aside ? `${aside} ${aside === 1 ? "was" : "were"} set aside` : "",
-  ].filter(Boolean);
-  const listed = `You listed ${total} ${total === 1 ? "wish" : "wishes"}.`;
-  return parts.length ? `${listed} ${capitalise(parts.join(", "))}.` : listed;
 }
 
 /** The draft with one core skill removed by the company: the wishes that became it are set aside, with that reason. */

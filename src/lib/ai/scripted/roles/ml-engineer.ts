@@ -2,19 +2,22 @@ import type { RoleTemplate } from "../role-template";
 
 export const mlEngineer: RoleTemplate = {
   id: "ml-engineer",
-  title: "ML engineer",
+  title: "Software engineer (machine learning)",
   level: "degree",
   keywords: [
     "ml engineer", "machine learning", "ml", "computer vision", "deep learning", "pytorch",
     "tensorflow", "model training", "koneoppiminen", "koneoppimisinsinööri", "konenäkö",
   ],
   skills: ["ml-evaluation", "data-quality", "code-review", "ai-assisted-work", "testing"],
+  cues: {
+    "ml-evaluation": ["look better than real life", "how a model is tested"],
+  },
   why: {
     "ml-evaluation": "A grasp model that looks accurate on paper still drops parcels if it was tested the wrong way.",
     "data-quality": "Camera frames repeat, drift and mislabel. The model learns whatever the data says.",
   },
   lookFor: {
-    "ml-evaluation": "Notices whether the split, the threshold choice and the metric match how the robot is used.",
+    "ml-evaluation": "Notices whether the split and the metric match how the robot is used.",
     "code-review": "Points to the exact lines that cause the problem and proposes a concrete change.",
   },
   constraints: [
@@ -24,20 +27,20 @@ export const mlEngineer: RoleTemplate = {
     "the release date cannot move",
   ],
   challenge: {
-    title: "Review an AI-written model evaluation",
-    format: "review",
+    minutes: 10,
+    title: "Find the bug in this model test",
+    format: "fix",
     proofKind: "code",
     brief:
-      "Our pick robots use a vision model to predict whether a grasp will hold. A teammate asked an AI assistant to write the evaluation for the new model. The report says 97% accuracy and the team wants to ship it on Monday. About 4% of real grasps fail. Before it ships, we would like a second pair of eyes on how it was tested.",
+      "We build pick robots for cold-storage warehouses. A model guesses if a grasp will hold, and the test below says 97% accuracy. About 4% of real grasps fail, and one line hides a real bug. Which line is it, and what does it do to the 97%? This is a synthetic example.",
     material: {
       kind: "code",
       title: "evaluate_grasp_model.py",
       body: [
-        "import numpy as np",
         "from sklearn.model_selection import train_test_split",
         "from sklearn.metrics import accuracy_score",
         "",
-        "# frames: one row per camera frame, ~30 frames per grasp attempt",
+        "# one row per camera frame, about 30 frames per grasp attempt",
         "frames = load_frames(\"warehouse_logs/2026-10/\")",
         "X, y = frames.features, frames.grasp_held  # 1 = held, 0 = dropped",
         "",
@@ -46,37 +49,24 @@ export const mlEngineer: RoleTemplate = {
         ")",
         "",
         "model = GraspNet().fit(X_train, y_train)",
-        "probs = model.predict_proba(X_test)[:, 1]",
-        "",
-        "# pick the threshold that gives the highest accuracy",
-        "thresholds = np.linspace(0.05, 0.95, 19)",
-        "accs = [accuracy_score(y_test, probs > t) for t in thresholds]",
-        "best_t = thresholds[int(np.argmax(accs))]",
-        "",
-        "print(f\"accuracy: {max(accs):.3f} at threshold {best_t:.2f}\")",
-        "save_release(model, threshold=best_t)",
+        "print(\"accuracy:\", accuracy_score(y_test, model.predict(X_test)))",
       ].join("\n"),
     },
-    deliverable:
-      "What would you change before this ships, and why? List the changes in order of importance. A few sentences each is enough.",
+    deliverable: "Name the line with the bug, say what it does to the result, and show the fix.",
     flaws: [
       {
-        label: "the frame-level random split that leaks frames of the same grasp into both sets",
+        label: "the frame-level random split that puts frames of one grasp in both sets",
         cues: ["leak", "same grasp", "group", "per grasp", "by grasp", "by attempt", "split by", "shuffle", "frames from the same", "correlated", "groupkfold", "session"],
       },
       {
-        label: "the threshold tuned on the test set",
-        cues: ["tuned on the test", "on the test set", "on the test data", "validation", "holdout", "test set to pick", "overfit"],
-      },
-      {
-        label: "accuracy hiding the rare dropped grasps",
-        cues: ["accuracy", "imbalance", "imbalanced", "4%", "recall", "precision", "false positive", "dropped grasps", "confusion matrix", "rare"],
+        label: "accuracy that hides the rare dropped grasps",
+        cues: ["accuracy", "imbalance", "imbalanced", "4%", "recall", "precision", "dropped grasps", "confusion matrix", "rare"],
       },
     ],
   },
   taster: {
     title: "Spot the problem in a training script",
-    format: "review",
+    format: "fix",
     proofKind: "code",
     brief: "An AI assistant wrote this to prepare data for a defect detector. It runs without errors.",
     material: {

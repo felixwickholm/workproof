@@ -40,10 +40,10 @@ export const SPOT_PADDING = 8;
 const GAP = 16;
 /** Distance from the screen edge. */
 const MARGIN = 16;
-/** Below this width the card docks to the bottom of the screen. */
+/** Below this width the card docks to the bottom of the screen, edge to edge. */
 export const PHONE_MAX = 640;
 /** The card's width on a laptop. */
-export const CARD_WIDTH = 480;
+export const CARD_WIDTH = 460;
 /** Where a target too tall for the screen starts: its top this far under the top edge. */
 const TALL_TOP = 24;
 /** How close the caret may come to a corner of the card, so it never sits on the rounded part. */
@@ -52,7 +52,7 @@ const ARROW_INSET = 28;
 export const CARD_HEIGHT_GUESS = 260;
 
 export function cardWidth(viewportWidth: number) {
-  return Math.min(CARD_WIDTH, viewportWidth - 2 * MARGIN);
+  return viewportWidth < PHONE_MAX ? viewportWidth : Math.min(CARD_WIDTH, viewportWidth - 2 * MARGIN);
 }
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), Math.max(min, max));
@@ -79,18 +79,23 @@ function above(spot: Box, limit: number): Box | null {
 
 /**
  * Beside the target when there is room, else below or above it. When none fits (a tall target
- * on a laptop, any target on a phone), the card docks at the bottom and the spotlight ends above it.
+ * on a laptop), the card docks at the bottom and the spotlight ends above it. On a phone the card
+ * always docks at the bottom edge, full width, with no caret: the accent ring alone marks the target.
  */
 export function placeCard(view: Viewport, target: Box | null, card: { width: number; height: number }): Placement {
   const phone = view.width < PHONE_MAX;
   const centred = { x: (view.width - card.width) / 2, y: (view.height - card.height) / 2 };
+  if (phone) {
+    // The card holds the device's bottom inset in its own padding, so it sits on the very edge.
+    const edge = { x: 0, y: view.height - card.height };
+    const spot = target ? onScreen(inflate(target), { ...view, bottom: 0 }) : null;
+    return { card: edge, side: "docked", spot: spot && above(spot, edge.y), arrow: null };
+  }
   const none: Placement = { card: centred, side: "center", spot: null, arrow: null };
   if (!target) return none;
-
   const spot = onScreen(inflate(target), view);
   if (!spot) return none;
   const docked = { x: (view.width - card.width) / 2, y: view.height - view.bottom - MARGIN - card.height };
-  if (phone) return withArrow(docked, "docked", above(spot, docked.y), card);
 
   const right = view.width - MARGIN;
   const bottom = view.height - view.bottom - MARGIN;

@@ -24,8 +24,9 @@ export const aiEngineer: RoleTemplate = {
     "the documents were updated every day",
   ],
   challenge: {
+    minutes: 15,
     title: "Review an AI-written support assistant",
-    format: "review",
+    format: "fix",
     proofKind: "code",
     brief:
       "We are adding an assistant that answers customers' questions about their own service contracts. A teammate built the first version with an AI coding tool. It answers the demo questions well. Each customer has their own contracts in the same document store. Please review the prompt and retrieval code before we open it to customers.",
@@ -69,7 +70,7 @@ export const aiEngineer: RoleTemplate = {
   },
   taster: {
     title: "Spot the problem in a prompt",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "This prompt turns customer emails into support tickets.",
     material: {

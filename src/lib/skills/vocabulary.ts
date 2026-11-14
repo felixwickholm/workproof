@@ -162,7 +162,7 @@ export const SKILLS = {
   "test-strategy": {
     label: "Test strategy",
     why: "Time for testing is limited, so the team must test what is most likely to break.",
-    lookFor: "Ranks test areas by risk to users, not by ease, and explains what is left untested.",
+    lookFor: "Puts the test areas in order of risk to users, not of ease, and explains what is left untested.",
     synonyms: ["qa", "quality assurance", "test automation", "selenium", "playwright", "cypress", "test plan", "laadunvarmistus"],
   },
   prioritisation: {
@@ -380,6 +380,66 @@ export const SKILLS = {
     why: "A patient is safe only when each finding is read together with the medicines and the history.",
     lookFor: "Connects the findings, the medicines and the history, and names the check or follow-up that is missing.",
     synonyms: ["clinical reasoning", "diagnosis", "differential diagnosis", "internal medicine", "general practice", "diagnoosi", "lääketiede", "sisätaudit"],
+  },
+  "audience-insight": {
+    label: "Knowing the audience",
+    why: "People share a video when it says something about them. A good idea starts from who will watch it.",
+    lookFor: "Names who the video is for, what makes that person send it on, and checks the guess against something real.",
+    synonyms: ["knowing the audience", "target audience", "audience", "brand awareness", "content strategy", "kohderyhmä", "yleisö"],
+  },
+  "budget-analysis": {
+    label: "Budget analysis",
+    why: "A budget guides real spending, so one wrong number can move money to the wrong place.",
+    lookFor: "Checks that rows add up and match the notes, finds the number that is wrong, and says what it changes.",
+    synonyms: ["budget analysis", "budgeting", "budget", "financial analysis", "financial analyst", "forecasting costs", "budjetti", "talousanalyysi"],
+  },
+  "contract-review": {
+    label: "Contract review",
+    why: "A clause nobody read can cost more than the whole deal is worth.",
+    lookFor: "Finds the clause that moves risk to us, says what could happen, and writes a fair change.",
+    synonyms: ["contract review", "contracts", "contract law", "supplier contracts", "commercial contracts", "sopimukset", "sopimusjuridiikka"],
+  },
+  "statistical-reasoning": {
+    label: "Statistics",
+    why: "A result table can look convincing and still not support the claim in the summary.",
+    lookFor: "Checks group sizes, ranges and comparisons, and says whether the numbers support the claim.",
+    synonyms: ["statistics", "statistical analysis", "biostatistics", "confidence intervals", "significance", "tilastotiede", "tilastollinen"],
+  },
+  "timing-analysis": {
+    label: "Timing analysis",
+    why: "A chip that misses timing on one path fails on every board, so the failing path must be found before tape-out.",
+    lookFor: "Reads the report to the path that fails, names the slack and the cause, and says what to try first.",
+    synonyms: ["timing analysis", "static timing", "sta", "timing closure", "timing sign-off", "ajoitusanalyysi"],
+  },
+  "digital-design": {
+    label: "Digital design",
+    why: "Logic that works in simulation still has to fit the clock on real silicon.",
+    lookFor: "Proposes a change to the logic, such as a pipeline step or a shorter path, and says what it costs.",
+    synonyms: ["digital design", "rtl", "verilog", "systemverilog", "vhdl", "asic", "fpga", "chip design", "semiconductor", "puolijohde", "piirisuunnittelu"],
+  },
+  "automation-choice": {
+    label: "Picks what matters",
+    why: "A company can automate one thing well at a time. The first one should save the most for the least risk.",
+    lookFor: "Weighs how often the work happens, how many hours it takes and what a mistake would cost, and picks one.",
+    synonyms: ["picks what matters", "automation opportunities", "what to automate", "process automation", "automaatio"],
+  },
+  "practical-plan": {
+    label: "Practical plan",
+    why: "A plan that fits in two weeks gets built. A big plan waits for next year.",
+    lookFor: "Gives steps a small team could start on Monday, with a first version that someone can use.",
+    synonyms: ["practical plan", "delivery plan", "implementation plan", "toteutussuunnitelma"],
+  },
+  "risk-sense": {
+    label: "Sees the risk",
+    why: "Automation repeats a mistake a thousand times before anyone notices.",
+    lookFor: "Names what could go wrong and how the team would catch it early, for example a person checking the first weeks.",
+    synonyms: ["sees the risk", "spots risks", "what could go wrong", "riskien tunnistaminen"],
+  },
+  "mixed-level-teaching": {
+    label: "Teaching mixed levels",
+    why: "In one class some pupils are two years ahead and some are new to the language. A lesson start has to reach all of them.",
+    lookFor: "Gives the same goal different ways in, and says how the teacher sees in the first minutes who needs help.",
+    synonyms: ["mixed-level", "mixed level", "differentiation", "inclusive teaching", "eriyttäminen", "eriyttää"],
   },
 } satisfies Record<string, SkillDefinition>;
 

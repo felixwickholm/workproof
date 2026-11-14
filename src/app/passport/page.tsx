@@ -1,8 +1,6 @@
-import type { Metadata } from "next";
-import { Passport } from "./passport";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Your proof passport" };
-
+/** The old name of "My work". */
 export default function PassportPage() {
-  return <Passport />;
+  redirect("/my-work");
 }

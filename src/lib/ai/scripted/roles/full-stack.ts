@@ -24,8 +24,9 @@ export const fullStackEngineer: RoleTemplate = {
     "the booking page was embedded on a partner site",
   ],
   challenge: {
+    minutes: 15,
     title: "Review an AI-written booking feature",
-    format: "review",
+    format: "fix",
     proofKind: "code",
     brief:
       "Customers book a time slot to pick up equipment. A teammate wrote the booking handler with an AI assistant. It works when one person books at a time. On launch days, many people try to book the same slots within minutes. Please review it before we release it.",
@@ -72,7 +73,7 @@ export const fullStackEngineer: RoleTemplate = {
   },
   taster: {
     title: "Spot the problem in a login check",
-    format: "review",
+    format: "fix",
     proofKind: "code",
     brief: "An AI assistant wrote this check for a staff page.",
     material: {

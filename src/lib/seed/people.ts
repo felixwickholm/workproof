@@ -1,5 +1,6 @@
 /**
- * Synthetic people at Espoo Talent Day. Every name and contact is invented. Contacts use the
+ * Synthetic people at Espoo Talent Day: recent graduates and experienced professionals, judged on their work.
+ * Every name and contact is invented. Contacts use the
  * reserved example.org domain or an unassigned number range. Where someone lives or comes from
  * is never a stored field: it appears only inside their own answers, where the blind layer hides it.
  */
@@ -34,6 +35,12 @@ export const PEOPLE = {
   iryna: { name: "Iryna Bondar", contact: "iryna.bondar@example.org" },
   tuomas: { name: "Tuomas Heikkinen", contact: "tuomas.heikkinen@example.org" },
   sari: { name: "Sari Lehtonen", contact: "sari.lehtonen@example.org" },
+  tomasz: { name: "Tomasz Nowicki", contact: "tomasz.nowicki@example.org" },
+  ana: { name: "Ana Petrović", contact: "ana.petrovic@example.org" },
+  kwame: { name: "Kwame Asante", contact: "kwame.asante@example.org" },
+  nadia: { name: "Nadia Rahimi", contact: "nadia.rahimi@example.org" },
+  sofia: { name: "Sofía Morales", contact: "sofia.morales@example.org" },
+  yusuf: { name: "Yusuf Demir", contact: "+358 41 000 6642" },
 } as const satisfies Record<string, { name: string; contact: string }>;
 
 export type PersonKey = keyof typeof PEOPLE;

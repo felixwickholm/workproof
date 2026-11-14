@@ -40,8 +40,12 @@ export async function practiceTask(page, errors, { job, name, screen, answer = a
   const nameBox = page.getByRole("textbox", { name: "First name" });
   await nameBox.waitFor();
   if (name) await type(nameBox, name);
+  await visible(page.getByRole("button", { name: name ? "Continue" : "Skip and continue", exact: true })).click();
+  // The blind preview comes before Send: the person sees what a company would read while it can still change.
+  await page.getByRole("heading", { name: "What the company will read" }).waitFor({ timeout: 15_000 });
+  await waitForText(page, "Something still shows who you are? Go back and remove it.");
   const sent = page.waitForResponse((r) => r.url().endsWith("/api/submissions") && r.request().method() === "POST", { timeout: 20_000 });
-  await visible(page.getByRole("button", { name: name ? "Send" : "Skip and send", exact: true })).click();
+  await visible(page.getByRole("button", { name: "Send", exact: true })).click();
   const response = await sent;
   expect(response.ok(), `sending the practice proof answered ${response.status()}`);
   await page.getByRole("heading", { name: "This is what a company sees." }).waitFor({ timeout: 15_000 });
@@ -113,7 +117,7 @@ export async function runPractice(browser, device, name) {
     const footer = (await visibleText(page)).match(/(\d+) details? hidden before anyone read this/);
     expect(footer && Number(footer[1]) >= 1, "the reveal does not say how many details it hid");
     // The server keeps no identity for practice: the reveal says so, and the proof carries no name.
-    await waitForText(page, "Your name was used once to hide it. It was not kept.");
+    await waitForText(page, "Your name was used only to hide it. It was not kept.");
     await waitForText(page, "Practice. Not sent to any company.");
   });
 
@@ -138,13 +142,15 @@ export async function runPractice(browser, device, name) {
   await suite.step("a refresh mid-task comes back to the same question with the same words", async () => {
     const explanation = page.getByRole("textbox", { name: "Your explanation" });
     const question = await visible(page.getByRole("heading", { level: 1 })).innerText();
+    const stepLine = (await visibleText(page)).match(/Step \d+ of \d+/)?.[0];
+    expect(stepLine, "the question shows no step line");
     await type(explanation, "Half an explanation");
     await page.waitForTimeout(400);
     await page.reload();
     await page.getByRole("textbox", { name: "Your explanation" }).waitFor({ timeout: 10_000 });
     expect((await page.getByRole("textbox", { name: "Your explanation" }).inputValue()) === "Half an explanation", "the explanation was lost on refresh");
     await waitForText(page, question);
-    await waitForText(page, "Step 3 of 5");
+    await waitForText(page, stepLine);
   });
 
   // The booth: a laptop on the big screen and phones that scan its code share one demo event.
@@ -183,7 +189,7 @@ export async function runPractice(browser, device, name) {
     await mikko.page.getByRole("heading", { name: "What's your dream job?" }).waitFor();
     await waitForText(mikko.page, "Practice. Shown blind on this table's screen: label and task only.");
     mikkoProof = await practiceTask(mikko.page, mikko.errors, { job: "chef", name: null, screen: "/try?table", answer: MIKKO.answer });
-    await waitForText(mikko.page, "You gave no name. Nothing identifies you here.");
+    await waitForText(mikko.page, "You gave no name.");
     await table.page.locator(`[data-proof="${mikkoProof.label}"]`).waitFor({ timeout: 5_000 });
     await waitForText(table.page, "1 proof from this table · 0 names shown", 5_000);
     const rows = await apiJson(table.page, "/api/table/proofs");

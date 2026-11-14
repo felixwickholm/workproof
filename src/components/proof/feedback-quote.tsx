@@ -29,7 +29,7 @@ export function FeedbackQuote({ reviewer, companyName, feedback, decision, viaSe
         </span>
         <span className="text-footnote mt-0.5 block text-label-2">
           <span className={cx(decision === "meet" && "font-medium text-accent")}>{decisionWords(decision)}</span>
-          {viaSecondLook ? " · through Second look" : null}
+          {viaSecondLook ? " · shared by another company" : null}
           {at ? (
             <>
               {" · "}

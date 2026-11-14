@@ -5,14 +5,17 @@ import { GET as listChallengesRoute, POST as approveRoute } from "@/app/api/chal
 import { GET as cityRoute } from "@/app/api/city/route";
 import { GET as queueRoute } from "@/app/api/companies/[id]/queue/route";
 import { GET as companiesRoute } from "@/app/api/companies/route";
-import { POST as decisionsRoute } from "@/app/api/decisions/route";
 import { POST as resetRoute } from "@/app/api/demo/reset/route";
 import { POST as followUpsRoute } from "@/app/api/followups/route";
+import { POST as decideHoldRoute } from "@/app/api/decisions/[id]/decide/route";
 import { POST as acceptRoute } from "@/app/api/meetings/[id]/accept/route";
 import { POST as confirmRoute } from "@/app/api/meetings/[id]/confirm/route";
+import { POST as followUpRoute } from "@/app/api/meetings/[id]/follow-up/route";
+import { POST as hiredRoute } from "@/app/api/meetings/[id]/hired/route";
+import { GET as cityTaskRoute } from "@/app/api/city/tasks/[id]/route";
+import { GET as topRoute } from "@/app/api/companies/[id]/tasks/[taskId]/top/route";
 import { GET as passportRoute } from "@/app/api/passport/me/route";
 import { POST as sharingRoute } from "@/app/api/proofs/[proofId]/sharing/route";
-import { POST as submissionsRoute } from "@/app/api/submissions/route";
 import { POST as tasterRoute } from "@/app/api/taster/route";
 import type {
   BlindProof,
@@ -23,9 +26,11 @@ import type {
   Decision,
   Meeting,
   PassportEntry,
+  CityTaskView,
   ReviewQueue,
+  TopProofs,
 } from "@/lib/domain/types";
-import { call, ownKey, record } from "./helpers";
+import { call, decide, ownKey, record, submit } from "./helpers";
 
 const EVAL = "5 Flow (API)";
 const A = "co-tuulos";
@@ -68,7 +73,7 @@ describe("Flow: from need to a confirmed Second look meeting", () => {
     const followUps = await call<{ questions: string[] }>(followUpsRoute, { body: { challengeId: approved.json.id, answer } });
     step("two follow-ups about the answer", followUps.json.questions.length === 2);
 
-    const submitted = await call<{ proof: BlindProof }>(submissionsRoute, {
+    const submitted = await submit<{ proof: BlindProof }>({
       body: {
         challengeId: approved.json.id,
         talent: TALENT,
@@ -86,10 +91,10 @@ describe("Flow: from need to a confirmed Second look meeting", () => {
     const queueA = (await call<ReviewQueue>(queueRoute, { params: { id: A } })).json;
     step("company A sees it in its own queue", queueA.proofs.some((p) => p.proofId === proof.proofId));
 
-    const passA = await call<{ decision: Decision }>(decisionsRoute, {
+    const passA = await decide<{ decision: Decision }>({
       body: { proofId: proof.proofId, companyId: A, reviewer: "Elias Virta", decision: "pass", feedback: "Clear and correct. We need someone on site this month, so we pass for now." },
     });
-    const again = await call(decisionsRoute, {
+    const again = await decide({
       body: { proofId: proof.proofId, companyId: A, reviewer: "Elias Virta", decision: "meet", feedback: "Changed my mind about this one, sorry." },
     });
     step("company A passes with feedback, once", passA.status === 200 && again.status === 409);
@@ -99,12 +104,12 @@ describe("Flow: from need to a confirmed Second look meeting", () => {
     step("company B sees it through Second look", Boolean(look && look.sharedSkills.length >= 2));
 
     const queueC = (await call<ReviewQueue>(queueRoute, { params: { id: C } })).json;
-    const blocked = await call(decisionsRoute, {
+    const blocked = await decide({
       body: { proofId: proof.proofId, companyId: C, reviewer: "Tomas Berg", decision: "meet", feedback: "We would like to meet about this work." },
     });
     step("company C without shared skills cannot see or decide", !queueC.secondLook.some((p) => p.proofId === proof.proofId) && blocked.status === 403);
 
-    const meet = await call<{ decision: Decision; meeting: Meeting }>(decisionsRoute, {
+    const meet = await decide<{ decision: Decision; meeting: Meeting }>({
       body: { proofId: proof.proofId, companyId: B, reviewer: "Mira Salo", decision: "meet", feedback: "Your point on the split matches what we see in forecasting. Let us talk." },
     });
     step("company B picks Meet and a slot is set", meet.status === 200 && meet.json.meeting.status === "invited" && /^Sat \d{1,2}:\d{2}, Table \d+$/.test(meet.json.meeting.slot));
@@ -158,7 +163,7 @@ describe("Flow: a task takes a fixed number of answers", () => {
     check("the employer's number of places is published with the task", fetched.json.places === 5);
 
     const send = (i: number) =>
-      call<{ proof: BlindProof; error?: string }>(submissionsRoute, {
+      submit<{ proof: BlindProof; error?: string }>({
         body: {
           challengeId: approved.json.id,
           talent: { id: `places-talent-${i}`, name: `Person ${i} Example`, contact: `person${i}@example.org` },
@@ -174,5 +179,53 @@ describe("Flow: a task takes a fixed number of answers", () => {
     check("all five places take work", accepted.every((status) => status === 200));
     const sixth = await send(5);
     check("the sixth answer is refused with 409 and no waiting list", sixth.status === 409 && sixth.json.error === "This task has all its 5 answers. Choose another task.");
+  });
+});
+
+describe("Flow v3: from a human score to a hire", () => {
+  it("scores, holds, invites, meets, agrees a follow-up and records a hire, through the route handlers", async () => {
+    const step = (name: string, ok: boolean) => {
+      record(EVAL, name, ok ? "ok" : "failed", ok);
+      expect(ok, name).toBe(true);
+    };
+    await call(resetRoute, { method: "POST" });
+    const person = { id: "flow-v3-talent", name: "Iida Example", contact: "iida.example@example.org" };
+    const task = "ch-tuulos-ml";
+    const sent = await submit<{ proof: BlindProof }>({
+      body: { challengeId: task, talent: person, answer: "Split by grasp attempt, then choose the threshold on validation data.", explain: [{ answer: "Frames of one attempt look alike." }, { answer: "The threshold source first." }], shareWithSimilar: true },
+    });
+    const proofId = sent.json.proof.proofId;
+
+    const held = await decide<{ decision: Decision; meeting?: Meeting }>({
+      body: { proofId, companyId: A, reviewer: "Elias Virta", decision: "hold", feedback: "Clear split by attempt and you said why. We want to hear about the threshold." },
+    });
+    step("v3: a named reviewer scores the work and holds it, no meeting yet", held.status === 200 && held.json.decision.total === 6 && !held.json.meeting);
+
+    const top = (await call<TopProofs>(topRoute, { params: { id: A, taskId: task } })).json;
+    step("v3: the scored proof is on the task's top list, blind", top.scored.some((t) => t.proof.proofId === proofId && !t.identity) && !JSON.stringify(top).includes(person.name));
+
+    const invited = await call<{ meeting?: Meeting }>(decideHoldRoute, { body: { decision: "meet", reviewer: "Elias Virta" }, params: { id: held.json.decision.id } });
+    const meetingId = invited.json.meeting?.id ?? "";
+    step("v3: the hold becomes an invitation", invited.status === 200 && invited.json.meeting?.status === "invited");
+
+    const accepted = await call<Meeting>(acceptRoute, { body: { talentId: person.id }, params: { id: meetingId } });
+    const named = (await call<TopProofs>(topRoute, { params: { id: A, taskId: task } })).json.scored.find((t) => t.proof.proofId === proofId);
+    step("v3: the person accepts, and only then the company sees the name", accepted.json.status === "accepted" && named?.identity?.name === person.name);
+
+    const early = await call(followUpRoute, { body: { companyId: A, agreed: true }, params: { id: meetingId } });
+    await call(confirmRoute, { body: { side: "talent", talentId: person.id }, params: { id: meetingId } });
+    const met = await call<Meeting>(confirmRoute, { body: { side: "company", companyId: A }, params: { id: meetingId } });
+    step("v3: both sides confirm the talk", early.status === 409 && met.json.status === "met");
+
+    const followUp = await call<Meeting>(followUpRoute, { body: { companyId: A, agreed: true }, params: { id: meetingId } });
+    const hired = await call<Meeting>(hiredRoute, { body: { companyId: A }, params: { id: meetingId } });
+    step("v3: a follow-up is agreed and a hire recorded by the company", followUp.json.followUpAgreed === true && hired.json.hired === true);
+
+    const city = (await call<CityTaskView>(cityTaskRoute, { params: { id: task } })).json;
+    const cityText = JSON.stringify(city);
+    step(
+      "v3: the city counts every step for the task, with no name",
+      city.scored >= 1 && city.followUps >= 1 && city.hires >= 1 && city.top.some((t) => t.proofId === proofId) && !cityText.includes(person.name) && !cityText.includes(person.id),
+    );
   });
 });

@@ -6,7 +6,7 @@ import { resolveProvider } from "@/lib/ai/provider/select";
 
 /**
  * Live calls to every provider with a key, through the real adapters and without the scripted fallback,
- * so a failure shows instead of being hidden. Runs only from `npm run check:ai`, which sets WORKPRINT_LIVE_AI.
+ * so a failure shows instead of being hidden. Runs only from `npm run check:ai`, which sets WORKPROOF_LIVE_AI.
  */
 
 const NEED = "Backend developer for our booking API: error handling, testing and code review. Works in Finnish with customers.";
@@ -19,7 +19,7 @@ const configs = (["claude", "gemini"] as const)
   .map((provider) => resolveProvider({ ...process.env, AI_PROVIDER: provider }))
   .filter((config) => config.provider !== "scripted");
 
-describe.skipIf(process.env.WORKPRINT_LIVE_AI !== "1" || configs.length === 0)("live AI", () => {
+describe.skipIf(process.env.WORKPROOF_LIVE_AI !== "1" || configs.length === 0)("live AI", () => {
   describe.each(configs.map((config) => [`${config.provider} ${config.model}`, config] as const))("%s", (_, config) => {
     const designer = modelDesignerFor(config);
 

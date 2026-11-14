@@ -1,127 +1,116 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { use, useEffect, useRef, useState, type ReactNode } from "react";
-import { BlindCompare, TaskMaterialView, taskMeta } from "@/components/proof";
-import { AiAllowedLine } from "@/components/seeker/ai-line";
-import { AnswerArea } from "@/components/seeker/answer-area";
-import { answerReady, defaultMode, type AnswerMode, type AnswerValue } from "@/components/seeker/answer-mode";
+import { useRouter, useSearchParams } from "next/navigation";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FORMAT_LABEL, FormatIcon } from "@/components/seeker/task-format";
 import { usePersonaName } from "@/components/seeker/identity-line";
-import { FlowProgress } from "@/components/seeker/flow-progress";
-import { BigButton, GatedAction } from "@/components/seeker/gated-action";
-import { PictureCheck } from "@/components/seeker/picture-slot";
-import { StepSlide } from "@/components/step-slide";
-import { cx } from "@/components/ui/cx";
+import { WorkArea } from "@/components/seeker/work/work-area";
+import { DemoCursor, DEMO_SESSION_EVENT, useDemoSession } from "@/components/think-aloud/demo-session";
+import { RecorderPill } from "@/components/think-aloud/recorder-pill";
+import { ThinkAloudIntro } from "@/components/think-aloud/think-aloud-intro";
+import { TimeRing } from "@/components/think-aloud/time-ring";
+import { canCaptureScreen, useThinkAloud } from "@/components/think-aloud/use-think-aloud";
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
-import { Field, TextArea } from "@/components/ui/field";
-import { Screen, StepTitle, TwoPane } from "@/components/ui/screen";
+import { Screen } from "@/components/ui/screen";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
-import { TimerChip } from "@/components/ui/timer-chip";
-import { SpokenBadge, VoiceButton } from "@/components/voice";
-import { api, ApiError, errorText } from "@/lib/client/api";
+import { api, ApiError, companyApi, errorText } from "@/lib/client/api";
 import { clearDraft, getIdentity, getSavedIdentity, getTalentId, loadDraft, saveDraft, saveIdentity } from "@/lib/client/local";
 import { backInFlow, useFlowHistory } from "@/lib/client/use-flow-history";
 import { useResource } from "@/lib/client/use-resource";
-import type { Challenge, OwnProof } from "@/lib/domain/types";
-import { LIMITS } from "@/lib/http/limits";
+import type { Challenge } from "@/lib/domain/types";
+import { composeAnswer, workReady, type WorkParts } from "@/lib/think-aloud/answer";
+import { fixUnits, markedText } from "@/lib/think-aloud/fix-units";
+import { isLive } from "@/lib/think-aloud/machine";
+import { scriptFromProof } from "@/lib/think-aloud/demo-script";
+import type { DemoScript } from "@/lib/think-aloud/timeline";
+import { firstWords } from "@/lib/think-aloud/timeline";
+import { transcriptToSend } from "@/lib/think-aloud/transcript";
+import { SessionView } from "./session-view";
+import { DoneStep, PreviewStep, QuestionsStep, YouStep, type Answers, type Preview, type Sender } from "./send-steps";
 
-type Step = "work" | "explain" | "send" | "sent";
-const order: Step[] = ["work", "explain", "send", "sent"];
+type Step = "intro" | "work" | "questions" | "you" | "preview" | "done";
+const ORDER: Step[] = ["intro", "work", "questions", "you", "preview", "done"];
 
-const SHARE_LABEL = "Let other employers with matching tasks see this proof if this one says not now or does not answer in 48 hours";
+const EMPTY: WorkParts = { main: "" };
 
-/** Plain questions about the person's own choices, used only when the question writer returns fewer than two. */
-const FALLBACK_QUESTIONS = ["Why did you choose this approach?", "What would you check first if you had more time?"];
-
-const NEXT_STEPS = [
-  "A person at the company reads it without your name.",
-  "You get a written answer, also when it is a no.",
-  "If they want to meet, you decide. Only then do they see your name.",
-];
-
-/** The demo person's contact: invented, on the reserved example domain. */
-function personaContact(fullName: string) {
-  return `${fullName.toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "")}@example.org`;
-}
-
-interface Explain {
-  answer: string;
-  spoken: boolean;
-}
-
-/** Do the task, explain two choices, send, then see what the company reads. One step per screen. */
+/**
+ * The challenge as a work session: one screen about what is recorded, the workspace with the recorder
+ * running, two follow-up questions, who you are, what the company will read, and Send.
+ * `?demo=1` (or the tour's event) plays a scripted sample session on the same screen instead.
+ */
 export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const search = useSearchParams();
+  const router = useRouter();
+  const { data, error: loadError, loading, retry } = useResource(async () => {
+    const [challenge, companies] = await Promise.all([api.challenge(id), api.companies().catch(() => [])]);
+    return { challenge, company: companies.filter((c) => challenge.companyIds.includes(c.id)).map((c) => c.name).join(" and ") || "the company" };
+  }, [id]);
+  const [demo, setDemo] = useState(search.get("demo") === "1");
+  useEffect(() => {
+    const onDemo = () => setDemo(true);
+    window.addEventListener(DEMO_SESSION_EVENT, onDemo);
+    return () => window.removeEventListener(DEMO_SESSION_EVENT, onDemo);
+  }, []);
+
+  if (!data) {
+    return (
+      <Screen back={{ href: "/seeker" }}>
+        {loading ? (
+          <div aria-busy className="mt-6">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="mt-8 h-14 w-full" />
+            <Skeleton className="mt-4 h-6 w-5/6" />
+            <Skeleton className="mt-2 h-6 w-4/6" />
+          </div>
+        ) : (
+          <ErrorState error={loadError} what="this challenge" onRetry={retry} away={{ href: "/seeker", label: "See the challenges" }} />
+        )}
+      </Screen>
+    );
+  }
+  return demo ? <DemoRun challenge={data.challenge} onExit={() => { setDemo(false); router.replace(`/challenges/${id}/work`); }} /> : <LiveRun challenge={data.challenge} company={data.company} />;
+}
+
+/** The person's own session. */
+function LiveRun({ challenge, company }: { challenge: Challenge; company: string }) {
   const router = useRouter();
   const persona = usePersonaName();
-  const [step, setStep] = useState<Step>("work");
-  const [direction, setDirection] = useState<1 | -1>(1);
+  const think = useThinkAloud();
+  const [step, setStep] = useState<Step>("intro");
+  const [parts, setParts] = useState<WorkParts>(() => ({ ...EMPTY, main: loadDraft(challenge.id)?.answer ?? "" }));
+  const [mark, setMark] = useState<number | null>(null);
+  const [picture, setPicture] = useState<string | null>(null);
+  const [pictureChecked, setPictureChecked] = useState(false);
+  const [startedAt, setStartedAt] = useState(0);
+  const [answers, setAnswers] = useState<Answers>({ questions: [], given: [] });
+  const [sender, setSender] = useState<Sender>(() => ({ as: getIdentity(), name: getSavedIdentity().name, contact: getSavedIdentity().contact, share: false }));
+  const [preview, setPreview] = useState<Preview | null>(null);
+  const [sent, setSent] = useState<{ proofId: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [mode, setMode] = useState<AnswerMode>("write");
-  const [value, setValue] = useState<AnswerValue>({ answer: "", spoken: false, picture: null, caption: "" });
-  const [questions, setQuestions] = useState<string[]>([]);
-  const [explain, setExplain] = useState<Explain[]>([
-    { answer: "", spoken: false },
-    { answer: "", spoken: false },
-  ]);
-  const [startedAt, setStartedAt] = useState(0);
-  const [sendAs, setSendAs] = useState<"persona" | "me">("persona");
-  const [name, setName] = useState("");
-  const [contact, setContact] = useState("");
-  const [share, setShare] = useState(false);
-  /** The person checked the picture shows the work only. Cleared whenever the picture changes. */
-  const [pictureChecked, setPictureChecked] = useState(false);
-  const [sent, setSent] = useState<{ proof: OwnProof; original: string } | null>(null);
-  const [restored, setRestored] = useState(false);
-
-  // Restore a saved draft and the visitor's own details once the task has loaded in the browser.
-  const restoredRef = useRef(false);
-  const { data: challenge, error: loadError, loading, retry } = useResource(async () => {
-    const loaded = await api.challenge(id);
-    if (!restoredRef.current) {
-      restoredRef.current = true;
-      const draft = loadDraft(id);
-      setMode(defaultMode(loaded.proofKind));
-      if (draft) {
-        setValue((v) => ({ ...v, answer: draft.answer }));
-        setExplain([0, 1].map((i) => ({ answer: draft.explain[i] ?? "", spoken: false })));
-      }
-      setStartedAt(draft?.startedAt ?? Date.now());
-      const saved = getSavedIdentity();
-      setName(saved.name);
-      setContact(saved.contact);
-      setSendAs(getIdentity());
-      setRestored(true);
-    }
-    return loaded;
-  }, [id]);
-
-  // Autosave the words while the person works, and once more when the page goes away.
-  const answerText = value.answer;
-  const explainKey = JSON.stringify(explain.map((e) => e.answer));
+  // The words save on this device while the person works.
   useEffect(() => {
-    if (!restored || step === "sent") return;
-    const save = () => saveDraft(id, { answer: answerText, explain: JSON.parse(explainKey) as string[], startedAt });
-    const t = window.setTimeout(save, 300);
-    window.addEventListener("pagehide", save);
-    return () => {
-      window.clearTimeout(t);
-      window.removeEventListener("pagehide", save);
-    };
-  }, [id, answerText, explainKey, startedAt, restored, step]);
+    if (step === "done") return;
+    const t = window.setTimeout(() => saveDraft(challenge.id, { answer: parts.main, explain: [], startedAt }), 300);
+    return () => window.clearTimeout(t);
+  }, [challenge.id, parts.main, startedAt, step]);
 
-  const go = (next: Step) => {
-    setDirection(order.indexOf(next) > order.indexOf(step) ? 1 : -1);
+  const go = useCallback((next: Step) => {
     setError(null);
+    if (ORDER.indexOf(next) < ORDER.indexOf("preview")) setPreview(null);
     setStep(next);
     window.scrollTo({ top: 0 });
-  };
+  }, []);
 
-  /** One request at a time: a double tap never sends twice. */
+  useFlowHistory(step, (popped) => {
+    const next = popped as Step;
+    if (sent) return router.replace(`/my-work/${sent.proofId}`);
+    if (ORDER.indexOf(next) <= ORDER.indexOf("work") || (next === "questions" && answers.questions.length) || next === "you") go(next === "intro" ? "work" : next);
+  });
+
   const inFlight = useRef(false);
   async function run(action: () => Promise<void>) {
     if (inFlight.current) return;
@@ -131,274 +120,313 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
     try {
       await action();
     } catch (e) {
-      // A refusal the server explains (a full task) is said in its own words.
-      setError(e instanceof ApiError && e.status === 409 ? e.message : errorText(e));
+      setError(sendErrorLine(e));
     } finally {
       inFlight.current = false;
       setBusy(false);
     }
   }
 
-  // The browser's back and forward move between steps. A sent proof cannot be reopened for editing.
-  useFlowHistory(step, (popped) => {
-    const next = popped as Step;
-    if (sent && next !== "sent") return router.replace(`/passport/${sent.proof.proofId}`);
-    if (next === "work" || ((next === "explain" || next === "send") && questions.length > 0)) go(next);
-  });
+  const answer = composeAnswer(challenge.format, parts, challenge.options) || (picture ? "A picture of my work." : "");
+  const personaName = persona?.full ?? "";
+  const sendName = sender.as === "persona" ? personaName : sender.name.trim();
+  const sendContact = sender.as === "persona" ? personaContact(personaName) : sender.contact.trim();
 
-  if (!challenge) {
+  const begin = () => {
+    setStartedAt((t) => t || Date.now());
+    go("work");
+  };
+
+  if (step === "intro") {
     return (
-      <Screen back={{ href: `/challenges/${id}` }} wide>
-        {loading ? (
-          <div aria-busy className="mt-2">
-            <Skeleton className="h-7 w-64" />
-            <div className="mt-6 h-48 rounded-inner bg-surface" />
-          </div>
-        ) : (
-          <ErrorState error={loadError} what="this task" onRetry={retry} away={{ href: "/challenges", label: "See open tasks" }} />
-        )}
+      <Screen back={{ href: "/seeker" }}>
+        <ThinkAloudIntro
+          heading={<ChallengeHeading challenge={challenge} company={company} />}
+          canScreen={canCaptureScreen()}
+          busy={think.state.status === "asking"}
+          error={think.state.status === "error" ? think.state.reason : undefined}
+          onStart={async (wantScreen) => {
+            await think.start(wantScreen);
+            begin();
+          }}
+          onType={() => {
+            think.typeInstead();
+            begin();
+          }}
+        />
       </Screen>
     );
   }
 
-  /** The words the blind layer and the follow-up questions read: the notes, or the picture's description. */
-  const writtenAnswer = () => (value.answer.trim() || (mode === "picture" ? value.caption.trim() : "")).trim();
-
-  const finishWork = () =>
-    run(async () => {
-      const known = sendAs === "me" && name.trim() ? { name: name.trim(), contact: contact.trim() } : undefined;
-      const res = await api.followups(challenge.id, writtenAnswer(), known);
-      // Two follow-up answers are part of every event proof; plain questions stand in if fewer come back.
-      setQuestions([...res.questions, ...FALLBACK_QUESTIONS.filter((q) => !res.questions.includes(q))].slice(0, 2));
-      go("explain");
-    });
-
-  const personaName = persona?.full ?? "";
-  const sendName = sendAs === "persona" ? personaName : name.trim();
-  const sendContact = sendAs === "persona" ? personaContact(personaName) : contact.trim();
-
-  const submit = () =>
-    run(async () => {
-      const talentId = sendAs === "persona" ? (await api.demoSession()).persona.talentId : getTalentId();
-      if (sendAs === "me") saveIdentity(sendName, sendContact);
-      const original = writtenAnswer();
-      const picture = mode === "picture" ? value.picture : null;
-      const res = await api.submit({
-        challengeId: challenge.id,
-        talent: { id: talentId, name: sendName, contact: sendContact },
-        answer: original,
-        explain: questions.map((question, i) => ({
-          question,
-          answer: explain[i]?.answer.trim() ?? "",
-          ...(explain[i]?.spoken ? { spoken: true } : {}),
-        })),
-        ...(picture
-          ? { attachment: { kind: challenge.proofKind === "design" ? ("design" as const) : ("photo" as const), src: picture, alt: value.caption.trim(), confirmed: true as const } }
-          : {}),
-        ...(value.spoken && mode !== "picture" ? { spoken: true } : {}),
-        shareWithSimilar: share,
-      });
-      clearDraft(challenge.id);
-      setSent({ proof: res.proof, original });
-      go("sent");
-    });
-
-  const index = order.indexOf(step);
-  const errorLine = error ? (
-    <p role="alert" className="text-footnote mb-3 text-center text-label-2">
-      {error}
-    </p>
-  ) : null;
-
-  let content: ReactNode = null;
-  let bottom: ReactNode = null;
-
   if (step === "work") {
-    content = (
-      <TwoPane
-        task={<TaskSide challenge={challenge} />}
-        answer={
-          <>
-            <AnswerArea
-              kind={challenge.proofKind}
-              mode={mode}
-              onMode={setMode}
-              value={value}
-              onChange={(patch) => {
-                if ("picture" in patch) setPictureChecked(false);
-                setValue((v) => ({ ...v, ...patch }));
-              }}
-              prompt={challenge.deliverable}
-            />
-            <p className="text-footnote mt-3 text-label-2">
-              {challenge.aiAllowed ? "AI allowed. Use it the way you would at work. " : ""}Your words save on this device. The clock never stops you.
-            </p>
-          </>
+    // A refused microphone sends the person back to the intro, which says why and offers typing.
+    if (think.state.status === "error" || think.state.status === "idle") {
+      return (
+        <Screen back={{ href: "/seeker" }}>
+          <ThinkAloudIntro
+            heading={<ChallengeHeading challenge={challenge} company={company} />}
+            canScreen={canCaptureScreen()}
+            busy={false}
+            error={think.state.status === "error" ? think.state.reason : undefined}
+            onStart={(wantScreen) => void think.start(wantScreen)}
+            onType={think.typeInstead}
+          />
+        </Screen>
+      );
+    }
+    const ready = workReady(challenge.format, parts) || (Boolean(picture) && pictureChecked);
+    const typing = think.state.status !== "asking" && (!think.listening || ("capture" in think.state && think.state.capture === "typed"));
+    const status = think.state.status === "stopped" ? "stopped" : think.state.status === "paused" ? "paused" : "recording";
+    return (
+      <SessionView
+        challenge={challenge}
+        timer={<TimeRing minutes={challenge.minutes} startedAt={startedAt} />}
+        pill={
+          <RecorderPill
+            status={status}
+            seconds={think.seconds}
+            level={think.level}
+            heard={think.transcript}
+            typed={"capture" in think.state && think.state.capture === "typed"}
+            onPause={think.pause}
+            onResume={think.resume}
+            onStop={() => void think.stop()}
+          />
+        }
+        aside={
+          typing ? (
+            <TypedThoughts value={think.typed} onChange={think.setTyped} />
+          ) : (
+            <p className="text-body text-pretty text-label-2">{think.screenNote ? `${think.screenNote} ` : ""}The recording stays on this device. The company gets the words as text.</p>
+          )
+        }
+        action={
+          <div className="flex flex-col gap-1.5">
+            <Button
+              disabled={!ready}
+              loading={busy}
+              className="h-14! text-[18px]!"
+              onClick={() =>
+                run(async () => {
+                  if (isLive(think.state)) await think.stop();
+                  const known = sender.as === "me" && sender.name.trim() ? { name: sender.name.trim(), contact: sender.contact.trim() } : undefined;
+                  const issued = await api.followups(challenge.id, answer, known);
+                  setAnswers({ questions: issued.questions, given: issued.questions.map(() => ({ answer: "", spoken: false })) });
+                  go("questions");
+                })
+              }
+            >
+              I&apos;m done
+            </Button>
+            {error ? <p role="alert" className="text-footnote text-center text-label-2">{error}</p> : !ready ? <p className="text-footnote text-center text-label-2">{notReadyLine(challenge)}</p> : null}
+          </div>
+        }
+      >
+        <WorkArea
+          challenge={challenge}
+          parts={parts}
+          onParts={(patch) => setParts((p) => ({ ...p, ...patch }))}
+          mark={mark}
+          onMark={setMark}
+          picture={picture}
+          onPicture={setPicture}
+          pictureChecked={pictureChecked}
+          onPictureChecked={setPictureChecked}
+        />
+      </SessionView>
+    );
+  }
+
+  const back = () => backInFlow(() => go(ORDER[ORDER.indexOf(step) - 1] ?? "work"));
+
+  if (step === "questions") {
+    return <QuestionsStep answers={answers} onAnswers={setAnswers} onBack={back} onNext={() => go("you")} />;
+  }
+
+  if (step === "you") {
+    return (
+      <YouStep
+        sender={sender}
+        onSender={setSender}
+        personaFirst={persona?.first ?? "Olena"}
+        personaLine={`${sendName || personaName} · ${sendContact}`}
+        company={company}
+        busy={busy}
+        error={error}
+        onBack={back}
+        onNext={() =>
+          run(async () => {
+            const explain = answers.questions.map((question, i) => ({ question, answer: answers.given[i]?.answer.trim() ?? "" }));
+            const transcript = transcriptToSend(think.transcript);
+            // The think-aloud runs through the same blind layer as the answer, as its own text.
+            const [work, said] = await Promise.all([
+              api.preview({ answer, explain, name: sendName, contact: sendContact }),
+              transcript ? api.preview({ answer: transcript, explain: [], name: sendName, contact: sendContact }) : Promise.resolve(null),
+            ]);
+            setPreview({ work: work.work, explain: work.explain, transcript: said?.work ?? "", original: answer, originalTranscript: transcript, hiddenCount: work.hiddenCount, transcriptHidden: said?.hiddenCount ?? 0 });
+            go("preview");
+          })
         }
       />
     );
-    bottom = (
-      <>
-        {errorLine}
-        <GatedAction onClick={finishWork} locked={!answerReady(mode, value)} reason={mode === "picture" ? "Add a picture and say what it shows to continue." : "Write your answer to continue."} loading={busy}>
-          I&apos;m done
-        </GatedAction>
-      </>
+  }
+
+  if (step === "preview" && preview) {
+    return (
+      <PreviewStep
+        preview={preview}
+        busy={busy}
+        error={error}
+        onBack={back}
+        onEdit={() => go("work")}
+        onSend={() =>
+          run(async () => {
+            const talentId = sender.as === "persona" ? (await api.demoSession()).persona.talentId : getTalentId();
+            if (sender.as === "me") saveIdentity(sendName, sendContact);
+            const transcript = transcriptToSend(think.transcript);
+            const input = {
+              challengeId: challenge.id,
+              talent: { id: talentId, name: sendName, contact: sendContact },
+              answer,
+              explain: answers.questions.map((question, i) => ({ question, answer: answers.given[i]?.answer.trim() ?? "", ...(answers.given[i]?.spoken ? { spoken: true } : {}) })),
+              ...(picture && pictureChecked
+                ? { attachment: { kind: challenge.proofKind === "design" ? ("design" as const) : ("photo" as const), src: picture, alt: parts.main.trim() || "A picture of the work", confirmed: true as const } }
+                : {}),
+              shareWithSimilar: sender.share,
+              ...(parts.choice ? { choice: parts.choice } : {}),
+              ...(transcript ? { thinkAloud: { transcript, seconds: Math.round(think.seconds) } } : {}),
+            };
+            const res = await api.submit(input);
+            think.keepFor(res.proof.proofId);
+            clearDraft(challenge.id);
+            setSent({ proofId: res.proof.proofId });
+            go("done");
+          })
+        }
+      />
     );
   }
 
-  if (step === "explain") {
-    content = (
-      <>
-        <StepTitle sub="Two questions about your own choices. Write a few sentences, or say it.">Explain your choices</StepTitle>
-        <div className="flex flex-col gap-8">
-          {questions.map((question, i) => (
-            <section key={question}>
-              <h2 className="text-headline mb-3 font-semibold text-pretty text-label">{question}</h2>
-              <TextArea
-                label={`Answer to question ${i + 1}`}
-                hideLabel
-                value={explain[i]?.answer ?? ""}
-                onChange={(answer) => setExplain((prev) => prev.map((e, j) => (j === i ? { answer, spoken: answer.trim() ? e.spoken : false } : e)))}
-                placeholder="A few sentences is enough"
-                minRows={3}
-                maxLength={LIMITS.explain}
-              />
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <VoiceButton
-                  label="Say it instead"
-                  title="Explain your choices"
-                  prompt={question}
-                  onUse={(answer) => setExplain((prev) => prev.map((e, j) => (j === i ? { answer, spoken: true } : e)))}
-                />
-                {explain[i]?.spoken ? <SpokenBadge /> : null}
-              </div>
-            </section>
-          ))}
-        </div>
-      </>
-    );
-    bottom = (
-      <GatedAction onClick={() => go("send")} locked={questions.some((_, i) => !explain[i]?.answer.trim())} reason="Answer both questions to continue.">
-        Continue
-      </GatedAction>
-    );
+  if (step === "done" && sent) return <DoneStep company={company} proofId={sent.proofId} replay={think.replay} />;
+  return null;
+}
+
+/** A refusal the server explains, in plain words; "already answered" points to My work. */
+function sendErrorLine(e: unknown): string {
+  if (e instanceof ApiError && e.status === 409 && /already answered/i.test(e.message)) return "You already did this challenge. See it in My work.";
+  return e instanceof ApiError && (e.status === 409 || e.status === 400) ? e.message : errorText(e);
+}
+
+/** "Write your work to go on." in the words of each format. */
+function notReadyLine(challenge: Challenge): string {
+  switch (challenge.format) {
+    case "choose":
+      return "Pick A or B to go on.";
+    case "fix":
+      return "Mark what is wrong and write the fix.";
+    case "read":
+      return "Write the one thing, in 240 characters or less.";
+    case "make":
+      return "Write your work, or add a picture, to go on.";
   }
+}
 
-  const sendingPicture = mode === "picture" ? value.picture : null;
+/** The demo person's contact: invented, on the reserved example domain. */
+function personaContact(fullName: string) {
+  return `${fullName.toLowerCase().replace(/[^a-z]+/g, ".").replace(/^\.|\.$/g, "")}@example.org`;
+}
 
-  const sendReason = !sendName || !sendContact ? "Add your name and a way to reach you to send." : "Check the picture to send.";
-
-  if (step === "send") {
-    content = (
-      <>
-        <StepTitle sub="Your name is shown to a company only after you accept its invitation.">Send your proof</StepTitle>
-        {sendingPicture ? <PictureCheck src={sendingPicture} checked={pictureChecked} onChange={setPictureChecked} /> : null}
-        {sendAs === "persona" ? (
-          <div className={cx("rounded-card bg-surface p-5", sendingPicture && "mt-4")}>
-            <p className="text-subhead text-label">Sending as {persona?.first ?? "Olena"}, the demo person</p>
-            <p className="text-footnote mt-1 text-label-2">
-              {sendName} · {sendContact}
-            </p>
-            <button type="button" onClick={() => setSendAs("me")} className="press text-subhead mt-2 min-h-11 font-medium text-label underline decoration-label-3 underline-offset-4">
-              Send as myself
-            </button>
-          </div>
-        ) : (
-          <div className={cx("flex flex-col gap-4", sendingPicture && "mt-4")}>
-            <Field label="Name" value={name} onChange={setName} placeholder="Your name" autoComplete="name" maxLength={LIMITS.name} />
-            <Field label="Email or phone" type="email" value={contact} onChange={setContact} placeholder="you@example.org" autoComplete="email" maxLength={LIMITS.contact} />
-            <button type="button" onClick={() => setSendAs("persona")} className="press text-subhead min-h-11 self-start font-medium text-label-2 underline decoration-label-3 underline-offset-4">
-              Send as {persona?.first ?? "Olena"}, the demo person
-            </button>
-          </div>
-        )}
-        <div className="mt-6 flex items-center gap-4 rounded-card bg-surface px-5 py-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-subhead text-pretty text-label">{SHARE_LABEL}</p>
-            <p className="text-footnote mt-1 text-label-2">They see the same blind proof. No name.</p>
-          </div>
-          <Switch checked={share} onChange={setShare} label={SHARE_LABEL} />
-        </div>
-        {challenge.aiAllowed ? <AiAllowedLine className="mt-6 rounded-card bg-surface px-5 py-4 text-subhead" /> : null}
-      </>
-    );
-    bottom = (
-      <>
-        {errorLine}
-        <p className="text-footnote mb-3 text-center text-label-2">You cannot edit it after you send it.</p>
-        <GatedAction onClick={submit} loading={busy} locked={!sendName || !sendContact || (Boolean(sendingPicture) && !pictureChecked)} reason={sendReason}>
-          Send
-        </GatedAction>
-      </>
-    );
-  }
-
-  if (step === "sent" && sent) {
-    content = (
-      <>
-        <StepTitle sub="A person at the company reads it without your name, and answers in writing.">This is what the company reads.</StepTitle>
-        <BlindCompare original={sent.original} blind={sent.proof.work} hiddenCount={sent.proof.hiddenCount} labels={["What you wrote", "What the company reads"]} />
-        <h2 className="text-headline mt-8 font-semibold text-label">What happens next</h2>
-        <ol className="mt-3 flex flex-col gap-3">
-          {NEXT_STEPS.map((text, i) => (
-            <li key={text} className="flex gap-3">
-              <span className="text-subhead tnum grid size-6 shrink-0 place-items-center rounded-full bg-fill font-medium text-label">{i + 1}</span>
-              <span className="text-subhead pt-0.5 text-pretty text-label">{text}</span>
-            </li>
-          ))}
-        </ol>
-      </>
-    );
-    bottom = (
-      <div className="flex flex-col gap-2 min-[900px]:flex-row">
-        <BigButton href={`/passport/${sent.proof.proofId}`} className="w-full min-[900px]:w-auto">
-          Open my passport
-        </BigButton>
-        <BigButton href="/challenges" variant="secondary" className="w-full min-[900px]:w-auto">
-          More tasks
-        </BigButton>
-      </div>
-    );
-  }
-
-  const back = step === "sent" ? undefined : step === "work" ? { href: `/challenges/${challenge.id}` } : { onBack: () => backInFlow(() => go(order[index - 1])) };
-
+function ChallengeHeading({ challenge, company }: { challenge: Challenge; company: string }) {
   return (
-    <Screen
-      back={back}
-      center={<FlowProgress step={index + 1} total={order.length} />}
-      right={step === "work" && startedAt > 0 ? <TimerChip minutes={challenge.minutes} startedAt={startedAt} /> : null}
-      bottom={bottom}
-      tall
-      wide={step === "work"}
-    >
-      <StepSlide stepKey={step} direction={direction}>
-        {content}
-      </StepSlide>
-    </Screen>
+    <div>
+      <p className="flex items-center gap-2 text-label-2">
+        <FormatIcon format={challenge.format} />
+        <span className="text-body font-medium">
+          {FORMAT_LABEL[challenge.format]} · {challenge.minutes} min · {company}
+        </span>
+      </p>
+      <p className="mt-2 text-[24px] leading-[30px] font-semibold text-pretty text-label">{challenge.title}</p>
+    </div>
   );
 }
 
-/** The task beside the answer: on a phone it folds away under its title once read. */
-function TaskSide({ challenge }: { challenge: Challenge }) {
+/** Where the person types what they would say, when the browser cannot listen or they chose to type. */
+function TypedThoughts({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
-    <details open className="group">
-      <summary className="flex cursor-pointer list-none items-start gap-3 min-[900px]:pointer-events-none [&::-webkit-details-marker]:hidden">
-        <div className="min-w-0 flex-1">
-          <p className="text-footnote tnum mt-2 font-medium text-label-2">{taskMeta(challenge.minutes, challenge.proofKind)}</p>
-          <h1 className="text-title mt-1 font-semibold text-pretty min-[900px]:text-[30px] min-[900px]:leading-[36px]">{challenge.title}</h1>
-        </div>
-        <ChevronDown aria-hidden className="mt-8 size-5 shrink-0 text-label-2 transition-transform duration-200 group-open:rotate-180 min-[900px]:hidden" strokeWidth={1.8} />
-      </summary>
-      <div className="mt-4 flex flex-col gap-4">
-        <p className="text-body whitespace-pre-wrap text-pretty text-label-2">{challenge.brief}</p>
-        <div className="border-t border-separator pt-4">
-          <p className="text-footnote text-label-2">You hand in</p>
-          <p className="text-headline mt-1 font-semibold text-pretty text-label">{challenge.deliverable}</p>
-        </div>
-        {challenge.material ? <TaskMaterialView material={challenge.material} /> : null}
-      </div>
-    </details>
+    <label className="block">
+      <span className="sr-only">Type what you would say</span>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={2}
+        maxLength={6000}
+        placeholder="Type what you would say while you work"
+        data-tour="typed-thoughts"
+        className="w-full resize-none rounded-inner bg-fill px-4 py-3 text-[17px] leading-[24px] text-label caret-accent outline-none placeholder:text-label-2 focus:shadow-[inset_0_0_0_1.5px_var(--color-label-3)]"
+      />
+    </label>
+  );
+}
+
+/**
+ * A sample session for the guided demo, from a seeded piece of work on this challenge: its think-aloud
+ * and its answer, played on the same work screen. No microphone needed.
+ */
+function DemoRun({ challenge, onExit }: { challenge: Challenge; onExit: () => void }) {
+  const { data: script, loading } = useResource(async () => {
+    const top = await companyApi.top(challenge.companyIds[0], challenge.id);
+    const seeded = [...top.scored.map((s) => s.proof), ...top.waiting].find((p) => p.thinkAloud?.transcript);
+    return seeded ? scriptFromProof(challenge, seeded) : null;
+  }, [challenge]);
+  if (!script) {
+    return (
+      <Screen back={{ onBack: onExit }}>
+        {loading ? <Skeleton className="mt-6 h-8 w-64" /> : <p className="text-body mt-6 text-label">No sample session for this challenge yet. Try it yourself.</p>}
+      </Screen>
+    );
+  }
+  return <DemoPlayer challenge={challenge} script={script} onExit={onExit} />;
+}
+
+function DemoPlayer({ challenge, script, onExit }: { challenge: Challenge; script: DemoScript; onExit: () => void }) {
+  const frame = useDemoSession(script);
+  const units = useMemo(() => (challenge.material ? fixUnits(challenge.material) : []), [challenge.material]);
+  if (!frame) return null;
+  const markUnit = frame.marked === null ? undefined : units[frame.marked];
+  const parts: WorkParts = {
+    choice: frame.picked ?? undefined,
+    marked: markUnit ? markedText(units, markUnit) : undefined,
+    main: script.answer.slice(0, frame.typed),
+  };
+  const heard = firstWords(script.transcript, frame.words);
+  return (
+    <>
+      <SessionView
+        challenge={challenge}
+        sample
+        timer={<TimeRing minutes={challenge.minutes} startedAt={0} at={frame.clock} />}
+        pill={<RecorderPill status={frame.done ? "stopped" : "recording"} seconds={frame.clock} level={0.35 + 0.3 * Math.abs(Math.sin(frame.progress * 60))} heard={heard} sample />}
+        aside={<p className="text-body line-clamp-2 text-pretty text-label">{heard ? `“${heard}”` : "A sample session. The words stream as they were said."}</p>}
+        action={
+          <Button onClick={onExit} variant={frame.done ? "primary" : "secondary"} className="h-14! text-[18px]!">
+            {frame.done ? "Now try it yourself" : "Skip the sample"}
+          </Button>
+        }
+      >
+        <WorkArea
+          challenge={challenge}
+          parts={parts}
+          onParts={() => {}}
+          mark={frame.marked}
+          onMark={() => {}}
+          picture={null}
+          onPicture={() => {}}
+          pictureChecked={false}
+          onPictureChecked={() => {}}
+          locked
+        />
+      </SessionView>
+      <DemoCursor frame={frame} mark={script.mark} />
+    </>
   );
 }

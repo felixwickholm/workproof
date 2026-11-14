@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayGreeting, greetingLine, homeCountLine } from "./greeting";
+import { dayGreeting, greetingLine, homeFact } from "./greeting";
 
 describe("seeker greeting", () => {
   it("names the time of day from the hour", () => {
@@ -12,16 +12,14 @@ describe("seeker greeting", () => {
   });
 
   it("greets by first name, or without one before the person has given a name", () => {
-    expect(greetingLine("Olena", "Kaari Home Care wants to meet you.", 9)).toBe("Good morning, Olena. Kaari Home Care wants to meet you.");
-    expect(greetingLine(null, "Fourteen tasks are open today.", 9)).toBe("Good morning. Fourteen tasks are open today.");
+    expect(greetingLine("Olena", "Kaari Home Care invited you.", 20)).toBe("Good evening, Olena. Kaari Home Care invited you.");
+    expect(greetingLine(null, "12 challenges are open.", 9)).toBe("Good morning. 12 challenges are open.");
   });
 
-  it("puts the four counts in one grey line", () => {
-    expect(homeCountLine({ proofs: 3, readByPeople: 2, writtenAnswers: 2, invitations: 1 })).toBe(
-      "3 proofs handed in · 2 read by a person · 2 written reasons · 1 invitation",
-    );
-    expect(homeCountLine({ proofs: 1, readByPeople: 0, writtenAnswers: 1, invitations: 0 })).toBe(
-      "1 proof handed in · 0 read by a person · 1 written reason · 0 invitations",
-    );
+  it("says an open invitation first, then the open challenges", () => {
+    expect(homeFact([{ companyName: "Kaari Home Care", status: "invited" }], 12)).toBe("Kaari Home Care invited you.");
+    expect(homeFact([{ companyName: "Kaari Home Care", status: "accepted" }], 12)).toBe("12 challenges are open.");
+    expect(homeFact([], 1)).toBe("1 challenge is open.");
+    expect(homeFact([], 0)).toBe("No challenge is open right now.");
   });
 });

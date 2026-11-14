@@ -4,7 +4,7 @@ A map for automated reviewers and coding agents. Plain facts and commands; verif
 
 ## What this is
 
-Workprint is a prototype for recruitment events run by the City of Espoo. A company posts a short real task, a person does it, and a named human at the company reads the work blind, writes feedback and chooses Meet or Not now; the name is shown only after the person accepts.
+WorkProof is a prototype for recruitment events run by the City of Espoo. A company posts a short real task, a person does it, and a named human at the company reads the work blind, scores it from 1 to 5 on each core skill, writes feedback and chooses Meet or Not now, then or later; the name is shown only after the person accepts.
 AI drafts tasks and follow-up questions only. It never scores, ranks or recommends a person.
 Next.js 16 (App Router), React 19, TypeScript strict, zod at the API edge, Vitest. No database, no login, no keys needed. All data is synthetic.
 
@@ -20,7 +20,7 @@ Next.js 16 (App Router), React 19, TypeScript strict, zod at the API edge, Vites
 | `npm run lint` | ESLint | Clean, about 5 s |
 | `npx tsc --noEmit` | Type check | Clean, about 2 s |
 | `npm run eval:e2e` | Playwright through the real UI at 390x844; needs the app running (`BASE_URL` to point elsewhere) | Prints "N/N steps passed"; takes minutes |
-| `npm run check:ai` | One live call per AI provider with a key | Skips without keys |
+| `npm run check:ai` | Four live designer calls per AI provider with a key (a retry can add requests) | Skips without keys |
 
 Current counts and their meaning: [docs/evals.md](docs/evals.md). The eval summary table is written to a file in the OS temp folder; two eval runs at the same time on one machine can drop each other's rows (the tests themselves still pass or fail correctly). Set `TMPDIR` per run to avoid it.
 
@@ -30,7 +30,7 @@ Current counts and their meaning: [docs/evals.md](docs/evals.md). The eval summa
 src/app                pages per mode, the JSON API in src/app/api, /for-judges, /llms.txt, robots, sitemap
 src/proxy.ts           sets the httpOnly sandbox cookie; ?table=<code> redirects to /api/demo/join
 src/components         UI: shell (mode switcher), landing, tour, proof, seeker, company, city, table, voice, controls, ui
-src/lib/domain         types.ts (the domain model), decision-rules.ts, feedback-check.ts, places.ts, guardrails.ts (fixed sentences), kinds.ts
+src/lib/domain         types.ts (the domain model), decision-rules.ts, scoring.ts (the 1 to 5 scale and the total), feedback-check.ts, places.ts, guardrails.ts (fixed sentences), kinds.ts
 src/lib/service        rules: challenges, submissions, decisions, meetings, sharing, demo; views/ builds each mode's JSON
 src/lib/blind          redaction rules, "At a glance" line, allow-list projection to BlindProof
 src/lib/guard          no-judgement guard, protected attributes, draft checks, text normalising
@@ -50,13 +50,13 @@ docs                   architecture, evals, responsible AI, demo script, screens
 |---|---|---|
 | Identity (name, contact) lives only in `Talent`. | `src/lib/domain/types.ts`, `src/lib/service/talent.ts` | `evals/blind-review.eval.ts` ("identity keys in proof payloads"), `evals/privacy.eval.ts` ("talent ids in public responses") |
 | Reviewers get `BlindProof`, built by an allow-list that names every field. Never build it by deleting fields. | `src/lib/blind/project.ts` (`toBlindProof`), `src/lib/service/views/queue.ts` | `src/lib/blind/project.test.ts` ("keeps out every field it does not name"), `evals/blind-review.eval.ts` |
-| No score, rank or rating of a person in any type, AI output or UI. Decision words are Meet and Not now. | `src/lib/guard/no-judgement.ts`, `src/lib/guard/check-draft.ts`, `src/lib/ai/guarded.ts`, `src/components/company/decision-words.ts` | `evals/no-automated-decisions.eval.ts` (a, b, b2), `src/lib/guard/no-judgement.test.ts`, `src/lib/seed/index.test.ts` |
-| Every decision has a named person and written feedback (at least 4 words, 20 characters). The person is registered for the company (`Company.reviewers`); any other name is refused with 403, a name that reads as software with 400. | `src/lib/domain/decision-rules.ts`, `src/lib/service/decisions.ts`, `src/lib/service/reviewers.ts` | `evals/no-automated-decisions.eval.ts` (d, e), `evals/privacy.eval.ts`, `src/lib/service/reviewers.test.ts` |
-| An event task takes a fixed number of answers (5 to 30, default 12), so every one can be read. | `src/lib/domain/places.ts`, `src/lib/service/submissions.ts` | `src/lib/domain/places.test.ts` |
+| Software never scores, ranks or rates a person. Only a named reviewer gives points: 1 to 5 for each core skill of the task, with a written reason. The total out of 10 is the average points × 2. A decision without the reviewer's points is refused. AI output with a score, rank or verdict is rejected, and related parts carry no number. Decision words are Meet, Not now, and Score only, decide later. | `src/lib/domain/scoring.ts`, `src/lib/service/decisions.ts`, `src/lib/guard/no-judgement.ts`, `src/lib/guard/check-draft.ts`, `src/lib/ai/guarded.ts`, `src/lib/service/related.ts`, `src/components/company/score-panel.tsx` | `evals/no-automated-decisions.eval.ts` (a, b, b2, g, h, i), `src/lib/domain/scoring.test.ts`, `src/lib/guard/no-judgement.test.ts`, `src/lib/seed/index.test.ts` |
+| Every decision carries a reviewer name and written feedback (at least 4 words, 20 characters). The name is on the company's list (`Company.reviewers`); any other name is refused with 403, a name that reads as software with 400. Without sign-in the name is not verified; never call it proof of a human. | `src/lib/domain/decision-rules.ts`, `src/lib/service/decisions.ts`, `src/lib/service/reviewers.ts` | `evals/no-automated-decisions.eval.ts` (d, e), `evals/privacy.eval.ts`, `src/lib/service/reviewers.test.ts` |
+| An event task takes a fixed number of answers (5 to 30, default 12), so an employer can read them all. Never promise that every answer is read. | `src/lib/domain/places.ts`, `src/lib/service/submissions.ts` | `src/lib/domain/places.test.ts` |
 | Reviewers never see a count of hidden details; every reviewer reads the same fixed line. | `src/lib/domain/guardrails.ts` (`REVIEWER_HIDDEN_LINE`) | `evals/e2e/suites/employer.mjs` |
-| A request without the sandbox cookie reads the shared demo event and cannot change it. The private key travels in the `x-workprint-key` header. | `src/lib/store/index.ts`, `src/lib/http/talent-key.ts` | `src/lib/store/index.test.ts`, `src/lib/http/talent-key.test.ts` |
+| A request without the sandbox cookie reads the shared demo event and cannot change it. The private key is never in a URL: the `x-workproof-key` header on reads and table answers, the request body on submissions, meeting answers and sharing changes. | `src/lib/store/index.ts`, `src/lib/http/talent-key.ts` | `src/lib/store/index.test.ts`, `src/lib/http/talent-key.test.ts` |
 | Code under `src/lib` never imports from `src/components`. | folder rule | review |
-| Queues are in arrival order. Nothing sorts people. | `src/lib/service/views/queue.ts` (`byArrival`) | `evals/no-automated-decisions.eval.ts` (c) |
+| Work waiting to be read is in arrival order. The only other order is a task's top work: scored proofs by the reviewers' own totals, highest first, ties by arrival. Software adds no order of its own. | `src/lib/service/views/queue.ts` (`byArrival`), `src/lib/service/views/leaderboard.ts` | `evals/no-automated-decisions.eval.ts` (c), `src/lib/service/views/leaderboard.test.ts` |
 | The demo persona's talent id leaves the server only through `GET /api/demo/session`, to the visitor who owns the sandbox. | `src/lib/service/demo.ts`, `src/app/api/demo/session/route.ts` | `evals/story.eval.ts` ("persona hidden from employer and city") |
 | Audio is never stored. Only the transcript is sent with a submission. | `src/lib/http/schemas.ts` (no audio field), `src/lib/voice/server/elevenlabs.ts` (passes audio through once) | `src/lib/voice/server/elevenlabs.test.ts` ("returns only the text"), `src/app/api/voice/routes.test.ts` |
 | Identity reaches a company only after the person accepts the meeting. | `src/lib/service/views/queue.ts`, `src/lib/service/meetings.ts` | `evals/blind-review.eval.ts` ("identity hidden until accepted"), `evals/flow.eval.ts` |

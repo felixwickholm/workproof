@@ -11,6 +11,7 @@ export const LIMITS = {
   reviewer: 80,
   feedback: 1000,
   attachmentAlt: 300,
+  thinkAloud: 6000,
 } as const;
 
 /** Largest request body any route accepts. A full submission stays under it even when every character is JSON-escaped. */

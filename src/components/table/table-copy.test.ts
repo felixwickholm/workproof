@@ -14,7 +14,7 @@ import {
 
 describe("table links", () => {
   it("joins the table and remembers the code past the join redirect", () => {
-    expect(tableJoinUrl("https://workprint.example.org", "K7M2QX")).toBe("https://workprint.example.org/try?table=K7M2QX&joined=K7M2QX");
+    expect(tableJoinUrl("https://workproof.example.org", "K7M2QX")).toBe("https://workproof.example.org/try?table=K7M2QX&joined=K7M2QX");
   });
 
   it("keeps the port of a local address", () => {
@@ -33,20 +33,20 @@ describe("the address in the QR code", () => {
   it("knows which addresses only this computer can open", () => {
     expect(isLocalOrigin("http://localhost:3000")).toBe(true);
     expect(isLocalOrigin("http://127.0.0.1:3000")).toBe(true);
-    expect(isLocalOrigin("http://workprint.localhost")).toBe(true);
+    expect(isLocalOrigin("http://workproof.localhost")).toBe(true);
     expect(isLocalOrigin("http://192.168.1.20:3000")).toBe(false);
-    expect(isLocalOrigin("https://workprint.example.org")).toBe(false);
+    expect(isLocalOrigin("https://workproof.example.org")).toBe(false);
   });
 
   it("uses the public address on localhost, and the page's own address everywhere else", () => {
-    expect(joinOrigin("http://localhost:3000", "https://workprint.example.org")).toBe("https://workprint.example.org");
-    expect(joinOrigin("http://192.168.1.20:3000", "https://workprint.example.org")).toBe("http://192.168.1.20:3000");
+    expect(joinOrigin("http://localhost:3000", "https://workproof.example.org")).toBe("https://workproof.example.org");
+    expect(joinOrigin("http://192.168.1.20:3000", "https://workproof.example.org")).toBe("http://192.168.1.20:3000");
     expect(joinOrigin("http://localhost:3000", null)).toBe("http://localhost:3000");
   });
 
   it("takes only a web address from the setting", () => {
-    expect(publicOriginOf("https://workprint.example.org/")).toBe("https://workprint.example.org");
-    expect(publicOriginOf("workprint.example.org")).toBeNull();
+    expect(publicOriginOf("https://workproof.example.org/")).toBe("https://workproof.example.org");
+    expect(publicOriginOf("workproof.example.org")).toBeNull();
     expect(publicOriginOf("javascript:alert(1)")).toBeNull();
     expect(publicOriginOf(undefined)).toBeNull();
   });

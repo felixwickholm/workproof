@@ -28,8 +28,9 @@ export const doctor: RoleTemplate = {
     "the ward pharmacist is off today",
   ],
   challenge: {
+    minutes: 15,
     title: "Review an AI-drafted discharge summary",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief:
       "Our internal medicine ward is testing a tool that drafts discharge summaries from the patient record. The doctor signs the summary, and the health centre and the pharmacy act on it. This is a synthetic patient from our training material. Please read it as the doctor who signs it.",
@@ -76,7 +77,7 @@ export const doctor: RoleTemplate = {
   },
   taster: {
     title: "Read one discharge line",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "Lines from a synthetic discharge summary.",
     material: {

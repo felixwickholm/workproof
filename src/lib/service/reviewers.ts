@@ -1,6 +1,7 @@
 import type { Company } from "@/lib/domain/types";
 import { isListedReviewer, reviewerNameProblem } from "@/lib/domain/decision-rules";
 import { getStore } from "@/lib/store";
+import { MAX_REVIEWERS } from "./capacity";
 import { appendAudit, findOrThrow, ServiceError } from "./support";
 
 /** The people registered to decide for a company. The seed registers one for every company. */
@@ -20,7 +21,8 @@ export function withReviewers(company: Company): Company {
 
 /**
  * Registers a person to decide for a company. An explicit step ("Add me as a reviewer"), never a side
- * effect of a decision, and logged. A name that is empty or reads as software is refused.
+ * effect of a decision, and logged. A name that is empty or reads as software is refused, and so is a
+ * name past the demo's limit per company.
  */
 export async function addReviewer(companyId: string, name: string): Promise<{ companyId: string; reviewers: string[] }> {
   const problem = reviewerNameProblem(name);
@@ -30,6 +32,7 @@ export async function addReviewer(companyId: string, name: string): Promise<{ co
     const company = findOrThrow(data.companies, (c) => c.id === companyId, "Company");
     const reviewers = companyReviewers(company);
     if (!isListedReviewer(reviewers, person)) {
+      if (reviewers.length >= MAX_REVIEWERS) throw new ServiceError(429, `${company.name} has ${MAX_REVIEWERS} reviewers, the most this demo keeps.`);
       reviewers.push(person);
       appendAudit(data, { actor: "human", by: person, action: "Added a reviewer", detail: `${person} can now decide on proofs for ${company.name}.` });
     }

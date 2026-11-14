@@ -5,7 +5,7 @@ const request = (url: string, headers?: Record<string, string>) => new Request(u
 
 describe("isSecureRequest", () => {
   it("reads the protocol of a direct request", () => {
-    expect(isSecureRequest(request("https://workprint.example.org/table"))).toBe(true);
+    expect(isSecureRequest(request("https://workproof.example.org/table"))).toBe(true);
     expect(isSecureRequest(request("http://192.168.1.20:3000/table"))).toBe(false);
   });
 

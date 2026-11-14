@@ -3,6 +3,7 @@ import { draftProblems, isNeutral } from "@/lib/guard/check-draft";
 import { findJudgement, JudgementError } from "@/lib/guard/no-judgement";
 import { protectedNames } from "@/lib/guard/protected";
 import type { Breaker } from "./provider/breaker";
+import type { CallBudget } from "./provider/budget";
 import type { TaskDesigner } from "./task-designer";
 
 /** Rejects an AI draft unless every field, the set-aside list included, is neutral and well formed. */
@@ -32,6 +33,8 @@ interface Backup {
   onFallback?: (method: string, error: unknown) => void;
   /** Skips the primary designer for a while after a provider failure. */
   breaker?: Breaker;
+  /** Caps live calls per minute and at once; past it the backup answers without calling the primary. */
+  budget?: CallBudget;
 }
 
 /**
@@ -46,14 +49,19 @@ export function guarded(primary: TaskDesigner, backup?: Backup): TaskDesigner {
   }
 
   async function run<T>(method: string, call: (d: TaskDesigner) => Promise<T>, check: (value: T) => void): Promise<{ value: T; by: DraftedBy }> {
-    if (backup?.breaker?.pause()) return { value: await answer(backup.designer, call, check), by: backup.designer.name };
+    if (!backup) return { value: await answer(primary, call, check), by: primary.name };
+    const byBackup = async () => ({ value: await answer(backup.designer, call, check), by: backup.designer.name });
+    if (backup.breaker?.pause()) return byBackup();
+    const release = backup.budget ? backup.budget.take() : () => undefined;
+    if (!release) return byBackup();
     try {
       return { value: await answer(primary, call, check), by: primary.name };
     } catch (error) {
-      if (!backup) throw error;
       backup.breaker?.record(error);
       backup.onFallback?.(method, error);
-      return { value: await answer(backup.designer, call, check), by: backup.designer.name };
+      return byBackup();
+    } finally {
+      release();
     }
   }
 

@@ -24,8 +24,9 @@ export const accountant: RoleTemplate = {
     "you had to explain the corrections to the client by phone",
   ],
   challenge: {
+    minutes: 15,
     title: "Review AI-prepared journal entries",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief:
       "We keep the books for a small design studio in Finland. An AI tool suggested the October entries below from the bank feed and receipts. They go into the VAT return this week. Please check them before we post.",
@@ -66,7 +67,7 @@ export const accountant: RoleTemplate = {
   },
   taster: {
     title: "Check one entry",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "An AI tool booked this purchase from a receipt.",
     material: {

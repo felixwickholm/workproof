@@ -3,9 +3,10 @@ import { followUpQuestions } from "@/lib/ai/scripted/follow-ups";
 import { blindWork } from "@/lib/blind/blind-work";
 import { atAGlance } from "@/lib/blind/glance";
 import { toOwnProof } from "@/lib/blind/project";
-import { redact } from "@/lib/blind/redact";
+import { addReports, redact } from "@/lib/blind/redact";
 import { DECISION_ACTIONS } from "@/lib/domain/decision-rules";
-import type { AuditEvent, Challenge, DecisionKind, MeetingStatus } from "@/lib/domain/types";
+import { orderedScores, scoreProblem, totalOf } from "@/lib/domain/scoring";
+import type { AuditEvent, Challenge, DecisionKind, MeetingStatus, SkillScore } from "@/lib/domain/types";
 import { FOLLOW_UP_ACTION, HIDE_ACTION, SHAPE_ACTION } from "@/lib/service/ai-work";
 import { pickMeetingSlot } from "@/lib/service/decisions";
 import { DECLINE_ACTION } from "@/lib/service/meetings";
@@ -21,14 +22,17 @@ export interface SeedDecisionInput {
   proofId: string;
   companyId: string;
   kind: DecisionKind;
+  points: readonly SkillScore["points"][];
   feedback: string;
   hoursAgo: number;
   meeting?: MeetingStatus;
+  followUpAgreed?: boolean;
+  hired?: boolean;
 }
 
 /**
  * Writes synthetic event data the way the services write live data: the same follow-up writer,
- * blind layer, "At a glance" line, decision shape and audit lines. Times are hours before `now`.
+ * blind layer, "At a glance" line, decision shape, scores and audit lines. Times are hours before `now`.
  */
 export function seedWriter(now: Date, data: StoreData) {
   const at = (hoursAgo: number) => new Date(now.getTime() - Math.round(hoursAgo * HOUR)).toISOString();
@@ -44,6 +48,12 @@ export function seedWriter(now: Date, data: StoreData) {
   };
   const companies = data.companies.map((c) => c.name);
   const labelOf = (proofId: string) => data.proofs.find((p) => p.proofId === proofId)?.label ?? proofId;
+  const challengeOf = (proofId: string) => {
+    const challengeId = data.submissions.find((s) => s.id === proofId)?.challengeId;
+    const challenge = data.challenges.find((c) => c.id === challengeId);
+    if (!challenge) throw new Error(`Seed proof ${proofId} has no challenge`);
+    return challenge;
+  };
 
   function addProof(seed: SeedProof, challenge: Challenge): void {
     const person = PEOPLE[seed.person];
@@ -56,6 +66,8 @@ export function seedWriter(now: Date, data: StoreData) {
       ...(seed.spokenFollowUps ? { spoken: true } : {}),
     }));
     const blind = blindWork(seed.answer, explain, known, seed.attachment);
+    const spokenThinking = redact(seed.thinkAloud.transcript, known);
+    const thinkAloud = { ...seed.thinkAloud, transcript: spokenThinking.text };
     const submittedAt = at(seed.hoursAgo);
     const proof = toOwnProof({
       proofId: seed.id,
@@ -64,8 +76,10 @@ export function seedWriter(now: Date, data: StoreData) {
       explain: blind.explain,
       attachment: blind.attachment,
       spoken: seed.spoken,
+      choice: seed.choice,
+      thinkAloud,
       glance: atAGlance(blind.work, blind.explain),
-      redactions: blind.report,
+      redactions: addReports(blind.report, spokenThinking.report),
       submittedAt,
       takenLabels: new Set(data.proofs.map((p) => p.label)),
     });
@@ -80,6 +94,8 @@ export function seedWriter(now: Date, data: StoreData) {
       explain,
       ...(seed.attachment ? { attachment: { ...seed.attachment } } : {}),
       ...(seed.spoken ? { spoken: true } : {}),
+      ...(seed.choice ? { choice: seed.choice } : {}),
+      thinkAloud: { ...seed.thinkAloud },
       shareWithSimilar: seed.shareWithSimilar,
       submittedAt,
     });
@@ -97,7 +113,7 @@ export function seedWriter(now: Date, data: StoreData) {
       actor: "system",
       by: "Blind layer",
       action: HIDE_ACTION,
-      detail: `${proof.label}: ${hidden} detail${hidden === 1 ? "" : "s"} hidden before any reviewer or AI model read it.`,
+      detail: `${proof.label}: ${hidden} detail${hidden === 1 ? "" : "s"} hidden from the work and the spoken thinking before any reviewer or AI model read it.`,
     });
     log(seed.hoursAgo - minute / 60, {
       actor: "system",
@@ -108,16 +124,21 @@ export function seedWriter(now: Date, data: StoreData) {
     if (seed.shareWithSimilar) {
       log(seed.hoursAgo - minute / 30, {
         actor: "system",
-        by: "Second look",
+        by: "Sharing",
         action: "Recorded consent",
-        detail: `${proof.label} may be shown to other employers with the same core skills if the first employer says not now or does not answer in time.`,
+        detail: `${proof.label} may be shared with other companies that hire for the same skills.`,
       });
     }
   }
 
-  /** A human decision, with the meeting it opens and the audit lines the services would write. */
-  function addDecision(input: SeedDecisionInput, viaSecondLook = false): void {
-    const reviewer = REVIEWERS[input.companyId];
+  /** A human decision with the reviewer's own points, the meeting it opens and the audit lines the services would write. */
+  function addDecision(input: SeedDecisionInput, reviewer = REVIEWERS[input.companyId]): void {
+    const challenge = challengeOf(input.proofId);
+    const given = challenge.coreSkills.map((skill, i) => ({ skillId: skill.id, points: input.points[i] ?? 0 }));
+    const problem = input.points.length === challenge.coreSkills.length ? scoreProblem(given, challenge) : "one score per core skill";
+    if (problem) throw new Error(`Seed decision on ${input.proofId}: ${problem}`);
+    const scores = orderedScores(given, challenge);
+    const total = totalOf(scores);
     const company = companyName(input.companyId);
     const label = labelOf(input.proofId);
     data.decisions.push({
@@ -128,27 +149,28 @@ export function seedWriter(now: Date, data: StoreData) {
       decision: input.kind,
       feedback: input.feedback,
       decidedAt: at(input.hoursAgo),
+      scores,
+      total,
     });
     log(input.hoursAgo, {
       actor: "human",
       by: reviewer,
       action: DECISION_ACTIONS[input.kind],
-      detail: `${company} on ${label}${viaSecondLook ? " through Second look" : ""}. Feedback sent to the person.`,
+      detail: `${company} on ${label}: ${total} of 10 from the reviewer's own points. Feedback sent to the person.`,
     });
     if (input.kind === "meet") addMeeting(input, label, company);
   }
 
   function addMeeting(input: SeedDecisionInput, label: string, company: string): void {
     const status = input.meeting ?? "invited";
-    const met = status === "met";
     data.meetings.push({
       id: `meet_${input.proofId}_${input.companyId}`,
       proofId: input.proofId,
       companyId: input.companyId,
       slot: pickMeetingSlot(data, input.proofId, input.companyId),
-      status,
-      talentConfirmedMet: met,
-      companyConfirmedMet: met,
+      status: "invited",
+      talentConfirmedMet: false,
+      companyConfirmedMet: false,
     });
     log(input.hoursAgo - 1 / 3600, {
       actor: "system",
@@ -156,22 +178,19 @@ export function seedWriter(now: Date, data: StoreData) {
       action: "Sent a meeting invite",
       detail: `${label} invited to meet ${company}. Identity stays hidden until the person accepts.`,
     });
+    const answeredAt = input.hoursAgo - Math.min(0.5, input.hoursAgo / 2);
     if (status === "declined") {
-      log(input.hoursAgo - Math.min(0.5, input.hoursAgo / 2), {
-        actor: "human",
-        by: "Talent",
-        action: DECLINE_ACTION,
-        detail: `${label} declined ${company}. The name stays hidden.`,
-      });
+      const meeting = data.meetings[data.meetings.length - 1];
+      meeting.status = "declined";
+      log(answeredAt, { actor: "human", by: "Talent", action: DECLINE_ACTION, detail: `${label} declined ${company}. The name stays hidden.` });
       return;
     }
-    if (status !== "invited") acceptMeeting(input.proofId, input.companyId, input.hoursAgo - Math.min(0.5, input.hoursAgo / 2));
-    if (met) {
-      log(input.hoursAgo - Math.min(2, input.hoursAgo * 0.75), {
-        actor: "human",
-        by: company,
-        action: "Confirmed the meeting took place",
-        detail: `${label} and ${company}: confirmed by both sides.`,
+    if (status === "invited") return;
+    acceptMeeting(input.proofId, input.companyId, answeredAt);
+    if (status === "met") {
+      confirmMet(input.proofId, input.companyId, input.hoursAgo - Math.min(2, input.hoursAgo * 0.75), {
+        followUpAgreed: input.followUpAgreed,
+        hired: input.hired,
       });
     }
   }
@@ -189,15 +208,44 @@ export function seedWriter(now: Date, data: StoreData) {
     });
   }
 
-  /** The audit line when an owner's "not now" opens a consented proof to similar employers. */
-  function logSecondLookOpened(proofId: string, hoursAgo: number): void {
-    log(hoursAgo - 1 / 3600, {
-      actor: "system",
-      by: "Second look",
-      action: "Shared a blind proof",
-      detail: `${labelOf(proofId)} is now visible to other employers with the same core skills.`,
+  /** Both sides confirm the talk took place; the company then records a follow-up and, rarely, a hire. */
+  function confirmMet(proofId: string, companyId: string, hoursAgo: number, after: { followUpAgreed?: boolean; hired?: boolean }): void {
+    const meeting = data.meetings.find((m) => m.proofId === proofId && m.companyId === companyId);
+    if (!meeting) throw new Error(`No meeting for ${proofId} at ${companyId}`);
+    const company = companyName(companyId);
+    const label = labelOf(proofId);
+    Object.assign(meeting, { status: "met", talentConfirmedMet: true, companyConfirmedMet: true });
+    log(hoursAgo, { actor: "human", by: company, action: "Confirmed the meeting took place", detail: `${label} and ${company}: confirmed by both sides.` });
+    if (after.followUpAgreed !== undefined) {
+      meeting.followUpAgreed = after.followUpAgreed;
+      log(hoursAgo - 1 / 60, {
+        actor: "human",
+        by: company,
+        action: "Recorded a follow-up",
+        detail: `${label} and ${company}: ${after.followUpAgreed ? "a follow-up talk was agreed" : "no follow-up this time"}.`,
+      });
+    }
+    if (after.hired) {
+      meeting.hired = true;
+      log(hoursAgo - 1 / 30, { actor: "human", by: company, action: "Recorded a hire", detail: `${company} hired the person behind ${label}.` });
+    }
+  }
+
+  /** One company shares a proof it scored with another company that hires for the same skills, with the person's consent. */
+  function recommend(proofId: string, fromCompanyId: string, toCompanyId: string, hoursAgo: number): void {
+    const from = companyName(fromCompanyId);
+    const to = companyName(toCompanyId);
+    data.recommendations = [
+      ...(data.recommendations ?? []),
+      { id: `rec_${proofId}_${toCompanyId}`, proofId, fromCompanyId, toCompanyId, at: at(hoursAgo) },
+    ];
+    log(hoursAgo, {
+      actor: "human",
+      by: from,
+      action: "Shared a good candidate",
+      detail: `${labelOf(proofId)} from ${from}'s challenge shared with ${to}, with the person's consent. No name and no scores go with it.`,
     });
   }
 
-  return { at, log, addProof, addDecision, acceptMeeting, logSecondLookOpened, talentId };
+  return { at, log, addProof, addDecision, acceptMeeting, confirmMet, recommend, talentId };
 }

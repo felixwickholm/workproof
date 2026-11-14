@@ -6,18 +6,19 @@ import { api } from "@/lib/client/api";
 import { toast } from "../ui/toast";
 
 /** Fired on window after the visitor's demo data was reset; pages holding client data reload it. */
-export const RESET_EVENT = "workprint:reset";
+export const RESET_EVENT = "workproof:reset";
 
-/** Fired on window to start a walkthrough. The event's detail names which one. */
-export const TOUR_EVENT = "workprint:tour";
+/** Fired on window to start a tour. The event's detail names which one. */
+export const TOUR_EVENT = "workproof:tour";
 
 /**
- * Starts a walkthrough from anywhere: the one-minute walkthrough by default, or Olena's whole story.
- * The tour listens for the event, so the shell needs no import of it. Safe as an onClick handler:
- * anything other than "story" starts the one-minute walkthrough.
+ * Starts a tour from anywhere: "minute" (the default) for the overview, or "seeker", "employer" or
+ * "city" for the demo of that view. The tour listens for the event, so the shell needs no import of
+ * it. Safe as an onClick handler: anything else (also the retired "story") starts the overview.
  */
-export function startTour(kind?: "minute" | "story" | unknown) {
-  window.dispatchEvent(new CustomEvent(TOUR_EVENT, { detail: kind === "story" ? "story" : "minute" }));
+export function startTour(kind?: unknown) {
+  const known = kind === "seeker" || kind === "employer" || kind === "city";
+  window.dispatchEvent(new CustomEvent(TOUR_EVENT, { detail: known ? kind : "minute" }));
 }
 
 /** Resets this visitor's demo copy, refreshes server data and tells client-side pages to reload theirs. */

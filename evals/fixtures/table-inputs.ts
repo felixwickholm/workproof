@@ -13,7 +13,7 @@ interface TableInput {
 export const TABLE_KNOWN = {
   name: "Leila Haddad",
   contact: "leila@example.org",
-  companies: ["Kaari Home Care", "Otso Health", "Tuulos Robotics"],
+  companies: ["Halla Supply", "Saarnivo Grid", "Tuulos Robotics"],
 };
 
 /** The work itself, which must survive every case unchanged. */
@@ -52,8 +52,8 @@ export const TABLE_INPUTS: TableInput[] = [
   { answer: `a 34-year-old nurse.${W}`, leaks: ["34"] },
   { answer: `Mikko, 34 v.${W}`, leaks: ["Mikko", "34 v"] },
   // Employers, whole.
-  { answer: `I worked at Kaari Home Care for two years.${W}`, leaks: ["Kaari", "Home Care", "Care for"] },
-  { answer: `Before this I was at kaari home care oy.${W}`, leaks: ["kaari", "care oy"] },
+  { answer: `I worked at Halla Supply for two years.${W}`, leaks: ["Halla", "Supply for"] },
+  { answer: `Before this I was at halla supply oy.${W}`, leaks: ["halla", "supply oy"] },
   { answer: `I trained at Tuulos Robotics Oy.${W}`, leaks: ["Tuulos", "Robotics", "Oy."] },
   { answer: `Ten years at Stora Enso Oyj.${W}`, leaks: ["Stora", "Enso", "Oyj"] },
   { answer: `I did nights at Nokia Networks.${W}`, leaks: ["Nokia"] },

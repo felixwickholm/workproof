@@ -65,26 +65,6 @@ export const MOTION_CSS = `
   }
 }
 
-/* The three-sides view: panels share one grid cell and cross-fade. */
-.lp-panel {
-  grid-area: 1 / 1;
-  transition:
-    opacity 200ms var(--ease-out),
-    transform 200ms var(--ease-out);
-}
-
-.lp-panel[data-active="false"] {
-  opacity: 0;
-  transform: translateY(6px);
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lp-panel[data-active="false"] {
-    transform: none;
-  }
-}
-
 /* A link whose arrow moves on hover. */
 .lp-arrow {
   display: inline-block;

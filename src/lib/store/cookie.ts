@@ -2,7 +2,7 @@
  * The visitor's sandbox key. Shared by the proxy, which sets it, and the store, which reads it.
  * Kept free of server imports so the proxy bundle stays small.
  */
-export const SANDBOX_COOKIE = "workprint_sandbox";
+export const SANDBOX_COOKIE = "workproof_sandbox";
 
 /** How long the browser keeps the cookie. Matches the sandbox lifetime. */
 export const SANDBOX_LIFETIME_MS = 12 * 60 * 60 * 1000;

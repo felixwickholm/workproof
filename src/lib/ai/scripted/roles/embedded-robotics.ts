@@ -24,8 +24,9 @@ export const embeddedEngineer: RoleTemplate = {
     "the fix had to ship as an over-the-air update tonight",
   ],
   challenge: {
+    minutes: 15,
     title: "Review an AI-written motor control loop",
-    format: "review",
+    format: "fix",
     proofKind: "code",
     brief:
       "Our mobile robots stop for obstacles using a front distance sensor. A teammate asked an AI assistant to rewrite the drive loop on the motor controller. It ran fine on the test bench. Before it goes to robots that share aisles with people, we want a careful review.",
@@ -78,7 +79,7 @@ export const embeddedEngineer: RoleTemplate = {
   },
   taster: {
     title: "Spot the problem in a sensor read",
-    format: "review",
+    format: "fix",
     proofKind: "code",
     brief: "An AI assistant wrote this to read a temperature sensor on a motor driver.",
     material: {

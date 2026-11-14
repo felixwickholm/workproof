@@ -12,7 +12,7 @@ const SANDBOX_B = "sb_7a9d3c2b-1e4f-4a8b-8c6d-5e2f1a0b9c8d";
 const inSandbox = (sandbox: string, address?: string) =>
   new Request("http://localhost/api", {
     method: "POST",
-    headers: { cookie: `theme=dark; workprint_sandbox=${sandbox}`, ...(address ? { "x-forwarded-for": address } : {}) },
+    headers: { cookie: `theme=dark; workproof_sandbox=${sandbox}`, ...(address ? { "x-forwarded-for": address } : {}) },
   });
 
 describe("request guard", () => {
@@ -48,7 +48,7 @@ describe("request guard", () => {
   it("leaves local callers without a sandbox, and a cookie that is not a sandbox id, unlimited", () => {
     const now = 5_000_000;
     const local = () => new Request("http://localhost/api", { method: "POST" });
-    const forged = () => new Request("http://localhost/api", { method: "POST", headers: { cookie: "workprint_sandbox=short" } });
+    const forged = () => new Request("http://localhost/api", { method: "POST", headers: { cookie: "workproof_sandbox=short" } });
     for (let i = 0; i < POSTS_PER_MINUTE * 2; i++) {
       limitRate(local(), now);
       limitRate(forged(), now);

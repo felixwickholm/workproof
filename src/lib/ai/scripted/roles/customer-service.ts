@@ -30,8 +30,9 @@ export const customerServiceAgent: RoleTemplate = {
     "the system shows a third bill being prepared",
   ],
   challenge: {
+    minutes: 15,
     title: "A customer got two bills. Say your first 30 seconds",
-    format: "explain",
+    format: "read",
     proofKind: "voice",
     brief:
       "You answer the billing line at an energy company. The next caller is upset: two electricity bills for October arrived, and one has already been taken from the bank account. Below is what your screen shows when the call connects. This is a synthetic example.",
@@ -78,7 +79,7 @@ export const customerServiceAgent: RoleTemplate = {
   },
   taster: {
     title: "Answer one upset caller",
-    format: "explain",
+    format: "read",
     proofKind: "voice",
     brief: "A caller to an energy company says this, word for word.",
     material: {

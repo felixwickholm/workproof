@@ -1,18 +1,19 @@
-import type { DemoSession, StoryStage } from "@/lib/domain/types";
+import type { DemoSessionReply, StoryStage } from "@/lib/domain/types";
 import { buildSeed } from "@/lib/seed";
-import { currentSandbox, getStore } from "@/lib/store";
+import { currentSandbox, getStore, ownsEvent } from "@/lib/store";
 import { clock } from "./support";
 
 /**
  * The caller's demo: the share code of their sandbox and the persona they explore as.
  * The persona's talent id is the demo person's private key for this sandbox only; this is
- * the one response that carries it, and only to the visitor who owns the sandbox.
+ * the one response that carries it, and only to the visitor who owns the sandbox. A request
+ * without one reads the shared default event and gets no persona.
  */
-export async function getSession(): Promise<DemoSession> {
-  const [sandbox, data] = await Promise.all([currentSandbox(), getStore().read()]);
+export async function getSession(): Promise<DemoSessionReply> {
+  const [sandbox, data, owner] = await Promise.all([currentSandbox(), getStore().read(), ownsEvent()]);
   return {
     code: sandbox?.code ?? null,
-    persona: { talentId: data.demo.personaTalentId, name: data.demo.personaName },
+    persona: owner ? { talentId: data.demo.personaTalentId, name: data.demo.personaName } : null,
     stage: data.demo.stage,
   };
 }
@@ -21,12 +22,12 @@ export async function getSession(): Promise<DemoSession> {
  * Rebuilds the caller's event at a story stage, with times relative to now. Inside a request this is
  * the caller's own sandbox; without one (tests, evals) it is the default store. Nobody else's demo changes.
  */
-export async function setStoryStage(stage: StoryStage): Promise<DemoSession> {
+export async function setStoryStage(stage: StoryStage): Promise<DemoSessionReply> {
   await getStore().replace(buildSeed(clock.now(), stage));
   return getSession();
 }
 
 /** Restores the synthetic Espoo Talent Day at the default stage for free exploring. */
-export async function resetDemo(): Promise<DemoSession> {
+export async function resetDemo(): Promise<DemoSessionReply> {
   return setStoryStage("invited");
 }

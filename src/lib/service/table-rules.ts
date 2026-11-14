@@ -5,7 +5,7 @@ import { isNamedReviewer } from "@/lib/domain/decision-rules";
  * The header that carries the visitor's own private key to the table's invitation routes.
  * A header, not the address, so the key never lands in a log line or the browser history.
  */
-export const VISITOR_KEY_HEADER = "x-workprint-key";
+export const VISITOR_KEY_HEADER = "x-workproof-key";
 
 /** The longest first name the big screen shows. */
 export const MAX_SHOWN_NAME = 40;

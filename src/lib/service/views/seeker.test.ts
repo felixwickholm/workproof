@@ -29,6 +29,15 @@ describe("seeker home", () => {
     expect(home.passport.map((e) => e.proof.proofId)).toEqual(["p1", "p2"]);
   });
 
+  it("names the reviewer on every passport answer, a Not now as much as a Meet, and counts reviewers who answered", () => {
+    const passport = buildSeekerHome(sampleEvent(), PRIVATE.olena, NOW).passport;
+    const byProof = new Map(passport.map((e) => [e.proof.proofId, e]));
+    expect(byProof.get("p2")?.responses).toMatchObject([{ decision: "pass", reviewer: "Henrik Lund", companyName: "Otso Health" }]);
+    expect(byProof.get("p1")?.responses).toMatchObject([{ decision: "meet", reviewer: "Anna Koivisto" }]);
+    for (const entry of passport) expect(entry.reviewersAnswered).toBe(entry.seenByHumans);
+    expect(passport.map((e) => e.reviewersAnswered)).toEqual([1, 1]);
+  });
+
   it("lists every open task newest first, the same order for everyone, and marks only work already sent", () => {
     const mine = buildSeekerHome(sampleEvent(), PRIVATE.olena, NOW).tasks;
     const stranger = buildSeekerHome(sampleEvent(), "t_nobody", NOW).tasks;

@@ -1,6 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { POST as resetRoute } from "@/app/api/demo/reset/route";
-import { POST as submissionsRoute } from "@/app/api/submissions/route";
 import { GET as mineRoute } from "@/app/api/table/mine/route";
 import { POST as acceptRoute } from "@/app/api/table/proofs/[proofId]/accept/route";
 import { POST as declineRoute } from "@/app/api/table/proofs/[proofId]/decline/route";
@@ -10,7 +9,7 @@ import { POST as tasterRoute } from "@/app/api/taster/route";
 import type { Challenge, MyTableInvite, OwnProof, TableProof } from "@/lib/domain/types";
 import { VISITOR_KEY_HEADER } from "@/lib/service/table-rules";
 import { getStore } from "@/lib/store";
-import { call, record } from "./helpers";
+import { call, record, submit } from "./helpers";
 
 const EVAL = "7 Table screen";
 const HOST = "Rami";
@@ -47,7 +46,7 @@ describe("Eval 7: the public table screen", () => {
     await call(resetRoute, { method: "POST" });
     const taster = (await call<Challenge>(tasterRoute, { body: { dreamJob: "Chef" } })).json;
     for (const visitor of VISITORS) {
-      const sent = await call<{ proof: OwnProof }>(submissionsRoute, {
+      const sent = await submit<{ proof: OwnProof }>({
         body: {
           challengeId: taster.id,
           talent: { id: visitor.key, name: "", contact: "" },

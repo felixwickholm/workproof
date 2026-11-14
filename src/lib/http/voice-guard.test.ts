@@ -23,14 +23,14 @@ const id = (n: number) => `sb_11111111-0000-4000-8000-${String(n).padStart(12, "
 /** A request with a live sandbox and no forwarded address, as a server reached without a proxy sees it. */
 function visitor(n: number, now: number): Request {
   if (!sandboxes().find(id(n), now)) sandboxes().create(id(n), now, tinyEvent);
-  return new Request("http://localhost/api/voice/speak", { method: "POST", headers: { cookie: `workprint_sandbox=${id(n)}` } });
+  return new Request("http://localhost/api/voice/speak", { method: "POST", headers: { cookie: `workproof_sandbox=${id(n)}` } });
 }
 
 describe("voice guard", () => {
   it("refuses a caller without a live sandbox", () => {
     const now = Date.now();
     expect(() => guardVoice(new Request("http://localhost/api/voice/speak", { method: "POST" }), now)).toThrow("Open the site first.");
-    const forged = new Request("http://localhost/api/voice/speak", { method: "POST", headers: { cookie: `workprint_sandbox=${id(999)}` } });
+    const forged = new Request("http://localhost/api/voice/speak", { method: "POST", headers: { cookie: `workproof_sandbox=${id(999)}` } });
     expect(() => guardVoice(forged, now)).toThrow("Open the site first.");
   });
 

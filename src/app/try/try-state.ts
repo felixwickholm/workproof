@@ -20,11 +20,13 @@ export interface SavedTry {
   challenge: Taster;
   startedAt: number;
   answer: Answer;
+  /** The option picked in a Choose task. */
+  choice?: "a" | "b";
   question: string;
   explain: Answer;
 }
 
-const KEY = "workprint.try";
+const KEY = "workproof.try";
 const STEPS: readonly SavedStep[] = ["task", "explain", "name"];
 
 const isAnswer = (value: unknown): value is Answer =>
@@ -42,7 +44,8 @@ export function parseSavedTry(raw: string | null): SavedTry | null {
       typeof value.startedAt === "number" &&
       typeof value.question === "string" &&
       isAnswer(value.answer) &&
-      isAnswer(value.explain);
+      isAnswer(value.explain) &&
+      (value.choice === undefined || value.choice === "a" || value.choice === "b");
     return valid ? (value as SavedTry) : null;
   } catch {
     return null;

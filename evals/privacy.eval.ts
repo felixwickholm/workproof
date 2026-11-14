@@ -1,12 +1,17 @@
-import { beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { GET as challengeRoute } from "@/app/api/challenges/[id]/route";
 import { POST as draftRoute } from "@/app/api/challenges/draft/route";
 import { GET as listChallengesRoute, POST as approveRoute } from "@/app/api/challenges/route";
+import { GET as cityActionsRoute } from "@/app/api/city/actions/route";
+import { GET as meetingsCsvRoute } from "@/app/api/city/meetings.csv/route";
+import { POST as cityRecommendRoute } from "@/app/api/city/recommendations/route";
+import { GET as cityTaskMatchesRoute } from "@/app/api/city/tasks/[id]/matches/route";
+import { GET as cityTaskRoute } from "@/app/api/city/tasks/[id]/route";
+import { GET as topRoute } from "@/app/api/companies/[id]/tasks/[taskId]/top/route";
 import { GET as cityRoute } from "@/app/api/city/route";
 import { GET as employerHomeRoute } from "@/app/api/companies/[id]/home/route";
 import { GET as queueRoute } from "@/app/api/companies/[id]/queue/route";
 import { GET as companiesRoute } from "@/app/api/companies/route";
-import { POST as decisionsRoute } from "@/app/api/decisions/route";
 import { POST as resetRoute } from "@/app/api/demo/reset/route";
 import { POST as storyRoute } from "@/app/api/demo/story/route";
 import { POST as followUpsRoute } from "@/app/api/followups/route";
@@ -18,11 +23,12 @@ import { POST as pictureReportRoute } from "@/app/api/proofs/[proofId]/picture/r
 import { POST as sharingRoute } from "@/app/api/proofs/[proofId]/sharing/route";
 import { POST as submissionsRoute } from "@/app/api/submissions/route";
 import { POST as tasterRoute } from "@/app/api/taster/route";
-import type { BlindProof, Challenge, ChallengeDraft, CityOverview, Company, Decision, Meeting, OwnProof, PassportEntry, ReviewQueue } from "@/lib/domain/types";
+import type { BlindProof, Challenge, ChallengeDraft, CityOverview, Company, Decision, ExplainAnswer, Meeting, OwnProof, PassportEntry, ReviewQueue } from "@/lib/domain/types";
 import { MAX_BODY_BYTES, MAX_PICTURE_BYTES, MAX_SUBMISSION_BODY_BYTES, POSTS_PER_MINUTE } from "@/lib/http/limits";
+import { STORY_STAGES } from "@/lib/seed/story";
 import { getStore } from "@/lib/store";
 import { CLEAN_JPEG, EXIF_JPEG, jpegOfSize } from "./fixtures/pictures";
-import { call, FOLLOW_UPS, ownKey, record, twoFollowUps } from "./helpers";
+import { call, decide, FOLLOW_UPS, ownKey, record, submit, twoFollowUps } from "./helpers";
 
 const EVAL = "4 Consent and privacy";
 const COMPANY = "co-tuulos";
@@ -46,11 +52,11 @@ describe("Eval 4: consent and privacy", () => {
 
   beforeAll(async () => {
     await call(resetRoute, { method: "POST" });
-    const submitted = await call<{ proof: BlindProof }>(submissionsRoute, {
+    const submitted = await submit<{ proof: BlindProof }>({
       body: { challengeId: "ch-tuulos-ml", talent: TALENT, answer: "Split by grasp attempt, not by frame. Pick the threshold on validation.", explain: twoFollowUps(), shareWithSimilar: false },
     });
     proofId = submitted.json.proof.proofId;
-    const decided = await call<{ decision: Decision; meeting: Meeting }>(decisionsRoute, {
+    const decided = await decide<{ decision: Decision; meeting: Meeting }>({
       body: { proofId, companyId: COMPANY, reviewer: "Elias Virta", decision: "meet", feedback: "Clear reasoning on the split. We would like to talk about it." },
     });
     meeting = decided.json.meeting;
@@ -109,7 +115,7 @@ describe("Eval 4: consent and privacy", () => {
   });
 
   it("a later request cannot change who the company meets", async () => {
-    await call(submissionsRoute, {
+    await submit({
       body: { challengeId: "ch-tuulos-ml", talent: { ...TALENT, name: "Mallory Example", contact: "mallory@example.net" }, answer: "Validate the amount first.", explain: twoFollowUps(), shareWithSimilar: false },
     });
     const shown = (await call<ReviewQueue>(queueRoute, { params: { id: COMPANY } })).json.decided.find((d) => d.proof.proofId === proofId);
@@ -141,8 +147,8 @@ describe("Eval 4: consent and privacy", () => {
   it("decisions need a real name and real feedback", async () => {
     const proof = (await call<ReviewQueue>(queueRoute, { params: { id: COMPANY } })).json.proofs[0].proofId;
     const base = { proofId: proof, companyId: COMPANY, decision: "pass" };
-    const dot = await call(decisionsRoute, { body: { ...base, reviewer: ".", feedback: "Thank you, the split point was clear to read." } });
-    const dots = await call(decisionsRoute, { body: { ...base, reviewer: "Elias Virta", feedback: "....................." } });
+    const dot = await decide({ body: { ...base, reviewer: ".", feedback: "Thank you, the split point was clear to read." } });
+    const dots = await decide({ body: { ...base, reviewer: "Elias Virta", feedback: "....................." } });
     const ok = dot.status === 400 && dots.status === 400;
     record(EVAL, "reviewer '.' and dotted feedback rejected", `refused: HTTP ${dot.status} for reviewer ".", HTTP ${dots.status} for dotted feedback`, ok);
     expect(ok).toBe(true);
@@ -158,7 +164,7 @@ describe("Eval 4: consent and privacy", () => {
 
   it("Second look is off until the person turns it on, and turning it off takes the proof out again", async () => {
     const person = { id: "t_eval_sharing_1d2e", name: "Ilona Koski", contact: "ilona@example.org" };
-    const submitted = await call<{ proof: BlindProof }>(submissionsRoute, {
+    const submitted = await submit<{ proof: BlindProof }>({
       body: { challengeId: "ch-tuulos-ml", talent: person, answer: "Split by grasp attempt so frames of one attempt never reach test.", explain: twoFollowUps() },
     });
     const id = submitted.json.proof.proofId;
@@ -168,13 +174,13 @@ describe("Eval 4: consent and privacy", () => {
     const offByDefault = (await sharingOf()) === false;
     const stranger = await call(sharingRoute, { body: { talentId: "t_guess", share: true }, params: { proofId: id } });
     const on = await call(sharingRoute, { body: { talentId: person.id, share: true }, params: { proofId: id } });
-    await call(decisionsRoute, {
+    await decide({
       body: { proofId: id, companyId: COMPANY, reviewer: "Elias Virta", decision: "pass", feedback: "Thank you. This role starts with on-site robot testing this month." },
     });
     const shownAfterPass = await inSecondLook();
     const off = await call(sharingRoute, { body: { talentId: person.id, share: false }, params: { proofId: id } });
     const goneAfterWithdraw = !(await inSecondLook());
-    const decideAfter = await call(decisionsRoute, {
+    const decideAfter = await decide({
       body: { proofId: id, companyId: "co-saarnivo", reviewer: "Mira Salo", decision: "meet", feedback: "We would like to talk about the split." },
     });
     const ok = offByDefault && stranger.status === 403 && on.status === 200 && shownAfterPass && off.status === 200 && goneAfterWithdraw && decideAfter.status === 403;
@@ -222,9 +228,10 @@ describe("Eval 4: consent and privacy", () => {
   it("a picture is accepted only as a clean JPEG made in the browser, and its description is blind", async () => {
     const challengeId = (await call<Challenge[]>(listChallengesRoute)).json[0].id;
     const person = { id: "t_eval_picture_5a1c", name: "Ilona Koski", contact: "ilona.koski@example.org" };
-    const send = (attachment: unknown) =>
-      call<{ proof: BlindProof }>(submissionsRoute, {
-        body: { challengeId, talent: person, answer: "Plated on a separate board, sauce on the side.", explain: twoFollowUps(), attachment },
+    // One proof per person per event task: the second accepted picture comes from a second person with the same name.
+    const send = (attachment: unknown, id = person.id) =>
+      submit<{ proof: BlindProof }>({
+        body: { challengeId, talent: { ...person, id }, answer: "Plated on a separate board, sauce on the side.", explain: twoFollowUps(), attachment },
       });
     const alt = "Ilona Koski's plate on the counter, photo by ilona.koski@example.org";
     const checked = { confirmed: true };
@@ -236,7 +243,7 @@ describe("Eval 4: consent and privacy", () => {
       await send({ kind: "photo", src: jpegOfSize(MAX_PICTURE_BYTES + 1), alt: "A plate", ...checked }),
     ].map((r) => r.status);
     const largest = await send({ kind: "photo", src: jpegOfSize(MAX_PICTURE_BYTES), alt: "A plate", ...checked });
-    const clean = await send({ kind: "photo", src: CLEAN_JPEG, alt, ...checked });
+    const clean = await send({ kind: "photo", src: CLEAN_JPEG, alt, ...checked }, `${person.id}_2`);
     const owner = (await call<Challenge>(challengeRoute, { params: { id: challengeId } })).json.companyIds[0];
     const queue = (await call<ReviewQueue>(queueRoute, { params: { id: owner } })).json;
     const shown = JSON.stringify(queue.proofs.find((p) => p.proofId === clean.json.proof.proofId) ?? null);
@@ -250,7 +257,7 @@ describe("Eval 4: consent and privacy", () => {
   it("a picture is refused unless the person confirmed it shows the work only", async () => {
     const person = { id: "t_eval_unchecked_3e9b", name: "Aino Mäkelä", contact: "aino.makela@example.org" };
     const send = (attachment: Record<string, unknown>) =>
-      call(submissionsRoute, {
+      submit({
         body: { challengeId: "ch-tuulos-ml", talent: person, answer: "Frames sorted by attempt.", explain: twoFollowUps(), attachment: { kind: "photo", src: CLEAN_JPEG, alt: "Two piles of frames", ...attachment } },
       });
     const missing = await send({});
@@ -265,7 +272,7 @@ describe("Eval 4: consent and privacy", () => {
     const person = { id: "t_eval_reported_6d0a", name: "Aino Mäkelä", contact: "aino.makela@example.org" };
     // A picture of its own size, so no other proof in this run carries the same bytes.
     const src = jpegOfSize(5_000);
-    const sent = await call<{ proof: BlindProof }>(submissionsRoute, {
+    const sent = await submit<{ proof: BlindProof }>({
       body: {
         challengeId: "ch-tuulos-ml",
         talent: person,
@@ -277,13 +284,13 @@ describe("Eval 4: consent and privacy", () => {
     });
     const proofId = sent.json.proof.proofId;
     const report = (companyId: string, reviewer: string) => call(pictureReportRoute, { body: { companyId, reviewer }, params: { proofId } });
-    const stranger = await report("co-kaari", "Anna Koivisto");
+    const stranger = await report("co-hohka", "Elina Heikkilä");
     const unnamed = await report(COMPANY, " ");
     const shownBefore = (await publicResponses()).includes(src);
-    const reported = await report(COMPANY, "Mira Salo");
+    const reported = await report(COMPANY, "Elias Virta");
     const passport = (await call<PassportEntry[]>(passportRoute, ownKey(person.id))).json.find((e) => e.proof.proofId === proofId);
     const everywhere = `${await publicResponses()} ${JSON.stringify(passport)}`;
-    const audit = (await getStore().read()).audit.filter((e) => e.action === "Reported a picture" && e.actor === "human" && e.by === "Mira Salo");
+    const audit = (await getStore().read()).audit.filter((e) => e.action === "Reported a picture" && e.actor === "human" && e.by === "Elias Virta");
     const ok =
       stranger.status === 403 && unnamed.status === 400 && shownBefore && reported.status === 200 && !everywhere.includes(src) &&
       passport?.pictureRemoved === true && passport.original.answer === "Frames sorted by attempt, then split." && audit.length === 1;
@@ -296,10 +303,30 @@ describe("Eval 4: consent and privacy", () => {
     expect(ok).toBe(true);
   });
 
+  it("a submission answers only the questions the server issued for this task and these words", async () => {
+    const person = { id: "t_eval_invented_5d2e", name: "Leo Example", contact: "leo.example@example.org" };
+    const answer = "Split by attempt, then choose the threshold on validation data.";
+    const body = { challengeId: "ch-tuulos-ml", talent: person, answer, explain: FOLLOW_UPS, shareWithSimilar: false };
+    const noIssue = await call(submissionsRoute, { body });
+    const issued = (await call<{ issueId: string }>(followUpsRoute, { body: { challengeId: "ch-tuulos-ml", answer } })).json.issueId;
+    const invented = await call(submissionsRoute, { body: { ...body, issueId: issued } });
+    const otherWords = await call(submissionsRoute, { body: { ...body, answer: "Something else.", issueId: issued, explain: FOLLOW_UPS.map((f) => ({ answer: f.answer })) } });
+    const honest = await call(submissionsRoute, { body: { ...body, issueId: issued, explain: FOLLOW_UPS.map((f) => ({ answer: f.answer })) } });
+    const twice = await submit({ body: { ...body, answer: "A second answer to the same task." } });
+    const ok = noIssue.status === 400 && invented.status === 400 && otherWords.status === 409 && honest.status === 200 && twice.status === 409;
+    record(
+      EVAL,
+      "a submission with invented questions is refused",
+      `HTTP ${noIssue.status} without issued questions, HTTP ${invented.status} with invented ones, HTTP ${otherWords.status} for changed words, HTTP ${honest.status} with the issued ones, HTTP ${twice.status} for a second proof to the same task`,
+      ok,
+    );
+    expect(ok).toBe(true);
+  });
+
   it("an event proof needs two follow-up answers, a practice proof one", async () => {
     const person = { id: "t_eval_followups_1b4c", name: "Aino Mäkelä", contact: "aino.makela@example.org" };
-    const send = (challengeId: string, explain: unknown[]) =>
-      call(submissionsRoute, { body: { challengeId, talent: person, answer: "Split by attempt.", explain } });
+    const send = (challengeId: string, explain: ExplainAnswer[]) =>
+      submit({ body: { challengeId, talent: person, answer: "Split by attempt.", explain } });
     const none = await send("ch-tuulos-ml", []);
     const one = await send("ch-tuulos-ml", [FOLLOW_UPS[0]]);
     const blank = await send("ch-tuulos-ml", [FOLLOW_UPS[0], { question: FOLLOW_UPS[1].question, answer: "   " }]);
@@ -320,7 +347,7 @@ describe("Eval 4: consent and privacy", () => {
   it("a practice proof keeps no name: no stored field contains it", async () => {
     const name = "Wilhelmiina Karppinen";
     const taster = (await call<Challenge>(tasterRoute, { body: { dreamJob: "Nurse" } })).json;
-    const sent = await call<{ proof: OwnProof }>(submissionsRoute, {
+    const sent = await submit<{ proof: OwnProof }>({
       body: {
         challengeId: taster.id,
         talent: { id: "t_eval_practice_9a2f", name, contact: "" },
@@ -336,10 +363,10 @@ describe("Eval 4: consent and privacy", () => {
 
   it("a person can decline an invitation and the name is never revealed", async () => {
     const person = { id: "t_eval_decline_5c8e", name: "Amira Haddad", contact: "amira.haddad@example.org" };
-    const sent = await call<{ proof: BlindProof }>(submissionsRoute, {
+    const sent = await submit<{ proof: BlindProof }>({
       body: { challengeId: "ch-tuulos-ml", talent: person, answer: "Split by attempt; tune on validation.", explain: twoFollowUps() },
     });
-    const decided = await call<{ meeting: Meeting }>(decisionsRoute, {
+    const decided = await decide<{ meeting: Meeting }>({
       body: { proofId: sent.json.proof.proofId, companyId: COMPANY, reviewer: "Elias Virta", decision: "meet", feedback: "Clear reasoning on the split. We would like to talk about it." },
     });
     const id = decided.json.meeting.id;
@@ -365,16 +392,16 @@ describe("Eval 4: consent and privacy", () => {
   it("after a Second look withdrawal, an employer that answered keeps its decision but no longer reads the work", async () => {
     const person = { id: "t_eval_withdraw_7e1d", name: "Ilona Koski", contact: "ilona@example.org" };
     const work = "Split frames by grasp attempt so one attempt never sits on both sides.";
-    const sent = await call<{ proof: BlindProof }>(submissionsRoute, {
+    const sent = await submit<{ proof: BlindProof }>({
       body: { challengeId: "ch-tuulos-ml", talent: person, answer: work, explain: twoFollowUps(), shareWithSimilar: true },
     });
     const proofId = sent.json.proof.proofId;
-    await call(decisionsRoute, {
+    await decide({
       body: { proofId, companyId: COMPANY, reviewer: "Elias Virta", decision: "pass", feedback: "Thank you. This role starts with on-site robot testing this month." },
     });
     // Saarnivo shares core skills with the task, so it reads the proof through Second look once the owner said not now.
     const reader = "co-saarnivo";
-    await call(decisionsRoute, {
+    await decide({
       body: { proofId, companyId: reader, reviewer: "Mira Salo", decision: "pass", feedback: "Thank you. Clear split; we hire for this skill in spring." },
     });
     const before = (await call<ReviewQueue>(queueRoute, { params: { id: reader } })).json.decided.find((d) => d.proof.proofId === proofId);
@@ -385,6 +412,75 @@ describe("Eval 4: consent and privacy", () => {
       before?.proof.work.includes("grasp attempt") === true && after?.withdrawn === true && after.proof.work === "The person withdrew this proof from Second look." &&
       !JSON.stringify(after).includes("grasp attempt") && after.decision.feedback.startsWith("Thank you. Clear split") && owner?.proof.work.includes("grasp attempt") === true;
     record(EVAL, "Second look withdrawal reaches decided proofs", `work shown to the Second look employer after withdrawal: ${JSON.stringify(after ?? {}).includes("grasp attempt")}; its decision kept: ${Boolean(after?.decision)}`, ok);
+    expect(ok).toBe(true);
+  });
+
+  describe("with a live model configured", () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      vi.unstubAllGlobals();
+    });
+
+    it("no name, contact, place or age typed by a person or a company is sent to a model", async () => {
+      const planted = ["mikko@example.org", "+358 40 000 1234", "I'm Mikko from Lahti", "Ahmed Al-Sayed, 34"];
+      const parts = [...planted, "Mikko", "Lahti", "Ahmed", "Al-Sayed"];
+      const bodies: string[] = [];
+      // A reply in the wrong shape: the scripted designer answers, and the provider is not paused for it.
+      const fetchMock = vi.fn<typeof fetch>(async (_url, init) => {
+        bodies.push(String(init?.body));
+        return Response.json({ content: [{ type: "text", text: "{}" }], stop_reason: "end_turn", candidates: [{ finishReason: "STOP", content: { parts: [{ text: "{}" }] } }] });
+      });
+      vi.stubGlobal("fetch", fetchMock);
+      for (const provider of ["claude", "gemini"]) {
+        vi.stubEnv("AI_PROVIDER", provider);
+        vi.stubEnv(provider === "claude" ? "ANTHROPIC_API_KEY" : "GEMINI_API_KEY", "eval-key");
+        await call(draftRoute, { body: { need: `Backend developer for our payments API, error handling and testing. Contact ${planted.join(". ")}.` } });
+        await call(tasterRoute, { body: { dreamJob: `Nurse. ${planted.join(". ")}` } });
+        await call(followUpsRoute, { body: { challengeId: "ch-tuulos-ml", answer: `Split by grasp attempt. ${planted.join(". ")}.` } });
+      }
+      const found = bodies.flatMap((body) => parts.filter((part) => body.includes(part)));
+      const ok = bodies.length === 6 && found.length === 0;
+      record(EVAL, "identity strings sent to a model", `${found.length} of ${parts.length * bodies.length} checks found a planted string in ${bodies.length} requests (draft, practice task, follow-ups; Claude and Gemini)`, ok);
+      expect(found).toEqual([]);
+      expect(bodies).toHaveLength(6);
+    });
+  });
+
+  it("no city response or meeting export carries a name, contact or private key, at any story stage", async () => {
+    const leaks: string[] = [];
+    for (const stage of STORY_STAGES) {
+      await call(storyRoute, { body: { stage } });
+      const csv = await (await meetingsCsvRoute()).text();
+      const overview = (await call<CityOverview>(cityRoute)).json;
+      const tasks = [];
+      for (const t of overview.insights.impact.tasks) {
+        tasks.push((await call(cityTaskRoute, { params: { id: t.challengeId } })).json, (await call(cityTaskMatchesRoute, { params: { id: t.challengeId } })).json);
+      }
+      const city = JSON.stringify([overview, (await call(cityActionsRoute)).json, csv, tasks]);
+      const people = (await getStore().read()).talents.flatMap((t) => [t.id, t.name, t.contact]).filter((v) => v.length > 3);
+      leaks.push(...people.filter((v) => city.includes(v)).map((v) => `${stage}: ${v}`));
+    }
+    const ok = leaks.length === 0;
+    record(EVAL, "city: slots and labels, never names", `${leaks.length} names, contacts or keys in city responses, task leaderboards, share matches and the meeting export over ${STORY_STAGES.length} story stages, "met" included`, ok);
+    expect(leaks).toEqual([]);
+  });
+
+  it("top proofs show a name only after acceptance; shared work reaches the other company without scores or a name", async () => {
+    await call(resetRoute, { method: "POST" });
+    const person = { id: "t_eval_shared_9c4d", name: "Ronja Example", contact: "ronja.example@example.org" };
+    const sent = await submit<{ proof: BlindProof }>({
+      body: { challengeId: "ch-tuulos-ml", talent: person, answer: "Split by grasp attempt, then choose the threshold on validation data.", explain: twoFollowUps(), shareWithSimilar: true },
+    });
+    const proofId = sent.json.proof.proofId;
+    await decide({ body: { proofId, companyId: COMPANY, reviewer: "Elias Virta", decision: "hold", feedback: "Clear split by attempt. Tell us how you pick the threshold." } });
+    const top = JSON.stringify((await call(topRoute, { params: { id: COMPANY, taskId: "ch-tuulos-ml" } })).json);
+    const to = (await call<{ companyId: string }[]>(cityTaskMatchesRoute, { params: { id: "ch-tuulos-ml" } })).json[0].companyId;
+    const shared = await call(cityRecommendRoute, { body: { proofId, toCompanyId: to, by: "Maija Kaupunki" } });
+    const queue = (await call<ReviewQueue>(queueRoute, { params: { id: to } })).json;
+    const received = JSON.stringify(queue.recommended.find((p) => p.proofId === proofId) ?? null);
+    const leaks = [person.id, person.name, person.contact].filter((v) => top.includes(v) || received.includes(v));
+    const ok = shared.status === 200 && received.includes("City of Espoo") && !/"scores"|"total"/.test(received) && leaks.length === 0;
+    record(EVAL, "top proofs and shared work stay blind", `${leaks.length} identity strings in the top list and the receiving queue; shared: HTTP ${shared.status}; scores sent along: ${/"scores"|"total"/.test(received)}`, ok);
     expect(ok).toBe(true);
   });
 });

@@ -1,4 +1,6 @@
 import { BriefcaseBusiness, House, Inbox, Landmark, Layers, SquarePen, UserRound, WalletCards, type LucideIcon } from "lucide-react";
+import { companyName } from "@/lib/seed/companies";
+import { STORY_COMPANY_ID, STORY_REVIEWER } from "@/lib/seed/story";
 
 /** A demo identity: who the visitor acts as, and where. */
 export interface Account {
@@ -39,22 +41,23 @@ export const MODES: readonly Mode[] = [
     home: "/seeker",
     nav: [
       { href: "/seeker", label: "Home", Icon: House },
-      { href: "/challenges", label: "Tasks", Icon: Layers },
-      { href: "/passport", label: "Passport", Icon: WalletCards },
+      { href: "/challenges", label: "Challenges", Icon: Layers },
+      { href: "/my-work", label: "My work", Icon: WalletCards },
     ],
-    routes: ["/seeker", "/challenges", "/passport"],
+    routes: ["/seeker", "/challenges", "/my-work", "/passport"],
   },
   {
     id: "employer",
     label: "Hiring",
     description: "Read work, not CVs",
-    account: { name: "Anna Koivisto", role: "Kaari Home Care" },
+    // The story company and its reviewer: the default Hiring identity before a visitor picks another company.
+    account: { name: STORY_REVIEWER, role: companyName(STORY_COMPANY_ID) },
     Icon: BriefcaseBusiness,
     home: "/employer",
     nav: [
-      { href: "/employer", label: "Home", Icon: House },
-      { href: "/company/review", label: "Review", Icon: Inbox },
-      { href: "/company", label: "Post a task", Icon: SquarePen },
+      { href: "/employer", label: "My challenges", Icon: House },
+      { href: "/company/review", label: "Score work", Icon: Inbox },
+      { href: "/company", label: "New challenge", Icon: SquarePen },
     ],
     routes: ["/employer", "/company"],
   },
@@ -80,7 +83,7 @@ export function modeForPath(path: string): Mode | null {
   return MODES.find((mode) => mode.routes.some((route) => isUnder(path, route))) ?? null;
 }
 
-/** The nav item a page sits under: the longest matching prefix, so a review page lights "Review", not "Post a task". */
+/** The nav item a page sits under: the longest matching prefix, so a scoring page lights "Score work", not "New challenge". */
 export function activeNavItem(path: string, nav: readonly NavItem[]): NavItem | null {
   let best: NavItem | null = null;
   for (const item of nav) {

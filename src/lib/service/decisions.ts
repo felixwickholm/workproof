@@ -3,8 +3,10 @@ import { secondLookMatches } from "@/lib/matching/second-look";
 import { getStore, type StoreData } from "@/lib/store";
 import { newId } from "@/lib/util/hash";
 import { appendAudit, clock, findOrThrow, ServiceError } from "./support";
-import { DECISION_ACTIONS, decisionInputProblem } from "@/lib/domain/decision-rules";
+import { DECIDED_HOLD_ACTION, DECISION_ACTIONS, decisionInputProblem } from "@/lib/domain/decision-rules";
+import { orderedScores, scoreProblem, totalOf } from "@/lib/domain/scoring";
 import { NAMED_PERSON_NEEDED } from "@/lib/domain/guardrails";
+import { recommendedTo } from "./recommendations";
 import { isRegisteredReviewer } from "./reviewers";
 
 interface DecideInput {
@@ -13,6 +15,8 @@ interface DecideInput {
   reviewer: string;
   decision: DecisionKind;
   feedback: string;
+  /** The named reviewer's points, one per core skill of the task. Software never fills these in. */
+  scores: { skillId: string; points: number }[];
 }
 
 /** Meetings on the event day: 15-minute steps from 13:00 to 16:45, at six tables. */
@@ -67,6 +71,27 @@ export function pickMeetingSlot(data: Pick<StoreData, "event" | "meetings" | "su
   return TIME_TO_BE_AGREED;
 }
 
+/** A meeting invitation with the first free slot. Only a "meet" decision creates one. */
+function invite(data: StoreData, proof: { proofId: string; label: string }, company: { id: string; name: string }): Meeting {
+  const meeting: Meeting = {
+    id: newId("meet"),
+    proofId: proof.proofId,
+    companyId: company.id,
+    slot: pickMeetingSlot(data, proof.proofId, company.id),
+    status: "invited",
+    talentConfirmedMet: false,
+    companyConfirmedMet: false,
+  };
+  data.meetings.push(meeting);
+  appendAudit(data, {
+    actor: "system",
+    by: "Scheduler",
+    action: "Sent a meeting invite",
+    detail: `${proof.label} invited to meet ${company.name}, proposed time: ${meeting.slot}. Identity stays hidden until the person accepts.`,
+  });
+  return meeting;
+}
+
 function context(data: StoreData, proofId: string) {
   const submission = findOrThrow(data.submissions, (s) => s.id === proofId, "Proof");
   const proof = findOrThrow(data.proofs, (p) => p.proofId === proofId, "Proof");
@@ -87,6 +112,9 @@ export async function decide(input: DecideInput): Promise<{ decision: Decision; 
       throw new ServiceError(403, `${NAMED_PERSON_NEEDED} ${reviewer} is not a reviewer for ${company.name} yet: add yourself as a reviewer first.`);
     }
     const { submission, proof, challenge } = context(data, input.proofId);
+    const notScored = scoreProblem(input.scores, challenge);
+    if (notScored) throw new ServiceError(400, notScored);
+    const scores = orderedScores(input.scores, challenge);
 
     if (data.decisions.some((d) => d.proofId === proof.proofId && d.companyId === company.id)) {
       throw new ServiceError(409, `${company.name} has already decided on this proof`);
@@ -102,7 +130,8 @@ export async function decide(input: DecideInput): Promise<{ decision: Decision; 
         responseWindowHours: data.event.responseWindowHours,
         now,
       }).some((m) => m.companyId === company.id);
-    if (!owner && !viaSecondLook) throw new ServiceError(403, `This proof is not in the queue of ${company.name}`);
+    const viaShare = !owner && !viaSecondLook && recommendedTo(data, proof.proofId, company.id);
+    if (!owner && !viaSecondLook && !viaShare) throw new ServiceError(403, `This proof is not in the queue of ${company.name}`);
 
     const decision: Decision = {
       id: newId("dec"),
@@ -112,34 +141,21 @@ export async function decide(input: DecideInput): Promise<{ decision: Decision; 
       decision: input.decision,
       feedback,
       decidedAt: now.toISOString(),
+      scores,
+      total: totalOf(scores),
     };
     data.decisions.push(decision);
     appendAudit(data, {
       actor: "human",
       by: reviewer,
       action: DECISION_ACTIONS[input.decision],
-      detail: `${company.name} on ${proof.label}${viaSecondLook ? " through Second look" : ""}. Feedback sent to the person.`,
+      detail: `${company.name} on ${proof.label}${viaSecondLook ? " through Second look" : ""}: ${decision.total} of 10 from the reviewer's own points. Feedback sent to the person.`,
     });
 
     let meeting: Meeting | undefined;
     if (input.decision === "meet") {
-      meeting = {
-        id: newId("meet"),
-        proofId: proof.proofId,
-        companyId: company.id,
-        slot: pickMeetingSlot(data, proof.proofId, company.id),
-        status: "invited",
-        talentConfirmedMet: false,
-        companyConfirmedMet: false,
-      };
-      data.meetings.push(meeting);
-      appendAudit(data, {
-        actor: "system",
-        by: "Scheduler",
-        action: "Sent a meeting invite",
-        detail: `${proof.label} invited to meet ${company.name}, proposed time: ${meeting.slot}. Identity stays hidden until the person accepts.`,
-      });
-    } else if (owner) {
+      meeting = invite(data, proof, company);
+    } else if (owner && input.decision === "pass") {
       const opened = secondLookMatches({
         submission,
         challenge,
@@ -158,5 +174,31 @@ export async function decide(input: DecideInput): Promise<{ decision: Decision; 
       }
     }
     return { decision, meeting };
+  });
+}
+
+/**
+ * Turns a hold (scored, not decided yet) into meet or pass. The same reviewer rules apply: a person
+ * registered for the company that scored it. The scores and the written reason stay as they were.
+ */
+export async function decideHold(decisionId: string, input: { decision: "meet" | "pass"; reviewer: string }): Promise<{ decision: Decision; meeting?: Meeting }> {
+  const reviewer = input.reviewer.trim();
+  return getStore().update((data) => {
+    const decision = findOrThrow(data.decisions, (d) => d.id === decisionId, "Decision");
+    const company = findOrThrow(data.companies, (c) => c.id === decision.companyId, "Company");
+    if (!isRegisteredReviewer(company, reviewer)) {
+      throw new ServiceError(403, `${NAMED_PERSON_NEEDED} ${reviewer || "This name"} is not a reviewer for ${company.name} yet: add yourself as a reviewer first.`);
+    }
+    if (decision.decision !== "hold") throw new ServiceError(409, "This proof already has a decision");
+    const proof = findOrThrow(data.proofs, (p) => p.proofId === decision.proofId, "Proof");
+    decision.decision = input.decision;
+    appendAudit(data, {
+      actor: "human",
+      by: reviewer,
+      action: DECIDED_HOLD_ACTION,
+      detail: `${company.name} on ${proof.label}: ${input.decision === "meet" ? "chose to meet" : "said not now"}, after scoring it ${decision.total ?? 0} of 10.`,
+    });
+    const meeting = input.decision === "meet" ? invite(data, proof, company) : undefined;
+    return { decision, ...(meeting ? { meeting } : {}) };
   });
 }

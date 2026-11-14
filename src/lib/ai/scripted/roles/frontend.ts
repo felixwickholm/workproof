@@ -24,8 +24,9 @@ export const frontendEngineer: RoleTemplate = {
     "the screen had to work offline for short periods",
   ],
   challenge: {
+    minutes: 15,
     title: "Review an AI-written search component",
-    format: "review",
+    format: "fix",
     proofKind: "code",
     brief:
       "Our staff search for parcels by tracking code. A teammate used an AI assistant to write a new search component. It looks right in a quick demo. Users type fast, the API is sometimes slow, and some staff use only a keyboard. Please review it before it ships.",
@@ -74,7 +75,7 @@ export const frontendEngineer: RoleTemplate = {
   },
   taster: {
     title: "Spot the problem in a counter",
-    format: "review",
+    format: "fix",
     proofKind: "code",
     brief: "An AI assistant wrote this button to add items to a cart.",
     material: {

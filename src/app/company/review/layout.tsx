@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { ReviewProvider } from "./review-context";
 import { ReviewShell, ReviewShellFallback } from "./review-shell";
 
-export const metadata: Metadata = { title: "Review · Workprint" };
+export const metadata: Metadata = { title: "Score work" };
 
 /** The queue stays mounted while proofs open beside it (desktop) or over it (phone). */
 export default function ReviewLayout({ children }: LayoutProps<"/company/review">) {

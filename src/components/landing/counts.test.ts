@@ -3,19 +3,19 @@ import { countParts } from "./counts";
 
 describe("countParts", () => {
   it("keeps the four totals in reading order, in outcome words", () => {
-    expect(countParts({ proofs: 47, writtenAnswers: 31, invitations: 10, automatedDecisions: 0 })).toEqual([
-      { value: 47, noun: "proofs handed in" },
-      { value: 31, noun: "written reasons" },
-      { value: 10, noun: "invitations" },
+    expect(countParts({ took: 47, invited: 10, met: 3, automatedDecisions: 0 })).toEqual([
+      { value: 47, noun: "challenges done" },
+      { value: 10, noun: "people invited" },
+      { value: 3, noun: "first talks" },
       { value: 0, noun: "decisions made by AI" },
     ]);
   });
 
   it("uses the singular for one", () => {
-    expect(countParts({ proofs: 1, writtenAnswers: 1, invitations: 1, automatedDecisions: 1 }).map((p) => p.noun)).toEqual([
-      "proof handed in",
-      "written reason",
-      "invitation",
+    expect(countParts({ took: 1, invited: 1, met: 1, automatedDecisions: 1 }).map((p) => p.noun)).toEqual([
+      "challenge done",
+      "person invited",
+      "first talk",
       "decision made by AI",
     ]);
   });

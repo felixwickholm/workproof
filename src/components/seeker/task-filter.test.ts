@@ -1,44 +1,36 @@
 import { describe, expect, it } from "vitest";
-import type { ProofKind } from "@/lib/domain/types";
-import { arrangeTasks, countByKind, countLine, filterByKind, KIND_FILTERS } from "./task-filter";
+import type { TaskFormat } from "@/lib/domain/types";
+import { arrangeTasks, countByFormat, filterByFormat, rowFacts } from "./task-filter";
 
-const task = (id: string, proofKind: ProofKind) => ({ id, challenge: { proofKind } });
-const feed = [task("a", "plan"), task("b", "photo"), task("c", "plan"), task("d", "code")];
+const task = (id: string, format: TaskFormat) => ({ id, challenge: { format } });
+const feed = [task("a", "make"), task("b", "choose"), task("c", "make"), task("d", "fix")];
 
-describe("task filter", () => {
-  it("offers All and every kind of proof, in display order", () => {
-    expect(KIND_FILTERS).toEqual(["all", "writing", "plan", "photo", "video", "voice", "design", "code"]);
-  });
-
+describe("challenge filter", () => {
   it("keeps the server's order and only removes", () => {
-    expect(filterByKind(feed, "all").map((t) => t.id)).toEqual(["a", "b", "c", "d"]);
-    expect(filterByKind(feed, "plan").map((t) => t.id)).toEqual(["a", "c"]);
-    expect(filterByKind(feed, "video")).toEqual([]);
+    expect(filterByFormat(feed, "all").map((t) => t.id)).toEqual(["a", "b", "c", "d"]);
+    expect(filterByFormat(feed, "make").map((t) => t.id)).toEqual(["a", "c"]);
+    expect(filterByFormat(feed, "read")).toEqual([]);
   });
 
-  it("counts each chip, zeros included", () => {
-    const counts = countByKind(feed);
-    expect(counts.all).toBe(4);
-    expect(counts.plan).toBe(2);
-    expect(counts.video).toBe(0);
+  it("counts each format, zeros included", () => {
+    expect(countByFormat(feed)).toEqual({ all: 4, choose: 1, make: 2, fix: 1, read: 0 });
   });
-});
 
-describe("count line", () => {
-  it("counts each employer once, also on a shared task", () => {
-    const tasks = [{ companies: [{ id: "a" }] }, { companies: [{ id: "a" }, { id: "b" }] }];
-    expect(countLine(tasks)).toBe("2 tasks from 2 Espoo employers");
-    expect(countLine([{ companies: [{ id: "a" }] }])).toBe("1 task from 1 Espoo employer");
+  it("puts open challenges first, then full ones, then the ones already done", () => {
+    const list = [
+      { id: "sent", placesLeft: 3, mine: true },
+      { id: "full", placesLeft: 0, mine: false },
+      { id: "open", placesLeft: 2, mine: false },
+    ];
+    const { open, full, sent } = arrangeTasks(list);
+    expect([open, full, sent].map((g) => g.map((t) => t.id))).toEqual([["open"], ["full"], ["sent"]]);
   });
-});
 
-describe("arrange tasks", () => {
-  const placed = (id: string, placesLeft: number, mine = false) => ({ id, challenge: { kind: "event" as const }, placesLeft, mine });
-
-  it("puts full tasks after open ones and work already sent last, keeping the order inside each group", () => {
-    const { open, full, sent } = arrangeTasks([placed("a", 0), placed("b", 4), placed("c", 2, true), placed("d", 1), placed("e", 0, true)]);
-    expect(open.map((t) => t.id)).toEqual(["b", "d"]);
-    expect(full.map((t) => t.id)).toEqual(["a"]);
-    expect(sent.map((t) => t.id)).toEqual(["c", "e"]);
+  it("says who, how long and how many places are left", () => {
+    const base = { challenge: { minutes: 10, kind: "event" as const }, companies: [{ name: "Kaari Home Care" }], mine: false };
+    expect(rowFacts({ ...base, placesLeft: 4 })).toBe("Kaari Home Care · 10 min · 4 places left");
+    expect(rowFacts({ ...base, placesLeft: 1 })).toBe("Kaari Home Care · 10 min · 1 place left");
+    expect(rowFacts({ ...base, placesLeft: 0 })).toBe("Kaari Home Care · 10 min");
+    expect(rowFacts({ ...base, placesLeft: 4, mine: true })).toBe("Kaari Home Care · 10 min");
   });
 });

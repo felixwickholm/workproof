@@ -25,8 +25,9 @@ export const healthCommunicator: RoleTemplate = {
     "the phone line is open only two hours a day",
   ],
   challenge: {
+    minutes: 15,
     title: "Rewrite this result letter so a patient understands it",
-    format: "write",
+    format: "make",
     proofKind: "writing",
     brief:
       "Our clinic sends lab results by letter after a health check. Patients call us because they do not understand them, and some miss the one thing they need to do. A doctor wrote the letter below with an AI assistant. This is a synthetic patient. Please rewrite it for the patient.",
@@ -71,7 +72,7 @@ export const healthCommunicator: RoleTemplate = {
   },
   taster: {
     title: "Rewrite one line of a result letter",
-    format: "write",
+    format: "make",
     proofKind: "writing",
     brief: "This line is from a synthetic lab result letter.",
     material: {

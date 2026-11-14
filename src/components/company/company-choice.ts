@@ -2,16 +2,17 @@
 
 import { useCallback, useSyncExternalStore } from "react";
 import { COMPANIES, REVIEWERS } from "@/lib/seed/companies";
+import { STORY_COMPANY_ID } from "@/lib/seed/story";
 
 /**
  * The company the presenter is acting as, and the reviewer name, kept in the browser.
  * Shared by the intake and review screens. Storage can be blocked, so every access is guarded.
  */
 
-const COMPANY_KEY = "workprint.companyId";
-const REVIEWER_KEY = "workprint.reviewer";
-/** The demo identity in Hiring mode: Anna Koivisto at Kaari Home Care. */
-export const DEFAULT_COMPANY_ID = "co-kaari";
+const COMPANY_KEY = "workproof.companyId";
+const REVIEWER_KEY = "workproof.reviewer";
+/** The demo identity in Hiring mode: the company in the demo story. */
+export const DEFAULT_COMPANY_ID = STORY_COMPANY_ID;
 
 const listeners = new Set<() => void>();
 
@@ -62,6 +63,20 @@ export function useCompanyId(): [string, (id: string) => void] {
   );
   const set = useCallback((next: string) => setCompanyChoice(next), []);
   return [id, set];
+}
+
+const noSubscribe = () => () => {};
+
+/**
+ * False during the server render and hydration, when the chosen company still reads as the default.
+ * Company data waits for it, so a reload of another company's page never asks for the default company's view.
+ */
+export function useCompanyKnown(): boolean {
+  return useSyncExternalStore(
+    noSubscribe,
+    () => true,
+    () => false,
+  );
 }
 
 /** Acts as another company everywhere at once, for example from the guided story. */

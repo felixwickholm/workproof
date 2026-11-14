@@ -2,11 +2,11 @@ import type { RoleTemplate } from "../role-template";
 
 export const structuralEngineer: RoleTemplate = {
   id: "structural-engineer",
-  title: "Structural engineer",
+  title: "Structural or mechanical engineer",
   level: "degree",
   keywords: [
     "structural engineer", "structural engineering", "structural designer", "civil engineer", "civil engineering",
-    "building engineer", "rakennesuunnittelija", "rakennesuunnittelu", "rakennusinsinööri", "statiikka",
+    "building engineer", "mechanical engineer", "mechanical design", "konetekniikka", "koneinsinööri", "rakennesuunnittelija", "rakennesuunnittelu", "rakennusinsinööri", "statiikka",
   ],
   skills: ["structural-design", "safety-thinking", "technical-explanation", "compliance"],
   cues: {
@@ -30,44 +30,36 @@ export const structuralEngineer: RoleTemplate = {
     "a heating pipe runs inside the wall at ceiling height",
   ],
   challenge: {
-    title: "Sketch how you would support an opening in a load-bearing wall",
-    format: "build",
+    minutes: 15,
+    title: "Sketch how to hold up this wall opening",
+    format: "make",
     proofKind: "photo",
     brief:
-      "A housing company in a 1968 concrete block building wants a 2.4 m opening between a kitchen and a living room. The wall is load-bearing. A colleague used an AI assistant to write the design note below. Before it goes to the contractor, sketch by hand how you would support the opening. This is a synthetic example.",
+      "We design renovations for apartment buildings from the 1960s and 1970s. A housing company wants a 2.4 m opening in a wall that carries the floor above. A colleague wrote the design note below. How would you support the opening, before and after the cut? This is a synthetic example.",
     material: {
       kind: "text",
       title: "Design note, flat C 23, opening in wall W4 (synthetic)",
       body: [
-        "Building: 1968, 8 floors, precast concrete slabs on block walls",
-        "Wall W4: 200 mm concrete block, load-bearing. Flat C 23 is on floor 3.",
-        "Opening: 2.4 m wide, 2.1 m high, in the middle of the wall",
+        "Building: 1968, 8 floors, concrete slabs on 200 mm block walls",
+        "Opening: 2.4 m wide, 2.1 m high, in the middle of wall W4",
         "",
-        "Loads (AI draft)",
-        "- Floor slab above: 6.5 kN/m², span 4.2 m, half of it on W4",
-        "- Nothing else stands above the opening.",
+        "Loads: floor slab above, 6.5 kN/m², span 4.2 m, half on W4.",
+        "Nothing else stands above the opening.",
         "",
-        "Proposed support",
-        "- Steel beam HEA 200, length 2.6 m",
-        "- Bearing: 100 mm at each end, straight on the block",
+        "Beam: steel HEA 200, 2.6 m long, 100 mm on the block at each end.",
+        "Work order: cut the opening, then lift the beam in. No props needed.",
         "",
-        "Work order (AI draft)",
-        "- Cut the opening, then lift the beam in and grout it.",
-        "- No temporary support needed for a 2.4 m opening.",
-        "",
-        "From the archive drawing of floor 4:",
-        "- partition wall W4b stands on the slab right above the opening.",
+        "Archive drawing, floor 4: partition wall W4b stands right above the opening.",
       ].join("\n"),
     },
-    deliverable:
-      "Sketch by hand the beam, its ends and the temporary support during the works, with the loads you count. Photograph the sketch. Not of people. Or describe it in words or by voice. Tell us what you changed in the note and why.",
+    deliverable: "Sketch the beam, its ends and the temporary props, and photograph the sketch (no people) or describe it in words.",
     flaws: [
       {
         label: "the beam sits 100 mm straight on old block, with no bearing check or padstone",
         cues: ["bearing", "padstone", "100 mm", "spreader", "concrete pad", "crush", "bearing length", "200 mm", "pad"],
       },
       {
-        label: "the opening cut before any temporary propping",
+        label: "the opening cut before any temporary props",
         cues: ["prop", "props", "needle", "temporary", "shore", "before cutting", "support first", "acrow"],
       },
       {
@@ -78,7 +70,7 @@ export const structuralEngineer: RoleTemplate = {
   },
   taster: {
     title: "Read one line of a work order",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "A line from a renovation work order.",
     material: {

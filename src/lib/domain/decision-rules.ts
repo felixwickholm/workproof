@@ -16,7 +16,10 @@ export function isNamedReviewer(reviewer: string): boolean {
 }
 
 /** The audit actions of a decision. The city counts decisions over the log by these, so they are fixed. */
-export const DECISION_ACTIONS = { meet: "Chose to meet", pass: "Said not now, with a reason" } as const;
+export const DECISION_ACTIONS = { meet: "Chose to meet", pass: "Said not now, with a reason", hold: "Scored the work, decision later" } as const;
+
+/** The audit action when a hold later becomes meet or pass. Counted with the decision lines. */
+export const DECIDED_HOLD_ACTION = "Decided after scoring";
 
 /** A reviewer name may be this long, as in the form field. */
 const MAX_REVIEWER_CHARS = 80;

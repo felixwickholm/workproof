@@ -62,7 +62,7 @@ export function practiceLine(onTable: boolean): string {
 
 /** What the reveal says about the name, true to what the person did on the name step. */
 export function nameLine(nameGiven: boolean): string {
-  return nameGiven ? "Your name was used once to hide it. It was not kept." : "You gave no name. Nothing identifies you here.";
+  return nameGiven ? "Your name was used only to hide it. It was not kept." : "You gave no name.";
 }
 
 /** The progress in words, beside the bar. */

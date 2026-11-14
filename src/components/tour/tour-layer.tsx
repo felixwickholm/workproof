@@ -22,8 +22,6 @@ interface Props extends CardProps {
 const MASK_ID = "tour-spotlight";
 /** The caret is a square turned 45°; this is its side, so it stands out 7px from the card. */
 const CARET = 14;
-/** The gap a connector needs before it is worth drawing between a docked card and its target. */
-const CONNECTOR_MIN = 12;
 
 /** Where the caret sits on the card, as a transform, so it travels with the card's own transition. */
 function caretStyle(arrow: Arrow, width: number, height: number): CSSProperties {
@@ -39,8 +37,8 @@ function caretStyle(arrow: Arrow, width: number, height: number): CSSProperties 
 
 /**
  * The dimmed page with one rounded cut-out over the target, a thin accent ring around it, and the
- * card beside it with a caret that points at the target. On a phone the card docks at the bottom
- * and a hairline connects it to the target above. Everything under the layer is inert while it is open.
+ * card beside it with a caret that points at the target. On a phone the card docks on the bottom
+ * edge and the ring alone marks the target. Everything under the layer is inert while it is open.
  */
 export function TourLayer({ target, targetId, moveKey, onCardHeight, ...card }: Props) {
   const view = useViewportSize();
@@ -72,7 +70,8 @@ export function TourLayer({ target, targetId, moveKey, onCardHeight, ...card }: 
   const top = box?.barBottom ?? 0;
   const placement = placeCard({ width: view.width, height: view.height, top, bottom: safeBottom }, box, { width, height: cardHeight });
   // The card never grows past the screen: its text scrolls inside and the buttons stay in view.
-  const maxHeight = view.height - safeBottom - 32 - (placement.side === "docked" ? 0 : top);
+  const phone = width === view.width;
+  const maxHeight = phone ? view.height - Math.max(top, 16) : view.height - safeBottom - 32 - (placement.side === "docked" ? 0 : top);
 
   // Without a target the cut-out fades where it was, so the next one opens from there.
   const hole = useSpringBox(placement.spot, moveKey, card.reduce);
@@ -85,12 +84,9 @@ export function TourLayer({ target, targetId, moveKey, onCardHeight, ...card }: 
     return () => controls.stop();
   }, [lit, placement.spot]);
 
-  // The mask, ring and connector are SVG attributes, so they are written directly as the springs move.
+  // The mask and ring are SVG attributes, so they are written directly as the springs move.
   const holeRef = useRef<SVGRectElement>(null);
   const ringRef = useRef<SVGRectElement>(null);
-  const lineRef = useRef<SVGLineElement>(null);
-  const docked = placement.side === "docked" && placement.arrow !== null;
-  const caretX = placement.arrow?.offset ?? 0;
   const paint = () => {
     for (const el of [holeRef.current, ringRef.current]) {
       if (!el) continue;
@@ -100,23 +96,11 @@ export function TourLayer({ target, targetId, moveKey, onCardHeight, ...card }: 
       el.setAttribute("height", String(Math.max(0, hole.height.get())));
       el.setAttribute("opacity", String(lit.get()));
     }
-    const line = lineRef.current;
-    if (!line) return;
-    const x = cardPos.x.get() + caretX;
-    const from = hole.y.get() + hole.height.get();
-    const to = cardPos.y.get() - CARET / 2;
-    line.setAttribute("x1", String(x));
-    line.setAttribute("x2", String(x));
-    line.setAttribute("y1", String(from));
-    line.setAttribute("y2", String(to));
-    line.setAttribute("opacity", String(docked && to - from > CONNECTOR_MIN ? lit.get() : 0));
   };
   useMotionValueEvent(hole.x, "change", paint);
   useMotionValueEvent(hole.y, "change", paint);
   useMotionValueEvent(hole.width, "change", paint);
   useMotionValueEvent(hole.height, "change", paint);
-  useMotionValueEvent(cardPos.x, "change", paint);
-  useMotionValueEvent(cardPos.y, "change", paint);
   useMotionValueEvent(lit, "change", paint);
   useLayoutEffect(paint);
 
@@ -140,7 +124,6 @@ export function TourLayer({ target, targetId, moveKey, onCardHeight, ...card }: 
         </defs>
         <rect width="100%" height="100%" mask={`url(#${MASK_ID})`} className="fill-(--tour-dim)" />
         <rect ref={ringRef} data-tour-ring rx="20" ry="20" fill="none" strokeWidth="2" className="stroke-accent" />
-        <line ref={lineRef} strokeWidth="1.5" strokeDasharray="3 4" strokeLinecap="round" className="stroke-accent" />
       </svg>
       <motion.div className="absolute top-0 left-0" style={{ x: cardPos.x, y: cardPos.y, width }}>
         <motion.div

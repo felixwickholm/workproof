@@ -1,17 +1,20 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { collectText, findJudgement } from "@/lib/guard/no-judgement";
 import { isSkillId } from "@/lib/skills/vocabulary";
 import { genericRole } from "./generic-role";
 import { matchRole } from "./match-role";
 import { skillsIn } from "./parse-need";
+import type { TaskTemplate } from "./role-template";
 import { ROLES } from "./roles";
 
 const lines = (body: string) => body.split("\n").length;
 const words = (text: string) => text.trim().split(/\s+/).length;
 
 describe("role library", () => {
-  it("has at least 46 roles with unique ids", () => {
-    expect(ROLES.length).toBeGreaterThanOrEqual(46);
+  it("has at least 48 roles with unique ids", () => {
+    expect(ROLES.length).toBeGreaterThanOrEqual(48);
     expect(new Set(ROLES.map((r) => r.id)).size).toBe(ROLES.length);
   });
 
@@ -31,12 +34,29 @@ describe("role library", () => {
         role.skills.forEach((id) => expect(isSkillId(id)).toBe(true));
       });
 
-      it("has a 20-minute challenge with real material and planted flaws", () => {
-        expect(lines(role.challenge.material.body)).toBeGreaterThanOrEqual(12);
+      it("has a 5 to 15 minute challenge with real material and planted flaws", () => {
+        expect(role.challenge.minutes).toBeGreaterThanOrEqual(5);
+        expect(role.challenge.minutes).toBeLessThanOrEqual(15);
         expect(lines(role.challenge.material.body)).toBeLessThanOrEqual(25);
-        expect(role.challenge.flaws.length).toBeGreaterThanOrEqual(2);
+        expect(role.challenge.flaws.length).toBeGreaterThanOrEqual(1);
         expect(role.challenge.flaws.length).toBeLessThanOrEqual(3);
         expect(words(role.challenge.brief)).toBeLessThan(120);
+      });
+
+      it("gives a choose task exactly two options, a and b, and no other task any", () => {
+        for (const task of [role.challenge, role.taster]) {
+          if (task.format !== "choose") {
+            expect(task.options).toBeUndefined();
+            continue;
+          }
+          expect(task.options?.map((o) => o.id)).toEqual(["a", "b"]);
+          for (const option of task.options ?? []) expect(option.title.length * option.body.length).toBeGreaterThan(0);
+        }
+      });
+
+      it("draws its pictures from files in public/demo", () => {
+        const images = [role.challenge, role.taster].flatMap((task) => [task.material.image, ...(task.options ?? []).map((o) => o.image)]);
+        for (const src of images.filter((x): x is string => Boolean(x))) expect(existsSync(join(process.cwd(), "public", src)), src).toBe(true);
       });
 
       it("has a taster short enough for a phone", () => {
@@ -62,7 +82,7 @@ describe("role library", () => {
 
       it("contains no judgement, exclamation marks, emoji or em dashes", () => {
         // Cues are match terms and never shown; flaw labels are, so they stay in.
-        const shown = (task: typeof role.challenge) => ({ ...task, flaws: task.flaws.map((f) => f.label) });
+        const shown = (task: TaskTemplate) => ({ ...task, flaws: task.flaws.map((f) => f.label) });
         const text = collectText({ c: shown(role.challenge), t: shown(role.taster), why: role.why, look: role.lookFor }).join("\n");
         expect(findJudgement(text)).toEqual([]);
         expect(text).not.toMatch(/[—]|\p{Extended_Pictographic}/u);
@@ -114,6 +134,17 @@ describe("matchRole", () => {
     ["football coach", "teacher"],
     ["game developer", "frontend"],
     ["founder", "product-manager"],
+    ["chip design engineer", "chip-verification-engineer"],
+    ["design verification engineer for our SoC", "chip-verification-engineer"],
+    ["piirisuunnittelija", "chip-verification-engineer"],
+    ["research scientist", "research-scientist"],
+    ["tutkija", "research-scientist"],
+    ["quantum researcher", "quantum-researcher"],
+    ["financial analyst", "business-analyst"],
+    ["communications specialist", "marketing"],
+    ["compliance specialist", "lawyer"],
+    ["service designer", "ux-designer"],
+    ["mechanical engineer", "structural-engineer"],
   ])("maps %s to %s", (text, id) => {
     expect(matchRole(text)?.id).toBe(id);
   });

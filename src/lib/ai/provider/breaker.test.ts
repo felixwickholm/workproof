@@ -9,7 +9,7 @@ const GEMINI: ProviderConfig = { provider: "gemini", apiKey: "test-gemini-key", 
 
 const TASK = {
   title: "Review the payment retry change",
-  format: "review",
+  format: "fix",
   proofKind: "code",
   brief: "A teammate wrote this change. It retries card payments when the provider is slow. Read it before it ships.",
   material: { kind: "code", title: "charge.ts", body: "for (;;) { const res = await fetch(PAY_URL); if (res.ok) return res.json(); }" },
@@ -128,6 +128,6 @@ describe("provider breaker", () => {
   it("shares one pause across the whole process", () => {
     providerBreaker().record(new ProviderError("Gemini request timed out after 12 s", "timeout"));
     expect(providerBreaker().pause()?.reason).toBe("timeout");
-    delete (globalThis as { __workprintProviderPause?: unknown }).__workprintProviderPause;
+    delete (globalThis as { __workproofProviderPause?: unknown }).__workproofProviderPause;
   });
 });

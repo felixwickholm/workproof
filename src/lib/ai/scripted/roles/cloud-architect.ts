@@ -24,8 +24,9 @@ export const cloudArchitect: RoleTemplate = {
     "traffic doubled during the first week of each month",
   ],
   challenge: {
+    minutes: 15,
     title: "Review an AI-drafted architecture proposal",
-    format: "review",
+    format: "fix",
     proofKind: "plan",
     brief:
       "We are moving our meter-reading service to the cloud. A teammate asked an AI assistant to draft the proposal below for the steering group on Thursday. Readings come from 40,000 devices every 15 minutes, and billing depends on them. Please review it before it goes out.",
@@ -67,7 +68,7 @@ export const cloudArchitect: RoleTemplate = {
   },
   taster: {
     title: "Spot the problem in a backup plan",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "An AI assistant drafted this backup plan for a customer database.",
     material: {

@@ -40,7 +40,7 @@ const PROTECTED: { name: string; pattern: RegExp }[] = [
     name: "native language",
     pattern: words(
       [
-        "(?<!cloud[- ]|react |non[- ])natives?(?![- ](?:app|apps|mobile|ios|android|code|modules?|integrations?|sdk|build|binar\\p{L}{0,40}|libraries|library|ui|tools?|units?|format|resolution|speed))",
+        "(?<!cloud[- ]|react |non[- ]|digital[- ])natives?(?![- ](?:app|apps|mobile|ios|android|code|modules?|integrations?|sdk|build|binar\\p{L}{0,40}|libraries|library|ui|tools?|units?|format|resolution|speed))",
         "mother[- ]tongue|first language|native language|native speakers?|äidinkiel\\p{L}{0,40}|modersmål\\p{L}{0,40}|förstaspråk\\p{L}{0,40}",
         "accent[- ]free|accentless|(?:no|without an?|neutral|native|foreign|strong|heavy|local) accent|aksentiton\\p{L}{0,40}|utan brytning|brytning",
         "[\\p{L}]+-speaking|suomea puhuv\\p{L}{0,40}|ruotsia puhuv\\p{L}{0,40}|svensktalande|finsktalande",

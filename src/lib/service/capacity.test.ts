@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildSeed } from "@/lib/seed";
 import { checkPictureRoom, makeRoom, MAX_PROOFS, MAX_UPLOADED_PICTURES } from "./capacity";
-import { ServiceError } from "./support";
+import { appendAudit, MAX_AUDIT_EVENTS, ServiceError } from "./support";
 
 function fill(kind: "event" | "taster") {
   const data = buildSeed(new Date("2026-11-14T12:00:00Z"));
@@ -24,6 +24,15 @@ describe("demo capacity", () => {
     expect(data.proofs.some((p) => p.proofId === oldest)).toBe(false);
   });
 
+  it("takes the evicted proof's table invitation, decisions and meetings with it", () => {
+    const data = fill("taster");
+    const oldest = data.submissions.find((s) => s.challengeId === "taster_x")?.id ?? "";
+    data.tableInvites = [{ proofId: oldest, host: "Anna Koivisto", message: "Come by. Bring the plan.", status: "invited", invitedAt: "2026-11-14T10:00:00Z" }];
+    makeRoom(data);
+    expect(data.tableInvites).toEqual([]);
+    expect(data.submissions.some((s) => s.id === oldest)).toBe(false);
+  });
+
   it("refuses with 429 when only event proofs remain", () => {
     const data = fill("event");
     expect(() => makeRoom(data)).toThrow(ServiceError);
@@ -39,5 +48,14 @@ describe("demo capacity", () => {
     expect(() => checkPictureRoom(data)).not.toThrow();
     add("own_last", "data:image/jpeg;base64,/9j/");
     expect(() => checkPictureRoom(data)).toThrow(ServiceError);
+  });
+
+  it("keeps only the newest audit events", () => {
+    const data = buildSeed(new Date("2026-11-14T12:00:00Z"));
+    data.audit = [];
+    for (let i = 0; i < MAX_AUDIT_EVENTS + 5; i++) appendAudit(data, { actor: "system", by: "Test", action: "Counted", detail: String(i) });
+    expect(data.audit).toHaveLength(MAX_AUDIT_EVENTS);
+    expect(data.audit[0].detail).toBe("5");
+    expect(data.audit.at(-1)?.detail).toBe(String(MAX_AUDIT_EVENTS + 4));
   });
 });

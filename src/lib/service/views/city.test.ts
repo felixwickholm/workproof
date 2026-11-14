@@ -38,6 +38,24 @@ describe("city insights", () => {
     expect(overview.totals.proofs).toBe(insights.funnel.proofs);
   });
 
+  it("counts proofs answered and people answered apart: one person with two answered proofs is one person", () => {
+    // Olena's P1 and P2 are both answered, and Sam's P3: three proofs, two people.
+    expect(overview.totals.proofsAnswered).toBe(3);
+    expect(overview.totals.peopleAnswered).toBe(2);
+  });
+
+  it("counts each proof once at every funnel step, and meetings apart as activity", () => {
+    const data = sampleEvent();
+    // Otso also invites P1 through Second look, and the person accepts that one: one proof, two invitations.
+    data.decisions.push({ id: "d4", proofId: "p1", companyId: "co-otso", reviewer: "Henrik Lund", decision: "meet", feedback: "Clear plan. We would like to meet.", decidedAt: "2026-11-14T11:00:00.000Z" });
+    data.meetings.push({ id: "m4", proofId: "p1", companyId: "co-otso", slot: "Sat 13:15, Table 3", status: "accepted", talentConfirmedMet: false, companyConfirmedMet: false });
+    data.meetings.push({ id: "m5", proofId: "p2", companyId: "co-kivira", slot: "Sat 13:30, Table 4", status: "declined", talentConfirmedMet: false, companyConfirmedMet: false });
+    const { funnel, meetings } = buildCityOverview(data).insights;
+    expect(funnel).toEqual({ proofs: 4, answered: 3, invited: 3, accepted: 2, met: 1 });
+    expect(meetings).toEqual({ invited: 4, accepted: 2, met: 1, declined: 1 });
+    expect(funnel.invited).toBeLessThanOrEqual(funnel.proofs);
+  });
+
   it("shows each proof at its furthest step, oldest first", () => {
     expect(insights.flows).toEqual([
       { proofLabel: "Proof P3", companyId: "co-kaari", state: "met" },

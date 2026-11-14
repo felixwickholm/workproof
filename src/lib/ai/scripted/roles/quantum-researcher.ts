@@ -5,8 +5,8 @@ export const quantumResearcher: RoleTemplate = {
   title: "Quantum and deep-tech researcher",
   level: "degree",
   keywords: [
-    "quantum", "qubit", "quantum computing", "deep tech", "deep-tech", "physicist", "research scientist",
-    "phd researcher", "kvantti", "kvanttitutkija", "kvanttilaskenta", "tutkija", "fyysikko",
+    "quantum", "qubit", "quantum computing", "deep tech", "deep-tech", "physicist",
+    "phd researcher", "kvantti", "kvanttitutkija", "kvanttilaskenta", "fyysikko",
   ],
   skills: ["scientific-reasoning", "experiment-design", "technical-explanation", "ai-assisted-work"],
   why: {
@@ -24,8 +24,9 @@ export const quantumResearcher: RoleTemplate = {
     "the paper deadline was in three days",
   ],
   challenge: {
+    minutes: 15,
     title: "Review an AI-drafted results summary",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief:
       "We tested a new error mitigation method on our 20-qubit chip. A teammate asked an AI assistant to turn the lab notes into the summary below for our newsletter to partners. It goes out on Friday. Please check whether the claims hold.",
@@ -66,7 +67,7 @@ export const quantumResearcher: RoleTemplate = {
   },
   taster: {
     title: "Spot the problem in a lab claim",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "An AI assistant summarised a colleague's measurement for a slide.",
     material: {

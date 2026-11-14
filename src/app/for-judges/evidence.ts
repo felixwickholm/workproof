@@ -18,10 +18,10 @@ interface CheckRun {
 export const VERIFIED_ON = "2026-11-14";
 
 /** `npm test`: unit tests next to the code under src/. */
-export const UNIT_TESTS: CheckRun = { command: "npm test", files: 106, tests: 1575, passed: 1575 };
+export const UNIT_TESTS: CheckRun = { command: "npm test", files: 129, tests: 1936, passed: 1936 };
 
 /** `npm run eval`: the eval suites under evals/ (the live-AI suite is skipped without a key). */
-export const EVAL_TESTS: CheckRun = { command: "npm run eval", files: 7, tests: 55, passed: 55 };
+export const EVAL_TESTS: CheckRun = { command: "npm run eval", files: 7, tests: 63, passed: 63 };
 
 /** The Result column of the table `npm run eval` prints, keyed by "eval › check". */
 export const PRINTED: Readonly<Record<string, string>> = {
@@ -41,17 +41,20 @@ export const PRINTED: Readonly<Record<string, string>> = {
   "2 Blind review › visitor inputs from the table": "40 of 40 forms fully hidden; 16 of 16 technical texts unchanged",
   "2 Blind review › technical text left intact": "5 of 5 answers unchanged",
   "2 Blind review › reviewer payload: [hidden] only, no count": "one token, no count, no categories",
-  "2 Blind review › unique proof labels": "246 distinct labels for 246 proofs",
+  "2 Blind review › unique proof labels": "261 distinct labels for 261 proofs",
   "3 No automated decisions › (a) guard: judging rejected": "70 of 70 judging phrases rejected",
   "3 No automated decisions › (a) guard: neutral passed": "33 of 33 neutral phrases passed",
-  "3 No automated decisions › (b) designer output passes the guard": "551 of 551 text fields from 32 designer outputs (20 drafts, 12 follow-up sets)",
+  "3 No automated decisions › (b) designer output passes the guard": "575 of 575 text fields from 32 designer outputs (20 drafts, 12 follow-up sets)",
   "3 No automated decisions › (b2) 'At a glance' is structure only": "12 of 12 lines describe shape only",
   "3 No automated decisions › (c) queues in arrival order": "every queue of 10 companies",
   "3 No automated decisions › (d) decisions need reviewer and feedback": "refused: HTTP 400 for a decision without a name, HTTP 400 without feedback; 34 stored decisions all named",
   "3 No automated decisions › (e) automated decisions": "0 automated decisions; 0 decision audit lines by a non-human",
   "3 No automated decisions › (f) decisions name a registered person": "refused: HTTP 400 for \"AI bot\", HTTP 403 for an unregistered name, HTTP 400 for a bot as reviewer; accepted after the explicit step: HTTP 200",
+  "3 No automated decisions › (g) scores only from a registered person": "refused: HTTP 400 without scores, HTTP 400 with a skill missing, HTTP 400 from a software name; accepted: a named reviewer's 6 of 10",
+  "3 No automated decisions › (h) related parts carry no score": "0 numbers and 0 judging phrases in 24 marked sentences from 37 proofs",
+  "3 No automated decisions › (i) portfolio shows own scores, never a rank": "7 cards newest first, 6 reviewer scores shown to the owner, 0 rank keys, skill bars as task counts; a link shows no name, contact or key, the score and decision only when shown, and stops when ended",
   "4 Consent and privacy › accept and confirm need the right party": "refused: HTTP 400 with no key, HTTP 403 with a wrong key, HTTP 403 for a guessed talent confirm, HTTP 403 for another company's confirm",
-  "4 Consent and privacy › talent ids in public responses": "0 of 31 talent ids found in company and city responses",
+  "4 Consent and privacy › talent ids in public responses": "0 of 37 talent ids found in company and city responses",
   "4 Consent and privacy › private key in a header only": "header read, path form gone, key absent from the audit log",
   "4 Consent and privacy › hidden count shown to the author only": "0 reviewer responses with a count or categories; author sees the count: true",
   "4 Consent and privacy › identity locked after first event proof": "kept",
@@ -64,10 +67,14 @@ export const PRINTED: Readonly<Record<string, string>> = {
   "4 Consent and privacy › pictures: clean JPEG only, description blind": "refused: HTTP 400, HTTP 400, HTTP 400, HTTP 400, HTTP 400 for EXIF, a /demo path, PNG, video, 1 byte over 300 kB; accepted: HTTP 200 at 300 kB, HTTP 200 clean",
   "4 Consent and privacy › pictures: the person's own check is required": "refused: HTTP 400 without the check, HTTP 400 unchecked; accepted: HTTP 200 checked",
   "4 Consent and privacy › pictures: a report removes the picture for everyone": "refused: HTTP 403 for a company that cannot read it, HTTP 400 without a name; reported: HTTP 200; picture in responses after: false",
+  "4 Consent and privacy › a submission with invented questions is refused": "HTTP 400 without issued questions, HTTP 400 with invented ones, HTTP 409 for changed words, HTTP 200 with the issued ones, HTTP 409 for a second proof to the same task",
   "4 Consent and privacy › follow-up answers are required": "event: HTTP 400 with none, HTTP 400 with one, HTTP 400 with a blank one, HTTP 200 with two; practice: HTTP 400 with none, HTTP 200 with one",
   "4 Consent and privacy › practice proof keeps no name": "HTTP 200; the given name in the store: nowhere",
   "4 Consent and privacy › decline keeps the name hidden": "HTTP 403 for a stranger; status after decline: declined, after a later accept: declined; name in responses: false",
   "4 Consent and privacy › Second look withdrawal reaches decided proofs": "work shown to the Second look employer after withdrawal: false; its decision kept: true",
+  "4 Consent and privacy › identity strings sent to a model": "0 of 48 checks found a planted string in 6 requests (draft, practice task, follow-ups; Claude and Gemini)",
+  "4 Consent and privacy › city: slots and labels, never names": "0 names, contacts or keys in city responses, task leaderboards, share matches and the meeting export over 4 story stages, \"met\" included",
+  "4 Consent and privacy › top proofs and shared work stay blind": "0 identity strings in the top list and the receiving queue; shared: HTTP 200; scores sent along: false",
   "5 Flow (API) › seed has 10 companies": "ok",
   "5 Flow (API) › taster is a 2-minute task": "ok",
   "5 Flow (API) › AI drafts a Problem Card": "ok",
@@ -89,11 +96,18 @@ export const PRINTED: Readonly<Record<string, string>> = {
   "5 Flow (API) › the employer's number of places is published with the task": "ok",
   "5 Flow (API) › all five places take work": "ok",
   "5 Flow (API) › the sixth answer is refused with 409 and no waiting list": "ok",
+  "5 Flow (API) › v3: a named reviewer scores the work and holds it, no meeting yet": "ok",
+  "5 Flow (API) › v3: the scored proof is on the task's top list, blind": "ok",
+  "5 Flow (API) › v3: the hold becomes an invitation": "ok",
+  "5 Flow (API) › v3: the person accepts, and only then the company sees the name": "ok",
+  "5 Flow (API) › v3: both sides confirm the talk": "ok",
+  "5 Flow (API) › v3: a follow-up is agreed and a hire recorded by the company": "ok",
+  "5 Flow (API) › v3: the city counts every step for the task, with no name": "ok",
   "6 Demo story (API) › session: persona and stage": "Olena Kovalenko, invited",
   "6 Demo story (API) › unknown stage refused": "HTTP 400 for an unknown stage",
   "6 Demo story (API) › before and sent": "2 proofs before, 3 after sending; story proof queued: true",
-  "6 Demo story (API) › invited: open invitation from Kaari": "Kaari Home Care wants to meet you.",
-  "6 Demo story (API) › met: accepted, name shown, Second look invite": "accepted meetings: 6 before, 7 after",
+  "6 Demo story (API) › invited: open invitation from the story company": "Halla Supply wants to meet you.",
+  "6 Demo story (API) › met: accepted, name shown, talk and follow-up counted": "proofs met: 4 before, 5 after; follow-ups: 3 before, 4 after",
   "6 Demo story (API) › persona hidden from employer and city": "hidden",
   "7 Table screen › no free text on the public screen": "0 of 10 names, emails and numbers found; extra fields: none",
   "7 Table screen › name only after the person's yes": "second invite HTTP 409; stranger read HTTP 403, accept HTTP 403; name on screen before yes: false, after: Mikko",
@@ -253,6 +267,6 @@ export const FIGURES = {
 export const PROMISES = [
   { figure: FIGURES.judgingRejected, promise: "No score. No rank. No match percent.", evidence: "planted judging phrases caught by the guard that checks every AI output." },
   { figure: FIGURES.plantedReached, promise: "A person reads your work, not your name.", evidence: "planted identity details reached a reviewer." },
-  { figure: "Text only", promise: "Your voice stays with you.", evidence: "Voice answers are stored as text only." },
+  { figure: "Text only", promise: "Your voice becomes text.", evidence: "WorkProof stores only the text of a voice answer." },
   { figure: FIGURES.automatedDecisions, promise: "Every decision has a name and a written reason.", evidence: "automated decisions in the audit log." },
 ] as const;

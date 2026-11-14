@@ -29,7 +29,7 @@ function promises(nameGiven: boolean, onTable: boolean): { Icon: LucideIcon; tex
       Icon: UserRoundCheck,
       text: onTable
         ? "The table can invite you. Your first name shows only if you accept, on this phone."
-        : "At a real event, the company could invite you. Only then would it see your name.",
+        : "At a real event the company could invite you. It would see your name only after you accept.",
     },
   ];
 }
@@ -95,7 +95,7 @@ export function Reveal({ proof, written, onTable, nameGiven, onAnotherJob }: Pro
           Try another job
         </Button>
         <Button href="/seeker" variant="quiet" className="mx-auto">
-          Explore Workprint
+          Explore WorkProof
         </Button>
       </div>
     </>

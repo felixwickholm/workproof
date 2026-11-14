@@ -33,12 +33,12 @@ describe("modeForPath", () => {
 
 describe("activeNavItem", () => {
   it("prefers the longest match, so a proof under review lights Review", () => {
-    expect(activeNavItem("/company/review/p-7", nav("employer"))?.label).toBe("Review");
-    expect(activeNavItem("/company", nav("employer"))?.label).toBe("Post a task");
+    expect(activeNavItem("/company/review/p-7", nav("employer"))?.label).toBe("Score work");
+    expect(activeNavItem("/company", nav("employer"))?.label).toBe("New challenge");
   });
 
   it("lights the section a detail page belongs to", () => {
-    expect(activeNavItem("/challenges/ch-1", nav("seeker"))?.label).toBe("Tasks");
+    expect(activeNavItem("/challenges/ch-1", nav("seeker"))?.label).toBe("Challenges");
   });
 
   it("lights nothing on a page outside the nav", () => {

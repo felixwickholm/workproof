@@ -154,7 +154,7 @@ describe("Eval 1: task generator", () => {
       const skillText = draft.json.coreSkills.map((s) => s.label).join(" ");
       if (/licen[cs]e|Finnish|English|permit/i.test(skillText)) problems.push(`${label}: a fact as a skill`);
 
-      const card = await call<Challenge>(approveRoute, { body: { draft: draft.json, companyId: "co-kaari", approvedBy: "Eval Person" } });
+      const card = await call<Challenge>(approveRoute, { body: { draft: draft.json, companyId: "co-harjula", approvedBy: "Eval Person" } });
       if (card.status !== 200) {
         problems.push(`${label}: publish status ${card.status}`);
         continue;

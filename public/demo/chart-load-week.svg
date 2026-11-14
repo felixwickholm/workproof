@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 380" role="img" aria-label="Line chart of last week: forecast and actual daily peak power. The lines stay close except on Wednesday and Thursday, the two coldest days, where the forecast is about 45 and 51 megawatts too low.">
+<rect width="640" height="380" fill="#ffffff"/>
+<rect x="224.3" y="50" width="77.1" height="260" fill="#dfeefa"/>
+<rect x="301.4" y="50" width="77.1" height="260" fill="#dfeefa"/>
+<text x="301.4" y="66" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#3a6a8f">coldest days</text>
+<line x1="70" x2="610" y1="284.0" y2="284.0" stroke="#e6e6e6"/>
+<text x="62" y="288.0" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#666">380</text>
+<line x1="70" x2="610" y1="232.0" y2="232.0" stroke="#e6e6e6"/>
+<text x="62" y="236.0" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#666">420</text>
+<line x1="70" x2="610" y1="180.0" y2="180.0" stroke="#e6e6e6"/>
+<text x="62" y="184.0" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#666">460</text>
+<line x1="70" x2="610" y1="128.0" y2="128.0" stroke="#e6e6e6"/>
+<text x="62" y="132.0" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#666">500</text>
+<line x1="70" x2="610" y1="76.0" y2="76.0" stroke="#e6e6e6"/>
+<text x="62" y="80.0" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#666">540</text>
+<text x="18" y="180.0" transform="rotate(-90 18 180.0)" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#666">Daily peak (MW)</text>
+<polyline points="108.6,242.4 185.7,225.5 262.9,113.7 340.0,90.3 417.1,209.9 494.3,260.6 571.4,271.0" fill="none" stroke="#1d2440" stroke-width="3"/>
+<circle cx="108.6" cy="242.4" r="4" fill="#1d2440"/>
+<circle cx="185.7" cy="225.5" r="4" fill="#1d2440"/>
+<circle cx="262.9" cy="113.7" r="4" fill="#1d2440"/>
+<circle cx="340.0" cy="90.3" r="4" fill="#1d2440"/>
+<circle cx="417.1" cy="209.9" r="4" fill="#1d2440"/>
+<circle cx="494.3" cy="260.6" r="4" fill="#1d2440"/>
+<circle cx="571.4" cy="271.0" r="4" fill="#1d2440"/>
+<polyline points="108.6,246.3 185.7,230.7 262.9,172.2 340.0,156.6 417.1,217.7 494.3,256.7 571.4,268.4" fill="none" stroke="#e07a2f" stroke-width="3" stroke-dasharray="7 5"/>
+<circle cx="108.6" cy="246.3" r="4" fill="#e07a2f"/>
+<circle cx="185.7" cy="230.7" r="4" fill="#e07a2f"/>
+<circle cx="262.9" cy="172.2" r="4" fill="#e07a2f"/>
+<circle cx="340.0" cy="156.6" r="4" fill="#e07a2f"/>
+<circle cx="417.1" cy="217.7" r="4" fill="#e07a2f"/>
+<circle cx="494.3" cy="256.7" r="4" fill="#e07a2f"/>
+<circle cx="571.4" cy="268.4" r="4" fill="#e07a2f"/>
+<text x="108.6" y="330" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#333">Mon</text>
+<text x="108.6" y="348" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#3a6a8f">-4 °C</text>
+<text x="185.7" y="330" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#333">Tue</text>
+<text x="185.7" y="348" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#3a6a8f">-6 °C</text>
+<text x="262.9" y="330" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#333">Wed</text>
+<text x="262.9" y="348" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#3a6a8f">-17 °C</text>
+<text x="340.0" y="330" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#333">Thu</text>
+<text x="340.0" y="348" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#3a6a8f">-19 °C</text>
+<text x="417.1" y="330" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#333">Fri</text>
+<text x="417.1" y="348" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#3a6a8f">-8 °C</text>
+<text x="494.3" y="330" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#333">Sat</text>
+<text x="494.3" y="348" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#3a6a8f">-5 °C</text>
+<text x="571.4" y="330" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#333">Sun</text>
+<text x="571.4" y="348" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#3a6a8f">-3 °C</text>
+<g font-family="Helvetica, Arial, sans-serif" font-size="13"><line x1="70" x2="98" y1="22" y2="22" stroke="#1d2440" stroke-width="3"/><text x="104" y="26" fill="#333">Actual peak</text><line x1="210" x2="238" y1="22" y2="22" stroke="#e07a2f" stroke-width="3" stroke-dasharray="7 5"/><text x="244" y="26" fill="#333">Forecast peak</text><text x="610" y="26" text-anchor="end" fill="#888">Synthetic data</text></g>
+</svg>

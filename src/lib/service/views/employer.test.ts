@@ -21,6 +21,14 @@ describe("employer home", () => {
     expect(home.hoursToFirstMeeting).toBe(72);
   });
 
+  it("measures each task from its own start to the first invitation on it", () => {
+    // ch-a went live 9 Nov 00:00 and its first Meet came 12 Nov 00:00. Nobody was invited on ch-pool yet.
+    expect(home.tasks.map((t) => [t.challenge.id, t.hoursToFirstInvitation])).toEqual([
+      ["ch-pool", null],
+      ["ch-a", 72],
+    ]);
+  });
+
   it("lists its own live tasks newest first", () => {
     expect(home.tasks.map((t) => [t.challenge.id, t.proofsReceived, t.waiting, t.daysLive])).toEqual([
       ["ch-pool", 1, 1, 4],

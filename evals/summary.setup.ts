@@ -42,7 +42,7 @@ function printSummary(file: string): void {
 
 /** Gives this run its own results file in a fresh temporary folder, and prints and removes it at the end. */
 export default function setup(project: TestProject): () => void {
-  const dir = mkdtempSync(join(tmpdir(), "workprint-evals-"));
+  const dir = mkdtempSync(join(tmpdir(), "workproof-evals-"));
   const file = join(dir, "results.jsonl");
   project.provide("evalResultsFile", file);
   return () => {

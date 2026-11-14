@@ -1,26 +1,30 @@
 import type { TourKind, TourStep } from "./steps";
 
-/** Reading pace for a step that moves on by itself: about 3 words a second, plus time to look. */
-const WORDS_PER_SECOND = 3;
-const LOOK_MS = 2500;
-/** No step goes faster than a comfortable glance or slower than the one-minute budget allows. */
-export const MIN_STEP_MS = 8500;
-export const MAX_STEP_MS = 10500;
+/** Time to look at the screen before reading: shorter in the overview, longer in a view's demo. */
+const LOOK_MS: Record<TourKind, number> = { minute: 5000, seeker: 6500, employer: 6500, city: 6500 };
+/** A slow reader's pace on short plain words. */
+const MS_PER_WORD = 250;
+/** No step goes faster than a comfortable glance or slower than the tour's budget allows. */
+export const MIN_STEP_MS = 6000;
+export const MAX_STEP_MS = 10_000;
 
-const words = (text: string) => text.split(/\s+/).filter(Boolean).length;
+/** The words a card shows: the headline and its one sentence. */
+export function cardWords(step: Pick<TourStep, "title" | "body">): string[] {
+  return `${step.title} ${step.body ?? ""}`.split(/\s+/).filter(Boolean);
+}
 
-/** How long a step stays before the walkthrough moves on, from the length of its words. */
-export function stepDuration(step: Pick<TourStep, "title" | "body">): number {
-  const ms = (words(step.body) / WORDS_PER_SECOND) * 1000 + LOOK_MS;
+/** How long a step stays before the tour moves on, from the length of its words. */
+export function stepDuration(step: Pick<TourStep, "title" | "body">, kind: TourKind): number {
+  const ms = LOOK_MS[kind] + cardWords(step).length * MS_PER_WORD;
   return Math.round(Math.min(MAX_STEP_MS, Math.max(MIN_STEP_MS, ms)));
 }
 
 /**
- * Whether a step moves on by itself: only in the one-minute walkthrough, never on its last step
- * (the visitor picks a way on), and never with reduced motion (the visitor presses Next).
+ * Whether a step moves on by itself: never on the end card (the visitor picks a way on), and never
+ * with reduced motion (the visitor presses Next).
  */
-export function autoAdvances(kind: TourKind, index: number, stepCount: number, reduce: boolean): boolean {
-  return kind === "minute" && !reduce && index < stepCount - 1;
+export function autoAdvances(index: number, stepCount: number, reduce: boolean): boolean {
+  return !reduce && index < stepCount - 1;
 }
 
 /** Everything that holds the timer still. Any one of them pauses it. */

@@ -1,60 +1,43 @@
-"use client";
-
-import { useState } from "react";
 import type { AuditEvent } from "@/lib/domain/types";
-import { Panel } from "../ui/card";
-import { cx } from "../ui/cx";
-import { auditActorName } from "./figures";
 import { formatClock } from "./format";
 
-const COLLAPSED = 12;
+const actorLabel: Record<AuditEvent["actor"], string> = { ai: "Software", human: "Person", system: "System" };
 
-const actorLabel: Record<AuditEvent["actor"], string> = { ai: "AI", human: "Person", system: "System" };
+/** The log names roles and reviewers only. A person who sent work shows as "Work seeker", never by name. */
+export function actorName(by: string) {
+  return by === "Talent" ? "Work seeker" : by;
+}
 
-const actorChip: Record<AuditEvent["actor"], string> = {
-  human: "bg-tint text-accent",
-  ai: "text-label shadow-[inset_0_0_0_1px_var(--color-control)]",
-  system: "bg-fill text-label-2",
-};
-
-/** Every step anyone or anything took, newest first: time, who acted, what they did. */
-export function AuditLog({ events, className }: { events: AuditEvent[]; className?: string }) {
-  const [all, setAll] = useState(false);
-  const shown = all ? events : events.slice(0, COLLAPSED);
-
+/** Every step anyone or anything took, newest first, as a plain table: time, who, what. */
+export function AuditLog({ events }: { events: AuditEvent[] }) {
+  if (events.length === 0) return <p className="text-body text-label-2">Nothing has happened yet. Each action shows here.</p>;
   return (
-    <Panel title="Audit log" count={events.length} className={className}>
-      <ol>
-        {shown.map((e) => (
-          <li
-            key={e.id}
-            className="grid grid-cols-[44px_minmax(0,1fr)] items-baseline gap-x-3 gap-y-1 py-2.5 [&+&]:hairline-t @min-[600px]:grid-cols-[44px_64px_128px_minmax(0,1fr)] @min-[600px]:py-2"
-          >
-            <time dateTime={e.at} className="text-footnote tnum text-label-2">
-              {formatClock(e.at)}
-            </time>
-            {/* Narrow: the actor and who on one line. Wide: each in its own column. */}
-            <span className="flex min-w-0 items-baseline gap-2 @min-[600px]:contents">
-              <span className={cx("text-caption inline-flex h-5 w-fit shrink-0 items-center rounded-full px-2 font-medium", actorChip[e.actor])}>{actorLabel[e.actor]}</span>
-              <span className="text-footnote truncate font-medium text-label">{auditActorName(e.by)}</span>
-            </span>
-            {/* Wide: one line per step, the full detail on hover. Narrow: the detail wraps under the action. */}
-            <span title={e.detail} className="col-start-2 min-w-0 @min-[600px]:col-start-4 @min-[600px]:truncate">
-              <span className="text-footnote block text-label @min-[600px]:inline">{e.action}</span>
-              <span className="text-footnote block text-label-2 @min-[600px]:inline @min-[600px]:before:content-['_·_']">{e.detail}</span>
-            </span>
-          </li>
-        ))}
-      </ol>
-      {events.length > COLLAPSED ? (
-        <button
-          type="button"
-          onClick={() => setAll((v) => !v)}
-          className="press text-subhead tnum mt-2 flex h-11 w-full items-center justify-center rounded-full bg-fill font-medium text-label transition-colors duration-150 hover:bg-label/10"
-        >
-          {all ? "Show the newest 12" : `Show all ${events.length}`}
-        </button>
-      ) : null}
-    </Panel>
+    <div className="@container">
+      <table className="w-full border-collapse text-left">
+        <thead className="sr-only @min-[640px]:not-sr-only">
+          <tr className="text-footnote text-label-2">
+            <th scope="col" className="w-20 pb-3 font-normal">Time</th>
+            <th scope="col" className="w-56 pb-3 font-normal">Who</th>
+            <th scope="col" className="pb-3 font-normal">What</th>
+          </tr>
+        </thead>
+        <tbody>
+          {events.map((e) => (
+            <tr key={e.id} className="hairline-t align-baseline max-[639px]:grid max-[639px]:grid-cols-[64px_minmax(0,1fr)] max-[639px]:py-3">
+              <td className="text-subhead tnum py-3 text-label-2 max-[639px]:row-span-2 max-[639px]:py-0">
+                <time dateTime={e.at}>{formatClock(e.at)}</time>
+              </td>
+              <td className="text-subhead py-3 pr-4 text-label max-[639px]:py-0">
+                {actorName(e.by)} <span className="text-label-2">· {actorLabel[e.actor]}</span>
+              </td>
+              <td className="text-subhead py-3 text-label max-[639px]:py-0 max-[639px]:pt-1">
+                {e.action}
+                <span className="block text-label-2">{e.detail}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

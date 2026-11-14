@@ -114,4 +114,26 @@ describe("scripted designer", () => {
     expect(protectedNames(native.need)).toEqual([]);
     expect(native.setAside.join(" ")).toContain("Not used: native language");
   });
+
+  it("reads a job ad's title line as the role only, never as a wish", () => {
+    const need = "Marketing and communications specialist\n- Plan short videos for social media\n- Write titles and captions";
+    const texts = wishOutcomes(need, draftFromNeed(need).coreSkills.map((s) => s.id)).map((w) => w.text);
+    expect(texts).toEqual(["Plan short videos for social media", "Write titles and captions"]);
+  });
+
+  it("sets aside a degree whose field names the role, instead of dropping it", () => {
+    const need = "Marketing specialist\n- A degree in marketing or similar\n- Plan short videos";
+    const draft = draftFromNeed(need);
+    expect(wishOutcomes(need, draft.coreSkills.map((s) => s.id))).toContainEqual({ text: "Degree in marketing or similar", outcome: "set-aside", reason: "The work shows ability directly." });
+  });
+
+  it("does not let a loose word add a skill from another field to a library role", () => {
+    const draft = draftFromNeed("Machine learning engineer\n- Care for how a model is tested, not only how it is trained");
+    expect(draft.coreSkills.map((s) => s.id)).not.toContain("patient-safety");
+    expect(draft.coreSkills[0].id).toBe("ml-evaluation");
+  });
+
+  it("keeps a work language with its alternative", () => {
+    expect(draftFromNeed("AI developer\n- Build small tools\n- Work language Finnish or English").facts).toEqual(["Work language: Finnish or English"]);
+  });
 });

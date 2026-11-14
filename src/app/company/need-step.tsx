@@ -1,69 +1,110 @@
-import { Check } from "lucide-react";
+import { Link2 } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import { CompanyLine } from "@/components/company/company-line";
 import { LockedButton } from "@/components/controls/locked-button";
-import { cx } from "@/components/ui/cx";
 import { TextArea } from "@/components/ui/field";
 import { VoiceButton } from "@/components/voice";
 import type { Company } from "@/lib/domain/types";
 import { LIMITS } from "@/lib/http/limits";
+import { SAMPLE_ADS } from "@/lib/seed/ads";
 
-/**
- * Needs written the way companies write them, for three degree-level roles. Each one is a wish
- * list with things that describe a person, so the trim on the next screen has work to do.
- */
-const examples = [
-  {
-    role: "Care team coordinator",
-    sample: "Plans the day's home visits when nurses are off sick",
-    need: "Care team coordinator for our home-care visits: plans the day when nurses are off sick, calm with families, clear handover notes for the evening shift, native Finnish speaker, under 35, 5 years of experience",
-  },
-  {
-    role: "Backend developer",
-    sample: "Builds and secures our payments API",
-    need: "Backend developer for our payments API: API design, error handling, security, testing, 8 years of experience, young, native Finnish speaker, top university degree",
-  },
-  {
-    role: "Data analyst",
-    sample: "Explains a forecast miss to the operations team",
-    need: "Data analyst for our energy forecasts: explains a forecast miss to the operations team, cleans meter data, SQL, Python, native Finnish speaker, top university, under 30",
-  },
-];
-
-/** True once the need is long enough for the designer to work from. */
+/** True once the sentence is long enough for the designer to work from. */
 export function needReady(need: string): boolean {
   return need.trim().length >= 10;
 }
 
-export const NEED_RULE = "Write at least a few words about the work.";
-export const AI_LINE = "AI drafts the task. You approve it. Nothing goes live before that.";
+/** True for something that looks like a web link. The server checks the rest. */
+export function linkReady(url: string): boolean {
+  return /^https?:\/\/\S+\.\S+/i.test(url.trim()) || /^\/ads\/[\w-]+$/.test(url.trim());
+}
+
+export const AI_LINE = "AI drafts the challenge. You approve it. Nothing goes live before that.";
 
 interface Props {
+  adUrl: string;
+  onAdUrl: (url: string) => void;
   need: string;
   onNeed: (need: string) => void;
   companies: Company[] | null;
   companyId: string;
   onCompany: (id: string) => void;
-  busy: boolean;
+  busy: "ad" | "need" | null;
   errorLine: ReactNode;
-  onSubmit: () => void;
+  onFromAd: (url?: string) => void;
+  onFromNeed: () => void;
 }
 
-/** Step 1: the need in the company's own words, typed, spoken or started from an example. */
-export function NeedStep({ need, onNeed, companies, companyId, onCompany, busy, errorLine, onSubmit }: Props) {
-  const ruleId = useId();
-  const ready = needReady(need);
+/** Step 1: the job ad link first, the zero-effort path; one sentence, typed or said, second. */
+export function NeedStep({ adUrl, onAdUrl, need, onNeed, companies, companyId, onCompany, busy, errorLine, onFromAd, onFromNeed }: Props) {
+  const adRule = useId();
+  const needRule = useId();
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+
   return (
     <>
       <CompanyLine companies={companies} value={companyId} onChange={onCompany} label="Posting as" className="-mt-4 min-[900px]:-mt-6" />
 
-      <div className="mt-8">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <span aria-hidden className="text-section text-label">
-            Your need
-          </span>
+      <section data-tour="job-ad" aria-labelledby="ad-title" className="mt-8 rounded-card bg-surface p-5 min-[900px]:p-7">
+        <h2 id="ad-title" className="text-title-3 font-semibold text-label">
+          Paste your job ad link
+        </h2>
+        <form
+          className="mt-4 flex flex-col gap-3 min-[900px]:flex-row"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (linkReady(adUrl)) onFromAd();
+          }}
+        >
+          <label className="relative flex h-14 min-w-0 flex-1 items-center rounded-full bg-raised shadow-[inset_0_0_0_1px_var(--color-separator)] focus-within:shadow-[inset_0_0_0_1.5px_var(--color-label)]">
+            <Link2 aria-hidden className="pointer-events-none absolute left-5 size-5 text-label-2" strokeWidth={1.75} />
+            <span className="sr-only">Job ad link</span>
+            <input
+              type="url"
+              inputMode="url"
+              value={adUrl}
+              onChange={(e) => onAdUrl(e.target.value)}
+              placeholder="https://"
+              aria-describedby={adRule}
+              className="h-full w-full rounded-full bg-transparent pr-5 pl-13 text-[18px] text-label outline-none placeholder:text-label-3"
+            />
+          </label>
+          <LockedButton locked={!linkReady(adUrl)} busy={busy === "ad"} reasonId={adRule} onClick={() => onFromAd()} className="h-14 min-[900px]:px-8">
+            {busy === "ad" ? "Reading the ad" : "Make my challenge"}
+          </LockedButton>
+        </form>
+        <p id={adRule} className="sr-only">
+          {linkReady(adUrl) ? AI_LINE : "Paste a link to your job ad."}
+        </p>
+        <p className="text-subhead mt-4 text-pretty text-label-2">
+          Try a sample ad:{" "}
+          {/* The company's own ad first; another company's ad posts as that company, so the draft and the company agree. */}
+          {[...SAMPLE_ADS].sort((a, b) => Number(b.companyId === companyId) - Number(a.companyId === companyId)).map((ad, i) => (
+            <span key={ad.slug} className="whitespace-nowrap">
+              {i > 0 ? <span aria-hidden> · </span> : null}
+              <button
+                type="button"
+                onClick={() => {
+                  const url = `${origin}/ads/${ad.slug}`;
+                  if (ad.companyId !== companyId && companies?.some((c) => c.id === ad.companyId)) onCompany(ad.companyId);
+                  onAdUrl(url);
+                  onFromAd(url);
+                }}
+                className="-mx-0.5 rounded-md px-0.5 py-2 font-medium text-label underline decoration-control underline-offset-4 transition-colors duration-150 hover:decoration-label-2"
+              >
+                {ad.title}
+              </button>
+            </span>
+          ))}
+        </p>
+      </section>
+
+      <section aria-labelledby="need-title" className="mt-10">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h2 id="need-title" className="text-title-3 font-semibold text-label">
+            Or say it in one sentence
+          </h2>
           <VoiceButton
-            label="Say it instead"
+            label="Say it"
             title="Say what you need"
             prompt="What do you need this person to do in their first month?"
             maxLength={LIMITS.need}
@@ -71,68 +112,28 @@ export function NeedStep({ need, onNeed, companies, companyId, onCompany, busy, 
             className="-my-1 -mr-1"
           />
         </div>
-        <div className="[&_textarea]:min-h-[164px] [&_textarea]:px-5 [&_textarea]:py-4 [&_textarea]:text-[18px] [&_textarea]:leading-[28px]">
+        <div className="[&_textarea]:px-5 [&_textarea]:py-4 [&_textarea]:text-[18px] [&_textarea]:leading-[28px]">
           <TextArea
-            label="Your need"
+            label="Your need in one sentence"
             hideLabel
             value={need}
             onChange={onNeed}
-            placeholder="For example: someone to plan our home-care visits when nurses are off sick"
-            minRows={5}
+            placeholder="For example: someone to find what we should automate first in our order handling"
+            minRows={3}
             maxLength={LIMITS.need}
           />
         </div>
-      </div>
+        <div className="mt-4 flex flex-col gap-2 min-[900px]:flex-row min-[900px]:items-center min-[900px]:gap-4">
+          <LockedButton tone="neutral" locked={!needReady(need)} busy={busy === "need"} reasonId={needRule} onClick={onFromNeed} className="w-full min-[900px]:w-auto min-[900px]:px-8">
+            {busy === "need" ? "Drafting" : "Make my challenge"}
+          </LockedButton>
+          <p id={needRule} className="text-footnote text-pretty text-label-2">
+            {needReady(need) ? AI_LINE : "Write a few words about the work."}
+          </p>
+        </div>
+      </section>
 
-      <div className="mt-8">
-        <p className="text-section text-label">Or start from an example</p>
-        <ul className="mt-3 flex flex-col gap-2">
-          {examples.map((e) => {
-            const on = need === e.need;
-            return (
-              <li key={e.role}>
-                <button
-                  type="button"
-                  onClick={() => onNeed(e.need)}
-                  aria-pressed={on}
-                  className={cx(
-                    "press flex min-h-16 w-full items-center gap-3 rounded-inner px-4 py-2.5 text-left transition-[background-color,box-shadow] duration-150",
-                    on ? "bg-fill shadow-[inset_0_0_0_1.5px_var(--color-label)]" : "bg-surface hover:bg-fill",
-                  )}
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className="text-subhead block font-semibold text-label">{e.role}</span>
-                    <span className="text-footnote block truncate text-label-2">{e.sample}</span>
-                  </span>
-                  <Check aria-hidden className={cx("size-[18px] shrink-0 text-label transition-opacity duration-150", on ? "opacity-100" : "opacity-0")} strokeWidth={2.2} />
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-
-      <div className="mt-10 max-[899px]:hidden">
-        <DraftAction ready={ready} busy={busy} ruleId={ruleId} errorLine={errorLine} onSubmit={onSubmit} />
-      </div>
+      {errorLine ? <div className="mt-6">{errorLine}</div> : null}
     </>
-  );
-}
-
-/** The AI line right above the primary, and the rule beside the primary while it waits. */
-export function DraftAction({ ready, busy, ruleId, errorLine, onSubmit }: { ready: boolean; busy: boolean; ruleId: string; errorLine: ReactNode; onSubmit: () => void }) {
-  return (
-    <div>
-      {errorLine}
-      <p className="text-[15px] leading-[21px] text-pretty text-label">{AI_LINE}</p>
-      <div className="mt-3 flex flex-col gap-2 min-[900px]:flex-row min-[900px]:items-center min-[900px]:gap-4">
-        <LockedButton locked={!ready} busy={busy} reasonId={ruleId} onClick={onSubmit} className="w-full min-[900px]:w-auto min-[900px]:px-8">
-          {busy ? "Drafting the task" : "Draft the task"}
-        </LockedButton>
-        <p id={ruleId} className={cx("text-footnote text-pretty text-label-2", ready && "sr-only")}>
-          {ready ? "AI drafts the task from your words." : NEED_RULE}
-        </p>
-      </div>
-    </div>
   );
 }

@@ -13,6 +13,6 @@ describe("places line", () => {
   });
 
   it("gives the reason Start is off, without a waiting list", () => {
-    expect(fullReason({ kind: "event", places: 5 })).toBe("This task has all its 5 answers, so every one can be read. Choose another task.");
+    expect(fullReason({ kind: "event", places: 5 })).toBe("This challenge has all its 5 answers, so an employer can read them all. Pick another challenge.");
   });
 });

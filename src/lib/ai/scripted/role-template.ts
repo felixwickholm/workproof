@@ -1,4 +1,4 @@
-import type { ProofKind, TaskFormat } from "@/lib/domain/types";
+import type { ChoiceOption, ProofKind, TaskFormat } from "@/lib/domain/types";
 import type { SkillId } from "@/lib/skills/vocabulary";
 
 /** A flaw planted in the material. Cues let a follow-up question quote the part of an answer about it. */
@@ -16,7 +16,11 @@ export interface TaskTemplate {
   proofKind: ProofKind;
   /** The situation, written like a message from the team. Under 120 words. */
   brief: string;
-  material: { kind: "code" | "text"; title: string; body: string };
+  /** `image`: a drawing of the material under /demo, such as a chart, for tasks where the picture is the material. */
+  material: { kind: "code" | "text"; title: string; body: string; image?: string };
+  /** A "choose" task only: the two options the person picks between. */
+  options?: [ChoiceOption, ChoiceOption];
+  /** One sentence: what the person hands in. */
   deliverable: string;
   flaws: PlantedFlaw[];
 }
@@ -44,8 +48,8 @@ export interface RoleTemplate {
   lookFor?: Partial<Record<SkillId, string>>;
   /** Constraints used in follow-up questions: "If <constraint>, what would you change?" */
   constraints: string[];
-  /** 20-minute event challenge. Material: 12 to 25 lines with 2 or 3 planted flaws. */
-  challenge: TaskTemplate;
+  /** The event challenge, 5 to 15 minutes. Material: at most 25 lines with 1 to 3 planted flaws. */
+  challenge: TaskTemplate & { minutes: number };
   /** 2-minute taster. Material: at most 10 short lines, one sharp question as the deliverable. */
   taster: TaskTemplate;
 }

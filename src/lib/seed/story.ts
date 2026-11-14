@@ -1,6 +1,5 @@
 import type { StoryStage } from "@/lib/domain/types";
-import type { SecondLookSeed } from "./second-look";
-import type { SeedProof } from "./types";
+import type { SeedDecision, SeedProof } from "./types";
 
 /** The story stages in order. Each stage is the previous one plus a few changes. */
 export const STORY_STAGES: readonly StoryStage[] = ["before", "sent", "invited", "met"];
@@ -9,114 +8,111 @@ export function stageReached(stage: StoryStage, at: StoryStage): boolean {
   return STORY_STAGES.indexOf(stage) >= STORY_STAGES.indexOf(at);
 }
 
-export const STORY_PROOF_ID = "proof_story_kaari_8";
+/** The story proof. Its id gives the label "Proof K7", which the tour and the landing page use. */
+export const STORY_PROOF_ID = "proof_story_halla_82";
+export const STORY_CHALLENGE_ID = "ch-halla-automate";
+export const STORY_COMPANY_ID = "co-halla";
+/** The finance and AI lead at Halla Supply who scores the story proof and invites Olena. */
+export const STORY_REVIEWER = "Katja Nurmi";
 
-/** Olena's earlier plan, answered "not now" by its own employer, which reaches Otso Health through Second look. */
-export const OLENA_EARLIER_PLAN_ID = "proof_story_kirkas";
+/** Olena's earlier feature-list cut, answered "not now" with points and a reason. */
+export const OLENA_EARLIER_ID = "proof_story_product";
 
 /**
- * Olena's two earlier proofs. The laboratory night plan got a "not now" with a reason; the result
- * letter has been read and waits for an answer.
+ * Olena Kovalenko is an AI developer with two years of freelance automation work. Her CV names no big
+ * employer and no famous school, and 40 applications got no interview. Her earlier proofs: a feature-list cut
+ * that got "not now" with points and a reason, and a chart reading that waits for an answer.
  */
 export const OLENA_EARLIER: SeedProof[] = [
   {
-    id: OLENA_EARLIER_PLAN_ID,
+    id: OLENA_EARLIER_ID,
     person: "olena",
-    challenge: "kirkas-runs",
-    hoursAgo: 140,
+    challenge: "pooled-product",
+    hoursAgo: 88,
     shareWithSimilar: true,
     answer: [
-      "Tonight, A1 and H1 only, 22:00-06:00.",
-      "A1: emergency samples first, every time one arrives. Troponin and potassium change treatment within the hour. The occupational health batch fills the gaps, the rest on Thursday morning. It has no deadline before Friday.",
-      "INR: to the partner lab by courier at 23:00, 01:30 and 04:00. After 4 hours the result cannot be used, and a patient on a new warfarin dose needs it.",
-      "Ward samples at 05:00: blood counts on H1, chemistry on A1 after the emergency queue.",
-      "22:10 call the emergency department and the doctor on call: which results are slower tonight, and until when.",
-      "I was the doctor waiting for these results for 11 years, so I know which ones cannot be late. I clean offices at night now.",
+      "Ships: 1 the double robot fix (4 days), 9 tickets say it confuses people. 2 export to Excel (3 days), all three pilots asked. 3 offline mode (5 days), one pilot needs it from 1 March.",
+      "That is 12 days, so 4 days stay as a buffer for testing.",
+      "Waits: dark mode and the animation, nobody outside the team asked. The push alert waits, 6 days is too big for this release. The pause button waits for the next one.",
     ].join("\n"),
+    thinkAloud: {
+      transcript:
+        "Sixteen days, list says twenty-seven. Okay. The fix goes first, nine tickets, that's real users. Export, all three pilots, easy yes. Then offline mode, five days, one customer but they have a date. That's twelve. Dark mode, no. Animation, no. Push alert is six days, too big. The pause button... two days, hmm, I'll keep it for later, I want the buffer for testing. Yes, leave four days.",
+      seconds: 410,
+    },
     explainAnswers: [
-      "Emergency first, because a potassium of 6.5 that waits two hours can stop a heart.",
-      "Then the batch stops at midnight and she stays with A1 and the emergency samples. The INR boxes are packed before midnight, so she only hands them to the courier.",
+      "The fix first, because people who see a robot twice stop trusting the screen.",
+      "Then offline mode moves out and the pause button comes in, because it is only two days and two pilots asked.",
     ],
     decision: {
-      companyId: "co-kirkas",
+      companyId: "co-tuulos",
       kind: "pass",
+      points: [4, 3, 4, 2],
       feedback:
-        "Your plan runs the emergency samples first and sends the INR samples to the partner lab inside four hours, which is the call we needed. This month the planner also runs the night alone on our analyser platform, and that needs a certification we cannot arrange before December, so it is not now. Please keep writing plans with times like this, the night team reads them on their phones.",
+        "You kept the fix and the export and gave one clear line for each. You left out the pause button that two pilot warehouses asked for, and you did not say how we would know the cut worked. This role talks with our warehouse customers every week, so it is not now.",
       hoursToReply: 6,
     },
   },
   {
-    id: "proof_story_otso",
+    id: "proof_story_chart",
     person: "olena",
-    challenge: "otso-letter",
-    hoursAgo: 30,
+    challenge: "saarnivo-chart",
+    hoursAgo: 28,
     shareWithSimilar: true,
     answer: [
-      "Hello,",
-      "Your results from the health check on 3 November are ready.",
-      "Please do this: book a new blood test in 3 months, and a time with the nurse. Your LDL cholesterol is 4.9. It should be under 3.0. High LDL slowly harms the blood vessels, and it can be lowered.",
-      "Your fasting blood sugar is 6.4, a little over the normal 6.0. This is not diabetes. Less sugar, less white bread and a daily walk help.",
-      "Blood count and thyroid are normal.",
-      "Call 09 000 1234 to book, Monday to Friday 8 to 15.",
+      "The forecast is about 10% too low at the peak on the two coldest days: Wednesday 466 MW against 511, Thursday 478 against 529.",
+      "Those are the hours when you buy reserve power, so the 2.1% average hides the most expensive misses.",
+      "I would not call it ready for winter. First check how many days under -15 °C the model learned from.",
     ].join("\n"),
+    thinkAloud: {
+      transcript:
+        "Two lines, almost on top of each other. Fine. But look at Wednesday, and Thursday. That's the cold, minus seventeen, minus nineteen. Forty-five megawatts short, fifty-one. So the average is nice but the peaks on cold days are off by ten percent. And that's exactly when they buy reserve. So the note is wrong, it's not ready for winter.",
+      seconds: 300,
+    },
     explainAnswers: [
-      "The cholesterol goes first because it is the only result that asks the patient to do something.",
-      "If the doctor wants the reference ranges, I keep them in brackets after each number.",
+      "The cold peaks, because reserve power is bought for exactly those hours.",
+      "Then I would add the temperature under the chart, so the team sees the misses line up with the cold.",
     ],
   },
 ];
 
-/** The story proof: Olena's plan for Kaari Home Care. Seven details in it identify her. */
+/** The story proof: Olena's answer for Halla Supply. The details that identify her are hidden before anyone reads it. */
 export const OLENA_STORY: SeedProof = {
   id: STORY_PROOF_ID,
   person: "olena",
-  challenge: "kaari-visits",
+  challenge: "halla-automate",
   hoursAgo: 0.92,
   shareWithSimilar: true,
   answer: [
-    "Keep in the morning:",
-    "- A 08:00, insulin. It cannot move.",
-    "- C 08:30. The new blood thinner dose after yesterday's hospital stay makes this visit urgent. The AI draft moves it to the afternoon, and I would not. Check the dispenser against the hospital list and look for bruises, nose bleeding or dark urine.",
-    "- D 09:00, memory disorder and alone. Without the visit there is no breakfast and no medicine.",
-    "- F, G and H as booked. G only if the daughter cannot help F.",
-    "",
-    "First call at 7:00: the daughter of client F. She often visits on Wednesdays. If she can come in the morning, she gives the eye drops at breakfast and we win one slot.",
-    "",
-    "Move: B shower to Thursday, E shopping to the afternoon, I walk to Friday. Each of them gets a call before 8:00, so nobody waits at the door.",
-    "",
-    "I was a doctor of internal medicine in Kyiv for 11 years, after Kyiv Medical Institute No. 2. I came to Finland in 2023. Now I work at Yöpuhdas Oy, cleaning offices at night in Espoo. My Ukrainian licence is still in process here. Planning a ward morning with too few people was my daily work.",
-    "",
+    "Automate the invoices first.",
+    "900 a month at two minutes each is about 30 hours of typing, and about 18 have a typo. The rule is the same every time: one delivery note, one invoice.",
+    "Not the support chatbot first. Its mistakes go straight to customers, and it needs clean order data anyway.",
+    "Week 1: read 200 old delivery notes with a text reader and match them to the order system. Week 2: the tool drafts the invoices, and a person approves each one.",
+    "Risk: a wrong amount or the wrong customer. For the first month a person approves every invoice, and we compare the totals each week.",
+    "Last spring I built the same flow for Kotiranta Oy. I live in Matinkylä and studied at Metropolia.",
     "Olena Kovalenko",
   ].join("\n"),
+  thinkAloud: {
+    transcript:
+      "Okay. Three things to choose from. Support emails, four hundred a week, that's the biggest number, so a chatbot, right? That's what everyone wants. Hmm, no, wait. If the bot gives a wrong delivery date, the customer sees it right away. Let me count the invoices. Nine hundred a month, two minutes each, that's thirty hours. One in fifty has a typo, so eighteen wrong invoices a month. And it's the same rule every time. A person can check them before they go out. Okay, invoices first. The report is only four hours a week, and the product names don't match, so that's a cleaning job. Later.",
+    seconds: 540,
+  },
   explainAnswers: [
-    "The blood thinner comes first because the first days after a dose change are when bleeding happens.",
-    "Then the third carer takes G and H, and Tomi gets time for the shower visit before noon. The blood thinner visit stays at 08:30.",
+    "The invoices first, because a mistake there can be caught before it leaves the building.",
+    "Then I would start with the notes that are typed, and keep the photos for week 3.",
   ],
   spokenFollowUps: true,
 };
 
-/** Anna Koivisto's decision on the story proof, from stage "invited". */
-export const ANNA_DECISION = {
-  companyId: "co-kaari",
-  kind: "meet" as const,
-  feedback: "You saw the blood thinner risk that our own draft missed. I want to hear how you would brief the evening shift.",
+/** Katja Nurmi's decision on the story proof, from stage "invited". Her work gets 9 of 10. */
+export const STORY_DECISION: Omit<SeedDecision, "hoursToReply"> & { hoursAgo: number } = {
+  companyId: STORY_COMPANY_ID,
+  kind: "meet",
+  points: [5, 5, 4, 4],
+  feedback: "You picked the invoices, not the chatbot, and you said why. Your two-week plan is one we could start on Monday.",
   hoursAgo: 0.5,
 };
 
-/** Hours ago Olena accepted Kaari's invitation, at stage "met". */
-export const OLENA_ACCEPTED_HOURS_AGO = 0.25;
-
-/**
- * At stage "met", Otso Health reads Olena's earlier plan through Second look. Its own employer said
- * not now and she allowed Second look, and Otso's shared task asks for at least two of the same core
- * skills (prioritisation and stakeholder communication). The seed test replays the rule on it.
- */
-export const OTSO_SECOND_LOOK: SecondLookSeed = {
-  proofId: OLENA_EARLIER_PLAN_ID,
-  companyId: "co-otso",
-  kind: "meet",
-  feedback:
-    "We read your night plan through Second look. You put the results that change treatment first, decided what could wait until Friday and called the emergency department before anyone asked, which is how our nurses plan a short-staffed handover. We would like to talk with you about shift handovers at our clinic.",
-  hoursAgo: 0.1,
-  meeting: "invited",
-};
+/** At stage "met": hours ago Olena accepted, and hours ago both sides confirmed the talk and agreed a follow-up. */
+export const OLENA_ACCEPTED_HOURS_AGO = 0.3;
+export const STORY_MET_HOURS_AGO = 0.1;

@@ -2,56 +2,68 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { roleFor } from "@/lib/ai/scripted/compose";
+import { ROLES } from "@/lib/ai/scripted/roles";
 import { toBlindProof } from "@/lib/blind/project";
 import { decisionInputProblem } from "@/lib/domain/decision-rules";
-import type { ProofKind, StoryStage } from "@/lib/domain/types";
+import { totalOf } from "@/lib/domain/scoring";
+import type { Attachment, StoryStage } from "@/lib/domain/types";
+import { draftProblems } from "@/lib/guard/check-draft";
 import { collectText, findJudgement } from "@/lib/guard/no-judgement";
 import { protectedNames } from "@/lib/guard/protected";
-import { secondLookMatches } from "@/lib/matching/second-look";
 import { median } from "@/lib/service/reply-totals";
+import { shareMatches } from "@/lib/service/views/city-task";
 import { buildSeed } from ".";
-import { REVIEWERS } from "./companies";
+import { SAMPLE_AD_PATHS } from "./ads";
+import { COMPANIES } from "./companies";
 import { PEOPLE } from "./people";
-import { OLENA_EARLIER_PLAN_ID, OLENA_STORY, STORY_PROOF_ID, STORY_STAGES } from "./story";
+import { OLENA_EARLIER_ID, STORY_CHALLENGE_ID, STORY_COMPANY_ID, STORY_PROOF_ID, STORY_REVIEWER, STORY_STAGES } from "./story";
 
 const NOW = new Date("2026-11-14T12:00:00.000Z");
 const HOUR = 3_600_000;
-const KINDS: ProofKind[] = ["writing", "plan", "photo", "video", "voice", "design", "code"];
 const hoursBefore = (iso: string) => (NOW.getTime() - new Date(iso).getTime()) / HOUR;
+const words = (text: string) => text.trim().split(/\s+/).length;
 const build = (stage: StoryStage) => buildSeed(NOW, stage);
 
 describe("seed world", () => {
   const data = build("invited");
-  const ownerOf = (proofId: string) => {
-    const submission = data.submissions.find((s) => s.id === proofId);
-    return data.challenges.find((c) => c.id === submission?.challengeId)?.companyIds ?? [];
-  };
+  const challengeOf = (proofId: string) => data.challenges.find((c) => c.id === data.submissions.find((s) => s.id === proofId)?.challengeId);
+  const onBehalf = data.challenges.filter((c) => c.onBehalf);
 
-  it("has the employers, tasks, people and decisions the contract describes", () => {
+  it("has the employers, tasks, people and work the contract describes", () => {
     expect(data.companies).toHaveLength(10);
-    expect(data.challenges).toHaveLength(14);
+    expect(data.challenges).toHaveLength(12);
     expect(data.challenges.filter((c) => c.companyIds.length === 2)).toHaveLength(2);
-    expect(data.proofs.length).toBeGreaterThanOrEqual(42);
-    expect(data.proofs.length).toBeLessThanOrEqual(50);
-    expect(data.talents.length).toBeGreaterThanOrEqual(26);
-    expect(data.talents.length).toBeLessThanOrEqual(30);
-    const answered = new Set(data.decisions.map((d) => d.proofId));
-    expect(answered.size).toBeGreaterThanOrEqual(28);
-    expect(answered.size).toBeLessThanOrEqual(34);
-    const meets = data.decisions.filter((d) => d.decision === "meet").length;
-    expect(meets).toBeGreaterThanOrEqual(9);
-    expect(meets).toBeLessThanOrEqual(13);
-    expect(data.meetings.length).toBeGreaterThanOrEqual(8);
-    expect(data.meetings.length).toBeLessThanOrEqual(11);
-    expect(new Set(data.meetings.map((m) => m.status))).toEqual(new Set(["invited", "accepted", "declined", "met"]));
-    expect(data.decisions.filter((d) => !ownerOf(d.proofId).includes(d.companyId))).toHaveLength(3);
+    expect(data.proofs.length).toBeGreaterThanOrEqual(56);
+    expect(data.proofs.length).toBeLessThanOrEqual(64);
+    expect(data.talents.length).toBeGreaterThanOrEqual(32);
+    expect(data.talents.length).toBeLessThanOrEqual(38);
   });
 
-  it("covers every proof kind in tasks and in proofs", () => {
-    expect(new Set(data.challenges.map((c) => c.proofKind))).toEqual(new Set(KINDS));
-    expect(new Set(data.proofs.map((p) => p.proofKind))).toEqual(new Set(KINDS));
-    expect(data.submissions.some((s) => s.spoken)).toBe(true);
-    expect(data.submissions.some((s) => s.explain.some((e) => e.spoken))).toBe(true);
+  it("uses a degree-level library role for every task, in every format, with at most two code tasks", () => {
+    for (const c of data.challenges) {
+      const role = roleFor(c);
+      expect(role.id, c.id).not.toBe("generic");
+      expect(role.level, `${c.id}: ${role.id}`).toBe("degree");
+    }
+    const count = (format: string) => data.challenges.filter((c) => c.format === format).length;
+    expect(count("choose")).toBeGreaterThanOrEqual(2);
+    expect(count("fix")).toBeGreaterThanOrEqual(3);
+    expect(count("read")).toBeGreaterThanOrEqual(3);
+    expect(count("make")).toBeGreaterThanOrEqual(4);
+    expect(data.challenges.filter((c) => c.proofKind === "code").length).toBeLessThanOrEqual(2);
+  });
+
+  it("states every task plainly: a short title, a brief with at most one question, one sentence to hand in, 5 to 15 minutes", () => {
+    for (const c of data.challenges) {
+      expect(words(c.title), c.id).toBeLessThanOrEqual(9);
+      expect(words(c.brief), c.id).toBeLessThan(120);
+      expect(c.brief.split("?").length - 1, c.id).toBeLessThanOrEqual(1);
+      expect(c.deliverable.replace(/\.$/, ""), c.id).not.toMatch(/[.?!]\s/);
+      expect(c.minutes, c.id).toBeGreaterThanOrEqual(5);
+      expect(c.minutes, c.id).toBeLessThanOrEqual(15);
+      expect(draftProblems(c), c.id).toEqual([]);
+      if (c.format === "choose") expect(c.options?.map((o) => o.id), c.id).toEqual(["a", "b"]);
+    }
   });
 
   it("publishes tasks 1 to 9 days before the event, with the bias bait set aside", () => {
@@ -62,50 +74,105 @@ describe("seed world", () => {
     expect(data.challenges.some((c) => c.setAside.some((line) => line.startsWith("Not used:")))).toBe(true);
   });
 
-  it("leads the newest tasks with five different kinds of work, none of them code, and the story task", () => {
+  it("leads the newest tasks with no code task and with the story task", () => {
     const newest = [...data.challenges].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5);
-    const kinds = newest.map((c) => c.proofKind);
-    expect(new Set(kinds).size).toBe(5);
-    expect(kinds).not.toContain("code");
-    expect(newest.map((c) => c.id)).toContain(`ch-${OLENA_STORY.challenge}`);
+    expect(newest.map((c) => c.proofKind)).not.toContain("code");
+    expect(newest.map((c) => c.id)).toContain(STORY_CHALLENGE_ID);
   });
 
-  it("receives every proof after its task was published", () => {
-    for (const stage of STORY_STAGES) {
-      const stageData = build(stage);
-      for (const s of stageData.submissions) {
-        const challenge = stageData.challenges.find((c) => c.id === s.challengeId);
-        expect(new Date(s.submittedAt).getTime()).toBeGreaterThan(new Date(challenge?.createdAt ?? NOW).getTime());
-      }
+  it("gives every proof a spoken think-aloud, plain answers of a fair length, and a choice for every choose task", () => {
+    for (const s of data.submissions) {
+      expect(words(s.answer), s.id).toBeGreaterThanOrEqual(40);
+      expect(words(s.answer), s.id).toBeLessThanOrEqual(140);
+      expect(words(s.thinkAloud?.transcript ?? ""), s.id).toBeGreaterThanOrEqual(50);
+      expect(words(s.thinkAloud?.transcript ?? ""), s.id).toBeLessThanOrEqual(140);
+      expect(s.thinkAloud?.seconds, s.id).toBeGreaterThan(0);
+      expect(s.choice !== undefined, s.id).toBe(challengeOf(s.id)?.format === "choose");
     }
+    const blindTranscripts = data.proofs.map((p) => p.thinkAloud?.transcript ?? "");
+    expect(blindTranscripts.filter((t) => t.includes("[hidden]")).length).toBeGreaterThanOrEqual(6);
+    expect(new Set(data.submissions.map((s) => s.thinkAloud?.transcript)).size).toBe(data.submissions.length);
   });
 
-  it("gives every decision a named reviewer and kind, specific feedback that never scores or ranks", () => {
+  it("never brings up where a person comes from, in work, speech or reasons", () => {
+    const text = [
+      ...data.submissions.flatMap((s) => [s.answer, s.thinkAloud?.transcript ?? "", ...s.explain.map((e) => e.answer)]),
+      ...data.decisions.map((d) => d.feedback),
+    ].join("\n");
+    expect(protectedNames(text).filter((name) => name === "nationality or origin")).toEqual([]);
+  });
+
+  it("scores every decided proof by the company's named reviewer, one point per core skill, with a reason", () => {
+    expect(data.decisions.filter((d) => d.decision === "meet")).toHaveLength(12);
+    expect(data.decisions.filter((d) => d.decision === "pass")).toHaveLength(14);
+    expect(data.decisions.filter((d) => d.decision === "hold")).toHaveLength(8);
     for (const d of data.decisions) {
-      expect(d.reviewer).toBe(REVIEWERS[d.companyId]);
-      expect(decisionInputProblem(d.reviewer, d.feedback)).toBeUndefined();
-      expect(findJudgement(d.feedback)).toEqual([]);
-      expect(protectedNames(d.feedback)).toEqual([]);
+      const challenge = challengeOf(d.proofId);
+      expect(challenge?.companyIds, d.id).toContain(d.companyId);
+      expect(COMPANIES.find((c) => c.id === d.companyId)?.reviewers, d.id).toContain(d.reviewer);
+      expect(d.scores?.map((s) => s.skillId), d.id).toEqual(challenge?.coreSkills.map((s) => s.id));
+      expect(d.total, d.id).toBe(totalOf(d.scores ?? []));
+      expect(decisionInputProblem(d.reviewer, d.feedback), d.id).toBeUndefined();
+      expect(words(d.feedback), d.id).toBeLessThanOrEqual(70);
     }
   });
 
-  it("keeps every review guide free of scores and ranks", () => {
-    for (const c of data.challenges) expect(findJudgement(collectText(c.reviewGuide).join("\n"))).toEqual([]);
+  it("spreads the totals the way people score real work: a wide range, and no flat top", () => {
+    const totals = data.decisions.map((d) => d.total ?? 0);
+    expect(Math.min(...totals)).toBeLessThanOrEqual(5);
+    expect(Math.max(...totals)).toBeGreaterThanOrEqual(9);
+    const tops = data.challenges.map((c) => Math.max(0, ...data.decisions.filter((d) => challengeOf(d.proofId)?.id === c.id).map((d) => d.total ?? 0)));
+    expect(new Set(tops.filter((t) => t > 0)).size).toBeGreaterThan(2);
   });
 
-  it("spreads work over the week before the event, more in the last two days", () => {
+  it("keeps software judgement out of every text the designer wrote", () => {
+    for (const c of data.challenges) {
+      expect(findJudgement(collectText([c.title, c.brief, c.deliverable, c.reviewGuide, c.options ?? []]).join("\n")), c.id).toEqual([]);
+    }
+  });
+
+  it("holds meetings in every state, with follow-ups and two hires recorded after the talk", () => {
+    const status = (s: string) => data.meetings.filter((m) => m.status === s).length;
+    expect(data.meetings).toHaveLength(12);
+    expect([status("invited"), status("declined"), status("accepted"), status("met")]).toEqual([4, 1, 3, 4]);
+    expect(data.meetings.filter((m) => m.followUpAgreed)).toHaveLength(3);
+    expect(data.meetings.filter((m) => m.hired)).toHaveLength(2);
+    for (const m of data.meetings.filter((x) => x.followUpAgreed !== undefined || x.hired)) expect(m.status, m.id).toBe("met");
+  });
+
+  it("has one challenge the city made from a job ad: not opened yet, with about twenty pieces of work waiting", () => {
+    expect(onBehalf).toHaveLength(1);
+    const [task] = onBehalf;
+    expect(task.claimedAt).toBeUndefined();
+    expect(SAMPLE_AD_PATHS).toContain(task.onBehalf?.adUrl);
+    const proofs = data.submissions.filter((s) => s.challengeId === task.id);
+    expect(proofs.length).toBeGreaterThanOrEqual(18);
+    expect(data.decisions.filter((d) => challengeOf(d.proofId)?.id === task.id)).toEqual([]);
+  });
+
+  it("shares work between companies only when the person allowed it, the sender scored it and the skills match", () => {
+    const shares = data.recommendations ?? [];
+    expect(shares).toHaveLength(3);
+    for (const r of shares) {
+      const submission = data.submissions.find((s) => s.id === r.proofId);
+      expect(submission?.shareWithSimilar, r.id).toBe(true);
+      const scored = data.decisions.find((d) => d.proofId === r.proofId && d.companyId === r.fromCompanyId);
+      expect(scored?.scores?.length, r.id).toBeGreaterThan(0);
+      expect(scored && scored.decidedAt < r.at, r.id).toBe(true);
+      expect(shareMatches(data, submission?.challengeId ?? "").map((m) => m.companyId), r.id).toContain(r.toCompanyId);
+      expect(data.decisions.some((d) => d.proofId === r.proofId && d.companyId === r.toCompanyId), r.id).toBe(false);
+    }
+  });
+
+  it("receives every proof after its task was published, over the week before the event, more in the last two days", () => {
+    for (const s of data.submissions) expect(s.submittedAt > (challengeOf(s.id)?.createdAt ?? ""), s.id).toBe(true);
     const days = data.submissions.map((s) => Math.floor(hoursBefore(s.submittedAt) / 24));
     for (let day = 0; day < 7; day++) expect(days).toContain(day);
     expect(days.every((d) => d < 7)).toBe(true);
-    const lastTwo = days.filter((d) => d < 2).length;
-    expect(lastTwo / days.length).toBeGreaterThan(2 / 7);
-    for (const s of data.submissions) {
-      const challenge = data.challenges.find((c) => c.id === s.challengeId);
-      expect(s.submittedAt > (challenge?.createdAt ?? "")).toBe(true);
-    }
+    expect(days.filter((d) => d < 2).length / days.length).toBeGreaterThan(2 / 7);
   });
 
-  it("answers in hours, not weeks, and leaves one quiet employer with feedback owed", () => {
+  it("answers in hours, not weeks, and leaves one quiet employer with work unanswered", () => {
     const replies = data.decisions.map((d) => {
       const s = data.submissions.find((x) => x.id === d.proofId);
       return (new Date(d.decidedAt).getTime() - new Date(s?.submittedAt ?? 0).getTime()) / HOUR;
@@ -115,38 +182,30 @@ describe("seed world", () => {
     expect(median(replies)).toBeGreaterThanOrEqual(2);
     expect(median(replies)).toBeLessThanOrEqual(4);
     const owed = data.submissions.filter(
-      (s) => hoursBefore(s.submittedAt) > 48 && !data.decisions.some((d) => d.proofId === s.id),
+      (s) => !challengeOf(s.id)?.onBehalf && hoursBefore(s.submittedAt) > 48 && !data.decisions.some((d) => d.proofId === s.id),
     );
     expect(owed.length).toBeGreaterThanOrEqual(3);
     expect(owed.length).toBeLessThanOrEqual(5);
+    expect(new Set(owed.map((s) => challengeOf(s.id)?.companyIds[0])).size).toBe(1);
   });
 
-  it("shows pictures of the work from small files in public/demo", () => {
-    const attached = data.submissions.filter((s) => s.attachment);
-    expect(attached.length).toBeGreaterThanOrEqual(8);
-    for (const s of attached) {
-      const challenge = data.challenges.find((c) => c.id === s.challengeId);
-      expect(s.attachment?.kind).toBe(challenge?.proofKind);
-      for (const src of [s.attachment?.src, s.attachment?.poster].filter((x): x is string => Boolean(x))) {
+  it("shows pictures and screen clips of the work from small files in public/demo", () => {
+    const media: Attachment[] = data.submissions.flatMap((s) => [s.attachment, s.thinkAloud?.screen].filter((x): x is Attachment => Boolean(x)));
+    expect(data.submissions.filter((s) => s.thinkAloud?.screen)).toHaveLength(3);
+    for (const item of media) {
+      for (const src of [item.src, item.poster].filter((x): x is string => Boolean(x))) {
         const file = join(process.cwd(), "public", src);
-        expect(existsSync(file)).toBe(true);
-        expect(statSync(file).size).toBeLessThan(250_000);
+        expect(existsSync(file), src).toBe(true);
+        expect(statSync(file).size, src).toBeLessThan(250_000);
       }
     }
   });
 
-  it("every employer task in the demo event uses a degree-level role", () => {
-    for (const c of data.challenges) {
-      const role = roleFor(c);
-      expect(role.id, c.id).not.toBe("generic");
-      expect(role.level, `${c.id}: ${role.id}`).toBe("degree");
-    }
-  });
-
   it("no demo media file is unreferenced", () => {
-    const referenced = new Set(
-      buildSeed(NOW, "met").submissions.flatMap((s) => [s.attachment?.src, s.attachment?.poster].filter((x): x is string => Boolean(x))),
-    );
+    const seed = buildSeed(NOW, "met");
+    const fromWork = seed.submissions.flatMap((s) => [s.attachment, s.thinkAloud?.screen].flatMap((a) => [a?.src, a?.poster]));
+    const fromTasks = ROLES.flatMap((r) => [r.challenge, r.taster].flatMap((t) => [t.material.image, ...(t.options ?? []).map((o) => o.image)]));
+    const referenced = new Set([...fromWork, ...fromTasks].filter((x): x is string => Boolean(x)));
     const files = readdirSync(join(process.cwd(), "public", "demo")).map((name) => `/demo/${name}`);
     expect(files.filter((file) => !referenced.has(file))).toEqual([]);
   });
@@ -169,55 +228,25 @@ describe("meeting slots in the seed", () => {
       unique(held.map((m) => `${time(m.slot)} ${m.companyId}`));
     }
   });
-
-  it("shows one invitation the person declined", () => {
-    expect(build("invited").meetings.filter((m) => m.status === "declined")).toHaveLength(1);
-  });
-});
-
-describe("Second look in the seed", () => {
-  it("makes every decision by an employer that does not own the task one the rules allow when it is made", () => {
-    for (const stage of STORY_STAGES) {
-      const data = build(stage);
-      const others = data.decisions.filter((d) => {
-        const submission = data.submissions.find((s) => s.id === d.proofId);
-        const challenge = data.challenges.find((c) => c.id === submission?.challengeId);
-        return !challenge?.companyIds.includes(d.companyId);
-      });
-      expect(others.length).toBeGreaterThan(0);
-      for (const look of others) {
-        const submission = data.submissions.find((s) => s.id === look.proofId);
-        const challenge = data.challenges.find((c) => c.id === submission?.challengeId);
-        if (!submission || !challenge) throw new Error(look.proofId);
-        const matches = secondLookMatches({
-          submission,
-          challenge,
-          decisions: data.decisions.filter((d) => d.proofId === look.proofId && d.decidedAt < look.decidedAt),
-          challenges: data.challenges,
-          responseWindowHours: data.event.responseWindowHours,
-          now: new Date(look.decidedAt),
-        });
-        expect(matches.map((m) => m.companyId), `${stage}: ${look.companyId} on ${look.proofId}`).toContain(look.companyId);
-      }
-    }
-  });
 });
 
 describe("Olena's story", () => {
-  it("labels the story proof K7 at every stage, as the guided tour calls it", () => {
+  const stages = STORY_STAGES.map((stage) => ({ stage, data: build(stage) }));
+
+  it("labels the story proof K7 at every stage, and no other proof", () => {
     for (const stage of ["sent", "invited", "met"] as const) {
-      const proof = buildSeed(new Date(), stage).proofs.find((p) => p.proofId === STORY_PROOF_ID);
-      expect(proof?.label).toBe("Proof K7");
+      const proofs = buildSeed(new Date(), stage).proofs;
+      expect(proofs.find((p) => p.proofId === STORY_PROOF_ID)?.label).toBe("Proof K7");
+      expect(proofs.filter((p) => p.label === "Proof K7")).toHaveLength(1);
     }
   });
-
-  const stages = STORY_STAGES.map((stage) => ({ stage, data: build(stage) }));
 
   it("builds every stage and fills the demo info", () => {
     for (const { stage, data } of stages) {
       expect(data.demo.stage).toBe(stage);
       expect(data.demo.personaName).toBe("Olena Kovalenko");
       expect(data.talents.find((t) => t.id === data.demo.personaTalentId)?.name).toBe("Olena Kovalenko");
+      expect(data.challenges.find((c) => c.id === STORY_CHALLENGE_ID)?.companyIds).toEqual([STORY_COMPANY_ID]);
     }
   });
 
@@ -232,46 +261,50 @@ describe("Olena's story", () => {
       expect(after.proofs.map((p) => p.label)).toEqual(expect.arrayContaining(before.proofs.map((p) => p.label)));
     }
     const [before, sent, invited, met] = stages.map((s) => s.data);
+    const storyMeeting = (data: typeof met) => data.meetings.find((m) => m.proofId === STORY_PROOF_ID);
     expect(before.submissions.some((s) => s.id === STORY_PROOF_ID)).toBe(false);
     expect(sent.submissions.length - before.submissions.length).toBe(1);
     expect(invited.decisions.length - sent.decisions.length).toBe(1);
-    expect(met.decisions.length - invited.decisions.length).toBe(1);
-    expect(invited.meetings.find((m) => m.proofId === STORY_PROOF_ID)?.status).toBe("invited");
-    expect(met.meetings.find((m) => m.proofId === STORY_PROOF_ID && m.companyId === "co-kaari")?.status).toBe("accepted");
-    expect(met.meetings.find((m) => m.proofId === STORY_PROOF_ID && m.companyId === "co-otso")).toBeUndefined();
-    expect(met.meetings.find((m) => m.proofId === OLENA_EARLIER_PLAN_ID && m.companyId === "co-otso")?.status).toBe("invited");
+    expect(storyMeeting(invited)?.status).toBe("invited");
+    expect(storyMeeting(met)).toMatchObject({ status: "met", followUpAgreed: true, companyId: STORY_COMPANY_ID });
   });
 
-  it("gives Olena two earlier proofs at every stage: one answered, one waiting", () => {
+  it("scores her answer 9 of 10, by the finance and AI lead, with the reason the tour quotes", () => {
+    const decision = stages[2].data.decisions.find((d) => d.proofId === STORY_PROOF_ID);
+    expect(decision).toMatchObject({ reviewer: STORY_REVIEWER, decision: "meet", total: 9 });
+    expect(decision?.feedback).toBe("You picked the invoices, not the chatbot, and you said why. Your two-week plan is one we could start on Monday.");
+  });
+
+  it("gives Olena two earlier proofs at every stage: one answered not now with points, one waiting", () => {
     const { data } = stages[0];
     const hers = data.submissions.filter((s) => s.talentId === data.demo.personaTalentId);
     expect(hers).toHaveLength(2);
-    expect(hers.filter((s) => data.decisions.some((d) => d.proofId === s.id))).toHaveLength(1);
+    const answered = data.decisions.filter((d) => hers.some((s) => s.id === d.proofId));
+    expect(answered).toHaveLength(1);
+    expect(answered[0]).toMatchObject({ proofId: OLENA_EARLIER_ID, decision: "pass" });
+    expect(answered[0].scores?.length).toBeGreaterThan(0);
   });
 
-  it("puts her plan first in Kaari's queue at stage sent", () => {
+  it("puts her answer first in the story task's queue at stage sent", () => {
     const { data } = stages[1];
-    const kaariChallenges = data.challenges.filter((c) => c.companyIds.includes("co-kaari")).map((c) => c.id);
     const waiting = data.proofs
-      .filter((p) => kaariChallenges.includes(p.challengeId) && !data.decisions.some((d) => d.proofId === p.proofId && d.companyId === "co-kaari"))
+      .filter((p) => p.challengeId === STORY_CHALLENGE_ID && !data.decisions.some((d) => d.proofId === p.proofId))
       .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt));
     expect(waiting[0].proofId).toBe(STORY_PROOF_ID);
     expect(waiting).toHaveLength(4);
     expect(hoursBefore(waiting[0].submittedAt)).toBeLessThan(1);
   });
 
-  it("hides exactly the seven planted details and none of her identity reaches the reviewer", () => {
-    const { data } = stages[1];
-    const proof = data.proofs.find((p) => p.proofId === STORY_PROOF_ID);
+  it("hides the four planted details and none of her identity reaches the reviewer", () => {
+    const proof = stages[1].data.proofs.find((p) => p.proofId === STORY_PROOF_ID);
     if (!proof) throw new Error("story proof missing");
     const blind = toBlindProof(proof);
-    expect(proof.hiddenCount).toBe(7);
+    expect(proof.hiddenCount).toBe(4);
     expect(blind).not.toHaveProperty("hiddenCount");
     const shown = collectText(blind).join("\n");
-    for (const planted of ["Olena", "Kovalenko", "Kyiv", "Medical Institute", "Yöpuhdas", "Espoo", "Finland", "Ukrainian", "olena.kovalenko"]) {
-      expect(shown).not.toContain(planted);
-    }
-    expect(shown).toContain("blood thinner");
+    for (const planted of ["Olena", "Kovalenko", "Matinkylä", "Metropolia", "Kotiranta", "olena.kovalenko"]) expect(shown).not.toContain(planted);
+    expect(shown).toContain("invoices");
+    expect(blind.thinkAloud?.transcript).toContain("chatbot");
     expect(blind.explain[0].spoken).toBe(true);
   });
 });

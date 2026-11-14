@@ -24,8 +24,9 @@ export const nurse: RoleTemplate = {
     "the patient's family calls during handover",
   ],
   challenge: {
+    minutes: 15,
     title: "Review an AI-drafted shift handover",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief:
       "Our ward is testing a tool that drafts the handover note from the patient records. The night shift reads it at 21:00. This is a synthetic example from the training ward. Please read it as the nurse who takes over.",
@@ -72,7 +73,7 @@ export const nurse: RoleTemplate = {
   },
   taster: {
     title: "Read one handover line",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "This line is from a synthetic handover note.",
     material: {

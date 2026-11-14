@@ -73,19 +73,3 @@ export function Bar({ share, grown, index = 0, tone = "ink", className }: { shar
     />
   );
 }
-
-/** A column for a per-day chart: grows from the baseline the same way a bar grows from the left. */
-export function Column({ share, grown, index = 0, tone = "ink" }: { share: number; grown: boolean; index?: number; tone?: Tone }) {
-  return (
-    <span
-      aria-hidden
-      className={cx("block w-full origin-bottom rounded-t-[4px] transition-transform duration-500 ease-out motion-reduce:transition-none", tones[tone])}
-      style={{
-        height: `${share * 100}%`,
-        minHeight: 2,
-        transform: grown ? "scaleY(1)" : "scaleY(0)",
-        transitionDelay: `${index * 40}ms`,
-      }}
-    />
-  );
-}

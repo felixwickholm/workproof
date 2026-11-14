@@ -1,56 +1,44 @@
 import { apiJson, assertNoOverflow, BASE_URL, expect, openVisitor, settled, visible, visibleText } from "../harness.mjs";
 import { practiceTask } from "./practice.mjs";
 
-/** Words that score, rank or rate a person. */
-const JUDGING = /\bmatch\b[^.%]{0,12}%|%\s*match|\bscor(?:e|es|ed|ing)\b|\brank(?:s|ed|ing|ings)?\b|\brat(?:ed|ing|ings)\b|top candidates?|★|☆|\bstars?\b/i;
+/** Machine verdicts on people that no screen may show: a match percentage, stars, "top candidates". */
+const VERDICT = /\bmatch\b[^.%]{0,12}%|%\s*match|top candidates?|★|☆|\bstars?\b/i;
+/** Software as the one who scores, ranks or rates. People score the work; software never does. */
+const MACHINE_JUDGES = /\b(?:AI|software|algorithm|model)\b[^.]*\b(?:scor(?:e|es|ed|ing)|rank(?:s|ed|ing)?|rat(?:es|ed|ing))\b/i;
+/** A sentence that says it does not happen. */
+const NEGATED = /\b(?:never|not|no|without)\b/i;
 
 /**
- * The only sentences allowed to use those words: each one says Workprint never does it, or names
- * what other tools do in a side-by-side with what Workprint does instead. Exact text, so a new
- * sentence with a score in it fails until a person has read it.
+ * The only sentences allowed to name software that judges people without a negation: each one names
+ * what other tools do, in a side-by-side with what WorkProof does instead, or the law that applies.
+ * Exact text, so a new sentence like it fails until a person has read it.
  */
-const SAYS_NEVER = new Set([
-  // Landing page.
-  "No names, no photos, no scores.",
-  "No score.",
-  "No rank.",
-  "An algorithm gives a match score",
-  "AI interviews or ranks people",
-  // Task lists and the Hiring home.
-  "The same list for everyone: no profile, no match score.",
-  "No names, no photos of people, no scores.",
-  // City compliance card: the law it follows, and what the AI never does.
-  "Recruitment AI that ranks people is high-risk (Annex III, point 4).",
-  "Scores or rates a person",
-  "Ranks or shortlists people",
-  // For judges.
-  "AI drafts tasks; it never scores or ranks a person.",
-  "AI drafts tasks and follow-up questions; it never scores, ranks or recommends a person.",
-  "AI never scores or ranks people: a guard checks every AI output; identity is removed before review; every decision needs a named reviewer and written feedback; runs with no keys; request limits; Docker build.",
-  "A person decides Meet or Not now with a written reason; a guard blocks scores and ranks in AI output; every decision is in the audit log.",
-  "Scores, ranks, rates or recommends a person.",
-]);
+const SAYS_NEVER = new Set(["An algorithm gives a match score", "AI interviews or ranks people", "Recruitment AI that ranks people is high-risk (Annex III, point 4)."]);
 
-/** Sentences on the screen that use judging words outside the allow-list. */
+/** Sentences on the screen that show a machine verdict, or software judging people, outside the allow-list. */
 function judgingSentences(text) {
   return text
     .split(/\n|\t/)
     .flatMap((line) => line.split(/(?<=[.!?])\s+(?=[A-Z0-9"“])/))
     .map((sentence) => sentence.trim())
-    .filter((sentence) => JUDGING.test(sentence) && !SAYS_NEVER.has(sentence));
+    .filter((sentence) => !SAYS_NEVER.has(sentence) && (VERDICT.test(sentence) || (MACHINE_JUDGES.test(sentence) && !NEGATED.test(sentence))));
 }
 
 /** Every route the other suites reach, with ids from this visitor's own demo event. */
 async function routes(page) {
   const session = await apiJson(page, "/api/demo/session");
   const home = await apiJson(page, "/api/seeker/me/home", session.persona.talentId);
-  const queue = await apiJson(page, "/api/companies/co-kaari/queue");
-  const task = home.tasks.find((t) => t.challenge.companyIds.includes("co-kaari"))?.challenge.id ?? home.tasks[0].challenge.id;
+  // The company that invited the demo person: the story company, read from the data.
+  const companies = await apiJson(page, "/api/companies");
+  const company = companies.find((c) => c.name === home.invitations[0]?.companyName) ?? companies[0];
+  const queue = await apiJson(page, `/api/companies/${company.id}/queue`);
+  const task = home.tasks.find((t) => t.challenge.companyIds.includes(company.id))?.challenge.id ?? home.tasks[0].challenge.id;
   const own = home.passport[0]?.proof.proofId;
   const waiting = queue.proofs[0]?.proofId;
-  expect(task && own && waiting, "the demo event has no task, passport proof or waiting proof to visit");
+  expect(task && own && waiting, "the demo event has no task, own work or waiting work to visit");
   return [
     "/",
+    "/how-it-works",
     "/try",
     "/table",
     "/for-judges",
@@ -58,13 +46,16 @@ async function routes(page) {
     "/challenges",
     `/challenges/${task}`,
     `/challenges/${task}/work`,
-    "/passport",
-    `/passport/${own}`,
+    "/my-work",
+    `/my-work/${own}`,
     "/employer",
+    `/employer/challenges/${task}`,
     "/company",
     "/company/review",
     `/company/review/${waiting}`,
     "/city",
+    `/city/challenges/${task}`,
+    "/city/log",
   ];
 }
 
@@ -103,9 +94,9 @@ async function crawl(browser, device, theme, suiteName) {
 }
 
 /**
- * Suite 8: a cheap scan of every screen the flows reach, in both themes: no score, rank or rating
- * words about people outside the sentences that promise there are none, no console error, no
- * failed request, no sideways scroll on a phone, and the practice task fits a 320px phone.
+ * Suite 8: a cheap scan of every screen the flows reach, in both themes: no match percentage, stars or
+ * software that scores, ranks or rates people (people score the work, software never does), no console
+ * error, no failed request, no sideways scroll on a phone, and the practice task fits a 320px phone.
  */
 export async function runGuardrails(browser, device, suiteName) {
   const results = [...(await crawl(browser, device, "light", suiteName)), ...(await crawl(browser, device, "dark", suiteName))];

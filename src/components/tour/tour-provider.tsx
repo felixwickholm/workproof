@@ -4,48 +4,50 @@ import { animate, AnimatePresence, useMotionValue, useReducedMotion } from "moti
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useReducer, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { DEFAULT_COMPANY_ID } from "@/components/company/company-choice";
 import { TOUR_EVENT } from "@/components/shell/demo-actions";
 import { api } from "@/lib/client/api";
 import type { StoryStage } from "@/lib/domain/types";
-import { fillRoute, resolveRoute } from "./resolve-route";
-import { bringIntoView, runStep, setStage, stagesSettled } from "./run-step";
-import { stickyTop } from "./use-geometry";
 import { autoAdvances, isHeld, noHolds, remainingMs, stepDuration, type Holds } from "./autoplay";
+import { offerDemo } from "./demo-offer";
 import { glideCompare } from "./glide";
-import { EXPLORE_STAGE, minuteSteps, storySteps, switchLine, tours, type TourKind, type TourStep } from "./steps";
+import { resolveRoute } from "./resolve-route";
+import { bringIntoView, runStep, setStage, stagesSettled } from "./run-step";
+import { EXPLORE_STAGE, TOUR_KINDS, tourKindOf, tours, type EndAction, type TourKind, type TourStep } from "./steps";
+import type { Wait } from "./tour-card";
 import { TourLayer } from "./tour-layer";
 import { announcement, closedTour, tourReducer, type TourAction, type TourState } from "./tour-machine";
+import { STORY_COMPANY } from "./story-ids";
+import { stickyTop } from "./use-geometry";
 import { useScrollLock } from "./use-scroll-lock";
+import { findShown, waitUntilStill } from "./wait-for-target";
 import { runWarmCall, usesTalentKey, warmCalls } from "./warm";
 
-const STEP_COUNTS = { minute: minuteSteps.length, story: storySteps.length };
+const STEP_COUNTS = Object.fromEntries(TOUR_KINDS.map((kind) => [kind, tours[kind].steps.length])) as Record<TourKind, number>;
 const reduceTour = (state: TourState, action: TourAction) => tourReducer(state, action, STEP_COUNTS);
 const noop = () => () => {};
 
-/** A first step slower than this shows its card early, with a busy Next, so the tap is never ignored. */
+/** A first step slower than this shows its card early, so the tap is never ignored. */
 const REVEAL_AFTER_MS = 250;
-/** How long the card says whose side comes next, so the switch of screens is understood. */
-export const SWITCH_MS = 600;
-
-const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
+/** A move shorter than this shows no spinner: most moves are, and a flash of one reads as lag. */
+export const SPIN_AFTER_MS = 600;
+/** A move longer than this says so in words, so a slow screen never looks like a stall. */
+export const LOADING_LINE_AFTER_MS = 4000;
 
 /**
- * Asks for the next step's page and the data it reads while the visitor reads this one, so Next
+ * Asks for the next step's page and the data it reads while the visitor reads this one, so the move
  * feels instant. Data is only asked for when the next step keeps the story stage: a new stage gives
  * the persona a new key, and an old key would only be refused.
  */
 async function warmNext(step: TourStep, next: TourStep | undefined, prefetch: (path: string) => void) {
-  if (!next) return;
+  if (!next?.route) return;
   const sameStage = !next.stage || next.stage === step.stage;
   try {
-    // A stage set behind the current step (the landing page) must land first, or the warm-up
-    // would ask for the old persona's proof.
+    // A stage set behind the current step must land first, or the warm-up would ask for the old persona's proof.
     await stagesSettled();
     const session = await api.demoSession();
-    const path = sameStage ? await resolveRoute(next.route) : fillRoute(next.route, null);
+    const path = resolveRoute(next.route);
     if (path) prefetch(path);
-    const ids = { talentId: session.persona.talentId, companyId: next.company ?? DEFAULT_COMPANY_ID };
+    const ids = { talentId: session.persona.talentId, companyId: next.company ?? STORY_COMPANY };
     const calls = warmCalls(next.route).filter((call) => sameStage || !usesTalentKey(call));
     await Promise.allSettled(calls.map((call) => runWarmCall(call, ids)));
   } catch {
@@ -54,9 +56,9 @@ async function warmNext(step: TourStep, next: TourStep | undefined, prefetch: (p
 }
 
 /**
- * Runs the walkthrough "See it in 2 minutes" over the real app. It starts on the `workprint:tour`
- * event or a `?tour=1` link, drives the story stage and the pages itself, and keeps nothing
- * between visits. The page underneath is inert while it runs.
+ * Runs the tours over the real app: the one-minute overview and the demo of each view. A tour starts
+ * on the `workproof:tour` event or a `?tour=` link, drives the story stage and the pages itself, and
+ * keeps nothing between visits. The page underneath is inert while it runs.
  */
 export function TourProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reduceTour, closedTour);
@@ -77,8 +79,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "start", kind });
   }, []);
   useEffect(() => {
-    // The event's detail names the walkthrough; a plain event (the shell's menu) starts the one-minute one.
-    const onStart = (event: Event) => start((event as CustomEvent<unknown>).detail === "story" ? "story" : "minute");
+    const onStart = (event: Event) => start(tourKindOf((event as CustomEvent<unknown>).detail));
     window.addEventListener(TOUR_EVENT, onStart);
     return () => window.removeEventListener(TOUR_EVENT, onStart);
   }, [start]);
@@ -96,21 +97,16 @@ export function TourProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (pending === null) return;
     const controller = new AbortController();
-    const step = steps[pending];
-    const handOver = pending !== index && switchLine(steps[index].mode, step.mode) !== null;
-    void Promise.all([
-      runStep(step, {
-        stage,
-        navigate: (path) => router.push(path),
-        refresh: () => router.refresh(),
-        cardHeight: () => cardHeight.current,
-        // The first step is prepared before the layer shows, so its scroll is never seen.
-        jump: pending === index,
-        reduce,
-        signal: controller.signal,
-      }),
-      handOver ? wait(SWITCH_MS) : null,
-    ]).then(([el]) => {
+    void runStep(steps[pending], {
+      stage,
+      navigate: (path) => router.push(path),
+      refresh: () => router.refresh(),
+      cardHeight: () => cardHeight.current,
+      // The first step is prepared before the layer shows, so its scroll is never seen.
+      jump: pending === index,
+      reduce,
+      signal: controller.signal,
+    }).then((el) => {
       if (controller.signal.aborted) return;
       setTarget(el);
       dispatch({ type: "arrived", run, found: el !== null });
@@ -126,6 +122,18 @@ export function TourProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timer);
   }, [open, revealed]);
 
+  // A move says nothing at first, shows a spinner after a moment and a plain line when it is slow.
+  const [wait, setWait] = useState<{ run: number; wait: Wait }>({ run: 0, wait: "none" });
+  useEffect(() => {
+    if (pending === null) return;
+    const timers = [
+      window.setTimeout(() => setWait({ run, wait: "short" }), SPIN_AFTER_MS),
+      window.setTimeout(() => setWait({ run, wait: "long" }), LOADING_LINE_AFTER_MS),
+    ];
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, [pending, run]);
+  const moveWait: Wait = pending !== null && wait.run === run ? wait.wait : "none";
+
   // While a step is read, its successor's page and data are asked for.
   const settledIndex = state.open && state.pending === null ? state.index : null;
   useEffect(() => {
@@ -133,8 +141,21 @@ export function TourProvider({ children }: { children: ReactNode }) {
     void warmNext(steps[settledIndex], steps[settledIndex + 1], (path) => router.prefetch(path));
   }, [settledIndex, router, steps]);
 
-  // The one-minute walkthrough moves on by itself. Its timer is the progress line: the line fills
-  // over the step's time and Next follows when it is full. Anything that holds it stops the line.
+  // A step's time starts only once its target is on screen and has stopped moving.
+  const [readyRun, setReadyRun] = useState(0);
+  const settledTarget = settledIndex !== null ? target : null;
+  useEffect(() => {
+    if (settledIndex === null) return;
+    const controller = new AbortController();
+    void waitUntilStill(settledTarget, controller.signal).then(() => {
+      if (!controller.signal.aborted) setReadyRun(run);
+    });
+    return () => controller.abort();
+  }, [settledIndex, settledTarget, run]);
+  const ready = settledIndex !== null && readyRun === run;
+
+  // Every tour moves on by itself. Its timer is the progress line: the line fills over the step's
+  // time and Next follows when it is full. Anything that holds it stops the line.
   const progress = useMotionValue(0);
   const [holds, setHolds] = useState<Holds>(noHolds);
   const hold = useCallback((key: keyof Holds, on: boolean) => setHolds((h) => (h[key] === on ? h : { ...h, [key]: on })), []);
@@ -148,41 +169,52 @@ export function TourProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (settledIndex !== null) progress.set(0);
   }, [settledIndex, run, progress]);
-  const auto = state.open && autoAdvances(kind, state.index, steps.length, reduce);
-  const ticking = auto && settledIndex !== null && !isHeld(holds);
+  const auto = state.open && autoAdvances(state.index, steps.length, reduce);
+  const ticking = auto && ready && !isHeld(holds);
   useEffect(() => {
     if (!ticking || settledIndex === null) return;
-    const duration = stepDuration(steps[settledIndex]);
+    const duration = stepDuration(steps[settledIndex], kind);
     const controls = animate(progress, 1, {
       duration: remainingMs(duration, progress.get()) / 1000,
       ease: "linear",
       onComplete: () => dispatch({ type: "next" }),
     });
     return () => controls.stop();
-  }, [ticking, settledIndex, run, steps, progress]);
+  }, [ticking, settledIndex, run, steps, kind, progress]);
 
   // A page that is still loading data can push the target down after it was found. Once the step
   // has settled, a target that left the screen is brought back, smoothly.
-  const settledLit = settledIndex !== null ? target : null;
   useEffect(() => {
-    if (!settledLit) return;
+    if (!settledTarget) return;
     const check = () => {
-      const r = settledLit.getBoundingClientRect();
-      const top = stickyTop();
-      if (r.top < top - 1 || r.top > window.innerHeight - 80) bringIntoView(settledLit, { cardHeight: () => cardHeight.current, reduce, jump: false });
+      const r = settledTarget.getBoundingClientRect();
+      if (r.top < stickyTop() - 1 || r.top > window.innerHeight - 80) bringIntoView(settledTarget, { cardHeight: () => cardHeight.current, reduce, jump: false });
     };
     const timers = [400, 1000, 2000].map((ms) => window.setTimeout(check, ms));
     return () => timers.forEach((t) => window.clearTimeout(t));
-  }, [settledLit, reduce]);
+  }, [settledTarget, reduce]);
+
+  // A page that polls its data can draw the lit element again; the spotlight follows the new one.
+  const settledStep = settledIndex !== null ? steps[settledIndex] : null;
+  useEffect(() => {
+    if (!settledTarget || !settledStep?.target) return;
+    const { target: id, targetText, selector } = settledStep;
+    const timer = window.setInterval(() => {
+      if (settledTarget.isConnected) return;
+      const again = findShown(id, window.location.pathname, targetText?.() || undefined, selector);
+      if (again) setTarget(again);
+    }, 300);
+    return () => window.clearInterval(timer);
+  }, [settledTarget, settledStep]);
 
   // The compare slider glides once from what she wrote to what the company reads.
-  const settledTarget = settledIndex !== null && steps[settledIndex].glide ? target : null;
+  const glideTarget = settledIndex !== null && steps[settledIndex].glide ? target : null;
   useEffect(() => {
-    if (!settledTarget || reduce) return;
+    if (!glideTarget || reduce) return;
     const controller = new AbortController();
-    void glideCompare(settledTarget, controller.signal);
+    void glideCompare(glideTarget, controller.signal);
     return () => controller.abort();
-  }, [settledTarget, reduce]);
+  }, [glideTarget, reduce]);
 
   // The lit element carries a mark, so a check can tell which of several look-alikes is meant.
   useEffect(() => {
@@ -204,11 +236,26 @@ export function TourProvider({ children }: { children: ReactNode }) {
       void setStage(EXPLORE_STAGE, { stage })
         .catch(() => false)
         .then((changed) => {
-          if (then) router.push(then);
+          if (then && then !== window.location.pathname) router.push(then);
           else if (changed) router.refresh();
         });
     },
     [router],
+  );
+  const onEnd = useCallback(
+    (action: EndAction) => {
+      if (action.offer) {
+        let session: Storage | undefined;
+        try {
+          session = window.sessionStorage;
+        } catch {
+          session = undefined;
+        }
+        offerDemo(action.offer, session);
+      }
+      close(action.href);
+    },
+    [close],
   );
 
   const next = useCallback(() => dispatch({ type: "next" }), []);
@@ -229,17 +276,19 @@ export function TourProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, close, next, back]);
 
-  // Focus starts on Next, so Enter and Space walk the story from the first step. The one-minute
-  // walkthrough plays by itself: focus starts on the card, so only a keyboard user on a button holds it.
+  // A tour that plays by itself starts with focus on the card, so only a keyboard user on a button
+  // holds it. With reduced motion it waits for Next, so focus starts there.
   useEffect(() => {
     if (!revealed) return;
-    if (kind === "minute") document.querySelector<HTMLElement>("[data-tour-kind]")?.focus({ preventScroll: true });
-    else nextRef.current?.focus({ preventScroll: true });
-  }, [revealed, kind]);
+    if (reduce) nextRef.current?.focus({ preventScroll: true });
+    else document.querySelector<HTMLElement>("[data-tour-kind]")?.focus({ preventScroll: true });
+  }, [revealed, reduce]);
 
   const shown = state.open ? steps[state.index] : null;
   const coming = state.open && state.pending !== null && state.pending !== state.index ? steps[state.pending] : null;
-  const handOver = shown && coming ? switchLine(shown.mode, coming.mode) : null;
+  // The chip says whose screen comes next as soon as the move starts: the hand-over is a caption, not a wait.
+  const comingMode = coming && shown && coming.mode !== shown.mode && coming.mode !== "start" ? coming.mode : null;
+  const fallback = Boolean(state.open && state.pending === null && shown?.target && !state.spotlight);
   return (
     <>
       <div className="contents" inert={open || undefined}>
@@ -256,29 +305,28 @@ export function TourProvider({ children }: { children: ReactNode }) {
                   key="tour"
                   target={state.spotlight ? target : null}
                   targetId={state.spotlight ? (shown.target ?? "") : ""}
-                  handOver={handOver}
-                  comingMode={coming?.mode ?? null}
                   moveKey={state.index}
                   onCardHeight={onCardHeight}
+                  kind={kind}
                   step={shown}
                   index={state.index}
                   stepCount={steps.length}
-                  kind={kind}
+                  busy={state.pending !== null}
+                  wait={moveWait}
+                  comingMode={comingMode}
+                  fallback={fallback}
+                  reduce={reduce}
+                  nextRef={nextRef}
+                  onNext={next}
+                  onBack={back}
+                  onSkip={() => close()}
+                  onEnd={onEnd}
                   progress={progress}
                   auto={auto}
                   paused={holds.paused}
                   onTogglePause={() => hold("paused", !holds.paused)}
                   onHover={(on) => hold("hover", on)}
                   onFocusHold={(on) => hold("focus", on)}
-                  onStory={() => start("story")}
-                  busy={state.pending !== null}
-                  reduce={reduce}
-                  nextRef={nextRef}
-                  onNext={next}
-                  onBack={back}
-                  onClose={() => close()}
-                  onExplore={() => close("/seeker")}
-                  onTry={() => close("/try")}
                 />
               ) : null}
             </AnimatePresence>,
@@ -292,14 +340,13 @@ export function TourProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/** The walkthrough a `?tour=` link asks for: `1` or `minute` for the one-minute one, `story` for Olena's. */
+/** The tour a `?tour=` link asks for: `1` (the overview), a tour's own name, or the retired `story`. */
 export function kindFromParam(value: string | null): TourKind | null {
-  if (value === "1" || value === "minute") return "minute";
-  if (value === "story") return "story";
-  return null;
+  if (value === null || value === "") return null;
+  return tourKindOf(value);
 }
 
-/** `?tour=1` (or `?tour=story`) on any page opens a walkthrough, so a link or a QR code can start it directly. */
+/** `?tour=1` (or `?tour=seeker`, `employer`, `city`) on any page opens a tour, so a link or a QR code can start it. */
 function StartFromLink({ onStart }: { onStart: (kind: TourKind) => void }) {
   const params = useSearchParams();
   const path = usePathname();

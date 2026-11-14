@@ -31,8 +31,9 @@ export const labOperationsPlanner: RoleTemplate = {
     "only one biomedical scientist is on shift after midnight",
   ],
   challenge: {
+    minutes: 15,
     title: "Two analysers are down tonight. Re-plan the sample runs",
-    format: "plan",
+    format: "make",
     proofKind: "plan",
     brief:
       "You plan the night at a laboratory that serves two hospitals and several health centres. Chemistry analyser A2 and coagulation analyser C1 broke down at 21:30, and the service engineer comes at 06:00. An AI assistant drafted the plan below from the run list. This is a synthetic example. Please re-plan the night.",
@@ -79,7 +80,7 @@ export const labOperationsPlanner: RoleTemplate = {
   },
   taster: {
     title: "Spot the risk in one run note",
-    format: "plan",
+    format: "make",
     proofKind: "plan",
     brief: "A note for tonight's laboratory shift.",
     material: {

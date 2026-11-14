@@ -46,11 +46,14 @@ const NOT_REQUIRED = [
   pattern(`(${SV})\\s{1,5}(?:krävs|behövs)\\s{1,5}inte`),
 ];
 
+/** "Finnish or English": a second language the work may be done in instead. */
+const OR_LANGUAGE = (words: string, or: string) => `(?:\\s{1,5}(?:${or})\\s{1,5}(${words}))?`;
+
 const WORK_LANGUAGE = [
-  pattern(`(?:work(?:ing)?\\s{1,5}language|language\\s{1,5}of\\s{1,5}work)(?:\\s{1,5}is|\\s{0,5}:)?\\s{1,5}(${EN})`),
-  pattern(`works?\\s{1,5}in\\s{1,5}(${EN})`),
-  pattern(`työkiel\\p{L}{0,6}(?:\\s{1,5}on)?\\s{1,5}(${FI})`),
-  pattern(`arbetsspråk\\p{L}{0,6}(?:\\s{1,5}är)?\\s{1,5}(${SV})`),
+  pattern(`(?:work(?:ing)?\\s{1,5}language|language\\s{1,5}of\\s{1,5}work)(?:\\s{1,5}is|\\s{0,5}:)?\\s{1,5}(${EN})${OR_LANGUAGE(EN, "or")}`),
+  pattern(`works?\\s{1,5}in\\s{1,5}(${EN})${OR_LANGUAGE(EN, "or")}`),
+  pattern(`työkiel\\p{L}{0,6}(?:\\s{1,5}on)?\\s{1,5}(${FI})${OR_LANGUAGE(FI, "tai")}`),
+  pattern(`arbetsspråk\\p{L}{0,6}(?:\\s{1,5}är)?\\s{1,5}(${SV})${OR_LANGUAGE(SV, "eller")}`),
 ];
 
 const LEVEL_NEEDED = [
@@ -115,7 +118,8 @@ function languageFacts(text: string): string[] {
   for (const re of WORK_LANGUAGE) {
     for (const m of text.matchAll(re)) {
       const language = languageOf(m[1]);
-      if (language) facts.push(`Work language: ${language}`);
+      const other = m[2] ? languageOf(m[2]) : undefined;
+      if (language) facts.push(`Work language: ${language}${other && other !== language ? ` or ${other}` : ""}`);
     }
   }
   const leveled = new Set<Language>();
@@ -148,7 +152,7 @@ const FIXED_FORM = new RegExp(
   [
     "^(?:Finnish|Swedish|English) (?:not required|needed)$",
     "^(?:Fluent|Good|Basic) (?:Finnish|Swedish|English) needed$",
-    "^Work language: (?:Finnish|Swedish|English)$",
+    "^Work language: (?:Finnish|Swedish|English)(?: or (?:Finnish|Swedish|English))?$",
     "^Driving licence(?: [A-E]{1,2})? needed$",
     ...LICENCES.map(({ fact }) => `^${fact}$`),
   ].join("|"),

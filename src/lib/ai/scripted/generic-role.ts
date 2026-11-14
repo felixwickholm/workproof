@@ -37,8 +37,9 @@ export function genericRole(): RoleTemplate {
       "the first week went to an urgent problem",
     ],
     challenge: {
+      minutes: 15,
       title: "Review an AI-drafted first-month plan",
-      format: "review",
+      format: "fix",
       proofKind: "plan",
       brief: `A new colleague starts with us next month. Their manager asked an AI assistant for a first-month plan and wants to hand it over as it is. We would like someone who knows the work to read it first. Tell us what you would change so the plan is realistic and useful.`,
       material: {
@@ -83,7 +84,7 @@ export function genericRole(): RoleTemplate {
     },
     taster: {
       title: "Spot the problem in a plan",
-      format: "review",
+      format: "fix",
       proofKind: "plan",
       brief: "A colleague asked an AI assistant for next week's plan and wants to send it to the team as it is. Read it first.",
       material: {

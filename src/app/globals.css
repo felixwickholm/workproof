@@ -4,24 +4,38 @@
  * Design tokens. Components use only these. The values here are the light theme (the default);
  * `html[data-theme="dark"]` below swaps them. Every text colour reaches 4.5:1 on ground, surface
  * and raised in its theme.
+ *
+ * The palette is Business Espoo's, measured from espoo.fi: navy #012169 for the primary action, deep
+ * navy #011135 for text, blue #0050bb for links, chips and skill bars, light grey #DFE5EB for surfaces and
+ * separators, and the warm accents (peach, pale peach, yellow, pink) used sparingly. Their red #FF4F57 is
+ * 3.2:1 on white, too light for text, so light-theme error text keeps a deeper red; dark uses #FF4F57.
  */
 @theme {
   --color-*: initial;
   --color-ground: #ffffff;
-  --color-surface: #f6f6f4;
+  /* #DFE5EB at half strength on white, so long pages of panels stay light. */
+  --color-surface: #eff2f5;
   --color-raised: #ffffff;
-  --color-label: #1f201d;
-  --color-label-2: #636361;
-  --color-label-3: #686865;
-  --color-separator: #eaeaea;
+  --color-label: #011135;
+  --color-label-2: #47536b;
+  --color-label-3: #57637b;
+  --color-separator: #dfe5eb;
   /* Borders of inputs and outlined controls: one step stronger than a separator. */
-  --color-control: #d9d9d6;
-  --color-fill: rgba(31, 32, 29, 0.07);
-  /* Deep teal, under 2% of a screen: the primary action and the human "Meet" / "Accept" only. */
-  --color-accent: #1b6e66;
+  --color-control: #c3ccd7;
+  --color-fill: rgba(1, 33, 105, 0.07);
+  /* Business Espoo navy: the primary action and the human "Meet" / "Accept" only. */
+  --color-accent: #012169;
   --color-accent-ink: #ffffff;
   /* A 6% accent wash behind a selected or human-decided block. */
-  --color-tint: rgba(27, 110, 102, 0.06);
+  --color-tint: rgba(1, 33, 105, 0.06);
+  /* Business Espoo blue: links, active filter chips, skill bars. */
+  --color-link: #0050bb;
+  --color-link-ink: #ffffff;
+  /* Warm accents, sparingly: a "Meet" chip, a highlight. Text on them is always label (deep navy). */
+  --color-peach: #ffc386;
+  --color-peach-wash: #fde6db;
+  --color-sun: #ffdc47;
+  --color-pink: #fca5c7;
   --color-positive: #2e7d32;
   --color-negative: #b42318;
   --color-warning: #92400e;
@@ -32,44 +46,48 @@
   --color-warning-ink: #7c3a0c;
   --color-negative-wash: #fdecea;
   --color-negative-ink: #7a1d14;
-  --color-scrim: rgba(17, 17, 15, 0.28);
+  --color-scrim: rgba(1, 17, 53, 0.28);
 
   --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  --text-display: 40px;
-  --text-display--line-height: 44px;
+  /*
+   * The scale: body 17px, nothing under 14px. Headings, greetings and key numbers are much bigger
+   * than the text around them, so the thing people care about is the first thing they see.
+   */
+  --text-display: 48px;
+  --text-display--line-height: 52px;
   --text-display--letter-spacing: -0.025em;
-  --text-large-title: 28px;
-  --text-large-title--line-height: 34px;
+  --text-large-title: 34px;
+  --text-large-title--line-height: 40px;
   --text-large-title--letter-spacing: -0.02em;
-  --text-title: 24px;
-  --text-title--line-height: 30px;
+  --text-title: 28px;
+  --text-title--line-height: 34px;
   --text-title--letter-spacing: -0.02em;
-  --text-title-3: 20px;
-  --text-title-3--line-height: 26px;
+  --text-title-3: 22px;
+  --text-title-3--line-height: 28px;
   --text-title-3--letter-spacing: -0.015em;
-  --text-headline: 16px;
-  --text-headline--line-height: 22px;
-  --text-body: 16px;
-  --text-body--line-height: 24px;
-  --text-subhead: 15px;
-  --text-subhead--line-height: 21px;
-  --text-section: 14px;
-  --text-section--line-height: 20px;
+  --text-headline: 18px;
+  --text-headline--line-height: 24px;
+  --text-body: 17px;
+  --text-body--line-height: 26px;
+  --text-subhead: 16px;
+  --text-subhead--line-height: 23px;
+  --text-section: 20px;
+  --text-section--line-height: 26px;
   --text-section--font-weight: 600;
-  --text-footnote: 13px;
-  --text-footnote--line-height: 18px;
-  --text-small: 13px;
-  --text-small--line-height: 18px;
-  --text-caption: 12px;
-  --text-caption--line-height: 16px;
+  --text-footnote: 15px;
+  --text-footnote--line-height: 21px;
+  --text-small: 15px;
+  --text-small--line-height: 21px;
+  --text-caption: 14px;
+  --text-caption--line-height: 19px;
   /* Kept for older markup; sentence case and no tracking, like every other label. */
-  --text-eyebrow: 12px;
-  --text-eyebrow--line-height: 16px;
-  --text-code: 13px;
-  --text-code--line-height: 20px;
+  --text-eyebrow: 14px;
+  --text-eyebrow--line-height: 19px;
+  --text-code: 15px;
+  --text-code--line-height: 22px;
 
   --radius-card: 22px;
   --radius-inner: 14px;
@@ -87,8 +105,8 @@
   --tour-dim: rgba(17, 17, 15, 0.6);
   --sidebar-width: 240px;
   --phone-bar: 52px;
-  /* The logo's bar sits on an ink tile, so it takes the other theme's teal to stay visible. */
-  --logo-dot: #5cc4b8;
+  /* The logo's bar sits on an ink tile, so it takes the warm peach to stay visible. */
+  --logo-dot: #ffc386;
   /* Espoo blue: the City of Espoo logo in "for City of Espoo" and nowhere else. */
   --partner: #0050bb;
 }
@@ -96,37 +114,44 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --tour-dim: rgba(0, 0, 0, 0.72);
-  --color-ground: #000000;
-  --color-surface: #151516;
-  --color-raised: #1f1f21;
-  --color-label: #f5f5f2;
-  --color-label-2: #a1a19c;
-  --color-label-3: #8f8f8a;
-  --color-separator: #2a2a2d;
-  --color-control: #3a3a3d;
-  --color-fill: rgba(118, 118, 128, 0.2);
+  /* Deep navy grounds; every text colour below reaches 4.5:1 on all three. */
+  --color-ground: #011135;
+  --color-surface: #0a1d4b;
+  --color-raised: #12285e;
+  --color-label: #ffffff;
+  --color-label-2: #b4c0d6;
+  --color-label-3: #a3b0c8;
+  --color-separator: #1d3266;
+  --color-control: #2e4478;
+  --color-fill: rgba(223, 229, 235, 0.12);
   /*
-   * One primary logic in both themes: an accent fill with ink that reaches AA. The accent is also
-   * accent text on dark panels, so a fill dark enough for white text would fail as text; this teal
-   * takes dark ink instead (6.3:1) and reads 6.1:1 as text on raised.
+   * One primary logic in both themes: an accent fill with ink that reaches AA. Navy disappears on navy, so the
+   * dark accent is a light Espoo blue with deep navy ink (9.8:1), and reads 7.4:1 as text on raised.
    */
-  --color-accent: #45ada1;
-  --color-accent-ink: #04201d;
-  --color-tint: rgba(69, 173, 161, 0.1);
+  --color-accent: #9dbcff;
+  --color-accent-ink: #011135;
+  --color-tint: rgba(157, 188, 255, 0.1);
+  --color-link: #8db4ff;
+  --color-link-ink: #011135;
+  --color-peach: #ffc386;
+  /* On navy the pale peach becomes a deep warm wash; label (white) stays readable on it. */
+  --color-peach-wash: #4a2f2a;
+  --color-sun: #ffdc47;
+  --color-pink: #fca5c7;
   --color-positive: #6fcf7a;
-  --color-negative: #f97066;
+  --color-negative: #ff4f57;
   --color-warning: #f5b544;
-  --color-positive-wash: #142619;
+  --color-positive-wash: #10302a;
   --color-positive-ink: #8edb98;
-  --color-warning-wash: #2a1f0e;
+  --color-warning-wash: #2e2410;
   --color-warning-ink: #f5c26b;
-  --color-negative-wash: #2e1513;
-  --color-negative-ink: #fb9a90;
+  --color-negative-wash: #3a1420;
+  --color-negative-ink: #ff9aa0;
   --color-scrim: rgba(0, 0, 0, 0.6);
-  --glass: rgba(10, 10, 11, 0.88);
-  /* On black a shadow alone does not lift a layer, so it gets a hairline edge too. */
-  --shadow-float: 0 0 0 1px #2a2a2d, 0 16px 48px rgba(0, 0, 0, 0.6);
-  --logo-dot: #1b6e66;
+  --glass: rgba(1, 17, 53, 0.88);
+  /* On navy a shadow alone does not lift a layer, so it gets a hairline edge too. */
+  --shadow-float: 0 0 0 1px #1d3266, 0 16px 48px rgba(0, 0, 0, 0.6);
+  --logo-dot: #0050bb;
   --partner: #ffffff;
 }
 
@@ -156,8 +181,8 @@ body {
   background: var(--color-ground);
   color: var(--color-label);
   font-family: var(--font-sans);
-  font-size: 16px;
-  line-height: 24px;
+  font-size: 17px;
+  line-height: 26px;
   /* A pasted URL or a long word wraps instead of pushing the page sideways. */
   overflow-wrap: break-word;
 }
@@ -191,20 +216,20 @@ html[data-theme-switching] *::after {
 /* The greeting that opens each mode home: the one serif on the screen. */
 @utility text-greeting {
   font-family: var(--font-serif);
-  font-size: 30px;
-  line-height: 34px;
+  font-size: 34px;
+  line-height: 38px;
   font-weight: 400;
   letter-spacing: -0.01em;
   @media (width >= 900px) {
-    font-size: 48px;
-    line-height: 52px;
+    font-size: 56px;
+    line-height: 60px;
   }
 }
 
 /* Figures: regular weight, tabular, so a counting number never jitters. */
 @utility text-kpi {
-  font-size: 32px;
-  line-height: 36px;
+  font-size: 44px;
+  line-height: 48px;
   font-weight: 400;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
@@ -332,12 +357,12 @@ html[data-theme-switching] *::after {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  height: 20px;
+  height: 22px;
   padding: 0 6px;
   border-radius: 6px;
   background: var(--color-fill);
   color: var(--color-label-2);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 1;
   vertical-align: 1px;

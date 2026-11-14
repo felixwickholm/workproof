@@ -4,14 +4,20 @@ import type { StoreData } from "@/lib/store";
 import { byArrival } from "../support";
 import { countAutomatedDecisions } from "./automated";
 import { DAY_MS, eventChallenges, eventProofs, eventTotals } from "./event";
+import { impactOf, proofIdsOf, topTotalOf } from "./leaderboard";
 
 const TOP_SKILLS = 8;
 const ARRIVAL_DAYS = 8;
 
 const accepted = (m: Meeting) => m.status === "accepted" || m.status === "met";
 
-/** How far one proof got with any employer: a meeting held, an invitation, an answer, or only sent. */
-const FLOW_ORDER: FlowState[] = ["sent", "answered", "invited", "met"];
+/** Proofs, each counted once, with at least one meeting that passes the test. */
+function proofsWith(meetings: Meeting[], test: (m: Meeting) => boolean): number {
+  return new Set(meetings.filter(test).map((m) => m.proofId)).size;
+}
+
+/** How far one proof got with any employer: a meeting held, an invitation, human scores, an answer, or only sent. */
+const FLOW_ORDER: FlowState[] = ["sent", "answered", "scored", "invited", "met"];
 
 function flowsOf(data: StoreData, proofs: StoreData["proofs"]): CityInsights["flows"] {
   const owners = new Map(data.challenges.map((c) => [c.id, c.companyIds]));
@@ -20,10 +26,28 @@ function flowsOf(data: StoreData, proofs: StoreData["proofs"]): CityInsights["fl
     const raise = (companyId: string, state: FlowState) => {
       if (FLOW_ORDER.indexOf(state) > FLOW_ORDER.indexOf(best.state)) best = { companyId, state };
     };
-    for (const d of data.decisions) if (d.proofId === proof.proofId) raise(d.companyId, "answered");
+    for (const d of data.decisions) if (d.proofId === proof.proofId) raise(d.companyId, d.scores?.length ? "scored" : "answered");
     for (const m of data.meetings) if (m.proofId === proof.proofId) raise(m.companyId, m.status === "met" ? "met" : "invited");
     return { proofLabel: proof.label, ...best };
   });
+}
+
+/** The impact numbers for the event and per task, the tasks with the most proofs first. Proofs, each counted once per step. */
+function impactFor(data: StoreData, proofs: StoreData["proofs"], companyName: Map<string, string>): CityInsights["impact"] {
+  const tasks = eventChallenges(data)
+    .map((c) => {
+      const counts = impactOf(data, proofIdsOf(data, c.id));
+      return {
+        challengeId: c.id,
+        title: c.title,
+        companies: c.companyIds.map((id) => companyName.get(id) ?? "An employer"),
+        ...counts,
+        topTotal: topTotalOf(data, c.id),
+        scoredShare: counts.took > 0 ? Math.round((counts.scored / counts.took) * 100) / 100 : 0,
+      };
+    })
+    .sort((a, b) => b.took - a.took || a.title.localeCompare(b.title));
+  return { event: impactOf(data, new Set(proofs.map((p) => p.proofId))), tasks };
 }
 
 /** Proofs per day for the days up to the event day, so the city sees work arrive over days. */
@@ -38,8 +62,8 @@ function arrivals(data: StoreData, proofs: StoreData["proofs"]): CityInsights["a
 }
 
 /**
- * What the city learns from the event: demand, proof kinds, pooled tasks, the funnel and the
- * fairness record. Built from tasks, proof labels and decisions; no talent id, name or contact.
+ * What the city learns from the event: demand, proof kinds, pooled tasks, the funnel (in proofs), meeting
+ * activity (in meetings) and the fairness record. Built from tasks, proof labels and decisions; no talent id, name or contact.
  */
 export function buildCityInsights(data: StoreData): CityInsights {
   const challenges = eventChallenges(data);
@@ -81,9 +105,15 @@ export function buildCityInsights(data: StoreData): CityInsights {
     funnel: {
       proofs: proofs.length,
       answered: eventTotals(data).proofsAnswered,
+      invited: proofsWith(data.meetings, () => true),
+      accepted: proofsWith(data.meetings, accepted),
+      met: proofsWith(data.meetings, (m) => m.status === "met"),
+    },
+    meetings: {
       invited: data.meetings.length,
       accepted: data.meetings.filter(accepted).length,
       met: data.meetings.filter((m) => m.status === "met").length,
+      declined: data.meetings.filter((m) => m.status === "declined").length,
     },
     fairness: {
       automatedDecisions: countAutomatedDecisions(data),
@@ -98,6 +128,7 @@ export function buildCityInsights(data: StoreData): CityInsights {
       tasks: challenges.length,
       liveThreeDaysBefore: challenges.filter((c) => new Date(c.createdAt).getTime() <= eventDay - 3 * DAY_MS).length,
     },
+    impact: impactFor(data, proofs, companyName),
     flows: flowsOf(data, proofs),
     arrivalsByDay: arrivals(data, proofs),
     companies: data.companies,

@@ -5,7 +5,7 @@ import { VISITOR_KEY_HEADER } from "@/lib/service/table-rules";
 const MAX_KEY_LENGTH = 100;
 
 /**
- * The person's private key from the `x-workprint-key` header. A header, not the path, so the key never
+ * The person's private key from the `x-workproof-key` header. A header, not the path, so the key never
  * lands in an access log, a referrer or the browser history. Errors never repeat the key.
  */
 export function talentKey(request: Request): string {

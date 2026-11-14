@@ -8,13 +8,13 @@ import type { VoicePrivacy } from "./types";
 export function privacyLine(privacy: VoicePrivacy): string {
   switch (privacy) {
     case "on-device":
-      return "Only the text is kept. Your voice stays on this device.";
+      return "Your voice stays on this device. WorkProof stores only the text.";
     case "server-once":
-      return "Your voice is sent once to make the text. Only the text is kept.";
+      return "Your voice is sent once to the speech service to make the text; WorkProof stores only the text.";
     case "browser-service":
-      return "Only the text is kept. Your browser's speech service turns your voice into text.";
+      return "Your browser's speech service turns your voice into text; WorkProof stores only the text.";
     case "typed":
-      return "Only the text is kept.";
+      return "WorkProof stores only the text.";
   }
 }
 

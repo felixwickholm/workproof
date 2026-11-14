@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { companyName } from "@/lib/seed/companies";
+import { STORY_COMPANY_ID, STORY_REVIEWER } from "@/lib/seed/story";
 import { accountFor } from "./identity";
 import { MODES } from "./modes";
 
@@ -6,7 +8,7 @@ const mode = (id: string) => MODES.find((m) => m.id === id)!;
 
 describe("accountFor", () => {
   it("matches the demo account for the default company", () => {
-    expect(accountFor(mode("employer"), { reviewer: "Anna Koivisto", company: "Kaari Home Care" })).toEqual(mode("employer").account);
+    expect(accountFor(mode("employer"), { reviewer: STORY_REVIEWER, company: companyName(STORY_COMPANY_ID) })).toEqual(mode("employer").account);
   });
 
   it("follows the chosen company in Hiring mode", () => {

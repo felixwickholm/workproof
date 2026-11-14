@@ -8,7 +8,8 @@ import { ownChallenges } from "./views/queue";
 /**
  * What the event organiser can do from the city view: draft a reminder to an employer that still
  * owes answers, and export the meeting list for the event's own meeting tool. Pure functions over
- * one event; nothing here sends a message or changes the event.
+ * one event; nothing here sends a message or changes the event. The organiser sees slots and labels,
+ * never a person's name, contact or private key.
  */
 
 /** The event's own rules, read from the data and the task schema, never typed twice. */
@@ -107,7 +108,7 @@ export function eventTime(iso: string): string {
   return `${part("weekday")} ${part("day")} ${part("month")}, ${part("hour")}:${part("minute")}`;
 }
 
-/** The reminder an organiser can copy into their own mail. Plain text, editable, never sent by Workprint. */
+/** The reminder an organiser can copy into their own mail. Plain text, editable, never sent by WorkProof. */
 export function reminderText(reminder: OwedReminder): string {
   const people = reminder.waiting === 1 ? "1 person handed in work" : `${reminder.waiting} people handed in work`;
   const wait = reminder.waiting === 1 ? "waits" : "wait";
@@ -117,17 +118,22 @@ export function reminderText(reminder: OwedReminder): string {
     "",
     `${people} for ${tasksInWords(reminder.tasks)} and ${wait} for a written answer. ${oldest} ${hoursInWords(reminder.oldestHours)}.`,
     "",
-    `Workprint shows the city which answers are still owed. Please answer by ${eventTime(reminder.answerBy)}.`,
+    `WorkProof shows the city which answers are still owed. Please answer by ${eventTime(reminder.answerBy)}.`,
   ].join("\n");
 }
 
-/** One row of the meeting export. The name is set only once the person accepted the meeting. */
+/**
+ * One row of the meeting export: what the organiser needs to book a table, and nothing about the person.
+ * No name, contact or private key at any status, accepted and met included: the name goes to the company only.
+ */
 interface MeetingRow {
   proofLabel: string;
   employer: string;
-  slot: string;
+  /** The proposed day and time, for example "Sat 13:15", or "Time to be agreed". */
+  time: string;
+  /** "Table 2", or empty while the time is to be agreed. */
+  table: string;
   status: string;
-  name: string;
 }
 
 /** Meetings the export lists, in the order a table plan reads them. A declined invitation is not a meeting. */
@@ -137,8 +143,13 @@ const EXPORTED: Partial<Record<MeetingStatus, { order: number; words: string }>>
   invited: { order: 2, words: "Invited, waiting for the person" },
 };
 
-/** The person accepted, so the employer already sees the name and the organiser can book the table. */
-const NAME_SHOWN: ReadonlySet<MeetingStatus> = new Set(["accepted", "met"]);
+const SLOT_PARTS = /^(.*), (Table \d+)$/;
+
+/** "Sat 13:15, Table 2" as its time and table; any other slot text is the time alone. */
+function slotParts(slot: string): { time: string; table: string } {
+  const match = SLOT_PARTS.exec(slot);
+  return match ? { time: match[1], table: match[2] } : { time: slot, table: "" };
+}
 
 export function meetingRows(data: StoreData): MeetingRow[] {
   const rows = data.meetings.flatMap((meeting) => {
@@ -146,19 +157,11 @@ export function meetingRows(data: StoreData): MeetingRow[] {
     if (!status) return [];
     const proof = data.proofs.find((p) => p.proofId === meeting.proofId);
     const company = data.companies.find((c) => c.id === meeting.companyId);
-    const submission = data.submissions.find((s) => s.id === meeting.proofId);
-    const talent = NAME_SHOWN.has(meeting.status) ? data.talents.find((t) => t.id === submission?.talentId) : undefined;
-    const row: MeetingRow = {
-      proofLabel: proof?.label ?? "",
-      employer: company?.name ?? "",
-      slot: meeting.slot,
-      status: status.words,
-      name: talent?.name ?? "",
-    };
-    return [{ row, order: status.order }];
+    const row: MeetingRow = { proofLabel: proof?.label ?? "", employer: company?.name ?? "", ...slotParts(meeting.slot), status: status.words };
+    return [{ row, order: status.order, slot: meeting.slot }];
   });
   return rows
-    .sort((a, b) => a.order - b.order || a.row.employer.localeCompare(b.row.employer) || a.row.slot.localeCompare(b.row.slot))
+    .sort((a, b) => a.order - b.order || a.row.employer.localeCompare(b.row.employer) || a.slot.localeCompare(b.slot))
     .map(({ row }) => row);
 }
 
@@ -171,13 +174,13 @@ export function csvCell(value: string): string {
   return /[",\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
-const MEETINGS_CSV_HEADER = ["Proof", "Employer", "Table and time", "Status", "Name"] as const;
+const MEETINGS_CSV_HEADER = ["Proof", "Employer", "Proposed time", "Table", "Status"] as const;
 
-/** The meeting list as CSV for the event's meeting tool, with a header row and CRLF line ends. */
+/** The meeting list as CSV for the event's meeting tool, with a header row and CRLF line ends. Slots and labels, never names. */
 export function meetingsCsv(data: StoreData): string {
   const lines = [
     MEETINGS_CSV_HEADER.join(","),
-    ...meetingRows(data).map((r) => [r.proofLabel, r.employer, r.slot, r.status, r.name].map(csvCell).join(",")),
+    ...meetingRows(data).map((r) => [r.proofLabel, r.employer, r.time, r.table, r.status].map(csvCell).join(",")),
   ];
   return `${lines.join("\r\n")}\r\n`;
 }

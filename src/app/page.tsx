@@ -3,15 +3,15 @@ import { siteUrl } from "@/app/for-judges/site";
 import { LandingPage } from "@/components/landing/landing-page";
 import { loadLandingData } from "@/components/landing/load";
 
-const title = "Workprint: hiring that sees the work, not the name";
+const title = "WorkProof: hiring that sees the work, not the name";
 const description =
-  "Skip the CV. Do the work. An Espoo company posts a short real task; a person there reads your work without your name and decides who to meet, always with a written reason. Made for the City of Espoo's talent events. Demo data.";
+  "Show your work. Get the interview. You do a short challenge and think aloud. A person at an Espoo company scores the work without your name and writes why. Made for Espoo's talent events. Demo data.";
 
 export const metadata: Metadata = {
   title: { absolute: title },
   description,
   alternates: { canonical: "/" },
-  openGraph: { title, description, type: "website", siteName: "Workprint", url: "/" },
+  openGraph: { title, description, type: "website", siteName: "WorkProof", url: "/" },
   twitter: { card: "summary_large_image", title, description },
 };
 
@@ -20,7 +20,7 @@ function jsonLd(): string {
   const data = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "Workprint",
+    name: "WorkProof",
     description,
     url: siteUrl(),
     applicationCategory: "BusinessApplication",

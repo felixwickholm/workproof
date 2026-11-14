@@ -6,7 +6,7 @@ import { CARD_HEIGHT_GUESS, PHONE_MAX, scrollFor, type Box } from "./placement";
 import { resolveRoute } from "./resolve-route";
 import type { TourStep } from "./steps";
 import { stickyTop, visibleSize } from "./use-geometry";
-import { waitForTarget } from "./wait-for-target";
+import { SOON_TIMEOUT_MS, TARGET_TIMEOUT_MS, waitForTarget, waitUntilStill } from "./wait-for-target";
 
 export interface StepContext {
   /** The stage the sandbox is at, as far as the tour knows. Null before the tour set one. */
@@ -70,14 +70,20 @@ export async function runStep(step: TourStep, ctx: StepContext): Promise<HTMLEle
     const changed = step.stageInBackground ? false : await staging;
     if (ctx.signal.aborted) return null;
     if (step.company) setCompanyChoice(step.company);
-    const path = await resolveRoute(step.route);
+    // A step without a route (the end card) stays on the page it is on.
+    const path = step.route ? resolveRoute(step.route) : window.location.pathname;
     if (ctx.signal.aborted || !path) return null;
     const moved = path !== window.location.pathname;
     if (moved) ctx.navigate(path);
     else if (changed) ctx.refresh();
     if (!step.target) return null;
-    const el = await waitForTarget(step.target, path, ctx.signal, step.targetText, undefined, step.selector);
-    if (el && !ctx.signal.aborted) bringIntoView(el, { ...ctx, jump: ctx.jump || moved });
+    const timeout = step.soon ? SOON_TIMEOUT_MS : TARGET_TIMEOUT_MS;
+    const el = await waitForTarget(step.target, path, ctx.signal, step.targetText?.() || undefined, timeout, step.selector);
+    if (el && !ctx.signal.aborted) {
+      bringIntoView(el, { ...ctx, jump: ctx.jump || moved });
+      // The card moves only once the page has stopped scrolling, so it never lands twice.
+      await waitUntilStill(el, ctx.signal, 0);
+    }
     return el;
   } catch {
     return null;

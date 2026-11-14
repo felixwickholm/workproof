@@ -24,8 +24,9 @@ export const electrician: RoleTemplate = {
     "the tester's battery is flat",
   ],
   challenge: {
+    minutes: 15,
     title: "Show a socket you connected and how you tested it",
-    format: "build",
+    format: "make",
     proofKind: "photo",
     brief:
       "We are renovating a kitchen in a block of flats. The work order below was written by our planning tool from the floor plan. Please show us how you would connect the new double socket by the sink and how you would test it before the client uses it. This is a synthetic example.",
@@ -71,7 +72,7 @@ export const electrician: RoleTemplate = {
   },
   taster: {
     title: "Read one job note",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "This note was left for the next electrician.",
     material: {

@@ -23,7 +23,7 @@ export function createMemoryStore(initial: () => StoreData, file?: string): Proo
         // A file saved before the demo stages existed has no `demo`; it is rebuilt from the seed.
         if (parsed.version === 1 && parsed.demo) return parsed;
       } catch {
-        console.warn(`Workprint: ${file} could not be read; starting from the demo data.`);
+        console.warn(`WorkProof: ${file} could not be read; starting from the demo data.`);
       }
     }
     return initial();
@@ -40,7 +40,7 @@ export function createMemoryStore(initial: () => StoreData, file?: string): Proo
       renameSync(temporary, file);
     } catch (error) {
       persist = false;
-      console.warn(`Workprint: cannot write ${file}; keeping data in memory only. ${error instanceof Error ? error.message : ""}`);
+      console.warn(`WorkProof: cannot write ${file}; keeping data in memory only. ${error instanceof Error ? error.message : ""}`);
     }
   }
 

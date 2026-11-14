@@ -9,6 +9,7 @@ const FACTS: [string, string[]][] = [
   ["work language English", ["Work language: English"]],
   ["working language is Swedish", ["Work language: Swedish"]],
   ["works in Finnish with customers", ["Work language: Finnish"]],
+  ["Work language Finnish or English", ["Work language: Finnish or English"]],
   ["fluent Finnish needed for patient contact", ["Fluent Finnish needed"]],
   ["good English", ["Good English needed"]],
   ["speaks Finnish at C1 level", ["Fluent Finnish needed"]],
@@ -27,6 +28,7 @@ const FACTS: [string, string[]][] = [
   // Finnish and Swedish basics.
   ["suomen kieltä ei vaadita", ["Finnish not required"]],
   ["työkieli englanti", ["Work language: English"]],
+  ["työkieli on suomi tai englanti", ["Work language: Finnish or English"]],
   ["sujuva suomi", ["Fluent Finnish needed"]],
   ["ajokortti B", ["Driving licence B needed"]],
   ["B-ajokortti", ["Driving licence B needed"]],
@@ -35,6 +37,7 @@ const FACTS: [string, string[]][] = [
   ["työturvallisuuskortti", ["Occupational safety card needed"]],
   ["sairaanhoitajan laillistus", ["Nurse licence needed"]],
   ["arbetsspråk engelska", ["Work language: English"]],
+  ["arbetsspråk svenska eller engelska", ["Work language: Swedish or English"]],
   ["finska krävs inte", ["Finnish not required"]],
 ];
 

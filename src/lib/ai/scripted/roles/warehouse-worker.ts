@@ -24,8 +24,9 @@ export const warehouseWorker: RoleTemplate = {
     "the shelf labels cannot be printed until Monday",
   ],
   challenge: {
+    minutes: 15,
     title: "Re-plan a shelf so the busiest items are closest",
-    format: "plan",
+    format: "make",
     proofKind: "plan",
     brief:
       "Pickers walk too far on our shelf row C, and two people reported sore backs last month. A planning tool suggested the layout below. Please re-plan the row before the night shift moves the stock. This is a synthetic example.",
@@ -68,7 +69,7 @@ export const warehouseWorker: RoleTemplate = {
   },
   taster: {
     title: "Check one shelf",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "This is one shelf in the picking area.",
     material: {

@@ -30,8 +30,9 @@ export const foodScientist: RoleTemplate = {
     "the night shift has already shipped one pallet",
   ],
   challenge: {
+    minutes: 15,
     title: "An allergen swab came back positive on line 2. Set up the re-test",
-    format: "build",
+    format: "make",
     proofKind: "photo",
     brief:
       "We make oat drinks and plant-based desserts. Last night line 2 changed over from a milk dessert to a milk-free oat drink. The allergen swab after cleaning came back positive for milk protein. The shift lead's AI assistant drafted the note below, and the line is meant to restart at 10:00. This is a synthetic example.",
@@ -76,7 +77,7 @@ export const foodScientist: RoleTemplate = {
   },
   taster: {
     title: "Read one swab result",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "A note from the morning shift at a food plant.",
     material: {

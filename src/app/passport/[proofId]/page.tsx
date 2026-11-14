@@ -1,13 +1,16 @@
-import type { Metadata } from "next";
-import { Suspense } from "react";
-import { ProofPage, ProofSkeleton } from "./proof-page";
+import { redirect } from "next/navigation";
+import { Suspense, type ReactNode } from "react";
 
-export const metadata: Metadata = { title: "Your proof" };
-
+/** The old address of one piece of work. */
 export default function PassportProofPage({ params }: PageProps<"/passport/[proofId]">) {
   return (
-    <Suspense fallback={<ProofSkeleton />}>
-      <ProofPage params={params} />
+    <Suspense fallback={null}>
+      <ToMyWork params={params} />
     </Suspense>
   );
+}
+
+async function ToMyWork({ params }: { params: Promise<{ proofId: string }> }): Promise<ReactNode> {
+  const { proofId } = await params;
+  redirect(`/my-work/${encodeURIComponent(proofId)}`);
 }

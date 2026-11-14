@@ -4,6 +4,7 @@ import type { StoreData } from "@/lib/store";
 import { employerRecord } from "./city";
 import { DAY_MS, eventChallenges, eventTotals, hoursBetween } from "./event";
 import { buildQueue, ownChallenges } from "./queue";
+import { isScored, topTotalOf } from "./leaderboard";
 import { counted } from "./words";
 
 const PREVIEW = 5;
@@ -41,7 +42,13 @@ export function buildEmployerHome(data: StoreData, companyId: string, now: Date)
   const waiting = queue.proofs.length + queue.secondLook.length;
   const accepted = meetings.filter((m) => m.status === "accepted" || m.status === "met").length;
   const met = meetings.filter((m) => m.status === "met").length;
-  const firstMeet = decisions.filter((d) => d.decision === "meet").sort((a, b) => a.decidedAt.localeCompare(b.decidedAt))[0];
+  const meets = decisions.filter((d) => d.decision === "meet").sort((a, b) => a.decidedAt.localeCompare(b.decidedAt));
+  const taskOf = new Map(data.proofs.map((p) => [p.proofId, p.challengeId]));
+  /** From the task going live to this company's first Meet decision on a proof sent to that task. */
+  const hoursToFirstInvitation = (challengeId: string, createdAt: string) => {
+    const first = meets.find((d) => taskOf.get(d.proofId) === challengeId);
+    return first ? hoursBetween(createdAt, first.decidedAt) : null;
+  };
 
   return {
     company: queue.company,
@@ -61,6 +68,9 @@ export function buildEmployerHome(data: StoreData, companyId: string, now: Date)
         daysLive: Math.max(0, Math.floor((now.getTime() - new Date(challenge.createdAt).getTime()) / DAY_MS)),
         places: placesOf(challenge) ?? 0,
         placesLeft: placesLeft(challenge, received.length) ?? 0,
+        hoursToFirstInvitation: hoursToFirstInvitation(challenge.id, challenge.createdAt),
+        scored: decisions.filter((d) => isScored(d) && taskOf.get(d.proofId) === challenge.id).length,
+        topTotal: topTotalOf(data, challenge.id),
       };
     }),
     readingMinutesOwed: readingMinutes(waiting),
@@ -73,8 +83,11 @@ export function buildEmployerHome(data: StoreData, companyId: string, now: Date)
       { stage: "Accepted", count: accepted },
       { stage: "Met", count: met },
     ],
-    hoursToFirstMeeting: firstMeet && own[0] ? hoursBetween(own[0].createdAt, firstMeet.decidedAt) : null,
+    hoursToFirstMeeting: meets[0] && own[0] ? hoursBetween(own[0].createdAt, meets[0].decidedAt) : null,
     pool: talentPool(data, companyId),
+    unclaimed: own
+      .filter((c) => c.onBehalf && !c.claimedAt)
+      .map((challenge) => ({ challenge, proofs: data.proofs.filter((p) => p.challengeId === challenge.id).length })),
     event: { ...eventTotals(data), responseWindowHours: data.event.responseWindowHours },
   };
 }

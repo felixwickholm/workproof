@@ -27,8 +27,9 @@ export const childcareWorker: RoleTemplate = {
     "the director wants to read it before it goes out",
   ],
   challenge: {
+    minutes: 15,
     title: "Review an AI-drafted message to families",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief:
       "Our daycare group had a forest day today. Two things went wrong. A colleague asked an AI assistant to draft the message that goes to all families of the group tonight. Please read the notes and the draft before it is sent. This is a synthetic example.",
@@ -73,7 +74,7 @@ export const childcareWorker: RoleTemplate = {
   },
   taster: {
     title: "Read one daycare note",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "This note is on the board when the afternoon staff arrive.",
     material: {

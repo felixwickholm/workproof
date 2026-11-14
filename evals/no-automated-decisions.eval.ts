@@ -1,21 +1,26 @@
+import { totalOf } from "@/lib/domain/scoring";
 import { beforeAll, describe, expect, it } from "vitest";
 import { GET as cityRoute } from "@/app/api/city/route";
 import { POST as draftRoute } from "@/app/api/challenges/draft/route";
 import { GET as queueRoute } from "@/app/api/companies/[id]/queue/route";
 import { POST as reviewersRoute } from "@/app/api/companies/[id]/reviewers/route";
-import { POST as decisionsRoute } from "@/app/api/decisions/route";
 import { POST as resetRoute } from "@/app/api/demo/reset/route";
+import { POST as decisionsRoute } from "@/app/api/decisions/route";
+import { GET as relatedRoute } from "@/app/api/proofs/[proofId]/related/route";
 import { POST as followUpsRoute } from "@/app/api/followups/route";
-import { POST as submissionsRoute } from "@/app/api/submissions/route";
+import { POST as decisionShownRoute } from "@/app/api/portfolio/decision/route";
+import { POST as linksRoute } from "@/app/api/portfolio/links/route";
+import { GET as portfolioRoute } from "@/app/api/portfolio/me/route";
+import { GET as sharedRoute } from "@/app/api/portfolio/shared/[token]/route";
 import { DECISION_ACTIONS } from "@/lib/domain/decision-rules";
 import { NAMED_PERSON_NEEDED } from "@/lib/domain/guardrails";
-import type { BlindProof, ChallengeDraft, CityOverview, Company, ReviewQueue } from "@/lib/domain/types";
+import type { BlindProof, ChallengeDraft, CityOverview, Company, Portfolio, RelatedPart, ReviewQueue } from "@/lib/domain/types";
 import { collectText, findJudgement } from "@/lib/guard/no-judgement";
 import { getStore } from "@/lib/store";
 import { omit } from "@/lib/util/object";
 import { NEEDS } from "./fixtures/needs";
 import { SUBMISSIONS } from "./fixtures/submissions";
-import { call, record } from "./helpers";
+import { call, decide, keysDeep, ownKey, record, reviewerScores, submit } from "./helpers";
 
 const EVAL = "3 No automated decisions";
 
@@ -110,7 +115,7 @@ describe("Eval 3: no automated decisions", () => {
       const { json: f } = await call<{ questions: string[] }>(followUpsRoute, { body: { challengeId: "ch-tuulos-ml", answer: fixture.answer } });
       aiTexts.push(...f.questions);
       designerOutputs += 1;
-      const { json } = await call<{ proof: BlindProof }>(submissionsRoute, {
+      const { json } = await submit<{ proof: BlindProof }>({
         body: {
           challengeId: "ch-tuulos-ml",
           talent: { id: `eval3-${i}`, name: fixture.name, contact: fixture.contact },
@@ -173,8 +178,8 @@ describe("Eval 3: no automated decisions", () => {
   it("(d) no decision without a named human and feedback", async () => {
     const proofId = (await call<ReviewQueue>(queueRoute, { params: { id: "co-tuulos" } })).json.proofs[0].proofId;
     const base = { proofId, companyId: "co-tuulos", decision: "pass" };
-    const noName = await call(decisionsRoute, { body: { ...base, reviewer: " ", feedback: "Thank you, this was a clear answer to read." } });
-    const noFeedback = await call(decisionsRoute, { body: { ...base, reviewer: "Anna Koivisto", feedback: "No." } });
+    const noName = await decide({ body: { ...base, reviewer: " ", feedback: "Thank you, this was a clear answer to read." } });
+    const noFeedback = await decide({ body: { ...base, reviewer: "Anna Koivisto", feedback: "No." } });
     const decisions = (await getStore().read()).decisions;
     const allNamed = decisions.every((d) => d.reviewer.trim() && d.feedback.trim().length >= 20);
     const ok = noName.status === 400 && noFeedback.status === 400 && allNamed;
@@ -195,11 +200,11 @@ describe("Eval 3: no automated decisions", () => {
     const company = "co-tuulos";
     const waiting = (await call<ReviewQueue>(queueRoute, { params: { id: company } })).json.proofs;
     const base = { proofId: waiting[0].proofId, companyId: company, decision: "pass", feedback: "Thank you, this was a clear answer to read." };
-    const bot = await call<{ error: string }>(decisionsRoute, { body: { ...base, reviewer: "AI bot" } });
-    const stranger = await call(decisionsRoute, { body: { ...base, reviewer: "Eeva Example" } });
+    const bot = await decide<{ error: string }>({ body: { ...base, reviewer: "AI bot" } });
+    const stranger = await decide({ body: { ...base, reviewer: "Eeva Example" } });
     const botReviewer = await call<{ error: string }>(reviewersRoute, { body: { name: "Review bot" }, params: { id: company } });
     const added = await call<Pick<Company, "reviewers">>(reviewersRoute, { body: { name: "Eeva Example" }, params: { id: company } });
-    const after = await call(decisionsRoute, { body: { ...base, reviewer: "Eeva Example" } });
+    const after = await decide({ body: { ...base, reviewer: "Eeva Example" } });
     const city = (await call<CityOverview>(cityRoute)).json;
     const ok =
       bot.status === 400 && bot.json.error === NAMED_PERSON_NEEDED && stranger.status === 403 && botReviewer.status === 400 &&
@@ -208,6 +213,77 @@ describe("Eval 3: no automated decisions", () => {
       EVAL,
       "(f) decisions name a registered person",
       `refused: HTTP ${bot.status} for "AI bot", HTTP ${stranger.status} for an unregistered name, HTTP ${botReviewer.status} for a bot as reviewer; accepted after the explicit step: HTTP ${after.status}`,
+      ok,
+    );
+    expect(ok).toBe(true);
+  });
+
+  it("(g) scores come only from a named, registered reviewer: a decision without them is refused", async () => {
+    const company = "co-tuulos";
+    const proofId = (await call<ReviewQueue>(queueRoute, { params: { id: company } })).json.proofs[0].proofId;
+    const base = { proofId, companyId: company, decision: "hold", feedback: "Clear split by attempt. Tell us how you pick the threshold." };
+    const none = await call(decisionsRoute, { body: { ...base, reviewer: "Elias Virta" } });
+    const partial = await call(decisionsRoute, { body: { ...base, reviewer: "Elias Virta", scores: (await reviewerScores(proofId)).slice(1) } });
+    const bot = await decide({ body: { ...base, reviewer: "Scoring bot" } });
+    const stored = (await getStore().read()).decisions.filter((d) => d.proofId === proofId).length;
+    const human = await decide<{ decision: { total: number; reviewer: string } }>({ body: { ...base, reviewer: "Elias Virta" } });
+    const ok = none.status === 400 && partial.status === 400 && bot.status >= 400 && stored === 0 && human.status === 200 && human.json.decision.total === 6;
+    record(EVAL, "(g) scores only from a registered person", `refused: HTTP ${none.status} without scores, HTTP ${partial.status} with a skill missing, HTTP ${bot.status} from a software name; accepted: a named reviewer's ${human.json.decision?.total} of 10`, ok);
+    expect(ok).toBe(true);
+  });
+
+  it("(h) related parts mark where a skill shows up, with no number and no judging word", async () => {
+    const texts: string[] = [];
+    const proofs: BlindProof[] = [];
+    for (const { id: company } of (await getStore().read()).companies) {
+      const queue = (await call<ReviewQueue>(queueRoute, { params: { id: company } })).json;
+      for (const proof of [...queue.proofs, ...queue.decided.map((d) => d.proof)].slice(0, 4)) {
+        proofs.push(proof);
+        const request = new Request(`http://localhost/api/proofs/${proof.proofId}/related?companyId=${company}`);
+        const parts = (await (await relatedRoute(request, { params: Promise.resolve({ proofId: proof.proofId }) })).json()) as RelatedPart[];
+        texts.push(...collectText(parts.map((p) => p.quotes)));
+      }
+    }
+    const numbers = texts.filter((t) => /\p{N}/u.test(t));
+    const judging = texts.flatMap(findJudgement);
+    const ok = texts.length > 0 && numbers.length === 0 && judging.length === 0;
+    record(EVAL, "(h) related parts carry no score", `${numbers.length} numbers and ${judging.length} judging phrases in ${texts.length} marked sentences from ${proofs.length} proofs`, ok);
+    expect(ok).toBe(true);
+  });
+
+  it("(i) the portfolio is the person's work in date order with each reviewer's own score: no rank or comparison, and a link carries no identity", async () => {
+    await call(resetRoute, { method: "POST" });
+    const data = await getStore().read();
+    const talentId = data.demo.personaTalentId;
+    const own = (await call<Portfolio>(portfolioRoute, ownKey(talentId))).json;
+    const times = own.cards.map((c) => c.submittedAt);
+    const newestFirst = times.join() === [...times].sort().reverse().join();
+    const rankKeys = keysDeep(own).filter((k) => /^(rank|ranking|rating|match|percent|percentile|place|position)$/i.test(k));
+    const counted = own.skills.every((s) => Number.isInteger(s.tasks) && s.tasks <= own.facts.tasks);
+    const scored = own.cards.flatMap((c) => c.responses).filter((r) => r.total !== undefined);
+    const ownScores = scored.length >= 4 && scored.every((r) => r.scores?.length && r.total === totalOf(r.scores));
+
+    const card = own.cards.find((c) => c.responses.some((r) => r.decision && r.total !== undefined))!;
+    const link = (await call<{ link: string }>(linksRoute, { body: { talentId, cardId: card.id, on: true } })).json.link;
+    const token = link.split("/").pop()!;
+    const hidden = (await call<Portfolio>(sharedRoute, { params: { token } })).json;
+    await call(decisionShownRoute, { body: { talentId, cardId: card.id, shown: true } });
+    const shown = (await call<Portfolio>(sharedRoute, { params: { token } })).json;
+    const person = data.talents.find((t) => t.id === talentId)!;
+    const wire = JSON.stringify(shown);
+    const noIdentity = !wire.includes(talentId) && !wire.includes(person.name) && !wire.includes(person.contact) && !keysDeep(shown).includes("talentId");
+    const byChoice =
+      hidden.cards[0].responses.every((r) => !r.decision && r.total === undefined && !r.scores) &&
+      shown.cards[0].responses.some((r) => r.decision && r.total !== undefined) &&
+      hidden.facts.invitations === 0;
+    await call(linksRoute, { body: { talentId, cardId: card.id, on: false } });
+    const ended = (await call(sharedRoute, { params: { token } })).status;
+
+    const ok = own.cards.length >= 4 && newestFirst && rankKeys.length === 0 && counted && ownScores && noIdentity && byChoice && ended === 404;
+    record(
+      EVAL,
+      "(i) portfolio shows own scores, never a rank",
+      `${own.cards.length} cards ${newestFirst ? "newest first" : "out of date order"}, ${scored.length} reviewer scores shown to the owner, ${rankKeys.length} rank keys, skill bars as task counts; a link shows ${noIdentity ? "no name, contact or key" : "identity"}, the score and decision only when shown, and stops when ended`,
       ok,
     );
     expect(ok).toBe(true);

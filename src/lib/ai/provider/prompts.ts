@@ -1,9 +1,11 @@
+import { redact } from "@/lib/blind/redact";
 import { PROOF_KINDS } from "@/lib/domain/kinds";
 import { SKILLS, SKILL_IDS } from "@/lib/skills/vocabulary";
 
 /**
  * Every prompt the model designers send. Instructions live only in SYSTEM and in the fixed text here.
- * Anything a person or company wrote goes inside a data tag and is never read as an instruction.
+ * Anything a person or company wrote goes inside a data tag and is never read as an instruction,
+ * and passes the blind layer first: this is the one way user text reaches a model.
  */
 
 const DATA_TAGS = ["need", "dream_job", "brief", "answer"] as const;
@@ -14,12 +16,16 @@ const MAX_DATA_CHARS = 6000;
 
 const TAG_PATTERN = new RegExp(`<\\s*/?\\s*(?:${DATA_TAGS.join("|")})\\b[^>]*>`, "gi");
 
-/** User text wrapped in a tag, with every data tag inside it removed so it cannot close its own tag early. */
+/**
+ * User text wrapped in a tag. The blind layer runs first, so names, contacts, places, schools, employers and
+ * ages never reach a model, whichever call sends them. Every data tag inside is removed, so the text cannot
+ * close its own tag early.
+ */
 function asData(tag: DataTag, value: string): string {
-  return `<${tag}>\n${value.slice(0, MAX_DATA_CHARS).replace(TAG_PATTERN, "").trim()}\n</${tag}>`;
+  return `<${tag}>\n${redact(value).text.slice(0, MAX_DATA_CHARS).replace(TAG_PATTERN, "").trim()}\n</${tag}>`;
 }
 
-export const SYSTEM = `You draft short real work tasks for Workprint, a hiring event where people show their work instead of a CV.
+export const SYSTEM = `You draft short real work tasks for WorkProof, a hiring event where people show their work instead of a CV.
 You do two things only: draft a task, and ask follow-up questions about a person's own answer.
 Rules:
 - Never score, rank, rate, grade, praise, criticise or recommend a person or their work. Never describe a person. Never say whether an answer is right, good or complete.
@@ -32,7 +38,7 @@ const SKILL_LIST = SKILL_IDS.map((id) => `${id}: ${SKILLS[id].label}`).join("\n"
 
 const TASK_FIELDS = `Fields:
 - title: a short task name.
-- format: "review", "plan", "write", "build" or "explain".
+- format: "choose", "make", "fix" or "read".
 - proofKind: what the person hands in, one of ${PROOF_KINDS.map((k) => `"${k}"`).join(", ")}.
 - brief: under 90 words, written like a message from the team.
 - material: {"kind": "code" or "text", "title", "body"}: the real material to work on.
@@ -48,7 +54,7 @@ export function draftPrompt(input: { need: string; role?: string; skills: string
   return `A company described the work it needs. Their words are between the <need> tags.
 ${asData("need", input.need)}
 ${input.role ? `Closest role: ${input.role}.\n` : ""}Skills the words point to: ${input.skills.join(", ") || "none found"}.
-Draft a short real work task of about 20 minutes. The material is 12 to 25 lines of real work, for example an AI-written code change, a plan, a query or an email, with 2 or 3 real problems in it. The person answers: what would you change before this ships, and why?
+Draft a short real work task that takes 5 to 15 minutes. The material is 12 to 25 lines of real work, for example an AI-written code change, a plan, a query or an email, with 2 or 3 real problems in it. The person answers: what would you change before this ships, and why?
 Keep 3 to 5 core skills. Put other work wishes in setAside with a short reason. Drop every wish about the person rather than the work.
 ${TASK_FIELDS}`;
 }

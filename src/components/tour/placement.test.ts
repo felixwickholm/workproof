@@ -3,21 +3,22 @@ import { cardWidth, inflate, placeCard, scrollFor, type Box } from "./placement"
 
 const laptop = { width: 1440, height: 900, top: 0, bottom: 0 };
 const phone = { width: 390, height: 844, top: 60, bottom: 0 };
-const card = { width: 480, height: 260 };
+const card = { width: 460, height: 260 };
 
 const overlaps = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 const cardBox = (p: { card: { x: number; y: number } }, size = card): Box => ({ ...p.card, ...size });
 
 describe("cardWidth", () => {
-  it("is 480 on a laptop and the screen minus 32 on a phone", () => {
-    expect(cardWidth(1440)).toBe(480);
-    expect(cardWidth(390)).toBe(358);
+  it("is 460 on a laptop and the whole screen on a phone", () => {
+    expect(cardWidth(1440)).toBe(460);
+    expect(cardWidth(390)).toBe(390);
+    expect(cardWidth(320)).toBe(320);
   });
 });
 
 describe("placeCard", () => {
   it("centres the card when nothing is lit", () => {
-    expect(placeCard(laptop, null, card)).toEqual({ card: { x: 480, y: 320 }, side: "center", spot: null, arrow: null });
+    expect(placeCard(laptop, null, card)).toEqual({ card: { x: 490, y: 320 }, side: "center", spot: null, arrow: null });
   });
 
   it("puts the card beside a narrow target", () => {
@@ -46,17 +47,21 @@ describe("placeCard", () => {
     expect(overlaps(cardBox(placed), placed.spot!)).toBe(false);
   });
 
-  it("docks the card at the bottom of a phone, inside the side margins", () => {
-    const size = { width: 358, height: 300 };
+  it("docks the card on the bottom edge of a phone, full width", () => {
+    const size = { width: 390, height: 300 };
     const placed = placeCard(phone, { x: 16, y: 80, width: 358, height: 600 }, size);
     expect(placed.side).toBe("docked");
-    expect(placed.card).toEqual({ x: 16, y: 844 - 16 - 300 });
+    expect(placed.card).toEqual({ x: 0, y: 844 - 300 });
     expect(overlaps(cardBox(placed, size), placed.spot!)).toBe(false);
   });
 
-  it("keeps the card clear of the home indicator", () => {
-    const placed = placeCard({ ...phone, bottom: 34 }, { x: 16, y: 80, width: 358, height: 100 }, { width: 358, height: 300 });
-    expect(placed.card.y + 300).toBe(844 - 34 - 16);
+  it("docks the card on a phone also when nothing is lit", () => {
+    expect(placeCard(phone, null, { width: 390, height: 300 })).toEqual({ card: { x: 0, y: 544 }, side: "docked", spot: null, arrow: null });
+  });
+
+  it("sits on the edge over the home indicator, which the card pads itself", () => {
+    const placed = placeCard({ ...phone, bottom: 34 }, { x: 16, y: 80, width: 358, height: 100 }, { width: 390, height: 300 });
+    expect(placed.card.y + 300).toBe(844);
   });
 
   it("never lets the spotlight run past the screen", () => {
@@ -89,9 +94,10 @@ describe("placeCard", () => {
     expect(offset).toBeLessThanOrEqual(card.width - 28);
   });
 
-  it("points a docked phone card up at its target", () => {
-    const placed = placeCard(phone, { x: 16, y: 80, width: 200, height: 200 }, { width: 358, height: 300 });
-    expect(placed.arrow).toEqual({ edge: "top", offset: 16 + 100 - 16 });
+  it("draws no caret and no line on a phone: the ring alone marks the target", () => {
+    const placed = placeCard(phone, { x: 16, y: 80, width: 200, height: 200 }, { width: 390, height: 300 });
+    expect(placed.spot).not.toBeNull();
+    expect(placed.arrow).toBeNull();
   });
 
   it("draws no caret when nothing is lit", () => {
@@ -105,9 +111,9 @@ describe("placeCard", () => {
     ]) {
       const size = { width: cardWidth(view.width), height: 320 };
       const placed = placeCard(view, { x: 16, y: 90, width: view.width - 32, height: 400 }, size);
-      expect(placed.card.x).toBeGreaterThanOrEqual(16);
-      expect(placed.card.x + size.width).toBeLessThanOrEqual(view.width - 16);
-      expect(placed.card.y + size.height).toBeLessThanOrEqual(view.height - view.bottom - 16);
+      expect(placed.card.x).toBe(0);
+      expect(placed.card.x + size.width).toBe(view.width);
+      expect(placed.card.y + size.height).toBe(view.height);
       expect(overlaps(cardBox(placed, size), placed.spot!)).toBe(false);
     }
   });

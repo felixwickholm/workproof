@@ -6,9 +6,18 @@ export const MAX_PROOFS = 500;
 
 const isSeed = (proofId: string) => proofId.startsWith("proof_seed_");
 
+/** A proof leaves with everything that points at it, so nothing is left behind that refers to nothing. */
+function removeProof(data: StoreData, proofId: string): void {
+  data.submissions = data.submissions.filter((s) => s.id !== proofId);
+  data.proofs = data.proofs.filter((p) => p.proofId !== proofId);
+  data.decisions = data.decisions.filter((d) => d.proofId !== proofId);
+  data.meetings = data.meetings.filter((m) => m.proofId !== proofId);
+  if (data.tableInvites) data.tableInvites = data.tableInvites.filter((i) => i.proofId !== proofId);
+}
+
 /**
- * Frees one place when the demo is full: the oldest taster proof goes first, since no company
- * ever sees a taster. When only event proofs remain, the request is refused.
+ * Frees one place when the demo is full: the oldest taster proof goes first, with its table invitation,
+ * since no company ever sees a taster. When only event proofs remain, the request is refused.
  */
 export function makeRoom(data: StoreData): void {
   if (data.proofs.length < MAX_PROOFS) return;
@@ -17,9 +26,11 @@ export function makeRoom(data: StoreData): void {
     .filter((s) => tasters.has(s.challengeId) && !isSeed(s.id))
     .sort((a, b) => a.submittedAt.localeCompare(b.submittedAt))[0];
   if (!oldest) throw new ServiceError(429, "The demo is full. Reset it from the city view.");
-  data.submissions = data.submissions.filter((s) => s.id !== oldest.id);
-  data.proofs = data.proofs.filter((p) => p.proofId !== oldest.id);
+  removeProof(data, oldest.id);
 }
+
+/** Registered reviewers one company can have in the demo. */
+export const MAX_REVIEWERS = 20;
 
 /**
  * A visitor's own pictures per store. Each can be 300 kB, and every visitor has a sandbox,

@@ -6,7 +6,7 @@ import { useSyncExternalStore } from "react";
  * Proofs this browser has opened, for the unread dot in the review list. Kept for the tab's
  * session only: it marks where the reader is, never anything about the work or the person.
  */
-const KEY = "workprint.openedProofs";
+const KEY = "workproof.openedProofs";
 
 /** The stored list, read leniently: anything unreadable counts as nothing opened. */
 export function parseOpened(raw: string | null): Set<string> {

@@ -1,4 +1,4 @@
-import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
+import type { Challenge, ChallengeDraft, ChoiceOption } from "@/lib/domain/types";
 import { neutralSetAside, NOT_USED_PREFIX, talentNeed } from "@/lib/guard/check-draft";
 import { isSkillId, SKILLS, toSkill, type SkillId } from "@/lib/skills/vocabulary";
 import { GENERIC_NOTE, genericRole, nearestNote, NO_EXACT_TASK_NOTE, NO_SKILLS_NOTE } from "./generic-role";
@@ -7,7 +7,6 @@ import { parseNeed, type ParsedNeed } from "./parse-need";
 import type { RoleTemplate, TaskTemplate } from "./role-template";
 import { ROLES } from "./roles";
 
-const EVENT_MINUTES = 20;
 const TASTER_MINUTES = 2;
 
 /** The set-aside reason for a skill beyond what one task can test. */
@@ -29,6 +28,10 @@ function chooseSkills(role: RoleTemplate, wished: SkillId[], wishCount: number):
   return { kept, dropped };
 }
 
+function copyOptions([a, b]: readonly [ChoiceOption, ChoiceOption]): [ChoiceOption, ChoiceOption] {
+  return [{ ...a }, { ...b }];
+}
+
 function toDraft(role: RoleTemplate, task: TaskTemplate, skills: SkillId[], extra: Pick<ChallengeDraft, "need" | "setAside" | "kind" | "minutes">): ChallengeDraft {
   return {
     title: task.title,
@@ -40,10 +43,12 @@ function toDraft(role: RoleTemplate, task: TaskTemplate, skills: SkillId[], extr
     minutes: extra.minutes,
     brief: task.brief,
     material: { ...task.material },
+    ...(task.options ? { options: copyOptions(task.options) } : {}),
     deliverable: task.deliverable,
     reviewGuide: skills.map((id) => ({ skillId: id, lookFor: role.lookFor?.[id] ?? SKILLS[id].lookFor })),
     aiAllowed: true,
     kind: extra.kind,
+    templateId: role.id,
   };
 }
 
@@ -97,7 +102,7 @@ export function draftFromNeed(need: string): ChallengeDraft {
     need: talentNeed(generic ? undefined : role.title, kept),
     setAside,
     kind: "event",
-    minutes: EVENT_MINUTES,
+    minutes: role.challenge.minutes,
   });
   // Languages and licences are facts about the job: never skills, never set aside.
   if (parsed.facts.length > 0) draft.facts = parsed.facts;
@@ -118,19 +123,29 @@ export function tasterFor(dreamJob: string): ChallengeDraft {
   return generic ? { ...draft, note: NO_EXACT_TASK_NOTE } : draft;
 }
 
-type ChallengeRef = Pick<Challenge, "kind" | "material" | "need" | "title">;
+type ChallengeRef = Pick<Challenge, "kind" | "templateId">;
 
 function taskOf(role: RoleTemplate, challenge: ChallengeRef): TaskTemplate {
   return challenge.kind === "taster" ? role.taster : role.challenge;
 }
 
-/** Finds the role a challenge was built from, so its planted flaws and constraints can be used. */
+/** The library role with this id, or the generic one. */
+function templateById(templateId: string | undefined): RoleTemplate | undefined {
+  if (templateId === "generic") return genericRole();
+  return ROLES.find((role) => role.id === templateId);
+}
+
+/** True for an id the scripted designer sets: a library role or the generic template. */
+export function isTemplateId(templateId: string): boolean {
+  return templateById(templateId) !== undefined;
+}
+
+/**
+ * The role a challenge was built from, by the template id the designer stored, so an employer who edits the
+ * title keeps the same follow-up questions. A task without one (written by a model or by hand) gets the generic role.
+ */
 export function roleFor(challenge: ChallengeRef): RoleTemplate {
-  const known = ROLES.find((role) => {
-    const task = taskOf(role, challenge);
-    return task.title === challenge.title && task.material.title === challenge.material?.title;
-  });
-  return known ?? genericRole();
+  return templateById(challenge.templateId) ?? genericRole();
 }
 
 /**
@@ -145,7 +160,6 @@ export function publishedNeed(draft: ChallengeDraft): string {
 
 /** The planted flaws for a challenge, or none when it was written by hand or by a model. */
 export function flawsFor(challenge: ChallengeRef) {
-  const role = roleFor(challenge);
-  const task = taskOf(role, challenge);
-  return task.title === challenge.title ? task.flaws : [];
+  const role = templateById(challenge.templateId);
+  return role ? taskOf(role, challenge).flaws : [];
 }

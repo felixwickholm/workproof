@@ -1,30 +1,86 @@
 # Demo script
 
-Two scripts: a 2-minute click path a judge can follow alone, and a 90-second spoken demo at the table for peer review. Both use the live demo (link at the top of the README) or `npm run dev` on http://localhost:3000. Each visitor gets a private copy of the demo event, so nothing you do changes anyone else's demo.
+Two paths through the live demo (link at the top of the README), or `npm run dev` on http://localhost:3000: a 2-minute path a judge can follow alone, and a 5-minute path for a presenter. Each visitor gets a private copy of the demo event, so nothing you do changes anyone else's demo. "Reset demo" at the foot of `/city` starts your copy again.
+
+## What the demo holds
+
+All people and companies are invented. At the default story stage the event has 10 companies, 12 challenges, 62 pieces of work from 36 people, 34 scored by a person, 12 invitations, 7 accepted, 4 talks held, 3 follow-ups agreed and 2 hires. These are the numbers the city view shows, marked "Demo data".
+
+**The story.** Olena is an AI developer. Her CV got no answer. Halla Supply asks "What should we automate first?" She picks the invoices, not the chatbot, says why, plans two weeks and names the risk. Katja Nurmi at Halla Supply reads the work without the name, scores each skill from 1 to 5 and writes why. The work gets 9 of 10. Halla invites her, and sees her name only after she says yes.
+
+**The 12 challenges.** Each one is done in one of four ways: Choose (pick one of two options and say why), Make (build a plan, a sketch or a screen), Fix (find what is wrong), Read (read a chart, a table or a report and say what matters).
+
+| Challenge | Format | Company | Minutes |
+|---|---|---|---|
+| What should we automate first? (Olena's story) | Make | Halla Supply | 10 |
+| Read this chart. What must the team know? | Read | Saarnivo Grid | 10 |
+| One number in this budget is wrong. Find it | Fix | Saarnivo Grid | 10 |
+| Find the bug in this model test | Fix | Tuulos Robotics | 10 |
+| One clause puts us at risk. Find it | Fix | Kivira Labs | 10 |
+| Two customers want the same engineer. Who waits? | Choose | Vesto Controls and Saarnivo Grid | 10 |
+| Sketch how to hold up this wall opening | Make | Harjula Engineering | 15 |
+| Which path fails in this timing report? | Read | Kide Silicon | 15 |
+| Which video will more people share? | Choose | Revontuli Games | 10 |
+| Cut this feature list to two weeks of work | Make | Tuulos Robotics and Kuulas Studio | 10 |
+| Make this booking screen easier. Change three things | Make | Kuulas Studio | 10 |
+| Does this table support the claim? | Read | Hohka Materials | 10 |
+
+The City of Espoo made the Kide Silicon challenge from the company's job ad. Kide Silicon has not opened it yet, and 20 people already did it.
 
 ## 2 minutes, alone (judge)
 
 | Time | Do this | Look for |
 |---|---|---|
-| 0:00 | Open `/`. | "Skip the CV. Do the work." and the counts under the map, with "0 automated decisions". |
-| 0:10 | Press "See it in 2 minutes". Press Next on each card. | Nine steps over the real app. The tour sets the story stage and opens each page itself. |
-| 0:25 | Step 3 and 4, Olena's proof. | Left: what she wrote, with the hidden details marked. Right: what the company reads, with 7 details hidden. The spoken follow-up is shown as text. |
-| 0:45 | Step 5 and 6, Anna at Kaari Home Care. | The queue is in arrival order, with no names and no scores. Anna's decision has her name and a written reason. |
-| 1:05 | Step 7, Olena accepts. | Only now does Kaari see her name. Her earlier plan, which another employer could not use, reached Otso Health through Second look, with her consent. |
-| 1:20 | Step 8, the city view. | Written answers, answers still owed per employer, meetings both sides confirmed, 0 automated decisions. |
-| 1:30 | Close the tour. Open `/company` from the Hiring mode. Type a sentence with a biased wish and a fact, for example "Nurse for our ward: work language English, valid nurse licence, elderly clients, native Finnish speaker". | The draft keeps 3 to 5 core skills, shows the language and the licence under "Good to know", and sets the native speaker wish aside with "Ask for a language level, not a native speaker." Choose how many answers you can read (5 to 30); a person approves before it goes live. |
-| 1:50 | Open `/for-judges` ("Evidence for judges"). | The 2-minute check path, each criterion with a way to check it, and the dated eval numbers. |
+| 0:00 | Open `/`. | "Show your work. Get the interview." Three doors: "I'm looking for work", "I'm hiring", "I'm the City of Espoo". Below them, Olena's story: "Her CV got no answer. Her work got 9 of 10." |
+| 0:10 | Press "Watch the 1-minute tour". Each card moves on by itself; Next, Back and Pause work too. | Seven cards over the real screens. The tour opens each page itself and sets the story to the right moment. |
+| 0:15 | Card 1, "A company needs help." | The Hiring screen where a company pastes its job ad. |
+| 0:25 | Card 2 and 3, "Olena does the challenge." and "Her name is hidden." | She thinks aloud as she works; no camera. Then what the company reads, with her name, a past client, where she lives and her school hidden. |
+| 0:45 | Card 4, "The boss scores the work." | Katja's points for each skill and her reason. "A person gives the points, not the AI." |
+| 0:55 | Card 5 and 6, "She says yes." and "The city sees what came of it." | The invitation from Halla Supply. Then the city's count from challenge to talk. |
+| 1:10 | On the last card, "Now try it yourself.", press "I'm hiring". | `/employer` opens as Halla Supply. Its "Show me" button pulses once. |
+| 1:15 | In the menu, open "New challenge". Under "Paste your job ad link", press the sample ad "Financial analyst". | The ad becomes a draft challenge: the task, what the person hands in, "Skills you score" (3 to 5), and the wishes set aside. Nothing goes live before a person presses "Approve and publish". |
+| 1:45 | Open "Evidence for judges" in the top bar of `/`, or go to `/for-judges`. | Each judging criterion with a way to check it, and the dated test numbers. |
 
-## 90 seconds, at the table (peer review)
+## 5 minutes, presenter
 
-Setup: the laptop shows `/table` on a big screen. Have a phone ready to pass round.
+Open `/` before you start. Each step says what to press, then what to say.
 
-1. **(0:00) The problem.** "Today AI writes the CV and AI reads it. The City of Espoo asked for better matches at its recruitment events, without automated decisions about people."
-2. **(0:10) The idea.** Point at the screen. "Skip the CV. Do the work. A company posts a 20-minute real task. You do it. A person there reads your work without your name and decides."
-3. **(0:20) Your turn.** Ask the visitor to scan the QR code, or type the short link under it. On the phone `/try` asks: "What's your dream job?" They pick one, answer one task in two sentences and one follow-up question.
-4. **(0:50) The reveal.** The phone shows "This is what a company sees." with their name and places hidden. The proof appears on the big screen as it arrives, as a label and a task, never the text they wrote.
-5. **(1:00) The invitation.** On the big screen, press Invite on their proof and write two sentences about what you saw. Their phone shows your words; they accept or decline. Only after an accept does their first name appear on the big screen.
-6. **(1:10) The other two sides.** On the laptop, switch the mode at the top left to Hiring, then to City of Espoo. "Anna reads work in arrival order. Every decision needs a written reason, also a no, and only a registered reviewer can sign it. The city sees answers given, answers still owed per employer and meetings both sides confirmed, and exports the meeting list."
-7. **(1:25) Close.** "AI drafts the tasks. People make every decision. Work first. Names last. People decide."
+**0:00 The start page.** Point at the headline and the three doors.
+Say: "Companies see how well people do the real work before they meet them. A company posts a short challenge. A person does it in 5 to 15 minutes and thinks aloud. Someone at the company scores the work without the name. The city sees what came of it."
+
+**0:30 Looking for work.** Press "I'm looking for work". `/seeker` opens as Olena.
+Say: "This is Olena, an AI developer. Her CV got no answer." Point at "Your invite" from Halla Supply and her score. "Her work got 9 of 10."
+
+**0:50 Her work.** In the menu, open "My work", then her Halla Supply work.
+Say: "This is what the company read. Bars cover what the rules removed: her name, a past client, where she lives and her school." Turn on "Show what I wrote" and drag the handle to compare. Point at "My score" and say: "Katja Nurmi gave points for each skill and wrote why. People score the work. The AI never does."
+
+**1:30 She says yes.** Go back to `/seeker` and press "Say yes".
+Say: "Only now does Halla Supply see her name. If she said no, it never would."
+
+**1:45 Hiring.** Switch the view at the top left to "Hiring". `/employer` opens as Halla Supply. Open the row "What should we automate first?".
+Say: "This is the company's best work first, by its own scores, still without names. Two pieces have 9 of 10. One of them now reads ‘K7 is Olena Kovalenko’. She said yes, so Halla Supply can see her name."
+
+**2:15 Score one.** In the menu, open "Score work". Open the first piece of work in the list.
+Say: "Work waits in the order it came. The reviewer gives 1 to 5 points for each skill and says why. Then: invite to the event, not now, or score now and decide later. A person decides every time."
+Do not send a score unless you want to; the buttons stay locked until every skill has points and a reason.
+
+**3:00 A job ad becomes a challenge.** In the menu, open "New challenge". Press the sample ad "AI developer". If someone asks what an ad looks like, open `/ads/halla-ai-developer` in a new tab.
+Say: "The company gives us its job ad. The AI drafts a short challenge with 3 to 5 skills to score. Wishes that are not skills are set aside. A person reads it, edits it and approves it. Nothing goes live before that."
+
+**3:40 The City of Espoo.** Switch the view to "City of Espoo". `/city` opens.
+Say, pointing at "What came of this event": "62 pieces of work from 36 people. 34 scored by a person. 12 invitations, 4 talks held, 3 follow-ups agreed, 2 hires. All demo data."
+Point at "Challenge leaderboard": "Every challenge, with how far its people got." Point at "Where the work goes": "Tap a company on the map of Espoo to see its challenges."
+
+**4:20 The city makes a challenge.** Scroll to "Make a challenge for a company".
+Say: "A company that is too busy does nothing. The city pastes its job ad and publishes the challenge for it. Kide Silicon got one this way, and 20 people already did it before the company opened it."
+
+**4:40 Close.** Scroll to the safeguards card.
+Say: "Work first. Names last. People decide. The AI drafts challenges and never scores a person."
+
+If time is short, each view has a "Show me" button: a 1-minute guided demo of that view on the real screens. The Looking for work and Hiring demos have seven cards, the city demo six.
+
+## At the table
+
+`/table` on a big screen shows a QR code and a short code. A visitor scans it, and `/try` on the phone asks "What's your dream job?", gives a 2-minute challenge and shows what a company would read before they send it. The big screen shows labels and challenges, never what the visitor wrote. The host invites one with a two-sentence message; the visitor says yes or no on the phone, and only after a yes does their first name appear on the big screen.
 
 If there is time for a question: the honest limits are in the README under "Limits, stated honestly", and the questions a city asks first are under "Fair questions".

@@ -1,43 +1,44 @@
 import { ROLES } from "@/lib/ai/scripted/roles";
-import { NO_AUTOMATED_DECISIONS_LINE, REVIEWER_HIDDEN_LINE } from "@/lib/domain/guardrails";
+import { HIDING_LINE, MODEL_INPUT_LINE, NO_AUTOMATED_DECISIONS_LINE, REVIEWER_HIDDEN_LINE } from "@/lib/domain/guardrails";
 import { DEFAULT_PLACES, MAX_PLACES, MIN_PLACES } from "@/lib/domain/places";
 import { countOf, EVAL_TESTS, FIGURES, printed, UNIT_TESTS, VERIFIED_ON } from "./evidence";
 
 /**
- * The one typed source for what /for-judges and /llms.txt say about Workprint. Every route and code
+ * The one typed source for what /for-judges and /llms.txt say about WorkProof. Every route and code
  * path here is checked to exist by facts.test.ts, so the two pages cannot point at something
  * that is not in the repository.
  */
 
-export const NAME = "Workprint";
+export const NAME = "WorkProof";
 
 /** The first paragraph, word for word the same as the submission text and the README. */
-export const SUMMARY = `Workprint is for City of Espoo talent events. A professional does a short real task from an Espoo company instead of sending a CV. A named person at the company reads the work without the name, writes a reason, and chooses Meet or Not now. The name appears only after the professional accepts. AI drafts tasks; it never scores or ranks a person. Tested: ${FIGURES.plantedReached} planted identity details reached a reviewer.`;
+export const SUMMARY = `WorkProof is for City of Espoo talent events. A professional does a short real task from an Espoo company instead of sending a CV. A named person at the company reads the work without the name, scores it from 1 to 5 on each of the task's skills, writes a reason, and chooses Meet or Not now. The name appears only after the professional accepts. AI drafts tasks; it never scores or ranks a person. Tested: ${FIGURES.plantedReached} planted identity details reached a reviewer.`;
 
 /** The demo event at its default story stage, as the seed builds it (src/lib/seed). */
-export const DEMO_EVENT = { employers: 10, tasks: 14, proofs: 47 } as const;
+export const DEMO_EVENT = { employers: 10, tasks: 12, proofs: 62 } as const;
 
-export const ONE_LINE = "Skip the CV. Do the work. A person reads your work, not your name, and decides.";
+export const ONE_LINE = "Show your work. Get the interview. A person reads your work, not your name, and decides.";
 
 export const KEY_FACTS: readonly string[] = [
   'Built during Junction 2026 (13 to 15 November 2026) for the City of Espoo challenge "Rethinking Recruitment".',
   "Three modes in one app: Looking for work, Hiring, City of Espoo.",
-  `Places per task: each task takes ${MIN_PLACES} to ${MAX_PLACES} answers (${DEFAULT_PLACES} unless the company chooses), so a person can read every one. The employer home shows the places left on each task and about how many minutes of reading wait.`,
-  "Only a registered reviewer decides. A company lists the people who may decide; a name that is not on the list is refused (HTTP 403) until that person adds themselves in one explicit, logged step, and a name that reads as software is refused outright (HTTP 400).",
+  `Places per task: each task takes ${MIN_PLACES} to ${MAX_PLACES} answers (${DEFAULT_PLACES} unless the company chooses), so an employer can read them all. The company sets the number before it approves the challenge, and each challenge page shows the places left.`,
+  "A decision names a reviewer registered for the company. A company lists the people who may decide; a name that is not on the list is refused (HTTP 403) until that person adds themselves in one explicit, logged step, and a name that reads as software is refused outright (HTTP 400). This demo has no sign-in, so the name is not verified.",
   `${NO_AUTOMATED_DECISIONS_LINE}`,
+  "A named reviewer scores the work from 1 to 5 on each core skill of the task and writes why. The total shows out of 10 (the average points × 2), and a task's top work is sorted by these human totals. Software never gives or suggests a number.",
   `Every reviewer reads the same line under every proof: "${REVIEWER_HIDDEN_LINE}" No count of hidden details is shown to a reviewer, since a count would hint at a background.`,
-  'Facts about the job (the work language, a language level, a licence the law asks for) are neither core skills nor set aside: talent reads them under "Good to know", in fixed forms. A wish for a native speaker is set aside with "Ask for a language level, not a native speaker."',
+  'Facts about the job (the work language, a language level, a licence the law asks for) are neither core skills nor set aside: they are kept under "Good to know", in fixed forms. A wish for a native speaker is set aside with "Ask for a language level, not a native speaker."',
   "Table mode is a live loop: a visitor scans the QR code and does a 2-minute task; the host invites the proof with a two-sentence reason; the visitor accepts or declines on the phone. The big screen shows labels and tasks, never free text, and a name only after its person accepted.",
   "A person can decline an invitation; the name stays hidden from that company.",
   "A picture is sent only after the person confirms it shows only the work. A reviewer can report a picture as possibly identifying; it is then removed for every reader.",
-  "The city can act: it drafts a reminder to an employer that still owes answers (nothing is sent) and exports the meeting list as a CSV file, with a name only where the person accepted.",
+  "The city can act: it makes a challenge for a company from its job ad, drafts a reminder to a company with work waiting (nothing is sent) and exports the list of talks as a CSV file. The organiser sees slots and labels, never names.",
   "Each visitor gets a private demo event behind a cookie. A request without that cookie reads the shared demo event and cannot change it. The visitor's private key travels in a request header, never in an address.",
   "No login and no API keys are needed to run the demo. All people and companies are synthetic.",
-  "AI drafts tasks and two follow-up questions. People make every decision, and each decision carries a name and a written reason.",
-  "A blind layer hides names, contacts, places, schools and employers before any reviewer or AI model reads the work.",
-  "Made for Espoo's talent events for highly educated professionals, where a degree from abroad too often goes unread.",
-  `Seven kinds of proof: writing, plan, photo, short video, voice answer, design, code. ${ROLES.length} professions have their own task today; any other gets the nearest one or a general planning task.`,
-  "No silent rejection: every decision comes with a written reason, and the city sees every answer an employer still owes. Nothing forces an employer to decide.",
+  "AI drafts tasks and two follow-up questions. WorkProof has no automated decision feature; each decision carries a reviewer's name and a written reason.",
+  `${HIDING_LINE} ${MODEL_INPUT_LINE}`,
+  "Made for Espoo's talent events for business and tech people.",
+  `Four formats: Choose, Make, Fix, Read. The demo event has 12 challenges from 10 companies. Without an AI key the built-in designer still drafts: ${ROLES.length} professions have their own task today; any other gets the nearest one or a general planning task.`,
+  "No decision without a reason: every recorded decision carries a written reason, and unanswered work stays visible to the city. Nothing forces an employer to decide.",
   `Checked on ${VERIFIED_ON}: ${UNIT_TESTS.passed} of ${UNIT_TESTS.tests} unit tests pass (${UNIT_TESTS.command}); ${EVAL_TESTS.passed} of ${EVAL_TESTS.tests} eval tests pass (${EVAL_TESTS.command}).`,
 ];
 
@@ -49,15 +50,15 @@ interface Route {
 
 /** Public pages. Each one exists under src/app. */
 export const ROUTES: readonly Route[] = [
-  { path: "/", name: "Landing page", what: "What Workprint is, Olena's story and the live Espoo map" },
+  { path: "/", name: "Landing page", what: "What WorkProof is, Olena's story and the live Espoo map" },
   { path: "/try", name: "2-minute task", what: "Do a short task on a phone and see the blind proof a company would read" },
-  { path: "/seeker", name: "Looking for work", what: "Olena's home: invitation, open tasks, proof passport" },
-  { path: "/challenges", name: "Tasks", what: "Every open task at the demo event" },
-  { path: "/passport", name: "Proof passport", what: "The person's own proofs, what was hidden, and the answers they got" },
-  { path: "/employer", name: "Hiring", what: "Kaari Home Care's home: blind queue in arrival order, pipeline, pool by skill" },
-  { path: "/company", name: "Post a task", what: "One sentence becomes a task with 3 to 5 core skills; a person approves it" },
-  { path: "/company/review", name: "Review", what: "Read a blind proof, write feedback, choose Meet or Not now" },
-  { path: "/city", name: "City of Espoo", what: "Outcomes, the Espoo flow map, fairness audit and audit log" },
+  { path: "/seeker", name: "Looking for work", what: "Olena's home: invitation, open challenges, her work" },
+  { path: "/challenges", name: "Challenges", what: "Every open challenge at the demo event, in four formats: Choose, Make, Fix, Read" },
+  { path: "/my-work", name: "My work", what: "The person's own work, what was hidden, the reviewer's scores and reason, and a portfolio to share" },
+  { path: "/employer", name: "Hiring", what: "Halla Supply's challenges, each with its top work by the reviewers' scores and the work waiting in arrival order" },
+  { path: "/company", name: "New challenge", what: "A job-ad link or one sentence becomes a challenge with 3 to 5 core skills; a person approves it" },
+  { path: "/company/review", name: "Score work", what: "Read the work without the name, give 1 to 5 points per skill with a written reason, then invite or not now" },
+  { path: "/city", name: "City of Espoo", what: "Outcomes, the Espoo flow map, process safeguards and audit log" },
   { path: "/table", name: "Table mode", what: "Big screen with a QR code: a phone joins the same demo event" },
   { path: "/for-judges", name: "Evidence for judges", what: "Criteria, evidence, evals and limits" },
 ];
@@ -71,13 +72,13 @@ interface CodePath {
 export const CODE_MAP: readonly CodePath[] = [
   { path: "src/app", what: "Next.js routes: pages and the JSON API under src/app/api" },
   { path: "src/lib/service", what: "Rules for tasks, submissions, decisions, meetings and Second look; view builders for each mode" },
-  { path: "src/lib/blind", what: "The blind layer: removes identity before any reviewer or model reads the work" },
+  { path: "src/lib/blind", what: "The blind layer: rules remove known personal details before any reviewer or model reads the work; some can remain" },
   { path: "src/lib/guard", what: "The no-judgement guard: rejects scores, ranks and protected attributes in AI output" },
   { path: "src/lib/ai", what: "Scripted task designer (default) and Claude and Gemini adapters, all behind the guard" },
   { path: "src/lib/matching/second-look.ts", what: "Second look: compares tasks by shared core skills, never people" },
-  { path: "src/lib/voice", what: "Voice input: Web Speech API, ElevenLabs or typed; only the transcript is kept" },
+  { path: "src/lib/voice", what: "Voice input: Web Speech API, ElevenLabs or typed; WorkProof stores only the transcript" },
   { path: "src/lib/store", what: "In-memory store and a private demo copy (sandbox) per visitor" },
-  { path: "src/lib/seed", what: "The synthetic event: 10 employers, 14 tasks, the proofs and decisions" },
+  { path: "src/lib/seed", what: "The synthetic event: 10 employers, 12 challenges, 62 pieces of work from 36 people, the scores and decisions" },
   { path: "evals", what: "Eval suites: task generator, blind review, no automated decisions, privacy, flow, story" },
 ];
 
@@ -96,7 +97,7 @@ export const CRITERIA: readonly CriterionRow[] = [
     criterion: "Impact & Relevance",
     weight: "45%",
     built:
-      "Companies register with a short real task; people answer with one of seven kinds of work (writing, plan, photo, short video, voice, design, code); a person reviews blind and every decision comes with a written reason; the city sees the answers each employer still owes and meetings both sides confirmed.",
+      "Companies register with a short real challenge in one of four formats (Choose, Make, Fix, Read); people answer with work and think aloud while working; a person reviews with known personal details removed and every recorded decision carries a written reason; the city sees each step from challenge taken to scored, invited, talked, follow-up agreed and hired, and the work still waiting on each challenge.",
     routes: ["/seeker", "/employer", "/city"],
     code: ["src/lib/service/views", "src/lib/service/decisions.ts", "src/lib/service/meetings.ts"],
     evidence: "Flow eval: every step from task to a meeting both sides confirmed passes (evals/flow.eval.ts).",
@@ -105,8 +106,8 @@ export const CRITERIA: readonly CriterionRow[] = [
     criterion: "Innovation & User Experience",
     weight: "35%",
     built:
-      "A task instead of a CV; the blind proof with a slider between what was written and what the company reads; the name shown only after the person accepts; Second look shares a proof with a second employer with the same skills, with consent; a guided two-minute walkthrough; a 2-minute task on a phone.",
-    routes: ["/", "/try", "/passport"],
+      "A task instead of a CV; the blind proof with a slider between what was written and what the company reads; the name shown only after the person accepts; Second look shares a proof with a second employer with the same skills, with consent; a 1-minute guided tour and a Show me demo in each view; a 2-minute task on a phone.",
+    routes: ["/", "/try", "/my-work"],
     code: ["src/lib/blind", "src/lib/matching/second-look.ts", "src/components/proof/blind-compare.tsx"],
     evidence: "Story eval: every story stage rebuilds the visitor's own demo event (evals/story.eval.ts); end-to-end run on a 390x844 screen (evals/e2e).",
   },
@@ -114,7 +115,7 @@ export const CRITERIA: readonly CriterionRow[] = [
     criterion: "Responsible & Feasible Execution",
     weight: "20%",
     built:
-      "AI never scores or ranks people: a guard checks every AI output; identity is removed before review; every decision needs a named reviewer and written feedback; runs with no keys; request limits; Docker build.",
+      "AI never scores or ranks people: a guard checks every AI output; known personal details are removed by rules before review; every decision needs a registered reviewer name and written feedback (not verified without sign-in); runs with no keys; request limits; Docker build.",
     routes: ["/city", "/for-judges"],
     code: ["src/lib/guard", "src/lib/blind", "src/app/api/decisions/route.ts", "src/lib/http/limits.ts", "Dockerfile"],
     evidence:
@@ -129,7 +130,7 @@ interface PainRow {
   evidence: string;
 }
 
-/** Recurring pains named in the brief, with what Workprint does about each. Only rows true in the code. */
+/** Recurring pains named in the brief, with what WorkProof does about each. Only rows true in the code. */
 export const PAINS: readonly PainRow[] = [
   {
     pain: "Companies struggle to describe their needs clearly and early enough.",
@@ -151,20 +152,20 @@ export const PAINS: readonly PainRow[] = [
   },
   {
     pain: "Companies assume there are no suitable candidates in the city's pool.",
-    built: "The employer home counts proofs handed in at this event for tasks that ask for the same skills as the company's. Counts only, never a list of people.",
-    code: ["src/lib/service/views/employer.ts"],
+    built: "The city makes a challenge from a company's job ad, and people do it before the company opens it. In the demo, Kide Silicon's challenge already has 20 pieces of work. The company's home data also counts proofs handed in for tasks that ask for the same skills. Counts only, never a list of people.",
+    code: ["src/lib/service/views/employer.ts", "src/components/city/make-challenge.tsx"],
     evidence: "Unit tests in src/lib/service/views/employer.test.ts.",
   },
   {
     pain: "Matching should not reinforce bias by nationality, language, education or career path.",
-    built: "Names, contacts, places, schools, employers and residence status are hidden before review; tasks cannot ask for protected attributes.",
+    built: "Known names, contacts, places, schools, employers and residence status are removed by rules before review, and some can remain; tasks cannot ask for protected attributes.",
     code: ["src/lib/blind", "src/lib/guard/protected.ts"],
     evidence: `${FIGURES.plantedReached} planted strings reach the reviewer; ${countOf(printed("2 Blind review", "review cases hidden"))} and ${FIGURES.secondSetHidden} identity forms hidden.`,
   },
   {
     pain: "No automated profiling or automated decision-making about individuals.",
-    built: "A person decides Meet or Not now with a written reason; a guard blocks scores and ranks in AI output; every decision is in the audit log.",
-    code: ["src/lib/guard/no-judgement.ts", "src/app/api/decisions/route.ts", "src/lib/service/decisions.ts"],
+    built: "WorkProof has no automated decision feature: a decision is recorded with a registered reviewer's name, the reviewer's own points for each core skill and a written reason; a guard blocks scores and ranks in AI output; every decision is in the audit log.",
+    code: ["src/lib/guard/no-judgement.ts", "src/app/api/decisions/route.ts", "src/lib/service/decisions.ts", "src/lib/domain/scoring.ts"],
     evidence: `${FIGURES.judgingRejected} planted judging phrases rejected; ${FIGURES.automatedDecisions} automated decisions in the audit log.`,
   },
   {
@@ -188,14 +189,14 @@ export const PAINS: readonly PainRow[] = [
   },
   {
     pain: "International recruitment adds language, permit and relocation questions.",
-    built: "Each task page shows the company's work language, whether Finnish is needed, and whether it helps with a work permit or moving.",
-    code: ["src/components/proof/company-facts.tsx", "src/app/challenges/[id]/challenge-detail.tsx"],
+    built: "Facts the company writes about the job (a work language, a language level, a licence) are kept in fixed forms under \"Good to know\" on the draft. Each demo company also records its work language, whether Finnish is needed, permit support and relocation help.",
+    code: ["src/lib/guard/job-facts.ts", "src/components/proof/company-facts.tsx", "src/lib/seed/companies.ts"],
     evidence: "Set for all 10 demo employers (src/lib/seed/companies.ts).",
   },
   {
     pain: "Solutions should minimise personal data processing.",
     built:
-      "No account and no CV; the person's key stays in the browser; a name is shared with one company only after the person accepts; voice is kept as text only.",
+      "No account and no CV; the person's key stays in the browser; accepting shows the name to that company only, and the organiser sees slots and labels, never names; WorkProof stores only the text of a spoken answer.",
     code: ["src/lib/client/local.ts", "src/lib/service/meetings.ts", "src/lib/voice"],
     evidence: `${countOf(printed("4 Consent and privacy", "talent ids in public responses"))} public responses carry a talent id; identity hidden until accepted.`,
   },
@@ -214,7 +215,7 @@ export const BOOTH = {
     'On 13 November we asked City of Espoo staff if a work task could replace the CV. They had thought of something similar "on a smaller scale" and named three risks. Our answers:',
   answers: [
     { risk: "A company hires only a few.", answer: "With consent, one proof can reach a second employer with the same core skills (Second look), after 48 hours without an answer or after a Not now." },
-    { risk: "Friction must stay low.", answer: "No login, no account, no CV. A task takes 20 minutes, 30 at most." },
+    { risk: "Friction must stay low.", answer: "No login, no account, no CV. The demo challenges take 10 or 15 minutes. The stated length is capped at 30." },
     { risk: "AI can do the task.", answer: "AI is allowed. Two follow-up questions ask about the person's own choices, and the meeting starts from the work." },
   ],
 } as const;
@@ -230,10 +231,10 @@ export const CHECK_PATH: readonly { path: string; what: string }[] = [
 export const LIMITS: readonly string[] = [
   "Company and city actions have no sign-in. Any caller can act as any company or as the city in the demo; a pilot needs sign-in and ownership checks.",
   "Pictures are not analysed. The person confirms that the picture shows only the work, and a reviewer can report one; a reported picture is removed for every reader. Nothing checks what a picture shows automatically.",
-  "AI-written work is reduced, not solved: two follow-up answers about the person's own choices and a meeting that starts from the work. The product cannot prove who typed an answer.",
+  "AI-written work is not solved. Our untested assumption: follow-up answers about a person's own choices, and a meeting that starts from the work, make AI-only answers easy to notice. This is not measured yet. The product cannot prove who typed an answer.",
   "Impact is not measured yet. Every outcome in the demo is invented data; the first real test is a pilot event.",
-  `Reviewing takes employer time. A task takes ${MIN_PLACES} to ${MAX_PLACES} answers, and the employer home shows the reading time owed, but reading still takes a person's time.`,
-  "Nothing forces an employer to answer. Every decision needs a written reason, and the city sees the answers each employer still owes.",
+  `Reviewing takes employer time. A task takes ${MIN_PLACES} to ${MAX_PLACES} answers, but reading still takes a person's time.`,
+  "Nothing forces an employer to answer. Every recorded decision needs a written reason, and unanswered work stays visible to the city.",
   "The blind layer is rules, not a guarantee. It misses a lowercase name with no cue word, a bare name with no introduction, another person's name, another spelling of the author's name, and part of an employer name that is not on the list. It over-hides a one-word capitalised sign-off and a capitalised value after \"name:\" outside a code block.",
   "Video upload is off in the demo; seed proofs carry sample clips, visitors answer in writing, by voice or with a photo.",
   "No ESCO skill ids yet; skills come from the project's own vocabulary.",
@@ -243,16 +244,16 @@ export const LIMITS: readonly string[] = [
 ];
 
 export const AI_DOES: readonly string[] = [
-  "Drafts a task from a company's one-sentence need, with 3 to 5 core skills. A person edits and approves it.",
+  "Drafts a task from a company's one-sentence need, with 3 to 5 core skills. A person approves every company task. Practice tasks are generated without approval and go to no company.",
   "Writes two follow-up questions about the person's own choices in their answer.",
   "Every AI output passes the no-judgement guard; on any failure the scripted designer is used.",
 ];
 
 export const AI_NEVER: readonly string[] = [
   "Scores, ranks, rates or recommends a person.",
-  "Reads a person's name, contact or other identity: it only sees text after the blind layer.",
-  "Decides Meet or Not now. Only a named person does, with written feedback.",
-  "Analyses a voice or a face. A spoken answer becomes text in the browser or once on the server, and only the text is kept.",
+  `Receives a person's name or contact field. ${MODEL_INPUT_LINE} Rules can miss some details in free text.`,
+  "Decides Meet or Not now. WorkProof has no automated decision feature; a decision carries a registered reviewer's name and written feedback.",
+  "Analyses a voice or a face. A spoken answer becomes text in the browser or once on the server, and WorkProof stores only the text.",
 ];
 
 /** Short quotes from the City of Espoo brief. */

@@ -51,7 +51,9 @@ export function companyFacts(company: Company): { label: string; value: string }
 
 /** A decision in words, as the person reads it. Never "rejected" or "passed". */
 export function decisionWords(decision: DecisionKind): string {
-  return decision === "meet" ? "wants to meet you" : "said not now, with a reason";
+  if (decision === "meet") return "wants to meet you";
+  if (decision === "hold") return "scored your work";
+  return "said not now, with a reason";
 }
 
 /** "7 details hidden before anyone read this". */

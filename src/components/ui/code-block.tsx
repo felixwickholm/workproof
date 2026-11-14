@@ -9,7 +9,7 @@ export function CodeBlock({ title, code }: { title?: string; code: string }) {
       {title ? (
         <figcaption className="hairline-b px-4 py-2 font-mono text-caption text-label-2">{title}</figcaption>
       ) : null}
-      <pre className="py-3 font-mono text-[12px] leading-[19px] min-[430px]:text-code">
+      <pre className="py-3 font-mono text-[14px] leading-[21px] min-[430px]:text-code">
         {lines.map((line, i) => {
           const indent = (line.match(/^\s*/)?.[0].length ?? 0) + 2;
           return (

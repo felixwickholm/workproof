@@ -1,10 +1,8 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { GET as queueRoute } from "@/app/api/companies/[id]/queue/route";
-import { POST as decisionsRoute } from "@/app/api/decisions/route";
 import { POST as resetRoute } from "@/app/api/demo/reset/route";
 import { POST as followUpsRoute } from "@/app/api/followups/route";
 import { POST as acceptRoute } from "@/app/api/meetings/[id]/accept/route";
-import { POST as submissionsRoute } from "@/app/api/submissions/route";
 import { POST as tasterRoute } from "@/app/api/taster/route";
 import type { BlindProof, Decision, Meeting, ReviewQueue } from "@/lib/domain/types";
 import { REDACTION_CASES } from "./fixtures/redaction-cases";
@@ -12,7 +10,7 @@ import { REDACTION_CASES_2 } from "./fixtures/redaction-cases-2";
 import { SUBMISSIONS } from "./fixtures/submissions";
 import { TABLE_INPUTS, TABLE_KNOWN, TABLE_TECHNICAL } from "./fixtures/table-inputs";
 import { getStore } from "@/lib/store";
-import { call, keysDeep, record, twoFollowUps } from "./helpers";
+import { call, decide, keysDeep, record, submit, twoFollowUps } from "./helpers";
 
 const EVAL = "2 Blind review";
 const CHALLENGE = "ch-tuulos-ml";
@@ -36,7 +34,7 @@ describe("Eval 2: blind review", () => {
       const { json: followUps } = await call<{ questions: string[] }>(followUpsRoute, {
         body: { challengeId: CHALLENGE, answer: fixture.answer },
       });
-      const { status, json } = await call<{ proof: BlindProof }>(submissionsRoute, {
+      const { status, json } = await submit<{ proof: BlindProof }>({
         body: {
           challengeId: CHALLENGE,
           talent: { id: `eval-talent-${i}`, name: fixture.name, contact: fixture.contact },
@@ -73,7 +71,7 @@ describe("Eval 2: blind review", () => {
 
   it("identity appears only after the person accepts the meeting", async () => {
     const proofId = proofIds[0];
-    const { json } = await call<{ decision: Decision; meeting: Meeting }>(decisionsRoute, {
+    const { json } = await decide<{ decision: Decision; meeting: Meeting }>({
       body: { proofId, companyId: COMPANY, reviewer: "Elias Virta", decision: "meet", feedback: "Clear reasoning on the split. We would like to talk about it." },
     });
     const before = (await call<ReviewQueue>(queueRoute, { params: { id: COMPANY } })).json;
@@ -92,7 +90,7 @@ describe("Eval 2: blind review", () => {
   it("hides identity in the forms people really write it (54 review cases)", async () => {
     const leaked: string[] = [];
     for (const [i, c] of REDACTION_CASES.entries()) {
-      const { json } = await call<{ proof: BlindProof }>(submissionsRoute, {
+      const { json } = await submit<{ proof: BlindProof }>({
         body: {
           challengeId: practiceTask,
           talent: { id: `eval-case-${i}`, name: "Leila Haddad", contact: "leila@example.org" },
@@ -115,7 +113,7 @@ describe("Eval 2: blind review", () => {
     const leaked: string[] = [];
     const limits: string[] = [];
     for (const [i, c] of REDACTION_CASES_2.entries()) {
-      const { json } = await call<{ proof: BlindProof }>(submissionsRoute, {
+      const { json } = await submit<{ proof: BlindProof }>({
         body: {
           challengeId: practiceTask,
           talent: { id: `eval-case2-${i}`, name: c.name ?? "Sanna Virtanen", contact: c.contact ?? "sanna.virtanen@example.org" },
@@ -138,7 +136,7 @@ describe("Eval 2: blind review", () => {
   it(`visitor inputs from the table: ${TABLE_INPUTS.length} forms all hidden, ${TABLE_TECHNICAL.length} technical texts intact`, async () => {
     const send = async (answer: string, i: number) =>
       (
-        await call<{ proof: BlindProof }>(submissionsRoute, {
+        await submit<{ proof: BlindProof }>({
           body: { challengeId: practiceTask, talent: { id: `eval-table-${i}`, name: TABLE_KNOWN.name, contact: TABLE_KNOWN.contact }, answer, explain: twoFollowUps(), shareWithSimilar: false },
         })
       ).json.proof;
@@ -176,7 +174,7 @@ describe("Eval 2: blind review", () => {
     ];
     const changed: string[] = [];
     for (const [i, c] of cases.entries()) {
-      const { json } = await call<{ proof: BlindProof }>(submissionsRoute, {
+      const { json } = await submit<{ proof: BlindProof }>({
         body: { challengeId: practiceTask, talent: { id: `eval-fp-${i}`, name: c.name, contact: "x@example.org" }, answer: c.answer, explain: twoFollowUps(), shareWithSimilar: false },
       });
       if (json.proof.work !== c.answer) changed.push(json.proof.work);

@@ -2,6 +2,7 @@ import { claudeDesigner } from "./claude/designer";
 import { geminiDesigner } from "./gemini/designer";
 import { guarded } from "./guarded";
 import { providerBreaker, type Breaker } from "./provider/breaker";
+import { providerBudget, type CallBudget } from "./provider/budget";
 import { resolveProvider, type ProviderConfig } from "./provider/select";
 import { scriptedDesigner } from "./scripted";
 import type { TaskDesigner } from "./task-designer";
@@ -25,11 +26,17 @@ export function modelDesignerFor(config: Exclude<ProviderConfig, { provider: "sc
 
 /**
  * The designer for a provider, guarded, with the scripted designer answering whenever the model fails or is rejected.
- * After a provider failure the model is skipped for a while, and only that first failure is logged.
+ * After a provider failure the model is skipped for a while, and only that first failure is logged. Past the
+ * process-wide ceiling on live calls the scripted designer answers too, and `draftedBy` says so.
  */
-export function createDesigner(config: ProviderConfig, onFallback: OnFallback = warnFallback(config.provider), breaker: Breaker = providerBreaker()): TaskDesigner {
+export function createDesigner(
+  config: ProviderConfig,
+  onFallback: OnFallback = warnFallback(config.provider),
+  breaker: Breaker = providerBreaker(),
+  budget: CallBudget = providerBudget(),
+): TaskDesigner {
   if (config.provider === "scripted") return guarded(scriptedDesigner);
-  return guarded(modelDesignerFor(config), { designer: scriptedDesigner, onFallback, breaker });
+  return guarded(modelDesignerFor(config), { designer: scriptedDesigner, onFallback, breaker, budget });
 }
 
 /**

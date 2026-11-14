@@ -2,18 +2,18 @@ import Link from "next/link";
 import { cx } from "./ui/cx";
 
 /**
- * The lockup: the tile, then "Workprint" in the sans at 600. No accent full stop; the teal lives on the
+ * The lockup: the tile, then "WorkProof" in the sans at 600. No accent full stop; the teal lives on the
  * tile's bar only. Inside the app frame the sidebar and switcher carry the name, so page bars drop their copy.
  */
 export function Wordmark({ className }: { className?: string }) {
   return (
     <Link
       href="/"
-      aria-label="Workprint, start page"
+      aria-label="WorkProof, start page"
       className={cx("flex h-11 items-center gap-2 text-[20px] leading-none font-semibold tracking-[-0.025em] text-label in-shell:hidden", className)}
     >
       <LogoMark className="size-7" />
-      Workprint
+      WorkProof
     </Link>
   );
 }

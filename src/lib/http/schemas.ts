@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PROOF_KINDS, STORY_STAGES } from "@/lib/domain/kinds";
+import { PROOF_KINDS, STORY_STAGES, TASK_FORMATS } from "@/lib/domain/kinds";
 import { DEFAULT_PLACES, MAX_PLACES, MIN_PLACES } from "@/lib/domain/places";
 import { pictureProblem } from "./jpeg";
 import { LIMITS } from "./limits";
@@ -30,7 +30,7 @@ const challengeDraftSchema = z.object({
   need: text(2000),
   coreSkills: z.array(skill).min(3).max(5),
   setAside: z.array(text(300)).max(30),
-  format: z.enum(["review", "plan", "write", "build", "explain"]),
+  format: z.enum(TASK_FORMATS),
   proofKind: z.enum(PROOF_KINDS),
   minutes: z.number().int().min(2).max(30),
   brief: z.string().min(10).max(LIMITS.brief),
@@ -41,8 +41,19 @@ const challengeDraftSchema = z.object({
   kind: z.enum(["event", "taster"]),
   /** Answers the task takes; the employer chooses when publishing. */
   places: z.number().int().min(MIN_PLACES).max(MAX_PLACES).default(DEFAULT_PLACES),
+  /** The job-ad link the draft was read from; kept only when the city publishes on the company's behalf. */
+  adUrl: z.string().url().max(2000).optional(),
+  /** The designer's template, kept through publishing so follow-ups never depend on the editable title. */
+  templateId: z.string().max(60).optional(),
   /** Company-side only: dropped before publishing. */
   draftedBy: z.enum(["scripted", "claude", "gemini"]).optional(),
+  /** The two options of a "choose" challenge. */
+  options: z
+    .tuple([
+      z.object({ id: z.literal("a"), title: text(120), body: text(600), image: z.string().startsWith("/demo/").max(200).optional() }),
+      z.object({ id: z.literal("b"), title: text(120), body: text(600), image: z.string().startsWith("/demo/").max(200).optional() }),
+    ])
+    .optional(),
   /** Job facts in fixed forms. Published as requirements only when each one matches a fixed form. */
   facts: z.array(text(120)).max(20).optional(),
   /** Company-side only: dropped before publishing. */
@@ -80,8 +91,11 @@ export const submissionRequest = z.object({
   challengeId: z.string().min(1),
   talent: z.object({ id: z.string().min(1).max(100), name: text(LIMITS.name), contact: text(LIMITS.contact) }),
   answer: z.string().min(1).max(LIMITS.answer),
+  /** From `POST /api/followups`: the questions this submission answers. Checked by the service, with one plain message. */
+  issueId: z.string().max(100).optional(),
+  /** Answers to the issued questions, in order. A question sent along must match the issued one; it is never stored from here. */
   explain: z
-    .array(z.object({ question: text(600), answer: text(LIMITS.explain), spoken: z.boolean().optional() }))
+    .array(z.object({ question: text(600).optional(), answer: text(LIMITS.explain), spoken: z.boolean().optional() }))
     .max(4)
     .default([]),
   attachment: uploadedPicture.optional(),
@@ -89,17 +103,44 @@ export const submissionRequest = z.object({
   spoken: z.boolean().optional(),
   /** Opt-in. Missing means no. */
   shareWithSimilar: z.boolean().default(false),
+  /** The option picked in a "choose" challenge; required there, checked by the service. */
+  choice: z.enum(["a", "b"]).optional(),
+  /** The person's spoken thinking as text. A screen clip never comes from a request: only sample clips under /demo exist. */
+  thinkAloud: z.object({ transcript: z.string().max(LIMITS.thinkAloud), seconds: z.number().int().min(0).max(3600) }).strict().optional(),
 });
 
+export const portfolioLinkRequest = z.object({ talentId: z.string().min(1).max(100), cardId: z.string().min(1).max(100).nullable(), on: z.boolean() });
+
+export const decisionShownRequest = z.object({ talentId: z.string().min(1).max(100), cardId: z.string().min(1).max(100), shown: z.boolean() });
+
 export const sharingRequest = z.object({ talentId: z.string().min(1).max(100), share: z.boolean() });
+
+/** One score per core skill, 1 to 5 points each. Whether they fit the task is checked by the service. */
+const skillScores = z.array(z.object({ skillId: z.string().min(1).max(60), points: z.number() })).max(5);
 
 export const decisionRequest = z.object({
   proofId: z.string().min(1),
   companyId: z.string().min(1),
   reviewer: z.string().max(LIMITS.reviewer),
-  decision: z.enum(["meet", "pass"]),
+  decision: z.enum(["meet", "pass", "hold"]),
   feedback: z.string().max(LIMITS.feedback),
+  scores: skillScores.default([]),
 });
+
+/** Turns a hold into meet or pass. The named reviewer must be registered for the company that scored it. */
+export const decideHoldRequest = z.object({ decision: z.enum(["meet", "pass"]), reviewer: z.string().max(LIMITS.reviewer) });
+
+export const recommendationRequest = z.object({ proofId: z.string().min(1).max(100), fromCompanyId: z.string().min(1).max(100), toCompanyId: z.string().min(1).max(100) });
+
+export const cityRecommendationRequest = z.object({ proofId: z.string().min(1).max(100), toCompanyId: z.string().min(1).max(100), by: z.string().trim().min(1).max(LIMITS.approvedBy) });
+
+export const followUpAgreedRequest = z.object({ companyId: z.string().min(1).max(100), agreed: z.boolean() });
+
+export const companyRequest = z.object({ companyId: z.string().min(1).max(100) });
+
+export const fromAdRequest = z.object({ url: z.string().trim().min(8).max(2000) });
+
+export const onBehalfRequest = z.object({ companyId: z.string().min(1).max(100), draft: challengeDraftSchema, by: z.string().trim().min(1).max(LIMITS.approvedBy) });
 
 /** Only the name: whether it is a person is checked by the service, with one plain message. */
 export const reviewerRequest = z.object({ name: z.string().max(LIMITS.reviewer) });

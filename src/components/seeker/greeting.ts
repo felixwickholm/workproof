@@ -6,22 +6,18 @@ export function dayGreeting(hour: number): string {
 }
 
 /**
- * The home's h1: "Good morning, Olena. Kaari Home Care wants to meet you." Without a name yet:
- * "Good morning. Fourteen tasks are open today."
+ * The home's h1: "Good evening, Olena. Kaari Home Care invited you." Without a name yet:
+ * "Good evening. 12 challenges are open."
  */
 export function greetingLine(firstName: string | null, fact: string, hour: number): string {
   const hello = dayGreeting(hour);
   return firstName ? `${hello}, ${firstName}. ${fact}` : `${hello}. ${fact}`;
 }
 
-const counted = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
-/** The grey line under the greeting: "3 proofs handed in · 2 read by a person · 2 written reasons · 1 invitation". */
-export function homeCountLine(counts: { proofs: number; readByPeople: number; writtenAnswers: number; invitations: number }): string {
-  return [
-    `${counted(counts.proofs, "proof", "proofs")} handed in`,
-    `${counts.readByPeople} read by a person`,
-    counted(counts.writtenAnswers, "written reason", "written reasons"),
-    counted(counts.invitations, "invitation", "invitations"),
-  ].join(" · ");
+/** Today's one fact: an open invitation first, otherwise how many challenges a person can start. */
+export function homeFact(invitations: readonly { companyName: string; status: string }[], openChallenges: number): string {
+  const waiting = invitations.find((i) => i.status === "invited");
+  if (waiting) return `${waiting.companyName} invited you.`;
+  if (openChallenges === 0) return "No challenge is open right now.";
+  return `${openChallenges} ${openChallenges === 1 ? "challenge is" : "challenges are"} open.`;
 }

@@ -24,8 +24,9 @@ export const dataAnalyst: RoleTemplate = {
     "half of the customers paid yearly instead of monthly",
   ],
   challenge: {
+    minutes: 15,
     title: "Review an AI-written churn query",
-    format: "review",
+    format: "fix",
     proofKind: "code",
     brief:
       "Leadership wants a monthly churn rate on the company dashboard. A teammate asked an AI assistant for the query below, and it returns a number that looks reasonable. It goes on the dashboard on Monday. Please review it before then.",
@@ -66,7 +67,7 @@ export const dataAnalyst: RoleTemplate = {
   },
   taster: {
     title: "Spot the problem in a chart",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "An AI assistant drafted this dashboard spec for the sales team.",
     material: {

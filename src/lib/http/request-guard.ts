@@ -5,7 +5,7 @@ import { DEMO_REBUILDS_PER_MINUTE, MAX_BODY_BYTES, POSTS_PER_MINUTE } from "./li
 
 const WINDOW_MS = 60_000;
 const TOO_MANY = "Too many requests. Wait a minute and try again.";
-const holder = globalThis as typeof globalThis & { __workprintRate?: Map<string, { start: number; count: number }> };
+const holder = globalThis as typeof globalThis & { __workproofRate?: Map<string, { start: number; count: number }> };
 
 /** The caller's address as the proxy reports it. Undefined for a local caller. */
 function callerAddress(request: Request): string | undefined {
@@ -57,7 +57,7 @@ const DEMO_REBUILDS: RateBucket = { name: "demo", perMinute: DEMO_REBUILDS_PER_M
 export function limitRate(request: Request, now = Date.now(), bucket: RateBucket = CHANGES): void {
   const keys = callerKeys(request);
   if (keys.length === 0) return;
-  const counts = (holder.__workprintRate ??= new Map());
+  const counts = (holder.__workproofRate ??= new Map());
   if (counts.size > 10_000) counts.clear();
   let over = false;
   for (const caller of keys) if (count(counts, `${bucket.name}:${caller}`, now) > bucket.perMinute) over = true;
@@ -69,7 +69,7 @@ export function limitRate(request: Request, now = Date.now(), bucket: RateBucket
  * spend money per call, so neither a missing address nor many cookies get around it.
  */
 export function limitAllCallers(bucket: RateBucket, now = Date.now()): void {
-  const counts = (holder.__workprintRate ??= new Map());
+  const counts = (holder.__workproofRate ??= new Map());
   if (count(counts, `${bucket.name}:all`, now) > bucket.perMinute) throw new ServiceError(429, TOO_MANY);
 }
 

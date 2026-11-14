@@ -31,8 +31,9 @@ export const homeCareCoordinator: RoleTemplate = {
     "the medicine dispenser alarm goes off during your first visit",
   ],
   challenge: {
+    minutes: 15,
     title: "Two carers are off sick. Plan tomorrow's visits",
-    format: "plan",
+    format: "make",
     proofKind: "plan",
     brief:
       "Tomorrow morning two of our carers are off sick. Leena and Tomi can do six visits before noon between them, but nine are booked. The office used an AI assistant to draft a plan, and it goes to the carers' phones at 7:00. This is a synthetic list from our training material. Please plan the morning as the coordinator.",
@@ -57,8 +58,7 @@ export const homeCareCoordinator: RoleTemplate = {
         "Calls: none needed, clients are used to changes",
       ].join("\n"),
     },
-    deliverable:
-      "Write the morning plan: which six visits stay, which move, and who you call first. Give one reason for each change. Write it, or say it and we keep only the text.",
+    deliverable: "Write or say the morning plan: which six visits stay, which move, who you call first, and why.",
     flaws: [
       {
         label: "the client with a new blood thinner dose moved to the afternoon",
@@ -76,7 +76,7 @@ export const homeCareCoordinator: RoleTemplate = {
   },
   taster: {
     title: "One carer is late. Who comes first?",
-    format: "plan",
+    format: "make",
     proofKind: "plan",
     brief: "One carer is 40 minutes late. These three visits are booked at 8:00 (synthetic).",
     material: {

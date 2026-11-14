@@ -45,11 +45,11 @@ export function createSuite(name, page) {
       } catch (error) {
         failed = true;
         const message = error instanceof Error ? error.message.split("\n")[0] : String(error);
-        // E2E_SHOTS=<folder> keeps a screenshot of each failure for a person to look at.
+        // E2E_SHOTS=<folder> keeps a screenshot of each failure for a person to look at; E2E_FULL=1 takes the whole page.
         let shot = "";
         if (process.env.E2E_SHOTS && shotPage) {
           const file = `${process.env.E2E_SHOTS}/${`${name}-${label}`.replace(/[^\w.-]+/g, "-")}.png`;
-          if (await shotPage.screenshot({ path: file, fullPage: false }).then(() => true, () => false)) shot = file;
+          if (await shotPage.screenshot({ path: file, fullPage: process.env.E2E_FULL === "1" }).then(() => true, () => false)) shot = file;
         }
         results.push({ suite: name, step: label, status: "FAIL", ms: Date.now() - started, error: message, ...(shot ? { shot } : {}) });
       }
@@ -81,6 +81,13 @@ export function watchErrors(page, { network = false } = {}) {
   return {
     assertClean(where) {
       if (errors.length) throw new Error(`${where}: ${errors.splice(0).join(" | ")}`);
+    },
+    /** Drops the errors a step caused on purpose, such as a refusal it waits for. Returns how many. */
+    allow(pattern) {
+      const kept = errors.filter((error) => !pattern.test(error));
+      const dropped = errors.length - kept.length;
+      errors.splice(0, errors.length, ...kept);
+      return dropped;
     },
   };
 }
@@ -147,7 +154,7 @@ export async function readCityTotals(page) {
  */
 export async function openVisitor(browser, device, suiteName, { theme, speech = true } = {}) {
   const context = await browser.newContext(device);
-  if (theme) await context.addInitScript((value) => localStorage.setItem("workprint.theme", value), theme);
+  if (theme) await context.addInitScript((value) => localStorage.setItem("workproof.theme", value), theme);
   if (!speech) {
     await context.addInitScript(() => {
       delete window.SpeechRecognition;
@@ -195,7 +202,7 @@ export const visible = (locator) => locator.filter({ visible: true }).first();
  * `talentId` goes in the private-key header, the way the app sends it, never in the path.
  */
 export async function apiJson(page, path, talentId) {
-  const response = await page.request.get(`${BASE_URL}${path}`, talentId ? { headers: { "x-workprint-key": talentId } } : undefined);
+  const response = await page.request.get(`${BASE_URL}${path}`, talentId ? { headers: { "x-workproof-key": talentId } } : undefined);
   expect(response.ok(), `GET ${path} answered ${response.status()}`);
   return response.json();
 }

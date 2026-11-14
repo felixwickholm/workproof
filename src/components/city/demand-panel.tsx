@@ -1,43 +1,45 @@
 import type { CityInsights } from "@/lib/domain/types";
-import { Panel } from "../ui/card";
-import { EmptyState } from "../ui/empty-state";
 import { Bar, BarChart } from "./bars";
-import { barShare, demandFinding } from "./figures";
-import { plural } from "./format";
+import { barShare, demandFinding, sortDemand } from "./impact";
 
 /**
- * Tasks that ask for each core skill against the proofs handed in for those tasks. Both bars share
- * one scale and carry their own number, so no legend is needed. Counts only, never a person.
+ * What companies ask for: the skills most asked for, as bars by the challenges that ask for each,
+ * with the work handed in for those challenges beside it. One finding in a sentence above.
  */
-export function DemandPanel({ demand, className }: { demand: CityInsights["demandBySkill"]; className?: string }) {
-  const max = Math.max(0, ...demand.flatMap((d) => [d.tasks, d.proofs]));
-  const finding = demandFinding(demand);
+export function DemandPanel({ demand }: { demand: CityInsights["demandBySkill"] }) {
+  const sorted = sortDemand(demand).filter((d) => d.tasks > 0);
+  const max = Math.max(0, ...sorted.map((d) => d.tasks));
+  const finding = demandFinding(sorted);
+
+  if (sorted.length === 0) {
+    return <p className="text-body text-label-2">No company has a challenge yet. The skills they ask for show here.</p>;
+  }
 
   return (
-    <Panel title="Asked for and answered" className={className}>
-      {demand.length === 0 ? (
-        <EmptyState>Skills appear here once a company posts a task.</EmptyState>
-      ) : (
-        <>
-          <p className="text-subhead text-pretty text-label">{finding}</p>
-          <p className="text-footnote mt-1 text-label-2">Per core skill: tasks that ask for it, and proofs handed in for those tasks. Counts only.</p>
-          <BarChart label="Tasks that ask for each skill, and proofs handed in for those tasks" className="mt-4 flex flex-col">
-            {(grown) =>
-              demand.map((d, i) => (
-                <div key={d.skillId} className="grid grid-cols-1 gap-x-4 gap-y-1.5 py-2 [&+&]:hairline-t @min-[440px]:grid-cols-[minmax(0,168px)_minmax(0,1fr)] @min-[440px]:items-center">
-                  <p className="text-footnote text-pretty text-label">{d.label}</p>
-                  <div className="grid grid-cols-[minmax(0,1fr)_60px] items-center gap-x-3 gap-y-1">
-                    <Bar className="h-1.5" share={barShare(d.tasks, max)} grown={grown} index={i} />
-                    <span className="text-caption tnum text-label-2">{plural(d.tasks, "task")}</span>
-                    <Bar className="h-1.5" share={barShare(d.proofs, max)} grown={grown} index={i} tone="accent" />
-                    <span className="text-caption tnum text-label-2">{plural(d.proofs, "proof")}</span>
-                  </div>
-                </div>
-              ))
-            }
-          </BarChart>
-        </>
-      )}
-    </Panel>
+    <div>
+      {finding ? <p className="text-body text-pretty text-label">{finding}</p> : null}
+      <div className="text-footnote mt-5 grid grid-cols-[minmax(0,1fr)_40px] gap-x-4 text-label-2">
+        <span>Challenges that ask for it</span>
+        <span className="text-right">Work</span>
+      </div>
+      <BarChart label="Skills companies ask for" className="mt-2">
+        {(grown) => (
+          <ol>
+            {sorted.map((d, i) => (
+              <li key={d.skillId} className="py-2">
+                <span className="text-subhead grid grid-cols-[minmax(0,1fr)_auto_40px] items-baseline gap-x-4 text-label">
+                  <span className="truncate">{d.label}</span>
+                  <span className="tnum">{d.tasks}</span>
+                  <span className="tnum text-right text-label-2">{d.proofs}</span>
+                </span>
+                <span className="mt-1.5 mr-14 block h-2">
+                  <Bar share={barShare(d.tasks, max)} grown={grown} index={i} tone="ink" className="h-2" />
+                </span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </BarChart>
+    </div>
   );
 }

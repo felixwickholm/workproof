@@ -1,18 +1,17 @@
 import { Closing, Footer } from "./closing";
-import { Comparison } from "./comparison";
-import { EventFit } from "./event-fit";
 import type { LandingData } from "./data";
-import { FairQuestions } from "./fair-questions";
+import { EventFlow } from "./event-flow";
 import { Hero } from "./hero";
+import { MapSection } from "./map-section";
 import { MOTION_CSS } from "./motion-css";
-import { PeopleDecide } from "./people-decide";
-import { Statement } from "./statement";
+import { ScoreRule } from "./score-rule";
 import { StorySection } from "./story-section";
-import { ThreeSides } from "./three-sides";
 import { TopBar } from "./top-bar";
-import { WorkMosaic } from "./work-mosaic";
 
-/** The landing page, sections in the copy deck's order. It sits outside the app frame. */
+/**
+ * The landing page: a front door, then a short tail. The long explanation lives in the tour and on
+ * /how-it-works. It sits outside the app frame.
+ */
 export function LandingPage({ data }: { data: LandingData }) {
   return (
     <div className="lp-root">
@@ -22,14 +21,10 @@ export function LandingPage({ data }: { data: LandingData }) {
       <TopBar />
       <main>
         <Hero data={data} />
+        <MapSection data={data} />
         <StorySection story={data.story} />
-        <WorkMosaic fragments={data.fragments} />
-        <ThreeSides data={data} />
-        <PeopleDecide />
-        <Comparison />
-        <Statement />
-        <EventFit />
-        <FairQuestions />
+        <EventFlow />
+        <ScoreRule />
         <Closing />
       </main>
       <Footer />

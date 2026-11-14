@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NOW, sampleEvent } from "./views/test-data";
+import { IDENTITY, NOW, sampleEvent } from "./views/test-data";
 import {
   answerByTime,
   buildCityActions,
@@ -70,7 +70,7 @@ describe("reminderText", () => {
         "",
         "3 people handed in work for your task “Plan tomorrow's visits” and wait for a written answer. The oldest has waited 26 hours.",
         "",
-        "Workprint shows the city which answers are still owed. Please answer by Sun 15 Nov, 14:00.",
+        "WorkProof shows the city which answers are still owed. Please answer by Sun 15 Nov, 14:00.",
       ].join("\n"),
     );
   });
@@ -103,29 +103,31 @@ describe("hoursInWords and eventTime", () => {
 });
 
 describe("meeting export", () => {
-  it("lists met and accepted meetings with the name, and open invitations without it", () => {
+  it("lists met, accepted and invited meetings by label, employer, time, table and status, never a name", () => {
     const data = sampleEvent();
     data.meetings.push({ id: "m4", proofId: "p2", companyId: "co-otso", slot: "Sat 15:00, Table 4", status: "accepted", talentConfirmedMet: false, companyConfirmedMet: false });
+    data.meetings.push({ id: "m5", proofId: "p4", companyId: "co-kivira", slot: "Time to be agreed", status: "invited", talentConfirmedMet: false, companyConfirmedMet: false });
     expect(meetingRows(data)).toEqual([
-      { proofLabel: "Proof P3", employer: "Kaari Home Care", slot: "Sat 14:00, Table 2", status: "Met, both sides confirmed", name: "Sam Example" },
-      { proofLabel: "Proof P2", employer: "Otso Health", slot: "Sat 15:00, Table 4", status: "Accepted", name: "Olena Kovalenko" },
-      { proofLabel: "Proof P1", employer: "Kaari Home Care", slot: "Sat 13:00, Table 1", status: "Invited, waiting for the person", name: "" },
+      { proofLabel: "Proof P3", employer: "Kaari Home Care", time: "Sat 14:00", table: "Table 2", status: "Met, both sides confirmed" },
+      { proofLabel: "Proof P2", employer: "Otso Health", time: "Sat 15:00", table: "Table 4", status: "Accepted" },
+      { proofLabel: "Proof P1", employer: "Kaari Home Care", time: "Sat 13:00", table: "Table 1", status: "Invited, waiting for the person" },
+      { proofLabel: "Proof P4", employer: "Kivira Labs", time: "Time to be agreed", table: "", status: "Invited, waiting for the person" },
     ]);
   });
 
-  it("never shows a name before the person accepts, and leaves declined invitations out", () => {
+  it("carries no name, contact or private key at any status, and leaves declined invitations out", () => {
     const data = sampleEvent();
-    data.meetings = data.meetings.map((m) => (m.id === "m3" ? { ...m, status: "declined" as const } : m));
+    data.meetings.push({ id: "m4", proofId: "p2", companyId: "co-otso", slot: "Sat 15:00, Table 4", status: "accepted", talentConfirmedMet: false, companyConfirmedMet: false });
     const csv = meetingsCsv(data);
-    expect(csv).not.toContain("Sam Example");
-    expect(csv).not.toContain("Olena");
-    expect(csv).not.toContain("Table 2");
+    for (const secret of IDENTITY) expect(csv).not.toContain(secret);
+    data.meetings = data.meetings.map((m) => (m.id === "m3" ? { ...m, status: "declined" as const } : m));
+    expect(meetingsCsv(data)).not.toContain("Table 2");
   });
 
   it("starts with a header row and ends every line with CRLF", () => {
     const csv = meetingsCsv(sampleEvent());
     const lines = csv.split("\r\n");
-    expect(lines[0]).toBe("Proof,Employer,Table and time,Status,Name");
+    expect(lines[0]).toBe("Proof,Employer,Proposed time,Table,Status");
     expect(lines).toHaveLength(4);
     expect(lines[3]).toBe("");
   });

@@ -21,5 +21,5 @@ export function placesState(challenge: { kind: "event" | "taster"; places?: numb
 
 /** Why Start is off on a full task. Honest: there is no waiting list. */
 export function fullReason(challenge: { kind: "event" | "taster"; places?: number }): string {
-  return `This task has all its ${placesOf(challenge) ?? 0} answers, so every one can be read. Choose another task.`;
+  return `This challenge has all its ${placesOf(challenge) ?? 0} answers, so an employer can read them all. Pick another challenge.`;
 }

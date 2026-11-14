@@ -1,6 +1,6 @@
 export type Theme = "light" | "dark";
 
-export const THEME_STORAGE_KEY = "workprint.theme";
+export const THEME_STORAGE_KEY = "workproof.theme";
 
 /** The ground of each theme, also used as the browser's theme colour so the phone chrome matches. */
 export const THEME_GROUND: Record<Theme, string> = { light: "#ffffff", dark: "#000000" };

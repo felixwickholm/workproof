@@ -3,10 +3,11 @@ import { CHECK_PATH, CODE_MAP, KEY_FACTS, LIMITS, NAME, ROUTES, SUMMARY } from "
 
 /** Where the rules that back the main claims live in the code. Each path exists in the repository. */
 export const EVIDENCE_IN_CODE: readonly { path: string; what: string }[] = [
-  { path: "src/lib/blind", what: "The blind layer: identity removed before any reviewer or model reads the work" },
+  { path: "src/lib/blind", what: "The blind layer: rules remove known personal details before any reviewer or model reads the work; some can remain" },
   { path: "src/lib/guard", what: "The no-judgement guard and the protected-attribute checks on every AI output" },
-  { path: "src/lib/service/decisions.ts", what: "A decision needs a registered, named person and a written reason" },
-  { path: "src/lib/domain/places.ts", what: "Places per task, so every answer can be read" },
+  { path: "src/lib/service/decisions.ts", what: "A decision needs the name of a reviewer registered for the company, the reviewer's points for each core skill and a written reason; without sign-in the name is not verified" },
+  { path: "src/lib/domain/scoring.ts", what: "One fixed scale from 1 to 5 per skill and the total out of 10; points come only from a named reviewer" },
+  { path: "src/lib/domain/places.ts", what: "Places per task, so an employer can read them all" },
   { path: "evals", what: "The eval suites behind the numbers above" },
 ];
 
@@ -38,6 +39,7 @@ export function buildLlmsTxt(origin: string, repo?: string): string {
     "",
     ...CHECK_PATH.map((step) => `- [${step.path}](${site}${step.path}): ${step.what}`),
     `- [Evidence for judges](${site}/for-judges): criteria table, evals, limits, architecture, data and privacy`,
+    `- [How it works](${site}/how-it-works): the product in six plain steps, what the AI does and never does, fair questions`,
     "",
     "## Product",
     "",

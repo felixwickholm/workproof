@@ -25,8 +25,9 @@ export const solutionsEngineer: RoleTemplate = {
     "the reply had to fit on a phone screen",
   ],
   challenge: {
+    minutes: 15,
     title: "Review an AI-drafted customer reply",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief:
       "A city water utility is evaluating our leak detection platform. Their IT lead sent two questions. A teammate asked an AI assistant to draft the reply below. It goes out tomorrow morning. Today our platform supports only cloud hosting in the EU, and the SCADA connector is on next year's roadmap.",
@@ -72,7 +73,7 @@ export const solutionsEngineer: RoleTemplate = {
   },
   taster: {
     title: "Spot the problem in a sales reply",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "A customer asked: \"Can your system export data to Excel?\" An AI assistant drafted this answer.",
     material: {

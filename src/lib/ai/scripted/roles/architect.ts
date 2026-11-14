@@ -30,8 +30,9 @@ export const architect: RoleTemplate = {
     "the city asks for a ramp under a roof",
   ],
   challenge: {
+    minutes: 15,
     title: "Mark up this clinic entrance for step-free access",
-    format: "build",
+    format: "make",
     proofKind: "design",
     brief:
       "A health centre in a 1970s building wants a step-free main entrance. An AI tool drafted the change below from the old drawings. Sketch or mark up the entrance as you would change it. This is a synthetic example.",
@@ -77,7 +78,7 @@ export const architect: RoleTemplate = {
   },
   taster: {
     title: "Read one access note",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "A note on a building entrance.",
     material: {

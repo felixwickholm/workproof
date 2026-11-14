@@ -10,6 +10,7 @@ import { useScrolled } from "../ui/top-bar";
 import { AccountCard } from "./account-menu";
 import { ModeSwitcher } from "./mode-switcher";
 import { PartnerLine } from "./partner-line";
+import { ServiceLine } from "./service-line";
 import { activeNavItem, isNavRoot, modeForPath, type Mode, type NavItem } from "./modes";
 import { ShellContext, useShell } from "./shell-context";
 
@@ -83,6 +84,7 @@ function Sidebar({ mode, active }: { mode: Mode; active: NavItem | null }) {
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-(--sidebar-width) flex-col px-3 pt-4 pb-4 shadow-[inset_-0.5px_0_0_var(--color-separator)] min-[900px]:flex">
       <ModeSwitcher mode={mode} variant="sidebar" />
+      <ServiceLine compact className="mt-3 px-3" />
       <nav aria-label={mode.label} className="mt-6 flex flex-col gap-1">
         {mode.nav.map((item) => {
           const on = item.href === active?.href;
@@ -108,13 +110,15 @@ function Sidebar({ mode, active }: { mode: Mode; active: NavItem | null }) {
   );
 }
 
-/** Phone: the tile and the mode name only. Clear at rest, glass once content scrolls under it. */
+/** Phone: the tile, the mode name and the service. Clear at rest, glass once content scrolls under it. */
 function PhoneBar({ mode }: { mode: Mode }) {
   const scrolled = useScrolled();
   return (
     <header data-scrolled={scrolled || undefined} className="top-bar pt-safe sticky top-0 z-30 min-[900px]:hidden">
-      <div className="flex h-(--phone-bar) items-center px-2">
+      <div className="flex h-(--phone-bar) items-center justify-between gap-3 px-2">
         <ModeSwitcher mode={mode} variant="bar" />
+        {/* Under 360px the view switcher needs the whole bar. */}
+        <ServiceLine compact className="pr-2 max-[359px]:hidden" />
       </div>
     </header>
   );

@@ -2,8 +2,10 @@ import type { RoleTemplate } from "../role-template";
 import { accountant } from "./accountant";
 import { aiEngineer } from "./ai-engineer";
 import { architect } from "./architect";
+import { automationDeveloper } from "./automation-developer";
 import { backendEngineer } from "./backend";
 import { businessAnalyst } from "./business-analyst";
+import { chipVerificationEngineer } from "./chip-verification-engineer";
 import { childcareWorker } from "./childcare";
 import { cleaningSupervisor } from "./cleaning-supervisor";
 import { cloudArchitect } from "./cloud-architect";
@@ -42,6 +44,7 @@ import { solutionsEngineer } from "./solutions-engineer";
 import { structuralEngineer } from "./structural-engineer";
 import { teacher } from "./teacher";
 import { technicalWriter } from "./technical-writer";
+import { researchScientist } from "./research-scientist";
 import { renovationWorker } from "./tiler";
 import { uxDesigner } from "./ux-designer";
 import { warehouseWorker } from "./warehouse-worker";
@@ -98,4 +101,7 @@ export const ROLES: readonly RoleTemplate[] = [
   architect,
   hrSpecialist,
   businessAnalyst,
+  researchScientist,
+  chipVerificationEngineer,
+  automationDeveloper,
 ];

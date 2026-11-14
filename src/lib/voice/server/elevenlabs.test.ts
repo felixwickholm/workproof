@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-import { readAudioBody, synthesize, transcribe, voiceStatus } from "./elevenlabs";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { readAudioBody, synthesize, transcribe, VOICE_TIMEOUT_MS, voiceStatus } from "./elevenlabs";
 
 const env = { ELEVENLABS_API_KEY: "test-key" };
 
@@ -102,5 +102,33 @@ describe("readAudioBody", () => {
 
   it("refuses something that is not audio", async () => {
     await expect(readAudioBody(post("{}", { "content-type": "application/json" }))).rejects.toMatchObject({ status: 415 });
+  });
+});
+
+describe("a stalled voice call", () => {
+  afterEach(() => vi.useRealTimers());
+
+  /** A service that never answers, until the call is cancelled. */
+  const stalled = () =>
+    vi.fn<typeof fetch>((_url, init) => new Promise((_, reject) => init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")))));
+
+  it.each([
+    ["text to speech", (fetch: typeof globalThis.fetch) => synthesize("Tell us why.", { env, fetch })],
+    ["speech to text", (fetch: typeof globalThis.fetch) => transcribe(new Blob(["x"], { type: "audio/webm" }), "en", { env, fetch })],
+  ])("%s is cancelled after the deadline with a clear 504", async (_, call) => {
+    vi.useFakeTimers();
+    const fetch = stalled();
+    const pending = call(fetch);
+    const settled = expect(pending).rejects.toMatchObject({ status: 504, message: "The voice service took too long to answer. Try again, or type your answer." });
+    await vi.advanceTimersByTimeAsync(VOICE_TIMEOUT_MS);
+    await settled;
+    expect(fetch.mock.calls[0][1]?.signal?.aborted).toBe(true);
+  });
+
+  it("turns a network failure into a 502", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => {
+      throw new TypeError("fetch failed");
+    });
+    await expect(synthesize("Hi", { env, fetch })).rejects.toMatchObject({ status: 502 });
   });
 });

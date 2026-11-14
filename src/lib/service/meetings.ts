@@ -80,3 +80,37 @@ export async function confirmMeeting(meetingId: string, who: ConfirmSide): Promi
     return meeting;
   });
 }
+
+/** The company side of a held meeting: only the inviting company, and only after both sides confirmed the talk. */
+function heldMeeting(data: StoreData, meetingId: string, companyId: string) {
+  const found = context(data, meetingId);
+  if (found.meeting.companyId !== companyId) throw new ServiceError(403, "Only the company that sent the invitation can record this");
+  if (found.meeting.status !== "met") throw new ServiceError(409, "Both sides confirm the talk took place first");
+  return found;
+}
+
+/** After the talk at the event, the company records whether a follow-up was agreed. The city counts these. */
+export async function recordFollowUp(meetingId: string, companyId: string, agreed: boolean): Promise<Meeting> {
+  return getStore().update((data) => {
+    const { meeting, company, proof } = heldMeeting(data, meetingId, companyId);
+    meeting.followUpAgreed = agreed;
+    appendAudit(data, {
+      actor: "human",
+      by: company.name,
+      action: "Recorded a follow-up",
+      detail: `${proof.label} and ${company.name}: ${agreed ? "a follow-up talk was agreed" : "no follow-up this time"}.`,
+    });
+    return meeting;
+  });
+}
+
+/** The company records a hire after the talk. Only the company can say it; it is counted, never shown with a name. */
+export async function recordHire(meetingId: string, companyId: string): Promise<Meeting> {
+  return getStore().update((data) => {
+    const { meeting, company, proof } = heldMeeting(data, meetingId, companyId);
+    if (meeting.hired) return meeting;
+    meeting.hired = true;
+    appendAudit(data, { actor: "human", by: company.name, action: "Recorded a hire", detail: `${company.name} hired the person behind ${proof.label}.` });
+    return meeting;
+  });
+}

@@ -25,8 +25,9 @@ export const renovationWorker: RoleTemplate = {
     "the flat below reports a damp ceiling",
   ],
   challenge: {
+    minutes: 15,
     title: "Show how you check a wall before tiling",
-    format: "build",
+    format: "make",
     proofKind: "video",
     brief:
       "We are renovating a bathroom in a 1970s apartment building. The team lead left the site note below and wants tiling to start tomorrow at 7:00. Before anyone tiles, we would like to see how you check the wall and the floor. This is a synthetic example.",
@@ -71,7 +72,7 @@ export const renovationWorker: RoleTemplate = {
   },
   taster: {
     title: "Read one site note",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "This note was left for the morning shift.",
     material: {

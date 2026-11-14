@@ -1,17 +1,20 @@
 import { getTaskDesigner } from "@/lib/ai";
-import { publishedNeed } from "@/lib/ai/scripted/compose";
+import { isTemplateId, publishedNeed } from "@/lib/ai/scripted/compose";
 import { wishOutcomes } from "@/lib/ai/scripted/wish-outcomes";
-import { redact, type KnownIdentity } from "@/lib/blind/redact";
 import { choosePlaces } from "@/lib/domain/places";
 import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
 import { draftProblems } from "@/lib/guard/check-draft";
 import { isJobFact } from "@/lib/guard/job-facts";
-import { getStore } from "@/lib/store";
+import { fetchAd, UNREADABLE_AD, type AdFetchDeps } from "@/lib/http/ad-fetch";
+import { readAd, type JobAd } from "@/lib/http/ad-reader";
+import { LIMITS } from "@/lib/http/limits";
+import { assertWritable, getStore } from "@/lib/store";
 import { newId } from "@/lib/util/hash";
 import { omit } from "@/lib/util/object";
-import { DRAFT_ACTION, FOLLOW_UP_ACTION } from "./ai-work";
+import { DRAFT_ACTION } from "./ai-work";
 import { forTalent } from "./for-talent";
 import { appendAudit, clock, findOrThrow, ServiceError } from "./support";
+import { endSentence } from "@/lib/domain/sentence";
 
 const TASK_DRAFTER = "Task drafter";
 
@@ -32,6 +35,8 @@ function publishedRequirements(facts: string[] | undefined): string[] | undefine
  * each wish, whichever designer drafted it; neither is ever published.
  */
 export async function draftChallenge(need: string): Promise<ChallengeDraft> {
+  // A request the store would refuse never reaches a model. The route has already checked the rate and the input.
+  await assertWritable();
   const draft = await getTaskDesigner().draftChallenge(need);
   await getStore().update((data) => {
     appendAudit(data, {
@@ -44,14 +49,29 @@ export async function draftChallenge(need: string): Promise<ChallengeDraft> {
   return { ...draft, yourWords: need.trim(), wishes: wishOutcomes(need, draft.coreSkills.map((s) => s.id)) };
 }
 
+/** An event task takes 5 to 15 minutes, so a person can do it before the event without taking a day off. */
+export const EVENT_MINUTES = { min: 5, max: 15 } as const;
+
 export async function approveChallenge(input: { draft: ChallengeDraft; companyId: string; approvedBy: string }): Promise<Challenge> {
+  return publish(input);
+}
+
+/**
+ * Publishes a draft after checking it again. With `onBehalf`, the city publishes it for the company, which
+ * opens it later with one click.
+ */
+async function publish(input: { draft: ChallengeDraft; companyId: string; approvedBy: string }, onBehalf?: Challenge["onBehalf"]): Promise<Challenge> {
   const approvedBy = input.approvedBy.trim();
   if (!approvedBy) throw new ServiceError(400, "A named person must approve the challenge");
   // A human may edit the draft, and a request may skip the UI, so the server checks it again.
   // The talent-visible need is rebuilt here; the request's own need, words, wish outcomes, note and designer are dropped.
-  const draft: ChallengeDraft = { ...omit(input.draft, ["yourWords", "note", "wishes", "draftedBy", "facts"]), need: publishedNeed(input.draft), kind: "event", aiAllowed: true };
+  // A template id the designer never sets is dropped, so follow-ups fall back on the generic role.
+  const templateId = input.draft.templateId && isTemplateId(input.draft.templateId) ? input.draft.templateId : undefined;
+  const sent: ChallengeDraft = { ...omit(input.draft, ["templateId"]), ...(templateId ? { templateId } : {}) };
+  const draft: ChallengeDraft = { ...omit(sent, ["yourWords", "note", "wishes", "draftedBy", "facts", "adUrl"]), need: publishedNeed(sent), kind: "event", aiAllowed: true };
   const problems = draftProblems(draft);
-  if (draft.minutes < 10) problems.push("An event task takes 10 to 30 minutes");
+  if (draft.minutes < EVENT_MINUTES.min || draft.minutes > EVENT_MINUTES.max) problems.push(`An event task takes ${EVENT_MINUTES.min} to ${EVENT_MINUTES.max} minutes`);
+  if (draft.format === "choose" && !draft.options) problems.push("A choose task needs its two options");
   if (problems.length > 0) throw new ServiceError(400, `This card cannot be published yet. ${problems[0]}.`);
   const requirements = publishedRequirements(input.draft.facts);
 
@@ -66,16 +86,76 @@ export async function approveChallenge(input: { draft: ChallengeDraft; companyId
       companyIds: [company.id],
       approvedBy,
       createdAt: clock.now().toISOString(),
+      ...(onBehalf ? { onBehalf } : {}),
     };
     data.challenges.push(challenge);
     appendAudit(data, {
       actor: "human",
       by: approvedBy,
       action: "Approved a Problem Card",
-      detail: `${company.name} published "${challenge.title}".`,
+      detail: onBehalf ? `The city published "${challenge.title}" for ${company.name}.` : `${company.name} published "${challenge.title}".`,
     });
     return challenge;
   });
+}
+
+/**
+ * A job ad as one need for the drafter: the role on the first line, then one listed line per ask, per piece
+ * of work and per job fact. Asks come first, so the core skills come from them. A listed line stays one wish.
+ * Headings, the offer and contact lines never reach it. Lines that do not fit the need limit are left out whole.
+ */
+export function adNeed(ad: JobAd): string {
+  const lines = [ad.title];
+  for (const item of [...ad.requirements, ...ad.duties, ...ad.facts]) {
+    const line = `- ${item}`;
+    if ([...lines, line].join("\n").length > LIMITS.need) break;
+    lines.push(line);
+  }
+  return lines.join("\n").slice(0, LIMITS.need);
+}
+
+/**
+ * Reads a job ad from a link and drafts a task from its words, the same way as from a sentence. The ad text
+ * passes the blind layer before any model reads it, like every text. `ownOrigin` lets this site's sample ads through.
+ */
+export async function draftFromAd(url: string, ownOrigin: string | undefined, deps?: AdFetchDeps): Promise<ChallengeDraft> {
+  await assertWritable();
+  const need = adNeed(readAd(await fetchAd(url, ownOrigin, deps)));
+  if (need.length < 10) throw new ServiceError(400, UNREADABLE_AD);
+  return { ...(await draftChallenge(need)), adUrl: url.trim() };
+}
+
+/** The city's ready message to the company: what was made, how many people did it, and where to look. */
+export function readyMessage(title: string, proofs: number, link: string): string {
+  return `We made a challenge for you: ${endSentence(title)} ${proofs} ${proofs === 1 ? "person" : "people"} already did it. See how they did: ${link}`;
+}
+
+/** The city publishes a challenge for a company, from its words or its job-ad link. The company claims it later. */
+export async function publishOnBehalf(input: { companyId: string; draft: ChallengeDraft; by: string }, link: (challengeId: string) => string): Promise<{ challenge: Challenge; message: string }> {
+  const by = input.by.trim();
+  const challenge = await publish({ draft: input.draft, companyId: input.companyId, approvedBy: by }, { by, ...(input.draft.adUrl ? { adUrl: input.draft.adUrl } : {}) });
+  return { challenge, message: readyMessage(challenge.title, 0, link(challenge.id)) };
+}
+
+/** The company opens a challenge the city made for it: one click, recorded once. */
+export async function claimChallenge(challengeId: string, companyId: string): Promise<Challenge> {
+  return getStore().update((data) => {
+    const challenge = findOrThrow(data.challenges, (c) => c.id === challengeId, "Challenge");
+    if (!challenge.onBehalf || !challenge.companyIds.includes(companyId)) throw new ServiceError(403, "Only the company the city made this challenge for can open it");
+    if (!challenge.claimedAt) {
+      challenge.claimedAt = clock.now().toISOString();
+      const company = findOrThrow(data.companies, (c) => c.id === companyId, "Company");
+      appendAudit(data, { actor: "human", by: company.name, action: "Opened a challenge made by the city", detail: `${company.name} opened "${challenge.title}".` });
+    }
+    return challenge;
+  });
+}
+
+/** The ready message for a challenge the city made, with the proofs it has now. */
+export async function readyMessageFor(challengeId: string, link: string): Promise<string> {
+  const data = await getStore().read();
+  const challenge = findOrThrow(data.challenges, (c) => c.id === challengeId && Boolean(c.onBehalf), "Challenge");
+  return readyMessage(challenge.title, data.proofs.filter((p) => p.challengeId === challengeId).length, link);
 }
 
 /** Approved event challenges, oldest first, as talent sees them. */
@@ -97,6 +177,8 @@ export async function getChallenge(id: string): Promise<Challenge> {
 }
 
 export async function createTaster(dreamJob: string): Promise<Challenge> {
+  // A request the store would refuse never reaches a model. The route has already checked the rate and the input.
+  await assertWritable();
   const draft = await getTaskDesigner().taster(dreamJob);
   return getStore().update((data) => {
     const challenge: Challenge = {
@@ -114,19 +196,4 @@ export async function createTaster(dreamJob: string): Promise<Challenge> {
     });
     return challenge;
   });
-}
-
-export async function followUpsFor(challengeId: string, answer: string, known: KnownIdentity = {}): Promise<string[]> {
-  const challenge = await findChallenge(challengeId);
-  // The follow-up writer reads the answer only after the blind layer, with the author's own name removed too.
-  const questions = await getTaskDesigner().followUps(challenge, redact(answer, known).text);
-  await getStore().update((data) => {
-    appendAudit(data, {
-      actor: "ai",
-      by: "Follow-up writer",
-      action: FOLLOW_UP_ACTION,
-      detail: `${questions.length} question${questions.length === 1 ? "" : "s"} on "${challenge.title}".`,
-    });
-  });
-  return questions;
 }

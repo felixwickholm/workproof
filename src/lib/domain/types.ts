@@ -1,10 +1,20 @@
 /**
  * Domain model. Two rules shape every type here:
  * 1. Identity lives only in `Talent`. Reviewers receive `BlindProof`, which has no identity fields.
- * 2. Nothing describes a person with a score, rank or rating. Decisions are made and logged by humans.
+ * 2. Scores are given only by a named human reviewer. Software never scores, ranks or decides.
  */
 
-export type TaskFormat = "review" | "plan" | "write" | "build" | "explain";
+/** How a challenge is done. Shown to people as Choose, Make, Fix, Read. */
+export type TaskFormat = "choose" | "make" | "fix" | "read";
+
+/** One of the two options in a "choose" challenge. */
+export interface ChoiceOption {
+  id: "a" | "b";
+  title: string;
+  body: string;
+  /** A path under /demo for a sample picture. */
+  image?: string;
+}
 
 export interface Skill {
   id: string;
@@ -109,6 +119,17 @@ export interface Challenge {
   /** AI drafts a challenge. A human at the company approves it before it is published. */
   approvedBy?: string;
   createdAt: string;
+  /** The two options of a "choose" challenge. */
+  options?: [ChoiceOption, ChoiceOption];
+  /** The city made this challenge for the company, from its words or its job-ad link. */
+  onBehalf?: { by: string; adUrl?: string };
+  /** When the company opened a challenge the city made for it (one click). Unset while unclaimed. */
+  claimedAt?: string;
+  /**
+   * The library template the scripted designer built the task from ("backend", or "generic"). Follow-up
+   * questions read it, never the editable title. Unset for a task a model wrote: the generic role answers.
+   */
+  templateId?: string;
 }
 
 /** The designer that wrote a draft: the built-in scripted one or a live model. */
@@ -139,6 +160,8 @@ export type ChallengeDraft = Omit<Challenge, "id" | "approvedBy" | "createdAt" |
   note?: string;
   /** Each wish the company wrote and what became of it, for the company's draft screen. Never published. */
   wishes?: WishOutcome[];
+  /** The job-ad link the draft was read from. Kept only as `onBehalf.adUrl` when the city publishes it. */
+  adUrl?: string;
 };
 
 /** The only place a person's identity is stored. */
@@ -149,6 +172,18 @@ export interface Talent {
   contact: string;
   /** Set by the first event submission with both name and contact. After that, nobody can change them. */
   locked?: boolean;
+}
+
+/**
+ * The person's spoken thinking while they worked. Only the text is stored; audio and screen video stay on the
+ * device, except sample clips under /demo.
+ */
+export interface ThinkAloud {
+  /** Runs through the blind layer like all text before any reviewer reads it. */
+  transcript: string;
+  seconds: number;
+  /** A screen recording: a sample clip under /demo only. */
+  screen?: Attachment;
 }
 
 export interface ExplainAnswer {
@@ -172,6 +207,9 @@ export interface Submission {
   submittedAt: string;
   /** A reviewer reported the picture as possibly identifying, and it was removed for every reader. */
   pictureRemoved?: true;
+  /** The option picked in a "choose" challenge. */
+  choice?: "a" | "b";
+  thinkAloud?: ThinkAloud;
 }
 
 export interface RedactionReport {
@@ -201,6 +239,10 @@ export interface BlindProof {
   /** "At a glance": the shape of the work (points, length, code, opening words), built by code, never about quality. */
   glance: string;
   submittedAt: string;
+  /** The option picked in a "choose" challenge. */
+  choice?: "a" | "b";
+  /** The think-aloud transcript after the blind layer, with its length and any sample screen clip. */
+  thinkAloud?: ThinkAloud;
 }
 
 /**
@@ -213,7 +255,14 @@ export interface OwnProof extends BlindProof {
   redactions: RedactionReport;
 }
 
-export type DecisionKind = "meet" | "pass";
+/** "hold": scored, not decided yet. A hold later becomes "meet" or "pass"; its scores and reason stay. */
+export type DecisionKind = "meet" | "pass" | "hold";
+
+/** A human reviewer's points for one skill. Never produced by software. */
+export interface SkillScore {
+  skillId: string;
+  points: 1 | 2 | 3 | 4 | 5;
+}
 
 export interface Decision {
   id: string;
@@ -225,6 +274,10 @@ export interface Decision {
   /** Two lines of feedback for the person. Required, so nobody is ghosted. */
   feedback: string;
   decidedAt: string;
+  /** One score per core skill of the task, from the named reviewer. Required for new decisions; older records may lack it. */
+  scores?: SkillScore[];
+  /** Average points × 2, one decimal, 0 to 10. Set with `scores`. */
+  total?: number;
 }
 
 /** "declined": the person said no. Their name is never shown to the company. */
@@ -239,6 +292,25 @@ export interface Meeting {
   status: MeetingStatus;
   talentConfirmedMet: boolean;
   companyConfirmedMet: boolean;
+  /** Set by the company after the talk: a follow-up was agreed, or not. */
+  followUpAgreed?: boolean;
+  /** Set by the company once the person was hired. */
+  hired?: boolean;
+}
+
+/**
+ * A company tips another company about a proof it scored. Needs the person's sharing consent. The receiving
+ * company sees who recommended it and the blind proof, never the sender's scores.
+ */
+export interface Recommendation {
+  id: string;
+  proofId: string;
+  /** The company whose challenge the proof answered, and which scored it. */
+  fromCompanyId: string;
+  toCompanyId: string;
+  at: string;
+  /** Set when the city made the recommendation: the person at the city who sent it. */
+  byCity?: string;
 }
 
 export interface AuditEvent {
@@ -257,9 +329,20 @@ export interface PassportEntry {
   /** The person's own words before the blind layer. Returned only to the person, never to a company or the city. */
   original: { answer: string; explain: ExplainAnswer[] };
   challenge: Pick<Challenge, "id" | "title" | "minutes" | "format" | "kind">;
+  /** Decisions on this proof, one per company reviewer who decided. Kept while screens still read it; see `reviewersAnswered`. */
   seenByHumans: number;
+  /**
+   * Reviewers who decided on this proof, with a written answer. Opening or reading a proof is not recorded,
+   * so this counts answers, never reads. The same value as `seenByHumans`.
+   */
+  reviewersAnswered: number;
   responses: {
     companyName: string;
+    /** The person who decided, for "Not now" as much as for "Meet". */
+    reviewer: string;
+    /** The reviewer's points per skill, with the skill's label, so the person sees how their work was scored. */
+    scores?: (SkillScore & { label: string })[];
+    total?: number;
     decision: DecisionKind;
     feedback: string;
     viaSecondLook: boolean;
@@ -267,10 +350,93 @@ export interface PassportEntry {
   }[];
   /** Employers with the same need who can now see this proof. */
   sharedWith: string[];
+  /** Companies another company shared this proof with: "Shared with {to} by {from}". */
+  recommendedTo: { to: string; by: string }[];
   /** Whether the person currently lets other employers see this proof through Second look. Event proofs only. */
   sharing: boolean;
   /** A reviewer reported the picture as possibly identifying; it was removed and the written answer stays. */
   pictureRemoved: boolean;
+}
+
+/**
+ * A finished task from an earlier Espoo event, kept for the person's portfolio. The event is over, so it is a
+ * fixed record: the words the company read (already blind), the named reviewer's points and written answer.
+ */
+export interface PastWork {
+  id: string;
+  /** The person's private key. Never leaves the server. */
+  talentId: string;
+  event: { name: string; date: string };
+  companyName: string;
+  taskTitle: string;
+  format: TaskFormat;
+  skills: Pick<Skill, "id" | "label">[];
+  /** The answer as the company read it, with personal details already hidden. */
+  answer: string;
+  submittedAt: string;
+  reviewer: string;
+  decision: Exclude<DecisionKind, "hold">;
+  /** The reviewer's points, one per skill, in the order of `skills`. */
+  scores: SkillScore[];
+  feedback: string;
+}
+
+/**
+ * One finished task in the portfolio: the work, the people, their words and the reviewer's own points.
+ * Never a rank or a place among other people.
+ */
+export interface PortfolioCard {
+  /** The proof id for this event's work, the record id for an earlier event's. */
+  id: string;
+  /** Set for this event's work, which has its own page under /my-work. */
+  proofId?: string;
+  event: { name: string; date: string };
+  /** Who posted the task. */
+  companyName: string;
+  taskTitle: string;
+  format: TaskFormat;
+  skills: Pick<Skill, "id" | "label">[];
+  /** The owner sees their own words; a shared link shows the words the company read. */
+  answer: string;
+  submittedAt: string;
+  /**
+   * Each reviewer's written answer. `decision`, `total` and `scores` are left out of a shared link unless the
+   * person shows them; the owner always sees them.
+   */
+  responses: {
+    reviewer: string;
+    companyName: string;
+    feedback: string;
+    decision?: "meet" | "pass";
+    /** The reviewer's total out of 10. */
+    total?: number;
+    /** The reviewer's points per skill. */
+    scores?: (SkillScore & { label: string })[];
+  }[];
+  /** Owner only: whether a shared link shows the decision and the score. */
+  decisionShown?: boolean;
+  /** Owner only: the link for this card alone, or null while it is private. */
+  link?: string | null;
+}
+
+/** Plain facts about the person's own work. Counts only, never a score or a place in a list. */
+export interface PortfolioFacts {
+  tasks: number;
+  events: number;
+  /** Companies that wrote an answer. */
+  companiesAnswered: number;
+  /** "Meet" invitations received. */
+  invitations: number;
+}
+
+/** The person's record of finished work across Espoo events, newest first. */
+export interface Portfolio {
+  facts: PortfolioFacts;
+  /** Tasks per skill the person has shown work in. A count of tasks, never a level. */
+  skills: { id: string; label: string; tasks: number }[];
+  cards: PortfolioCard[];
+  /** Owner only: the link for the whole portfolio, or null while it is private. */
+  link?: string | null;
 }
 
 export interface ReviewQueue {
@@ -280,6 +446,8 @@ export interface ReviewQueue {
   proofs: BlindProof[];
   /** Proofs another employer passed on, where the challenge shares core skills. Oldest first. */
   secondLook: (BlindProof & { sharedSkills: string[] })[];
+  /** Proofs another company recommended to this one, oldest first. Never the sender's scores. */
+  recommended: (BlindProof & { recommendedBy: string })[];
   /**
    * `identity` appears only after the person accepts. It never carries the talent id.
    * `withdrawn`: the person turned Second look off after this company answered through it, and no meeting
@@ -313,8 +481,10 @@ export interface CityOverview {
   totals: {
     challenges: number;
     proofs: number;
-    /** Event proofs with at least one employer decision: people who got an answer. */
+    /** Event proofs with at least one employer decision. A person who sent two answered proofs counts twice here. */
     proofsAnswered: number;
+    /** Distinct people with at least one answered event proof. Counted from private keys on the server; only the number leaves. */
+    peopleAnswered: number;
     /** Median hours from sending a proof to its first decision, or null before any answer. */
     medianHoursToFirstAnswer: number | null;
     humanDecisions: number;
@@ -330,7 +500,7 @@ export interface CityOverview {
 }
 
 /** Where one proof stands, for the city's flow picture. A proof label and a company, never a person. */
-export type FlowState = "sent" | "answered" | "invited" | "met";
+export type FlowState = "sent" | "answered" | "scored" | "invited" | "met";
 
 /** What the city learns from the event. Counts of tasks, proofs and human decisions; nothing about a person. */
 export interface CityInsights {
@@ -340,7 +510,15 @@ export interface CityInsights {
   byProofKind: { kind: ProofKind; tasks: number; proofs: number }[];
   /** Tasks shared by more than one employer: one piece of work, several readers. */
   pooled: { challengeId: string; title: string; companies: string[]; proofs: number }[];
+  /**
+   * Proofs at each step, each proof counted once: invited means at least one invitation, accepted at least one
+   * meeting the person accepted (or held), met at least one meeting both sides confirmed.
+   */
   funnel: { proofs: number; answered: number; invited: number; accepted: number; met: number };
+  /** Meeting records by status, as activity: one proof invited by two employers counts twice here. */
+  meetings: { invited: number; accepted: number; met: number; declined: number };
+  /** Proofs at each step for the whole event, and per task. */
+  impact: { event: ImpactCounts; tasks: TaskImpact[] };
   fairness: {
     /** Decisions in the log not made by a registered person. Counted over the log, not assumed. */
     automatedDecisions: number;
@@ -361,6 +539,96 @@ export interface CityInsights {
   /** Event proofs per day for the 8 days up to the event day (ISO dates), zero-filled. */
   arrivalsByDay: { day: string; proofs: number }[];
   companies: Company[];
+}
+
+/**
+ * Proofs at each step, each proof counted once: took (sent), scored (at least one human score), invited,
+ * agreed (the person accepted a meeting), met (both confirmed), followUps (a follow-up agreed after the talk), hires.
+ */
+export interface ImpactCounts {
+  took: number;
+  scored: number;
+  invited: number;
+  agreed: number;
+  met: number;
+  followUps: number;
+  hires: number;
+}
+
+export interface TaskImpact extends ImpactCounts {
+  challengeId: string;
+  title: string;
+  companies: string[];
+  /** The highest human total on this task, or null before any score. */
+  topTotal: number | null;
+  /** Scored proofs as a share of proofs sent, 0 to 1 (0 when none were sent). */
+  scoredShare: number;
+}
+
+/** One scored proof as the city sees it: a label and a total, never a name or the work. */
+export interface CityTopEntry {
+  proofId: string;
+  proofLabel: string;
+  total: number;
+  /** The person turned sharing on, so the city may offer this proof to another company. */
+  canShare: boolean;
+  /** Companies this proof was already shared with. */
+  sharedWith: string[];
+}
+
+/** One task for the city: its counts and its leaderboard as labels and totals only. */
+export interface CityTaskView extends TaskImpact {
+  challenge: Challenge;
+  top: CityTopEntry[];
+}
+
+/** A company that may receive a shared proof from a task: it has a task sharing at least 2 core skills. */
+export interface ShareMatch {
+  companyId: string;
+  name: string;
+  sharedSkills: string[];
+}
+
+/** Proofs of one task at the company's first steps, each counted once. */
+export interface TaskCounts {
+  took: number;
+  scored: number;
+  invited: number;
+  agreed: number;
+}
+
+/** One proof on a task's leaderboard. Blind; identity only after the person accepted this company's meeting. */
+export interface TopProof {
+  proof: BlindProof;
+  total: number;
+  /** The reviewer's points in the task's skill order. */
+  scores: SkillScore[];
+  /** The scoring decision: reviewer, kind ("hold" until decided), feedback. */
+  decision: Decision;
+  meeting?: Meeting;
+  identity?: Pick<Talent, "name" | "contact">;
+}
+
+/** The leaderboard for one task: scored proofs highest total first (ties by arrival), unscored ones oldest first. */
+export interface TopProofs {
+  challenge: Challenge;
+  scored: TopProof[];
+  waiting: BlindProof[];
+  counts: TaskCounts;
+}
+
+/** One of a company's tasks for its home: the counts and the top total. */
+export interface CompanyTaskSummary {
+  challenge: Challenge;
+  counts: TaskCounts;
+  topTotal: number | null;
+}
+
+/** Where each core skill shows up in the work: sentences found by cue words. No model, no number. */
+export interface RelatedPart {
+  skillId: string;
+  label: string;
+  quotes: string[];
 }
 
 /** One employer's invitation, as the invited person sees it. */
@@ -421,14 +689,32 @@ export interface EmployerHome {
     meetings: number;
   };
   /** This company's live tasks, newest first. */
-  tasks: { challenge: Challenge; proofsReceived: number; waiting: number; daysLive: number; places: number; placesLeft: number }[];
+  tasks: {
+    challenge: Challenge;
+    proofsReceived: number;
+    waiting: number;
+    daysLive: number;
+    places: number;
+    placesLeft: number;
+    /** Hours from this task going live to this company's first Meet decision on a proof for it, or null before one. */
+    hoursToFirstInvitation: number | null;
+    /** Proofs for this task this company scored. */
+    scored: number;
+    /** The highest human total on this task, or null before any score. */
+    topTotal: number | null;
+  }[];
+  /** Challenges the city made for this company that it has not opened yet, with the proofs already sent. */
+  unclaimed: { challenge: Challenge; proofs: number }[];
   /** An estimate: proofs waiting to be read, at about 4 minutes each. */
   readingMinutesOwed: number;
   /** The oldest five waiting proofs, in arrival order. */
   queuePreview: BlindProof[];
   secondLookWaiting: number;
   pipeline: { stage: PipelineStage; count: number }[];
-  /** Hours from this company's first task going live to its first Meet decision, or null. */
+  /**
+   * Hours from this company's oldest task going live to its first Meet decision on any task, or null. It measures an
+   * invitation, not a held meeting; kept while screens still read it. Per task: `tasks[].hoursToFirstInvitation`.
+   */
   hoursToFirstMeeting: number | null;
   /** For each core skill this company asks for: event proofs handed in for any task with that skill. Counts only. */
   pool: { skillId: string; label: string; proofs: number }[];
@@ -445,6 +731,12 @@ export interface DemoSession {
   persona: { talentId: string; name: string };
   stage: StoryStage;
 }
+
+/**
+ * What `GET /api/demo/session` answers. A request without a sandbox of its own reads the shared event, which
+ * belongs to nobody, so it gets no persona key: `persona` is null and `code` is null.
+ */
+export type DemoSessionReply = Omit<DemoSession, "persona"> & { persona: DemoSession["persona"] | null };
 
 /** An invitation from the person hosting the booth table to the author of one practice proof. */
 export type TableInviteStatus = "invited" | "accepted" | "declined";

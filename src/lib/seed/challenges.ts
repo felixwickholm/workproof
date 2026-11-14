@@ -1,66 +1,28 @@
 /**
  * Synthetic needs, written the way companies tend to write them. Espoo's talent events are for
- * professions that normally need a university or university of applied sciences degree, so every
- * task here is one. Each runs through the scripted task designer, exactly like a need typed on the
- * company page. The ML need carries bias bait on
- * purpose, so the wishes the designer sets aside are visible in the demo. The five newest tasks lead
- * the work seeker's home, so they are five different kinds of work and none of them is code.
- * A task without `places` takes the default number of answers.
+ * professions that normally need a university or university of applied sciences degree, mostly in
+ * business and tech, so every task here is one. Each runs through the scripted task designer, exactly
+ * like a need typed on the company page. The ML need carries bias bait on purpose, so the wishes the
+ * designer sets aside are visible in the demo. A task without `places` takes the default number of answers.
  */
 export const SEED_CHALLENGES = [
   {
-    key: "kaari-visits",
-    companyIds: ["co-kaari"],
+    key: "halla-automate",
+    companyIds: ["co-halla"],
     daysBeforeEvent: 3,
-    need: "Care team coordinator: prioritising care visits with patient safety first, prioritisation when staff are short, calm on the phone with families, stakeholder communication",
+    need: "AI developer: picks what matters, practical plan, sees the risk, clear writing",
   },
   {
-    key: "otso-letter",
-    companyIds: ["co-otso"],
+    key: "saarnivo-chart",
+    companyIds: ["co-saarnivo"],
     daysBeforeEvent: 6,
-    need: "Health communicator for our patient letters: plain language, accessibility, patient safety, calm on the phone with patients",
+    need: "Data scientist: data visualisation, model evaluation, data quality, scientific reasoning",
   },
   {
-    key: "pooled-care",
-    companyIds: ["co-kaari", "co-otso"],
-    daysBeforeEvent: 7,
-    need: "Nurse for shift handovers: patient safety, prioritisation, stakeholder communication, care coordination",
-  },
-  {
-    key: "merituuli-swab",
-    companyIds: ["co-merituuli"],
-    daysBeforeEvent: 1,
-    need: "Food scientist and quality manager: allergens and food safety, laboratory practice, compliance, clear communication with production",
-  },
-  {
-    key: "harjula-opening",
-    companyIds: ["co-harjula"],
-    daysBeforeEvent: 6,
-    need: "Structural engineer for apartment building renovations: structural design, safety during demolition, clear drawings for site teams, building regulations",
-  },
-  {
-    key: "tuulos-board",
-    companyIds: ["co-tuulos"],
+    key: "saarnivo-budget",
+    companyIds: ["co-saarnivo"],
     daysBeforeEvent: 4,
-    need: "Hardware test engineer for our gripper electronics: testing, embedded systems, showing how you work at the bench, safety",
-  },
-  {
-    key: "vesto-delivery",
-    companyIds: ["co-vesto"],
-    daysBeforeEvent: 2,
-    need: "Key account manager for our integrator clients: calm on the phone with unhappy clients, stakeholder communication, prioritisation, customer discovery",
-  },
-  {
-    key: "kuulas-reminder",
-    companyIds: ["co-kuulas"],
-    daysBeforeEvent: 5,
-    need: "Graphic designer for public service letters: visual design, plain language, accessibility",
-  },
-  {
-    key: "kirkas-runs",
-    companyIds: ["co-kirkas"],
-    daysBeforeEvent: 9,
-    need: "Laboratory operations planner for our night shift: prioritisation of urgent samples, patient safety, stakeholder communication, planning",
+    need: "Financial analyst for our budget follow-up: budget analysis, bookkeeping accuracy, data quality, stakeholder communication",
   },
   {
     key: "tuulos-ml",
@@ -71,31 +33,67 @@ export const SEED_CHALLENGES = [
     need: "ML engineer for our pick robots: model evaluation, data quality, code review, Python, 5 years of experience, young native speaker from a top university",
   },
   {
-    key: "pooled-data",
-    companyIds: ["co-saarnivo", "co-kivira"],
-    daysBeforeEvent: 8,
-    need: "Data engineer for meter data pipelines: pipeline reliability, SQL, error handling, Airflow",
-  },
-  {
-    key: "saarnivo-forecast",
-    companyIds: ["co-saarnivo"],
-    daysBeforeEvent: 7,
-    need: "Data scientist for load forecasting: model evaluation, data quality, experiment design and clear communication with the operations team",
-  },
-  {
-    key: "kivira-backend",
+    key: "kivira-contract",
     companyIds: ["co-kivira"],
-    daysBeforeEvent: 8,
-    need: "Backend developer for our payments API: API design, error handling, security, testing",
+    daysBeforeEvent: 5,
+    need: "Legal or compliance specialist: contract review, compliance, risk management, clear writing",
   },
   {
-    key: "kivira-pm",
-    companyIds: ["co-kivira"],
+    key: "pooled-account",
+    companyIds: ["co-vesto", "co-saarnivo"],
+    daysBeforeEvent: 2,
+    need: "Key account manager for our integration customers: prioritisation, customer discovery, stakeholder communication, risk management",
+  },
+  {
+    key: "harjula-opening",
+    companyIds: ["co-harjula"],
     daysBeforeEvent: 6,
-    // A small team that reads every answer itself chose the fewest places.
-    places: 5,
-    need: "Technical project manager for a customer integration: planning, risk management, stakeholder communication",
+    need: "Structural engineer for apartment building renovations: structural design, safety during demolition, clear drawings for site teams, building regulations",
+  },
+  {
+    key: "kide-timing",
+    companyIds: ["co-kide"],
+    daysBeforeEvent: 5,
+    // The city chose room for a big group: about twenty people took it before the company opened it.
+    places: 30,
+    need: "Chip verification engineer for timing sign-off: timing analysis, digital design, prioritisation, technical explanation",
+  },
+  {
+    key: "revontuli-video",
+    companyIds: ["co-revontuli"],
+    daysBeforeEvent: 5,
+    need: "Marketing specialist: knowing the audience, social media campaigns, experiment design, clear writing",
+  },
+  {
+    key: "pooled-product",
+    companyIds: ["co-tuulos", "co-kuulas"],
+    daysBeforeEvent: 4,
+    // A small team that reads every answer itself chose few places.
+    places: 8,
+    need: "Product manager for our operator app: prioritisation, user research, stakeholder communication, metric definitions",
+  },
+  {
+    key: "kuulas-booking",
+    companyIds: ["co-kuulas"],
+    daysBeforeEvent: 4,
+    need: "Service designer for a booking app: interaction design, accessibility, clear writing, user research",
+  },
+  {
+    key: "hohka-results",
+    companyIds: ["co-hohka"],
+    daysBeforeEvent: 7,
+    need: "Research scientist: scientific reasoning, statistics, data quality, experiment design",
   },
 ] as const;
 
 export type SeedChallengeKey = (typeof SEED_CHALLENGES)[number]["key"];
+
+/**
+ * The challenge the city made for a company from its job-ad link. The company has not opened it yet, and
+ * about twenty people already did it: "We made a challenge for you."
+ */
+export const ON_BEHALF = { key: "kide-timing", by: "Laura Mattila", adUrl: "/ads/kide-chip-verification-engineer" } as const satisfies {
+  key: SeedChallengeKey;
+  by: string;
+  adUrl: string;
+};

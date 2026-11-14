@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { buildSeed } from "@/lib/seed";
 import { getStore } from "@/lib/store";
 import { createTaster } from "./challenges";
+import { issueFollowUps } from "./follow-ups";
 import { submitWork } from "./submissions";
 import { acceptTableInvite, declineTableInvite, inviteFromTable, myTableInvite, TABLE_INVITE_ACTION } from "./table";
 import { inviteCheck, shownNameProblem } from "./table-rules";
@@ -14,11 +15,13 @@ const MESSAGE = "Your plan for the shared board caught my eye. I would like to h
 /** A practice proof sent without a name, so any name found later can only have come from accepting. */
 async function practiceProof() {
   const taster = await createTaster("Chef");
+  const answer = "I would keep the gluten-free bread on its own board and tell the guest what is in the sauce.";
   return submitWork({
     challengeId: taster.id,
     talent: { id: KEY, name: "", contact: "" },
-    answer: "I would keep the gluten-free bread on its own board and tell the guest what is in the sauce.",
-    explain: [{ question: "Why?", answer: "One shared board undoes the rest of the plate." }],
+    answer,
+    issueId: (await issueFollowUps(taster.id, answer)).issueId,
+    explain: [{ answer: "One shared board undoes the rest of the plate." }],
     shareWithSimilar: false,
   });
 }

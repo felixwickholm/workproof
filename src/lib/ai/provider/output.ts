@@ -1,18 +1,16 @@
 import { z } from "zod";
-import { PROOF_KINDS } from "@/lib/domain/kinds";
-import type { TaskFormat } from "@/lib/domain/types";
+import { PROOF_KINDS, TASK_FORMATS } from "@/lib/domain/kinds";
 import { SKILL_IDS, type SkillId } from "@/lib/skills/vocabulary";
 
 /** What a model must return, checked twice: as a JSON Schema the API enforces, then strictly with zod here. */
 
-const FORMATS = ["review", "plan", "write", "build", "explain"] as const satisfies readonly TaskFormat[];
 const MATERIAL_KINDS = ["code", "text"] as const;
 
 const skillId = z.enum(SKILL_IDS as [SkillId, ...SkillId[]]);
 
 export const taskSchema = z.strictObject({
   title: z.string().trim().min(3).max(120),
-  format: z.enum(FORMATS),
+  format: z.enum(TASK_FORMATS),
   /** Optional here so a model that leaves it out still drafts; the scripted draft supplies it then. */
   proofKind: z.enum(PROOF_KINDS).optional(),
   brief: z.string().trim().min(20).max(900),
@@ -52,7 +50,7 @@ function oneOf(values: readonly string[]): JsonSchema {
  */
 export const TASK_JSON_SCHEMA = object({
   title: text,
-  format: oneOf(FORMATS),
+  format: oneOf(TASK_FORMATS),
   proofKind: oneOf(PROOF_KINDS),
   brief: text,
   material: object({ kind: oneOf(MATERIAL_KINDS), title: text, body: text }),

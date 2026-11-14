@@ -26,8 +26,9 @@ export const graphicDesigner: RoleTemplate = {
     "the clinic logo and address block cannot move",
   ],
   challenge: {
+    minutes: 15,
     title: "Redesign this appointment reminder for people new to Finnish",
-    format: "build",
+    format: "make",
     proofKind: "design",
     brief:
       "Our client, a health clinic, sends this reminder before a blood test. Many patients come on the wrong day or have eaten, and the test has to be redone. Many of them are new to Finnish. Redesign the reminder so it works on paper and on a phone. Keep every fact. This is a synthetic example.",
@@ -73,7 +74,7 @@ export const graphicDesigner: RoleTemplate = {
   },
   taster: {
     title: "Fix one line of a notice",
-    format: "build",
+    format: "make",
     proofKind: "design",
     brief: "This line is at the bottom of a notice taped to a clinic door.",
     material: {

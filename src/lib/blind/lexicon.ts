@@ -119,7 +119,7 @@ export const NOT_EMPLOYERS = new Set([
   "November", "December", "Christmas", "Easter",
   "AWS", "GCP", "Azure", "Kubernetes", "Docker", "Python", "Java", "JavaScript", "TypeScript", "SQL",
   "React", "Postgres", "PostgreSQL", "Linux", "Windows", "Mac", "iOS", "Android", "Git", "GitHub",
-  "Terraform", "Kafka", "Spark", "Airflow", "Excel", "Monday's", "Workprint", "Proof", "AI", "API", "UI",
+  "Terraform", "Kafka", "Spark", "Airflow", "Excel", "Monday's", "WorkProof", "Proof", "AI", "API", "UI",
   "UX", "QA", "ML", "LLM", "CI", "CD", "PR", "MVP", "Q1", "Q2", "Q3", "Q4", "Week", "Step", "Line",
   "First", "Second", "Third", "Least", "Most", "Some", "All", "Any", "Each", "Every", "Scale", "Risk",
   "Pandas", "NumPy", "Numpy", "SciPy", "PyTorch", "TensorFlow", "Keras", "Jupyter", "Figure", "Fig", "Table",

@@ -1,5 +1,5 @@
 /**
- * The walkthrough's position as a pure reducer. The card keeps showing the current step while
+ * The tour's position as a pure reducer. The card keeps showing the current step while
  * the next one is prepared (stage set, page opened, target found); only then does it switch.
  */
 
@@ -9,7 +9,7 @@ export type TourState =
   | { open: false }
   | {
       open: true;
-      /** Which walkthrough runs. */
+      /** Which tour runs. */
       kind: TourKind;
       /** The step on the card. */
       index: number;
@@ -36,7 +36,7 @@ export type TourAction =
 
 export const closedTour: TourState = { open: false };
 
-/** How many steps a walkthrough has: one count for both, or one per kind. */
+/** How many steps a tour has: one count for all, or one per kind. */
 export type StepCount = number | Record<TourKind, number>;
 
 export function tourReducer(state: TourState, action: TourAction, steps: StepCount): TourState {
@@ -44,8 +44,8 @@ export function tourReducer(state: TourState, action: TourAction, steps: StepCou
     case "start": {
       const kind = action.kind ?? "minute";
       if (!state.open) return { open: true, kind, index: 0, pending: 0, run: 1, spotlight: false, revealed: false };
-      // Another walkthrough asked for while one shows (the last step opens Olena's story): the card
-      // stays where it is and the new walkthrough's first step is prepared under it.
+      // Another tour asked for while one shows: the card stays where it is and the new tour's first
+      // step is prepared under it.
       if (state.kind === kind) return state;
       return { open: true, kind, index: 0, pending: 0, run: state.run + 1, spotlight: false, revealed: state.revealed };
     }
@@ -67,12 +67,12 @@ export function tourReducer(state: TourState, action: TourAction, steps: StepCou
   }
 }
 
-/** "3 of 9". */
+/** "3 of 7". */
 export function counterText(index: number, stepCount: number) {
   return `${index + 1} of ${stepCount}`;
 }
 
-/** What a screen reader hears when a step settles: "Step 3 of 9: She does the work." */
+/** What a screen reader hears when a step settles: "Step 3 of 7: Her name is hidden." */
 export function announcement(index: number, stepCount: number, title: string) {
   return `Step ${index + 1} of ${stepCount}: ${title}`;
 }

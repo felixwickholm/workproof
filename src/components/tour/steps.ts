@@ -1,233 +1,162 @@
-import { DEFAULT_COMPANY_ID } from "@/components/company/company-choice";
 import type { StoryStage } from "@/lib/domain/types";
+import { STORY_CHALLENGE, STORY_COMPANY, storyBossFirstName, storyCompanyName } from "./story-ids";
 
-/** Whose screen a step shows. "start" is the landing page and the close, which belong to nobody. */
+/** Whose screen a step shows. "start" is a card that belongs to nobody (the end card). */
 export type TourMode = "seeker" | "employer" | "city" | "start";
+
+/** The three views that each have their own demo. */
+export type TourView = Exclude<TourMode, "start">;
+
+/** Which tour runs: the one-minute overview from the landing page, or the demo of one view. */
+export type TourKind = "minute" | TourView;
+
+export const TOUR_KINDS: readonly TourKind[] = ["minute", "seeker", "employer", "city"];
 
 /** Stands for the id of Olena's story proof in a route; filled in once the stage is set. */
 export const STORY_PROOF = "{storyProof}";
 
+
 export interface TourStep {
   id: string;
+  /** At most 8 words. */
   title: string;
-  body: string;
-  /** Where the step happens. May contain STORY_PROOF. */
-  route: string;
+  /** At most one sentence of at most 12 words. The screen itself shows the rest. */
+  body?: string;
+  /** Where the step happens. May contain STORY_PROOF. Without one the step stays on the page it is on. */
+  route?: string;
   /** The story stage the sandbox must be at; the server rebuilds it when it differs. */
   stage?: StoryStage;
   /** The `data-tour` id to spotlight. Without one the card sits in the middle of the screen. */
   target?: string;
-  /** A CSS selector to light when no element carries the `data-tour` id (a page another team owns). */
+  /** A CSS selector to light while no element carries the `data-tour` id yet. */
   selector?: string;
+  /**
+   * The screen that carries this target is still being built: the step waits only briefly for it,
+   * then shows its card in the middle.
+   */
+  soon?: boolean;
   /** Glide the page's compare slider once from "written" to "company reads" while the step shows. */
   glide?: boolean;
   /**
-   * Text the lit element must contain, when a page carries several elements of one kind (two
-   * invitations): the step means the one with these words.
+   * Text the lit element must contain, when a page carries several of one kind (two invitations).
+   * Read when the step runs, so it follows the demo world's names.
    */
-  targetText?: string;
-  /**
-   * The page shows the same thing at every story stage (the landing page), so the stage is set
-   * while the step already shows, and the first card appears at once.
-   */
+  targetText?: () => string;
+  /** The page reads no story data, so its stage is set while the step already shows. */
   stageInBackground?: boolean;
   mode: TourMode;
-  /**
-   * The company Hiring mode acts as on this step. A visitor may have switched company before
-   * the tour; the story still has to open Kaari's queue.
-   */
+  /** The company Hiring mode acts as on this step, whatever company the visitor chose before. */
   company?: string;
 }
 
-/** Whose screen it is, for the chip and its dot. Each person keeps one hue through the whole tour. */
-export interface ModeChip {
-  label: string;
-  /** The person's hue, as a CSS colour. Identity, not data: it never appears in a chart. */
-  hue: string;
-}
-
-/** The chip on the card, so a visitor always knows whose screen they are looking at. */
-export const modeChip: Record<TourMode, ModeChip | null> = {
-  seeker: { label: "Olena, looking for work", hue: "#d97706" },
-  employer: { label: "Anna, Kaari Home Care", hue: "#7c3aed" },
-  city: { label: "City of Espoo, the organiser", hue: "#2563eb" },
-  start: null,
-};
-
 /**
- * The line the card shows while the screen changes hands, so the switch is understood. Null when
- * the next step is on the same person's screen or on nobody's.
+ * The chip on the card, so a visitor always knows whose screen they are looking at. The boss is
+ * named from the demo world, so the chip never names someone the story no longer has.
  */
-export function switchLine(from: TourMode, to: TourMode): string | null {
-  if (from === to || to === "start") return null;
-  if (to === "employer") return "Now the employer's side.";
-  if (to === "city") return "Now the city's side.";
-  return from === "start" ? "Now Olena's screen." : "Back to Olena.";
+export function modeChip(mode: TourMode): string | null {
+  if (mode === "seeker") return "Olena, looking for work";
+  if (mode === "city") return "The City of Espoo";
+  if (mode === "employer") {
+    const boss = storyBossFirstName();
+    return boss ? `${boss}, the boss` : "The boss";
+  }
+  return null;
 }
 
-/** Which walkthrough runs: the one-minute overview (the default) or Olena's whole story. */
-export type TourKind = "minute" | "story";
+/** Where a way out of the end card leads. */
+export interface EndAction {
+  label: string;
+  /** The page it opens. */
+  href: string;
+  /** The view whose own demo the opened page offers (its Show me button gives a pulse). */
+  offer?: TourView;
+}
 
-/** "See it in 2 minutes": one person's story from the landing page to the city view, about 12 seconds a step. */
-export const storySteps: readonly TourStep[] = [
-  {
-    id: "meet-olena",
-    title: "Meet Olena.",
-    body: 'Doctor in Kyiv for 11 years. Now she cleans offices in Espoo. 140 applications, no interview. Her CV says "cleaner".',
-    route: "/",
-    stage: "before",
-    target: "olena-story",
-    stageInBackground: true,
-    mode: "start",
-  },
-  {
-    id: "skips-the-cv",
-    title: "She skips the CV.",
-    body: "Espoo companies post short real tasks, not job ads. Kaari Home Care needs a visit coordinator. The task takes 20 minutes.",
-    route: "/seeker",
-    stage: "before",
-    target: "task-feed",
-    mode: "seeker",
-  },
-  {
-    id: "does-the-work",
-    title: "She does the work.",
-    body: "Two carers are off sick. Nine visits, six slots. Olena decides which visits stay. Then she explains one choice by voice.",
-    route: `/passport/${STORY_PROOF}`,
-    stage: "sent",
-    target: "own-work",
-    mode: "seeker",
-  },
-  {
-    id: "name-stays",
-    title: "Her name stays with her.",
-    body: "Before anyone reads it, Workprint hides 7 details, like her name, her city and her university. Her voice is kept as text only.",
-    route: `/passport/${STORY_PROOF}`,
-    stage: "sent",
-    target: "blind-proof",
-    mode: "seeker",
-  },
-  {
-    id: "anna-queue",
-    title: "Anna opens her queue.",
-    body: "Anna hires at Kaari Home Care. She sees work in the order it arrived. No names, no photos, no scores.",
-    route: "/employer",
-    stage: "sent",
-    target: "queue",
-    mode: "employer",
-    company: DEFAULT_COMPANY_ID,
-  },
-  {
-    id: "person-decides",
-    title: "A person decides.",
-    body: "Anna reads Proof K7, writes what she saw and asks to meet. No AI ranked anyone. A written answer is required, also for a no.",
-    route: `/company/review/${STORY_PROOF}`,
-    stage: "invited",
-    target: "decision",
-    mode: "employer",
-    company: DEFAULT_COMPANY_ID,
-  },
-  {
-    id: "olena-says-yes",
-    title: "Olena says yes.",
-    body: "She reads Anna's answer and accepts. Only now does Kaari see her name. Her earlier plan, which another employer could not use, reached Otso Health through Second look, with her consent.",
-    route: "/seeker",
-    stage: "met",
-    target: "invitation",
-    targetText: "Kaari Home Care",
-    mode: "seeker",
-  },
-  {
-    id: "espoo-sees",
-    title: "Espoo sees what happened.",
-    body: "Not sign-ups. Outcomes: written answers, meetings both sides confirmed, and 0 automated decisions.",
-    route: "/city",
-    stage: "met",
-    target: "city-outcomes",
-    mode: "city",
-  },
-  {
-    id: "close",
-    title: "Work first. Names last. People decide.",
-    body: "That is Workprint. Explore it yourself, or do a task on your own phone.",
-    route: "/city",
-    mode: "start",
-  },
+const company = STORY_COMPANY;
+const myWork = `/my-work/${STORY_PROOF}`;
+const review = `/company/review/${STORY_PROOF}`;
+const work = `/challenges/${STORY_CHALLENGE}/work`;
+const leaderboard = `/employer/challenges/${STORY_CHALLENGE}`;
+
+/** The last card of every tour. */
+const END_TITLE = "Now try it yourself.";
+
+/** The overview from the landing page: one person's way from a challenge to a talk, in about a minute. */
+export const minuteSteps: readonly TourStep[] = [
+  { id: "m-ask", title: "A company needs help.", body: "It posts a short challenge.", route: "/company", stage: "before", stageInBackground: true, target: "job-ad", mode: "employer", company },
+  { id: "m-do", title: "Olena does the challenge.", body: "She says what she thinks as she works.", route: work, stage: "before", target: "do-challenge", mode: "seeker" },
+  { id: "m-hidden", title: "Her name is hidden.", body: "The company sees her work, not her name.", route: myWork, stage: "sent", target: "blind-work", glide: true, mode: "seeker" },
+  { id: "m-score", title: "The boss scores the work.", body: "A person gives the points, not the AI.", route: review, stage: "invited", target: "score", mode: "employer", company },
+  { id: "m-yes", title: "She says yes.", body: "Now the company sees her name.", route: "/seeker", stage: "met", target: "invitation", targetText: storyCompanyName, mode: "seeker" },
+  { id: "m-city", title: "The city sees what came of it.", body: "Who took part, who met, and who talks again.", route: "/city", stage: "met", target: "city-funnel", mode: "city" },
+  { id: "m-end", title: END_TITLE, body: "Pick your side.", mode: "start" },
 ];
 
-/** Where "Explore on your own" leaves the sandbox: the default state for free exploring. */
+/** Looking for work: pick a challenge, do it, the name hidden, a score and an invite, then yes. */
+export const seekerSteps: readonly TourStep[] = [
+  { id: "s-pick", title: "Pick a challenge.", body: "Companies in Espoo post short challenges.", route: "/seeker", stage: "before", target: "challenge-list", mode: "seeker" },
+  { id: "s-do", title: "Do it and think aloud.", body: "Olena talks as she works, with no camera.", route: work, stage: "before", target: "do-challenge", mode: "seeker" },
+  { id: "s-sent", title: "She sends her work.", body: "The company sees it without her name.", route: myWork, stage: "sent", target: "own-work", glide: true, mode: "seeker" },
+  { id: "s-score", title: "Her CV got no answer.", body: "Her work got 9 of 10.", route: myWork, stage: "invited", target: "my-score", mode: "seeker" },
+  { id: "s-invite", title: "She gets an invite.", body: "The boss wants to meet her.", route: "/seeker", stage: "invited", target: "invitation", targetText: storyCompanyName, mode: "seeker" },
+  { id: "s-yes", title: "She says yes.", body: "Only now does the company see her name.", route: "/seeker", stage: "met", target: "invitation", targetText: storyCompanyName, mode: "seeker" },
+  { id: "s-end", title: END_TITLE, body: "Pick a challenge and do it.", mode: "start" },
+];
+
+/** Hiring: a job ad becomes a challenge, the work is read without names, scored, and the best invited. */
+export const employerSteps: readonly TourStep[] = [
+  { id: "e-ad", title: "Paste your job ad.", body: "Or say what you need in one sentence.", route: "/company", stage: "invited", target: "job-ad", mode: "employer", company },
+  { id: "e-draft", title: "The challenge is written for you.", body: "You read it and say yes.", route: "/company", stage: "invited", target: "draft", soon: true, mode: "employer", company },
+  { id: "e-read", title: "Read the work, not the name.", body: "Work waits in the order it came.", route: "/company/review", stage: "sent", target: "queue", mode: "employer", company },
+  { id: "e-score", title: "Score the work.", body: "Give points for each skill and say why.", route: review, stage: "sent", target: "score", mode: "employer", company },
+  { id: "e-top", title: "See the best work first.", body: "The top scores, still with no names.", route: leaderboard, stage: "invited", target: "top-work", mode: "employer", company },
+  { id: "e-invite", title: "Invite the people you want to meet.", body: "Names show only when they say yes.", route: leaderboard, stage: "invited", target: "invite", soon: true, mode: "employer", company },
+  { id: "e-end", title: END_TITLE, body: "Paste a job ad or read the work.", mode: "start" },
+];
+
+/** City: the map, who took part, what companies need, the talks, and how people are kept safe. */
+export const citySteps: readonly TourStep[] = [
+  { id: "c-map", title: "See the event on the map.", body: "Where the companies and the work are in Espoo.", route: "/city", stage: "met", target: "city-map", mode: "city" },
+  { id: "c-funnel", title: "See who took part.", body: "From challenge to score to a talk.", route: "/city", stage: "met", target: "city-funnel", mode: "city" },
+  { id: "c-demand", title: "See what companies need.", body: "The skills they ask for most.", route: "/city", stage: "met", target: "city-demand", mode: "city" },
+  { id: "c-talks", title: "Count the talks.", body: "See which talks led to a next meeting.", route: "/city", stage: "met", target: "city-talks", mode: "city" },
+  { id: "c-safe", title: "See how people are kept safe.", body: "Names stay hidden, and people make every choice.", route: "/city", stage: "met", target: "city-safeguards", mode: "city" },
+  { id: "c-end", title: END_TITLE, body: "Look around the city view.", mode: "start" },
+];
+
+/** Where free exploring starts once a tour closes. */
 export const EXPLORE_STAGE: StoryStage = "invited";
 
-/**
- * The one-minute walkthrough: what it is, how it works on each side, why it is fair, and how to try
- * it. Steps 1 to 5 move on by themselves; the last one waits for the visitor.
- */
-export const minuteSteps: readonly TourStep[] = [
-  {
-    id: "m-what",
-    title: "Skip the CV. Do the work.",
-    body: "An Espoo company posts a short real task. A professional does it. A person reads the work without the name and decides who to meet.",
-    route: "/",
-    // The landing page reads no story data, so the next step's stage is set behind it.
-    stage: "sent",
-    stageInBackground: true,
-    target: "hero",
-    selector: "#hero-title",
-    mode: "start",
-  },
-  {
-    id: "m-work",
-    title: "The work, without the name.",
-    body: "Olena was a doctor in Kyiv. Before anyone reads her plan, 7 details are hidden: her name, her city, her university.",
-    route: `/passport/${STORY_PROOF}`,
-    stage: "sent",
-    target: "blind-proof",
-    glide: true,
-    mode: "seeker",
-  },
-  {
-    id: "m-decide",
-    title: "A person decides. In writing.",
-    body: "Anna reads Proof K7 in arrival order. No score, no ranking. A written reason is required, also for a no.",
-    route: `/company/review/${STORY_PROOF}`,
-    stage: "invited",
-    target: "decision",
-    mode: "employer",
-    company: DEFAULT_COMPANY_ID,
-  },
-  {
-    id: "m-consent",
-    title: "Names last.",
-    body: "Olena reads Anna's words and accepts. Only now does the company see her name.",
-    route: "/seeker",
-    stage: "met",
-    target: "invitation",
-    targetText: "Kaari Home Care",
-    mode: "seeker",
-  },
-  {
-    id: "m-city",
-    title: "Espoo sees outcomes.",
-    body: "People who got a written answer, how fast it came, meetings both sides confirmed, and 0 automated decisions.",
-    route: "/city",
-    stage: "met",
-    target: "city-outcomes",
-    mode: "city",
-  },
-  {
-    id: "m-try",
-    title: "Now try it yourself.",
-    body: "Do a 2-minute task on your phone, explore the three sides, or follow Olena's whole story.",
-    route: "/city",
-    mode: "start",
-  },
-];
+export interface Tour {
+  steps: readonly TourStep[];
+  /** The ways out of the end card, the first one filled. */
+  end: readonly EndAction[];
+}
 
-/** The steps of each walkthrough and the name its card shows. */
-export const tours: Record<TourKind, { steps: readonly TourStep[]; name: string }> = {
-  minute: { steps: minuteSteps, name: "1-minute walkthrough" },
-  story: { steps: storySteps, name: "Olena's story" },
+export const tours: Record<TourKind, Tour> = {
+  minute: {
+    steps: minuteSteps,
+    end: [
+      { label: "I'm looking for work", href: "/seeker", offer: "seeker" },
+      { label: "I'm hiring", href: "/employer", offer: "employer" },
+      { label: "I'm the City of Espoo", href: "/city", offer: "city" },
+    ],
+  },
+  seeker: { steps: seekerSteps, end: [{ label: "Pick a challenge", href: "/challenges" }] },
+  employer: {
+    steps: employerSteps,
+    end: [
+      { label: "Paste a job ad", href: "/company" },
+      { label: "Read the work", href: "/company/review" },
+    ],
+  },
+  city: { steps: citySteps, end: [{ label: "Look around", href: "/city" }] },
 };
 
-/** The story's steps under their earlier name. */
-export const tourSteps = storySteps;
+/**
+ * The tour a request names. Anything unknown, and the retired "story", start the one-minute tour,
+ * so an old link or button still works.
+ */
+export function tourKindOf(value: unknown): TourKind {
+  return TOUR_KINDS.includes(value as TourKind) ? (value as TourKind) : "minute";
+}

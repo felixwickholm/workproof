@@ -1,15 +1,29 @@
 import type { FlowMapCompany, FlowMapFlow, FlowState } from "./types";
 
-const STATE_ORDER: Record<FlowState, number> = { sent: 0, answered: 1, invited: 2, met: 3 };
+/**
+ * The three ways the map draws a line: handed in (dashed), scored by a person (solid) and
+ * invited to talk (accent). A meeting is drawn as an invitation.
+ */
+export type FlowStage = "sent" | "scored" | "invited";
 
-/** True when a proof reached at least the given state. A meeting also counts as answered. */
+export const STAGE_ORDER: readonly FlowStage[] = ["sent", "scored", "invited"];
+
+const STATE_RANK: Record<FlowState, number> = { sent: 0, answered: 1, scored: 1, invited: 2, met: 3 };
+
+/** The line a state is drawn as. */
+export function stageOf(state: FlowState): FlowStage {
+  const rank = STATE_RANK[state];
+  return rank === 0 ? "sent" : rank === 1 ? "scored" : "invited";
+}
+
+/** True when a piece of work reached at least the given state. A meeting also counts as scored. */
 function reached(state: FlowState, atLeast: FlowState): boolean {
-  return STATE_ORDER[state] >= STATE_ORDER[atLeast];
+  return STATE_RANK[state] >= STATE_RANK[atLeast];
 }
 
 export interface FlowTotals {
   sent: number;
-  answered: number;
+  scored: number;
   invited: number;
   met: number;
 }
@@ -17,7 +31,7 @@ export interface FlowTotals {
 export function countFlows(flows: readonly FlowMapFlow[]): FlowTotals {
   return {
     sent: flows.length,
-    answered: flows.filter((f) => reached(f.state, "answered")).length,
+    scored: flows.filter((f) => reached(f.state, "scored")).length,
     invited: flows.filter((f) => reached(f.state, "invited")).length,
     met: flows.filter((f) => reached(f.state, "met")).length,
   };
@@ -35,29 +49,36 @@ function plural(count: number, one: string, many: string) {
 /** The map in one paragraph, for screen readers and the image's label. */
 export function summarySentence(flows: readonly FlowMapFlow[]): string {
   const totals = countFlows(flows);
-  if (totals.sent === 0) return "No proofs sent yet.";
+  if (totals.sent === 0) return "No work handed in yet.";
   const companies = new Set(flows.map((f) => f.companyId)).size;
   return [
-    `${plural(totals.sent, "proof", "proofs")} sent to ${plural(companies, "company", "companies")}.`,
-    `${totals.answered} answered in writing.`,
+    `${plural(totals.sent, "piece of work went", "pieces of work went")} to ${plural(companies, "company", "companies")}.`,
+    `${totals.scored} scored by a person.`,
     `${plural(totals.invited, "invitation", "invitations")}.`,
-    `${plural(totals.met, "meeting", "meetings")} held.`,
   ].join(" ");
 }
 
-/** The card line for one company: "6 proofs received · 4 answered · 1 meeting". */
+/** The card line for one company: "6 people took its challenge · 4 scored · 1 invited". */
 export function companyLine(totals: FlowTotals): string {
-  return [plural(totals.sent, "proof received", "proofs received"), `${totals.answered} answered`, plural(totals.met, "meeting", "meetings")].join(" · ");
+  return [plural(totals.sent, "person took its challenge", "people took its challenge"), `${totals.scored} scored`, `${totals.invited} invited`].join(" · ");
 }
 
-export type NodeSize = 0 | 1 | 2;
+export type Step = 0 | 1 | 2;
 
 /**
- * Three node sizes by proofs received, relative to the busiest company, so the steps stay
- * readable whether the event has five proofs or five hundred.
+ * Three steps by count, relative to the largest, so the steps stay readable whether the event
+ * has five pieces of work or five hundred. Used for pin sizes and line weights.
  */
-export function nodeSize(received: number, busiest: number): NodeSize {
-  if (busiest <= 0 || received * 3 <= busiest) return 0;
-  if (received * 3 <= busiest * 2) return 1;
+export function stepOf(count: number, largest: number): Step {
+  if (largest <= 0 || count * 3 <= largest) return 0;
+  if (count * 3 <= largest * 2) return 1;
   return 2;
+}
+
+/** Line widths in pixels for the three steps: thin, medium, heavy. */
+export const LINE_WEIGHT: Record<Step, number> = { 0: 1.25, 1: 2.25, 2: 3.5 };
+
+/** The width in pixels of a line that carries `count` pieces of work. */
+export function lineWeight(count: number, largest: number): number {
+  return LINE_WEIGHT[stepOf(count, largest)];
 }

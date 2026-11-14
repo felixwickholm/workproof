@@ -93,5 +93,15 @@ export function buildQueue(data: StoreData, companyId: string, now: Date): Revie
       };
     });
 
-  return { company: withReviewers(company), challenges, proofs, secondLook, decided };
+  // Shared by another company or by the city: the blind proof and who shared it, never their scores.
+  const companyName = (id: string) => data.companies.find((c) => c.id === id)?.name ?? "An employer";
+  const recommended = (data.recommendations ?? [])
+    .filter((r) => r.toCompanyId === companyId && !decidedIds.has(r.proofId))
+    .flatMap((r) => {
+      const proof = data.proofs.find((p) => p.proofId === r.proofId);
+      return proof ? [{ ...toBlindProof(proof), recommendedBy: r.byCity ? `the City of Espoo (from ${companyName(r.fromCompanyId)}'s challenge)` : companyName(r.fromCompanyId) }] : [];
+    })
+    .sort(byArrival);
+
+  return { company: withReviewers(company), challenges, proofs, secondLook, recommended, decided };
 }

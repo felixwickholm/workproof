@@ -3,6 +3,7 @@ import { CLEAN, dataUrl } from "@/lib/http/jpeg-test-data";
 import { buildSeed } from "@/lib/seed";
 import { getStore } from "@/lib/store";
 import { REPORT_PICTURE_ACTION, reportPicture } from "./pictures";
+import { issueFollowUps } from "./follow-ups";
 import { submitWork } from "./submissions";
 import { buildPassport } from "./views/passport";
 import { buildQueue } from "./views/queue";
@@ -12,14 +13,13 @@ const person = { id: "t_pictures_test_8b1d", name: "Ilona Koski", contact: "ilon
 const picture = { kind: "photo" as const, src: dataUrl(CLEAN), alt: "Frames sorted into two piles", confirmed: true as const };
 
 async function sendWithPicture() {
+  const answer = "Split by grasp attempt.";
   return submitWork({
     challengeId: "ch-tuulos-ml",
     talent: person,
-    answer: "Split by grasp attempt.",
-    explain: [
-      { question: "Why split by attempt?", answer: "Frames of one attempt look alike." },
-      { question: "What would you check first?", answer: "Where the threshold was chosen." },
-    ],
+    answer,
+    issueId: (await issueFollowUps("ch-tuulos-ml", answer)).issueId,
+    explain: [{ answer: "Frames of one attempt look alike." }, { answer: "Where the threshold was chosen." }],
     attachment: picture,
     shareWithSimilar: false,
   });
@@ -34,7 +34,7 @@ describe("reportPicture", () => {
     const proof = await sendWithPicture();
     expect(buildQueue(await getStore().read(), "co-tuulos", NOW).proofs.find((p) => p.proofId === proof.proofId)?.attachment).toBeDefined();
 
-    await expect(reportPicture(proof.proofId, "co-tuulos", "Mira Salo")).resolves.toEqual({ proofId: proof.proofId, pictureRemoved: true });
+    await expect(reportPicture(proof.proofId, "co-tuulos", "Elias Virta")).resolves.toEqual({ proofId: proof.proofId, pictureRemoved: true });
     const data = await getStore().read();
     for (const company of data.companies) expect(JSON.stringify(buildQueue(data, company.id, NOW))).not.toContain(picture.src);
     expect(data.submissions.find((s) => s.id === proof.proofId)).toMatchObject({ answer: "Split by grasp attempt.", pictureRemoved: true });
@@ -42,22 +42,22 @@ describe("reportPicture", () => {
     const entry = buildPassport(data, person.id, NOW).find((e) => e.proof.proofId === proof.proofId);
     expect(entry?.pictureRemoved).toBe(true);
     expect(entry?.proof.attachment).toBeUndefined();
-    expect(data.audit.at(-1)).toMatchObject({ actor: "human", by: "Mira Salo", action: REPORT_PICTURE_ACTION });
+    expect(data.audit.at(-1)).toMatchObject({ actor: "human", by: "Elias Virta", action: REPORT_PICTURE_ACTION });
   });
 
   it("needs a named reviewer at a company that can read the proof", async () => {
     const proof = await sendWithPicture();
     await expect(reportPicture(proof.proofId, "co-tuulos", " . ")).rejects.toMatchObject({ status: 400 });
-    await expect(reportPicture(proof.proofId, "co-kaari", "Anna Koivisto")).rejects.toMatchObject({ status: 403 });
-    await expect(reportPicture("proof_missing", "co-tuulos", "Mira Salo")).rejects.toMatchObject({ status: 404 });
+    await expect(reportPicture(proof.proofId, "co-hohka", "Elina Heikkilä")).rejects.toMatchObject({ status: 403 });
+    await expect(reportPicture("proof_missing", "co-tuulos", "Elias Virta")).rejects.toMatchObject({ status: 404 });
     expect((await getStore().read()).submissions.find((s) => s.id === proof.proofId)?.attachment).toBeDefined();
   });
 
   it("answers a second report of the same picture without a second audit line", async () => {
     const proof = await sendWithPicture();
-    await reportPicture(proof.proofId, "co-tuulos", "Mira Salo");
+    await reportPicture(proof.proofId, "co-tuulos", "Elias Virta");
     const lines = (await getStore().read()).audit.length;
-    await expect(reportPicture(proof.proofId, "co-tuulos", "Mira Salo")).resolves.toMatchObject({ pictureRemoved: true });
+    await expect(reportPicture(proof.proofId, "co-tuulos", "Elias Virta")).resolves.toMatchObject({ pictureRemoved: true });
     expect((await getStore().read()).audit).toHaveLength(lines);
   });
 });

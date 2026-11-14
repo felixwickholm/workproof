@@ -1,4 +1,4 @@
-import type { Attachment, BlindProof, Challenge, ExplainAnswer, OwnProof, RedactionReport } from "@/lib/domain/types";
+import type { Attachment, BlindProof, Challenge, ExplainAnswer, OwnProof, RedactionReport, ThinkAloud } from "@/lib/domain/types";
 import { hash } from "@/lib/util/hash";
 
 // No I or O, so labels never read as 1 or 0.
@@ -45,6 +45,16 @@ function copyAttachment(attachment: Attachment | undefined): { attachment?: Atta
 
 const spokenFlag = (spoken: boolean | undefined) => (spoken === true ? { spoken } : {});
 
+/** The option picked in a "choose" challenge, only when it is one of the two. */
+const choiceField = (choice: "a" | "b" | undefined): { choice?: "a" | "b" } => (choice === "a" || choice === "b" ? { choice } : {});
+
+/** Copies only the named think-aloud fields: the (already redacted) transcript, its length and a sample screen clip. */
+function copyThinkAloud(thinkAloud: ThinkAloud | undefined): { thinkAloud?: ThinkAloud } {
+  if (!thinkAloud) return {};
+  const screen = copyAttachment(thinkAloud.screen).attachment;
+  return { thinkAloud: { transcript: thinkAloud.transcript, seconds: thinkAloud.seconds, ...(screen ? { screen } : {}) } };
+}
+
 interface BlindProofInput {
   proofId: string;
   challenge: Pick<Challenge, "id" | "title" | "coreSkills" | "proofKind">;
@@ -56,6 +66,10 @@ interface BlindProofInput {
   attachment?: Attachment;
   /** The answer was given by voice. */
   spoken?: boolean;
+  /** The option picked in a "choose" challenge. */
+  choice?: "a" | "b";
+  /** Its transcript already redacted. */
+  thinkAloud?: ThinkAloud;
   glance: string;
   redactions: RedactionReport;
   submittedAt: string;
@@ -76,6 +90,8 @@ export function toOwnProof(input: BlindProofInput): OwnProof {
     explain: copyExplain(input.explain),
     ...copyAttachment(input.attachment),
     ...spokenFlag(input.spoken),
+    ...choiceField(input.choice),
+    ...copyThinkAloud(input.thinkAloud),
     glance: input.glance,
     hiddenCount: hiddenTotal(input.redactions),
     redactions: { ...input.redactions },
@@ -99,6 +115,8 @@ export function toBlindProof(proof: OwnProof): BlindProof {
     explain: copyExplain(proof.explain),
     ...copyAttachment(proof.attachment),
     ...spokenFlag(proof.spoken),
+    ...choiceField(proof.choice),
+    ...copyThinkAloud(proof.thinkAloud),
     glance: proof.glance,
     submittedAt: proof.submittedAt,
   };

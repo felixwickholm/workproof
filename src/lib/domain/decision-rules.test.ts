@@ -10,7 +10,7 @@ describe("reviewer names", () => {
     expect(decisionInputProblem(name, FEEDBACK)).toBeUndefined();
   });
 
-  it.each(["AI bot", "ai", "Review Bot", "auto-review", "System", "GPT reviewer", "Scoring model", "script 2", "Workprint AI"])("refuses software named %s", (name) => {
+  it.each(["AI bot", "ai", "Review Bot", "auto-review", "System", "GPT reviewer", "Scoring model", "script 2", "WorkProof AI"])("refuses software named %s", (name) => {
     expect(looksLikeSoftware(name)).toBe(true);
     expect(reviewerNameProblem(name)).toBe(NAMED_PERSON_NEEDED);
     expect(decisionInputProblem(name, FEEDBACK)).toBe(NAMED_PERSON_NEEDED);

@@ -24,17 +24,17 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const title = "Workprint: hiring that sees the work, not the name";
+const title = "WorkProof: hiring that sees the work, not the name";
 const description =
   "Hiring that sees the work, not the name. An Espoo company posts a short real task. A person reads the work without the name, writes a reason and decides who to meet.";
 
 // The OG and Twitter images and their alt text come from the files next to this layout, by file name.
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
-  title: { default: title, template: "%s · Workprint" },
+  title: { default: title, template: "%s · WorkProof" },
   description,
-  applicationName: "Workprint",
-  openGraph: { title, description, type: "website", siteName: "Workprint" },
+  applicationName: "WorkProof",
+  openGraph: { title, description, type: "website", siteName: "WorkProof" },
   twitter: { card: "summary_large_image", title, description },
 };
 

@@ -4,10 +4,10 @@
  */
 import type { DemoSession } from "@/lib/domain/types";
 
-const TALENT_ID = "workprint.talentId";
-const TALENT_NAME = "workprint.talentName";
-const TALENT_CONTACT = "workprint.talentContact";
-const IDENTITY = "workprint.identity";
+const TALENT_ID = "workproof.talentId";
+const TALENT_NAME = "workproof.talentName";
+const TALENT_CONTACT = "workproof.talentContact";
+const IDENTITY = "workproof.identity";
 
 function read(key: string): string | null {
   try {
@@ -73,6 +73,20 @@ export function rememberSession(pending: Promise<DemoSession>): Promise<DemoSess
   return pending;
 }
 
+/**
+ * The latest follow-up questions the server issued per task, in memory only: a reload starts the task's
+ * questions again, as the page does.
+ */
+const issues = new Map<string, string>();
+
+export function rememberIssue(challengeId: string, issueId: string) {
+  issues.set(challengeId, issueId);
+}
+
+export function issuedFor(challengeId: string): string | undefined {
+  return issues.get(challengeId);
+}
+
 export function getSavedIdentity() {
   return { name: read(TALENT_NAME) ?? "", contact: read(TALENT_CONTACT) ?? "" };
 }
@@ -88,7 +102,7 @@ interface WorkDraft {
   startedAt: number;
 }
 
-const draftKey = (challengeId: string) => `workprint.draft.${challengeId}`;
+const draftKey = (challengeId: string) => `workproof.draft.${challengeId}`;
 
 export function loadDraft(challengeId: string): WorkDraft | null {
   const raw = read(draftKey(challengeId));

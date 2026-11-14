@@ -9,14 +9,25 @@ export interface FlowMapCompany {
   district: EspooDistrictName;
 }
 
-/** How far a proof got. Each state includes the ones before it: a meeting was also an invitation. */
-export type FlowState = "sent" | "answered" | "invited" | "met";
+/**
+ * How far a piece of work got. Each state includes the ones before it: a meeting was also an
+ * invitation. "answered" is the older name for "scored" and is drawn the same way.
+ */
+export type FlowState = "sent" | "answered" | "scored" | "invited" | "met";
 
 /** One piece of work on its way to a company. Carries a label, never a person. */
 export interface FlowMapFlow {
   proofLabel: string;
   companyId: string;
   state: FlowState;
+}
+
+/** The event's headline figures, set on the map beside the words "Demo data". */
+export interface FlowMapHeadline {
+  took: number;
+  scored: number;
+  talks: number;
+  hires: number;
 }
 
 export type FlowMapVariant = "hero" | "panel" | "compact";
@@ -31,4 +42,8 @@ export interface EspooFlowMapProps {
   className?: string;
   /** Dots keep travelling in a gentle loop. Without it each dot makes one trip. */
   live?: boolean;
+  /** Figures drawn in a corner of the map. Without it no figures are drawn; never on `compact`. */
+  headline?: FlowMapHeadline;
+  /** Called when a company's pin is clicked or tapped, so a page can filter by that company. */
+  onSelectCompany?: (id: string) => void;
 }

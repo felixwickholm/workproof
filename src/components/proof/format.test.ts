@@ -74,6 +74,7 @@ describe("words for people", () => {
   it("says a decision without judging", () => {
     expect(decisionWords("meet")).toBe("wants to meet you");
     expect(decisionWords("pass")).toBe("said not now, with a reason");
+    expect(decisionWords("hold")).toBe("scored your work");
   });
 
   it("counts hidden details", () => {

@@ -117,8 +117,8 @@ describe("words on the practice screens", () => {
   });
 
   it("tells the truth about the name", () => {
-    expect(nameLine(true)).toBe("Your name was used once to hide it. It was not kept.");
-    expect(nameLine(false)).toBe("You gave no name. Nothing identifies you here.");
+    expect(nameLine(true)).toBe("Your name was used only to hide it. It was not kept.");
+    expect(nameLine(false)).toBe("You gave no name.");
   });
 
   it("counts steps in words", () => {

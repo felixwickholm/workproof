@@ -1,7 +1,7 @@
 import type { Challenge, ChallengeDraft, DraftedBy } from "@/lib/domain/types";
 
 /**
- * The AI side of Workprint. It drafts tasks and asks follow-up questions. It never reads or describes
+ * The AI side of WorkProof. It drafts tasks and asks follow-up questions. It never reads or describes
  * work for a reviewer, and never decides, scores or ranks: every output passes the no-judgement guard.
  */
 export interface TaskDesigner {

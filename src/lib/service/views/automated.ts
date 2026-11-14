@@ -1,8 +1,8 @@
-import { DECISION_ACTIONS } from "@/lib/domain/decision-rules";
+import { DECIDED_HOLD_ACTION, DECISION_ACTIONS } from "@/lib/domain/decision-rules";
 import type { StoreData } from "@/lib/store";
 import { isRegisteredReviewer } from "../reviewers";
 
-const DECISION_LINES: ReadonlySet<string> = new Set(Object.values(DECISION_ACTIONS));
+const DECISION_LINES: ReadonlySet<string> = new Set([...Object.values(DECISION_ACTIONS), DECIDED_HOLD_ACTION]);
 
 /**
  * Decisions not made by a registered person, counted over the log rather than assumed:

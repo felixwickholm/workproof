@@ -24,8 +24,9 @@ export const technicalWriter: RoleTemplate = {
     "the page could be at most half as long",
   ],
   challenge: {
+    minutes: 15,
     title: "Review an AI-written quickstart page",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief:
       "We are publishing a quickstart for our sensor data API. A teammate asked an AI assistant to write it from the internal wiki. New customers get the link in their welcome email. Please review it as a developer who has never used the API.",
@@ -68,7 +69,7 @@ export const technicalWriter: RoleTemplate = {
   },
   taster: {
     title: "Spot the problem in an install step",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "An AI assistant wrote this install step for a command line tool.",
     material: {

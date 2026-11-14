@@ -3,10 +3,10 @@ import { demoLevel, formatClock, privacyLine, words } from "./copy";
 
 describe("privacyLine", () => {
   it("promises the voice stays local only when it really does", () => {
-    expect(privacyLine("on-device")).toBe("Only the text is kept. Your voice stays on this device.");
+    expect(privacyLine("on-device")).toBe("Your voice stays on this device. WorkProof stores only the text.");
     expect(privacyLine("browser-service")).not.toMatch(/stays on this device/);
     expect(privacyLine("server-once")).toMatch(/sent once/);
-    expect(privacyLine("typed")).toBe("Only the text is kept.");
+    expect(privacyLine("typed")).toBe("WorkProof stores only the text.");
   });
 });
 

@@ -10,7 +10,7 @@ vi.mock("next/headers", () => {
   return {
     cookies: async () => {
       if (!request.inScope) outside();
-      return { get: (name: string) => (name === "workprint_sandbox" && request.cookie ? { name, value: request.cookie } : undefined) };
+      return { get: (name: string) => (name === "workproof_sandbox" && request.cookie ? { name, value: request.cookie } : undefined) };
     },
     headers: async () => {
       if (!request.inScope) outside();
@@ -36,7 +36,7 @@ vi.mock("@/lib/seed", () => ({
   }),
 }));
 
-const { currentSandbox, getStore, NO_SANDBOX_MESSAGE, sandboxes } = await import("./index");
+const { assertWritable, currentSandbox, getStore, NO_SANDBOX_MESSAGE, ownsEvent, sandboxes } = await import("./index");
 const { SANDBOXES_PER_ADDRESS } = await import("./creation-limit");
 
 const sandboxId = (n: number) => `sb_00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -64,6 +64,17 @@ describe("store scope", () => {
     await expect(rename("Changed by a script")).rejects.toMatchObject({ status: 401, message: NO_SANDBOX_MESSAGE });
     await expect(getStore().replace(await getStore().read())).rejects.toMatchObject({ status: 401 });
     expect(sandboxes().size).toBe(before);
+    expect(await ownsEvent()).toBe(false);
+    await expect(assertWritable()).rejects.toMatchObject({ status: 401, message: NO_SANDBOX_MESSAGE });
+  });
+
+  it("says up front who may change the event: no request, or a request with its own sandbox", async () => {
+    expect(await ownsEvent()).toBe(true);
+    request.inScope = true;
+    request.cookie = sandboxId(2);
+    request.headers = { "x-forwarded-for": "203.0.113.9" };
+    expect(await ownsEvent()).toBe(true);
+    await expect(assertWritable()).resolves.toBeUndefined();
   });
 
   it("a request with a sandbox cookie gets its own event, created once", async () => {

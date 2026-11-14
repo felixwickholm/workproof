@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, ChevronsUpDown, Moon, Play, RotateCcw, Sun, UserRound } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useId, useRef, useState, type ReactNode } from "react";
 import type { Theme } from "../theme/theme";
 import { useTheme } from "../theme/use-theme";
@@ -10,7 +10,7 @@ import { Popover } from "../ui/popover";
 import { SegmentedControl } from "../ui/segmented-control";
 import { startTour, useResetDemo } from "./demo-actions";
 import { MenuAction, onMenuKey } from "./mode-menu";
-import type { Mode } from "./modes";
+import { modeForPath, type Mode } from "./modes";
 import { useAccount } from "./use-identity";
 
 const ICON = "size-5";
@@ -38,11 +38,12 @@ export function AccountSummary({ mode, className }: { mode: Mode; className?: st
 }
 
 /**
- * The rarely used actions, together in one place: the walkthrough, a reset, the theme and the way
- * out. `onDone` closes whatever holds the menu.
+ * The rarely used actions, together in one place: the demo of this view, a reset, the theme and the
+ * way out. `onDone` closes whatever holds the menu.
  */
 export function AccountActions({ onDone }: { onDone: () => void }) {
   const router = useRouter();
+  const view = modeForPath(usePathname())?.id;
   const { reset, busy } = useResetDemo();
   const { theme, setTheme } = useTheme();
   return (
@@ -50,11 +51,11 @@ export function AccountActions({ onDone }: { onDone: () => void }) {
       <MenuAction
         onClick={() => {
           onDone();
-          startTour();
+          startTour(view);
         }}
         icon={<Play aria-hidden className={ICON} strokeWidth={STROKE} />}
       >
-        Start the 1-minute walkthrough
+        {view ? "Show me this view" : "Watch the 1-minute tour"}
       </MenuAction>
       <MenuAction
         disabled={busy}

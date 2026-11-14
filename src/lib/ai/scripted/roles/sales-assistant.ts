@@ -24,8 +24,9 @@ export const salesAssistant: RoleTemplate = {
     "the customer is in a hurry to catch a bus",
   ],
   challenge: {
+    minutes: 15,
     title: "A return without a receipt and a wrong price",
-    format: "explain",
+    format: "read",
     proofKind: "voice",
     brief:
       "You work the afternoon shift in a home goods shop. A customer is at the till with a kettle and the shelf label in their hand. Three people wait behind them. Read the situation and the shop rules below. This is a synthetic example.",
@@ -69,7 +70,7 @@ export const salesAssistant: RoleTemplate = {
   },
   taster: {
     title: "One sentence at the till",
-    format: "explain",
+    format: "read",
     proofKind: "voice",
     brief: "A customer at the till says this.",
     material: {

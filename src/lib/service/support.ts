@@ -16,6 +16,9 @@ export class ServiceError extends Error {
 /** Replaceable clock, so tests can move time forward. */
 export const clock = { now: (): Date => new Date() };
 
+/** The audit log keeps this many newest events, so a long-running demo never grows without limit. */
+export const MAX_AUDIT_EVENTS = 2000;
+
 export function appendAudit(
   data: StoreData,
   event: Omit<AuditEvent, "id" | "at"> & { at?: string },
@@ -29,6 +32,7 @@ export function appendAudit(
     detail: event.detail,
   };
   data.audit.push(entry);
+  if (data.audit.length > MAX_AUDIT_EVENTS) data.audit.splice(0, data.audit.length - MAX_AUDIT_EVENTS);
   return entry;
 }
 

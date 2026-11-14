@@ -29,8 +29,9 @@ export const hrSpecialist: RoleTemplate = {
     "the team moves to a new office that week",
   ],
   challenge: {
+    minutes: 15,
     title: "Review an AI-drafted return-to-work plan",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief:
       "An employee returns after three months of sick leave next Monday. The manager asked an AI assistant to draft a return-to-work plan and a message to the team. HR checks both before they are sent. This is a synthetic example. Please review them as the HR specialist.",
@@ -75,7 +76,7 @@ export const hrSpecialist: RoleTemplate = {
   },
   taster: {
     title: "Read one team message",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "A manager wants to send this to the team.",
     material: {

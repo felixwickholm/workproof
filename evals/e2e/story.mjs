@@ -1,270 +1,226 @@
 import { BASE_URL, checkScreen, createSuite, expect, PHONE, watchErrors } from "./harness.mjs";
 
 const LAPTOP = { viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 };
-
 const SMALL_PHONE = { ...PHONE, viewport: { width: 320, height: 640 } };
 
-/**
- * The nine steps as a visitor reads them: the title on the card, what it spotlights, and words the
- * lit element must hold when the page has look-alikes (two invitations: the story is Kaari's).
- */
-const STORY_STEPS = [
-  { title: "Meet Olena.", target: "olena-story" },
-  { title: "She skips the CV.", target: "task-feed" },
-  { title: "She does the work.", target: "own-work" },
-  { title: "Her name stays with her.", target: "blind-proof" },
-  { title: "Anna opens her queue.", target: "queue" },
-  { title: "A person decides.", target: "decision" },
-  { title: "Olena says yes.", target: "invitation", holds: "Kaari Home Care" },
-  { title: "Espoo sees what happened.", target: "city-outcomes" },
-  { title: "Work first. Names last. People decide.", target: null },
+const END_TITLE = "Now try it yourself.";
+/** The overview must reach its end card within this, with no tap. */
+const MINUTE_BUDGET_MS = 80_000;
+/** A view's demo must reach its end card within this, with no tap. */
+const VIEW_BUDGET_MS = 120_000;
+/** The longest a step may take to give way to the next one: its own time plus a slow screen. */
+const STALL_MS = 25_000;
+
+/** Each view's demo: where its Show me button lives, its number of cards, and its end card's buttons. */
+const VIEWS = {
+  seeker: { home: "/seeker", cards: 7, end: ["Pick a challenge"] },
+  employer: { home: "/employer", cards: 7, end: ["Paste a job ad", "Read the work"] },
+  city: { home: "/city", cards: 6, end: ["Look around"] },
+};
+
+/** The overview's three ways out and the view each opens. */
+const MINUTE_EXITS = [
+  { label: "I'm looking for work", path: "/seeker", view: "seeker" },
+  { label: "I'm hiring", path: "/employer", view: "employer" },
+  { label: "I'm the City of Espoo", path: "/city", view: "city" },
 ];
 
-/** The one-minute walkthrough: five steps that move on by themselves, then the ways to try it. */
-const MINUTE_STEPS = [
-  { title: "Skip the CV. Do the work.", target: "hero" },
-  { title: "The work, without the name.", target: "blind-proof" },
-  { title: "A person decides. In writing.", target: "decision" },
-  { title: "Names last.", target: "invitation", holds: "Kaari Home Care" },
-  { title: "Espoo sees outcomes.", target: "city-outcomes" },
-  { title: "Now try it yourself.", target: null },
-];
+const words = (text) => text.split(/\s+/).filter(Boolean);
+const sentences = (text) => text.split(/(?<=[.!?])\s+/).filter(Boolean);
+const inside = (box, view) => box.x >= -0.5 && box.y >= -0.5 && box.x + box.width <= view.width + 0.5 && box.y + box.height <= view.height + 0.5;
+const overlap = (a, b) => a.x < b.x + b.width - 1 && b.x < a.x + a.width - 1 && a.y < b.y + b.height - 1 && b.y < a.y + a.height - 1;
 
-/** Steps 1 to 5 of the one-minute walkthrough must play through by themselves within this. */
-const MINUTE_BUDGET_MS = 75_000;
+/** Moves the mouse off the card: a resting mouse holds the timer, as it should for a reader. */
+const away = (page) => page.mouse.move(1, 1);
 
-const inside = (box, view) => box.x >= 0 && box.y >= 0 && box.x + box.width <= view.width + 0.5 && box.y + box.height <= view.height + 0.5;
+/** Resolves once the card shows a settled step (no move under way). */
+const settled = (page) => page.waitForFunction(() => !document.querySelector('[role="dialog"] [aria-disabled="true"]'), null, { timeout: STALL_MS });
 
-const overlap = (a, b) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
-
-/** The counter on the card, "1-minute walkthrough · 2 of 6", for step n of a walkthrough. */
-const counter = (dialog, name, n, total) => dialog.locator("[data-tour-counter]").filter({ hasText: `${name} · ${n} of ${total}` });
+/** What the card says now, read from the screen. */
+async function readCard(page) {
+  return page.evaluate(() => {
+    const dialog = document.querySelector('[role="dialog"][data-tour-kind]');
+    if (!dialog) return null;
+    return {
+      step: dialog.getAttribute("data-tour-step"),
+      counter: dialog.querySelector("[data-tour-counter]")?.textContent?.trim() ?? "",
+      title: dialog.querySelector("h2")?.textContent?.trim() ?? "",
+      body: dialog.querySelector("#tour-body")?.textContent?.trim() ?? "",
+      fallback: dialog.hasAttribute("data-tour-fallback"),
+      lit: document.querySelector("[data-spotlight]")?.getAttribute("data-spotlight") ?? "",
+    };
+  });
+}
 
 /**
- * Checks one settled step: its title, its spotlight on the right part of the page and on screen,
- * the whole card and its way on inside the screen, and the card not over the spotlight.
+ * Checks the card on screen: the copy budget on the rendered words, the whole card inside the
+ * screen, and the card clear of the spotlight when a target is lit.
  */
-async function checkStep(page, errors, label, steps, n, onwardName) {
-  const dialog = page.getByRole("dialog");
-  const step = steps[n - 1];
-  const title = (await dialog.locator("h2").textContent())?.trim();
-  expect(title === step.title, `step ${n} shows "${title}", expected "${step.title}"`);
-  const lit = await page.locator("[data-spotlight]").getAttribute("data-spotlight");
-  const [card, view] = await Promise.all([dialog.boundingBox(), page.viewportSize()]);
-  expect(card && inside(card, view), `step ${n}: the card runs off the ${view.width}x${view.height} screen`);
-  const button = await dialog.getByRole("button", { name: onwardName }).first().boundingBox();
-  expect(button && inside(button, view), `step ${n}: the card's way on is not fully on screen`);
-  if (!step.target) {
-    expect(lit === "", `step ${n} should have no spotlight, has "${lit}"`);
-  } else {
-    expect(lit === step.target, `step ${n} has no spotlight on "${step.target}" (has "${lit}")`);
-    const target = page.locator("[data-tour-lit]");
-    const box = await target.boundingBox();
-    expect(box && box.y < view.height && box.y + box.height > 0, `step ${n}: the target is not on screen`);
-    if (step.holds) {
-      const text = (await target.textContent()) ?? "";
-      expect(text.includes(step.holds), `step ${n}: the spotlight is not on the part that says "${step.holds}"`);
-    }
+async function checkCard(page, errors, where) {
+  const card = await readCard(page);
+  expect(card, `${where}: no tour card`);
+  const titleWords = words(card.title).length;
+  const bodyWords = words(card.body).length;
+  expect(titleWords <= 8, `${where}: the headline "${card.title}" has ${titleWords} words`);
+  expect(!card.body || (sentences(card.body).length === 1 && bodyWords <= 12), `${where}: the sentence "${card.body}" is over budget`);
+  expect(titleWords + bodyWords <= 20, `${where}: the card has ${titleWords + bodyWords} words`);
+  const dialog = page.locator('[role="dialog"][data-tour-kind]');
+  const [box, view] = await Promise.all([dialog.boundingBox(), page.viewportSize()]);
+  expect(box && inside(box, view), `${where}: the card runs off the ${view.width}x${view.height} screen`);
+  if (card.lit) {
     const ring = await page.locator("[data-tour-ring]").evaluate((el) => ({
       x: Number(el.getAttribute("x")),
       y: Number(el.getAttribute("y")),
       width: Number(el.getAttribute("width")),
       height: Number(el.getAttribute("height")),
+      opacity: Number(el.getAttribute("opacity")),
     }));
-    expect(!overlap(ring, card), `step ${n}: the card covers the spotlight`);
+    if (ring.width > 0 && ring.opacity > 0.5) expect(!overlap(ring, box), `${where}: the card covers its target "${card.lit}"`);
+    const target = await page.locator("[data-tour-lit]").first().boundingBox({ timeout: 3_000 }).catch(() => null);
+    expect(target && target.y < view.height && target.y + target.height > 0, `${where}: the target "${card.lit}" is not on screen`);
   }
-  await checkScreen(page, errors, `${label} step ${n}`);
+  await checkScreen(page, errors, where);
+  return card;
 }
 
-/** The demo's story stage, read the way the app reads it. */
-const waitForStage = (page, stage) =>
-  page.waitForFunction(async (want) => (await (await fetch("/api/demo/session")).json()).stage === want, stage, { timeout: 30_000, polling: 500 });
-
 /**
- * Olena's story (nine steps), pressing only Next, on one screen size. Each step must show its
- * counter and title, spotlight its target on screen without the card on top of it, and keep the
- * whole card and its Next button on the screen.
+ * Lets a tour play by itself from its first card to its end card, checking each card as it settles.
+ * Returns the time from `startedAt` to the end card, and which steps fell back to a card on its own.
  */
-async function walk(browser, device, name) {
-  const context = await browser.newContext(device);
-  const page = await context.newPage();
-  const suite = createSuite(name, page);
-  const errors = watchErrors(page);
-  const dialog = page.getByRole("dialog");
-  const next = dialog.getByRole("button", { name: "Next" });
-  const STEPS = STORY_STEPS;
-
-  /** Waits until step n is on the card and settled (Next no longer busy). */
-  const settle = async (n) => {
-    await counter(dialog, "Olena's story", n, 9).waitFor({ timeout: 15_000 });
-    await page.waitForFunction(() => !document.querySelector('[role="dialog"] [aria-disabled="true"]'), null, { timeout: 15_000 });
-    // The spotlight and card travel for about 400 ms; a smooth scroll can take a little longer.
-    await page.waitForTimeout(900);
-  };
-
-  const assertStep = async (n) => {
-    await settle(n);
-    await checkStep(page, errors, name, STEPS, n, n < STEPS.length ? "Next" : "Explore on your own");
-  };
-
-  await suite.step("t0 a ?tour=story link opens Olena's story", async () => {
-    await page.goto(`${BASE_URL}/?tour=story`);
-    await dialog.waitFor({ timeout: 10_000 });
-    await page.waitForURL((url) => !url.searchParams.has("tour"));
-  });
-
-  for (let n = 1; n <= STEPS.length; n++) {
-    await suite.step(`t${n} ${STEPS[n - 1].title}`, async () => {
-      try {
-        await assertStep(n);
-        if (n === 4) {
-          await dialog.getByRole("button", { name: "Back" }).click();
-          await assertStep(3);
-          await next.click();
-          await assertStep(4);
-        }
-      } finally {
-        // Move on even after a failed check, so E2E_KEEP_GOING reports every step on its own.
-        if (n < STEPS.length) await next.click({ timeout: 5_000 }).catch(() => {});
-        // A second tap while the step loads must not skip a step: the next check expects step 2.
-        if (n === 1) await next.click({ timeout: 5_000, force: true }).catch(() => {});
-      }
-    });
+async function playThrough(page, errors, label, total, startedAt, budget) {
+  const seen = [];
+  const fellBack = [];
+  const shownAt = [];
+  let last = null;
+  while (true) {
+    const deadline = Date.now() + STALL_MS;
+    let card = await readCard(page);
+    while ((!card || card.counter === last) && Date.now() < deadline) {
+      await page.waitForTimeout(100);
+      card = await readCard(page);
+    }
+    expect(card && card.counter !== last, `${label}: stalled on "${last}" for ${STALL_MS / 1000} s`);
+    shownAt.push(Date.now());
+    last = card.counter;
+    await settled(page);
+    await page.waitForTimeout(500);
+    const checked = await checkCard(page, errors, `${label} ${card.counter}`);
+    seen.push(checked);
+    if (checked.fallback) fellBack.push(`${checked.step}`);
+    if (checked.title === END_TITLE) break;
+    expect(Date.now() - startedAt < budget, `${label}: not at the end card after ${budget / 1000} s`);
   }
-
-  await suite.step("t10 the close offers both ways on", async () => {
-    await dialog.getByRole("button", { name: "Explore on your own" }).waitFor();
-    await dialog.getByRole("button", { name: "Do a 2-minute task" }).waitFor();
-  });
-
-  await suite.step("t11 Esc closes and leaves the demo ready to explore", async () => {
-    await page.keyboard.press("Escape");
-    await dialog.waitFor({ state: "detached", timeout: 5_000 });
-    await waitForStage(page, "invited");
-    await checkScreen(page, errors, `${name} after close`);
-  });
-
-  await suite.step("t12 a ?tour=1 link opens the one-minute walkthrough", async () => {
-    await page.goto(`${BASE_URL}/?tour=1`);
-    await counter(dialog, "1-minute walkthrough", 1, 6).waitFor({ timeout: 10_000 });
-    await page.waitForURL((url) => !url.searchParams.has("tour"));
-    await page.keyboard.press("Escape");
-    await dialog.waitFor({ state: "detached", timeout: 5_000 });
-  });
-
-  await context.close();
-  return suite.results;
+  expect(seen.length === total, `${label}: showed ${seen.length} cards, expected ${total}`);
+  const per = shownAt.slice(1).map((t, i) => ((t - shownAt[i]) / 1000).toFixed(1));
+  return { ms: shownAt[shownAt.length - 1] - startedAt, per, fellBack, seen };
 }
 
 /**
- * The one-minute walkthrough on one screen size: started from the landing page's Start button, it
- * plays steps 1 to 5 without a tap, each step checked as it shows; then Back, Pause and Play, and
- * one of the last step's three ways on (`exit`: "explore", "try" or "story").
+ * The overview on one screen size: started from the landing page's button, it plays to its end
+ * card with no tap. Then Back, Pause and Play, Skip, and one of the end card's three ways out.
  */
 async function minute(browser, device, name, exit, notes) {
   const context = await browser.newContext(device);
   const page = await context.newPage();
   const suite = createSuite(name, page);
   const errors = watchErrors(page);
-  const dialog = page.getByRole("dialog");
-  const at = (n) => counter(dialog, "1-minute walkthrough", n, 6);
-  /** Moves the mouse off the card: a resting mouse holds the timer, as it should for a reader. */
-  const away = () => page.mouse.move(1, 1);
-  const shownAt = [];
-  let started = 0;
+  const dialog = page.locator('[role="dialog"][data-tour-kind="minute"]');
+  const counter = (n) => dialog.locator("[data-tour-counter]").filter({ hasText: new RegExp(`^${n} of 7$`) });
+  let startedAt = 0;
 
-  await suite.step("m0 the Start button opens the one-minute walkthrough", async () => {
+  await suite.step("m0 the landing page's button starts the overview", async () => {
     await page.goto(`${BASE_URL}/`, { timeout: 60_000 });
     const start = page.locator('[data-tour-start="minute"]').filter({ visible: true }).first();
     if (await start.waitFor({ timeout: 5_000 }).then(() => true, () => false)) {
-      const label = (await start.textContent()) ?? "";
-      expect(/start/i.test(label) || /start/i.test((await start.getAttribute("aria-label")) ?? ""), `the Start button reads "${label.trim()}"`);
-      started = Date.now();
+      startedAt = Date.now();
       await start.click();
     } else {
-      notes.push(`${name}: no [data-tour-start="minute"] on the landing page yet; started from /?tour=1`);
-      started = Date.now();
+      notes.push(`${name}: no [data-tour-start="minute"] on the landing page; started from /?tour=1`);
+      startedAt = Date.now();
       await page.goto(`${BASE_URL}/?tour=1`);
     }
-    await away();
-    await at(1).waitFor({ timeout: 10_000 });
+    await away(page);
+    await counter(1).waitFor({ timeout: 15_000 });
   });
 
-  for (let n = 1; n <= 5; n++) {
-    await suite.step(`m${n} ${MINUTE_STEPS[n - 1].title} (no tap)`, async () => {
-      // A step's time plus its move: a loaded server may take a few seconds to build the next stage.
-      await at(n).waitFor({ timeout: 30_000 });
-      shownAt[n] = Date.now();
-      await page.waitForFunction(() => !document.querySelector('[role="dialog"] [aria-disabled="true"]'), null, { timeout: 15_000 });
-      await page.waitForTimeout(900);
-      await checkStep(page, errors, name, MINUTE_STEPS, n, "Next");
-      const line = await dialog.locator("[data-tour-progress]").count();
-      expect(line === 1, `step ${n}: no progress line on the card`);
-    });
-  }
-
-  await suite.step("m6 steps 1 to 5 play through by themselves", async () => {
-    await at(6).waitFor({ timeout: 30_000 });
-    shownAt[6] = Date.now();
-    const total = shownAt[6] - started;
-    const per = shownAt.slice(2).map((t, i) => ((t - shownAt[i + 1]) / 1000).toFixed(1));
-    notes.push(`${name}: start to step 6 in ${(total / 1000).toFixed(1)} s; steps 1-5 lasted ${per.join(", ")} s`);
-    expect(total < MINUTE_BUDGET_MS, `the walkthrough took ${Math.round(total / 1000)} s to reach its last step`);
-    await page.waitForTimeout(600);
-    await checkStep(page, errors, name, MINUTE_STEPS, 6, "Do a 2-minute task");
-    for (const label of ["Do a 2-minute task", "Explore the demo", "Olena's story · 2 min"]) {
-      await dialog.getByRole("button", { name: label }).waitFor({ timeout: 2_000 });
-    }
-    // The last step waits for the visitor.
+  await suite.step("m1 it plays to the end card with no tap, every card in budget and on screen", async () => {
+    const run = await playThrough(page, errors, name, 7, startedAt, MINUTE_BUDGET_MS);
+    notes.push(`${name}: start to the end card in ${(run.ms / 1000).toFixed(1)} s; steps lasted ${run.per.join(", ")} s${run.fellBack.length ? `; fell back: ${run.fellBack.join(", ")}` : ""}`);
+    for (const exit of MINUTE_EXITS) await dialog.getByRole("button", { name: exit.label }).waitFor({ timeout: 2_000 });
     await page.waitForTimeout(2_000);
-    expect(await at(6).isVisible(), "the last step moved on by itself");
+    expect(await counter(7).isVisible(), "the end card moved on by itself");
   });
 
-  await suite.step("m7 Back works, Pause holds the step, Play moves on", async () => {
+  await suite.step("m2 Back works, Pause holds the step, Play moves on", async () => {
     await dialog.getByRole("button", { name: "Back" }).click();
-    await away();
-    await at(5).waitFor({ timeout: 10_000 });
-    await page.waitForFunction(() => !document.querySelector('[role="dialog"] [aria-disabled="true"]'), null, { timeout: 15_000 });
-    const pause = dialog.getByRole("button", { name: "Pause the walkthrough" });
-    await pause.click();
-    await away();
+    await away(page);
+    await counter(6).waitFor({ timeout: 10_000 });
+    await settled(page);
+    await dialog.getByRole("button", { name: "Pause the tour" }).click();
+    await away(page);
     await page.waitForTimeout(12_000);
-    expect(await at(5).isVisible(), "the walkthrough moved on while paused");
-    await dialog.getByRole("button", { name: "Play the walkthrough" }).click();
-    await away();
-    await at(6).waitFor({ timeout: 25_000 });
+    expect(await counter(6).isVisible(), "the tour moved on while paused");
+    await dialog.getByRole("button", { name: "Play the tour" }).click();
+    await away(page);
+    await counter(7).waitFor({ timeout: 20_000 });
   });
 
-  await suite.step(`m8 the last step's "${exit}" does what it says`, async () => {
-    await page.waitForFunction(() => !document.querySelector('[role="dialog"] [aria-disabled="true"]'), null, { timeout: 15_000 });
-    if (exit === "explore") {
-      await dialog.getByRole("button", { name: "Explore the demo" }).click();
-      await dialog.waitFor({ state: "detached", timeout: 5_000 });
-      await page.waitForURL((url) => url.pathname === "/seeker", { timeout: 10_000 });
-      await waitForStage(page, "invited");
-    } else if (exit === "try") {
-      await dialog.getByRole("button", { name: "Do a 2-minute task" }).click();
-      await dialog.waitFor({ state: "detached", timeout: 5_000 });
-      await page.waitForURL((url) => url.pathname === "/try", { timeout: 10_000 });
-    } else {
-      await dialog.getByRole("button", { name: "Olena's story · 2 min" }).click();
-      await counter(dialog, "Olena's story", 1, 9).waitFor({ timeout: 10_000 });
-      await page.waitForFunction(() => !document.querySelector('[role="dialog"] [aria-disabled="true"]'), null, { timeout: 15_000 });
-      await page.waitForTimeout(900);
-      await checkStep(page, errors, name, STORY_STEPS, 1, "Next");
-      await page.keyboard.press("Escape");
-      await dialog.waitFor({ state: "detached", timeout: 5_000 });
-      await waitForStage(page, "invited");
-    }
-    await checkScreen(page, errors, `${name} after the last step`);
-  });
-
-  await suite.step("m9 Esc closes and leaves the demo at the invited stage", async () => {
-    await page.goto(`${BASE_URL}/?tour=1`);
-    await at(1).waitFor({ timeout: 10_000 });
-    await page.keyboard.press("Escape");
+  await suite.step(`m3 "${exit.label}" opens that view, which offers its own demo`, async () => {
+    await settled(page);
+    await dialog.getByRole("button", { name: exit.label }).click();
     await dialog.waitFor({ state: "detached", timeout: 5_000 });
-    await waitForStage(page, "invited");
+    await page.waitForURL((url) => url.pathname === exit.path, { timeout: 15_000 });
+    await page.locator(`[data-show-me="${exit.view}"]`).waitFor({ timeout: 15_000 }).catch(() => notes.push(`${name}: no Show me button on ${exit.path}`));
+    await checkScreen(page, errors, `${name} after the end card`);
+  });
+
+  await suite.step("m4 Skip closes the tour from its first card", async () => {
+    await page.goto(`${BASE_URL}/?tour=1`);
+    await counter(1).waitFor({ timeout: 15_000 });
+    await dialog.getByRole("button", { name: "Skip" }).click();
+    await dialog.waitFor({ state: "detached", timeout: 5_000 });
+  });
+
+  await context.close();
+  return suite.results;
+}
+
+/** One view's demo on one screen size: started from that view's Show me button, it plays to the end card. */
+async function viewDemo(browser, device, view, name, notes) {
+  const context = await browser.newContext(device);
+  const page = await context.newPage();
+  const suite = createSuite(name, page);
+  const errors = watchErrors(page);
+  const { home, cards, end } = VIEWS[view];
+  const dialog = page.locator(`[role="dialog"][data-tour-kind="${view}"]`);
+  let startedAt = 0;
+
+  await suite.step("v0 the view's Show me button starts its demo", async () => {
+    await page.goto(`${BASE_URL}${home}`, { timeout: 60_000 });
+    const button = page.locator(`[data-show-me="${view}"]`).filter({ visible: true }).first();
+    if (await button.waitFor({ timeout: 15_000 }).then(() => true, () => false)) {
+      expect(/Show me/.test((await button.textContent()) ?? ""), "the button does not say Show me");
+      startedAt = Date.now();
+      await button.click();
+    } else {
+      notes.push(`${name}: no Show me button on ${home}; started from ?tour=${view}`);
+      startedAt = Date.now();
+      await page.goto(`${BASE_URL}${home}?tour=${view}`);
+    }
+    await away(page);
+    await dialog.waitFor({ timeout: 15_000 });
+  });
+
+  await suite.step("v1 it plays to the end card with no tap", async () => {
+    const run = await playThrough(page, errors, name, cards, startedAt, VIEW_BUDGET_MS);
+    notes.push(`${name}: start to the end card in ${(run.ms / 1000).toFixed(1)} s; steps lasted ${run.per.join(", ")} s; fell back: ${run.fellBack.join(", ") || "none"}`);
+    for (const label of end) await dialog.getByRole("button", { name: label }).waitFor({ timeout: 2_000 });
+  });
+
+  await suite.step("v2 Close leaves the demo ready to explore", async () => {
+    await dialog.getByRole("button", { name: "Close" }).click();
+    await dialog.waitFor({ state: "detached", timeout: 5_000 });
+    await checkScreen(page, errors, `${name} after close`);
   });
 
   await context.close();
@@ -272,22 +228,23 @@ async function minute(browser, device, name, exit, notes) {
 }
 
 /**
- * The one-minute walkthrough and Olena's story on a phone (390 x 844), the smallest phone
- * (320 x 640) and a laptop (1440 x 900). E2E_TOUR=minute or story runs one of them.
+ * The overview on a phone (390 x 844), the smallest phone (320 x 640) and a laptop (1440 x 900),
+ * each leaving by a different way out; then each view's demo on a phone and a laptop.
+ * E2E_TOUR=minute, seeker, employer or city runs one of them.
  */
 export async function runTour(browser) {
   const notes = [];
   const which = process.env.E2E_TOUR;
   const results = [];
-  if (which !== "story") {
-    results.push(...(await minute(browser, PHONE, "Minute phone", "explore", notes)));
-    results.push(...(await minute(browser, SMALL_PHONE, "Minute small phone", "try", notes)));
-    results.push(...(await minute(browser, LAPTOP, "Minute laptop", "story", notes)));
+  if (!which || which === "minute") {
+    results.push(...(await minute(browser, PHONE, "Minute phone", MINUTE_EXITS[0], notes)));
+    results.push(...(await minute(browser, SMALL_PHONE, "Minute small phone", MINUTE_EXITS[1], notes)));
+    results.push(...(await minute(browser, LAPTOP, "Minute laptop", MINUTE_EXITS[2], notes)));
   }
-  if (which !== "minute") {
-    results.push(...(await walk(browser, PHONE, "Story phone")));
-    results.push(...(await walk(browser, SMALL_PHONE, "Story small phone")));
-    results.push(...(await walk(browser, LAPTOP, "Story laptop")));
+  for (const view of Object.keys(VIEWS)) {
+    if (which && which !== view) continue;
+    results.push(...(await viewDemo(browser, LAPTOP, view, `Demo ${view} laptop`, notes)));
+    results.push(...(await viewDemo(browser, PHONE, view, `Demo ${view} phone`, notes)));
   }
   return { results, notes };
 }

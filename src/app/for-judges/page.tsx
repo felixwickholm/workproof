@@ -8,9 +8,9 @@ import { EVAL_RESULTS, EVAL_TESTS, FIGURES, UNIT_TESTS, VERIFIED_ON } from "./ev
 import { AI_DOES, AI_NEVER, BLIND_MISSES, BOOTH, BRIEF_QUOTES, CHECK_PATH, CRITERIA, LIMITS, PAINS, SUMMARY } from "./facts";
 
 export const metadata: Metadata = {
-  title: { absolute: "Evidence for judges · Workprint" },
+  title: { absolute: "Evidence for judges · WorkProof" },
   description:
-    "How Workprint meets the City of Espoo criteria: what was built, where to see it, where it is in the code, and the test and eval numbers. Limits included.",
+    "How WorkProof meets the City of Espoo criteria: what was built, where to see it, where it is in the code, and the test and eval numbers. Limits included.",
   alternates: { canonical: "/for-judges" },
 };
 
@@ -120,7 +120,7 @@ export default function ForJudgesPage() {
 
         <section aria-labelledby="criteria">
           <h2 id="criteria" className={H2}>
-            How Workprint meets each criterion
+            How WorkProof meets each criterion
           </h2>
           <div className="mt-6 overflow-x-auto">
             <table className="w-full min-w-[860px] border-collapse">
@@ -172,7 +172,7 @@ export default function ForJudgesPage() {
                     Pain named in the brief
                   </th>
                   <th scope="col" className={TH}>
-                    What Workprint does
+                    What WorkProof does
                   </th>
                   <th scope="col" className={TH}>
                     Where in code
@@ -212,7 +212,7 @@ export default function ForJudgesPage() {
           <h3 className="mt-6 text-[18px] leading-6 font-semibold text-label">Never does</h3>
           <List items={AI_NEVER} />
           <p className={P}>
-            The guard is in <Code>src/lib/guard/no-judgement.ts</Code>. Every decision is a human&apos;s, recorded with a name and feedback in the audit log.
+            The guard is in <Code>src/lib/guard/no-judgement.ts</Code>. WorkProof has no automated decision feature. A decision is recorded with the name of a reviewer registered for the company and a written reason. This demo has no sign-in, so the name is not verified.
           </p>
         </section>
 
@@ -298,7 +298,7 @@ export default function ForJudgesPage() {
             Architecture
           </h2>
           <p className={P}>
-            One Next.js app. Pages and the JSON API call the service rules. The rules pass work through the blind layer before anyone reads it, check every AI
+            One Next.js app. Pages and the JSON API call the service rules. The rules pass work through the blind layer before anyone reads it (rules remove known personal details; some can remain), check every AI
             output with the guard, and keep each visitor&apos;s demo copy in memory.
           </p>
           <div className="mt-6">
@@ -313,10 +313,10 @@ export default function ForJudgesPage() {
           <List
             items={[
               "No account and no CV. The person's private key is kept in their own browser.",
-              "Reviewers and AI models read work only after the blind layer; company and city responses carry no talent id, name or contact.",
-              "A name and contact go to one company only after the person accepts that company's invitation.",
+              "Reviewers and AI models read work only after the blind layer: known personal details are removed by rules, and some can remain. Responses to companies and the city carry no talent id.",
+              "Accepting shows the name and contact to that company only. The organiser sees slots and labels, never names.",
               "Second look is off until the person turns it on, and can be withdrawn.",
-              "Voice is turned into text; only the text is stored. Pictures are re-encoded in the browser and the server refuses a JPEG that still carries EXIF data.",
+              "Voice is turned into text; WorkProof stores only the text. Pictures are re-encoded in the browser and the server refuses a JPEG that still carries EXIF data.",
               "Each visitor's demo copy lives in memory and is dropped after 12 hours.",
             ]}
           />

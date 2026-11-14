@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
-import { useCompanyId } from "@/components/company/company-choice";
+import { useCompanyId, useCompanyKnown } from "@/components/company/company-choice";
 import { useOnDemoReset } from "@/components/company/use-demo-reset";
 import { api, companyApi } from "@/lib/client/api";
 import { useResource } from "@/lib/client/use-resource";
@@ -27,7 +27,8 @@ const Context = createContext<ReviewState | null>(null);
 export function ReviewProvider({ children }: { children: ReactNode }) {
   const [companyId, setCompanyId] = useCompanyId();
   const companies = useResource(() => api.companies(), []);
-  const queue = useResource(() => companyApi.queue(companyId), [companyId], { pollMs: POLL_MS });
+  const known = useCompanyKnown();
+  const queue = useResource(known ? () => companyApi.queue(companyId) : null, [companyId, known], { pollMs: POLL_MS });
   useOnDemoReset(() => void queue.reload());
 
   const value: ReviewState = {
@@ -57,14 +58,17 @@ export function useReview(): ReviewState {
 export type QueueItem =
   | { kind: "review"; proof: BlindProof }
   | { kind: "second"; proof: BlindProof & { sharedSkills: string[] } }
+  | { kind: "recommended"; proof: BlindProof & { recommendedBy: string } }
   | { kind: "decided"; proof: BlindProof; entry: ReviewQueue["decided"][number] };
 
-/** Finds a proof in any section of the queue. */
+/** Finds a work in any section of the queue. */
 export function findInQueue(queue: ReviewQueue, proofId: string): QueueItem | null {
   const own = queue.proofs.find((p) => p.proofId === proofId);
   if (own) return { kind: "review", proof: own };
   const second = queue.secondLook.find((p) => p.proofId === proofId);
   if (second) return { kind: "second", proof: second };
+  const recommended = queue.recommended.find((p) => p.proofId === proofId);
+  if (recommended) return { kind: "recommended", proof: recommended };
   const entry = queue.decided.find((d) => d.proof.proofId === proofId);
   if (entry) return { kind: "decided", proof: entry.proof, entry };
   return null;

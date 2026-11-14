@@ -28,8 +28,9 @@ export const cook: RoleTemplate = {
     "the only clean fryer is the shared one",
   ],
   challenge: {
+    minutes: 15,
     title: "Plate today's lunch for a guest with coeliac disease",
-    format: "build",
+    format: "make",
     proofKind: "photo",
     brief:
       "A regular lunch guest has coeliac disease and ordered today's fish plate. Our kitchen app wrote the line card below from the recipe system. Please plate the lunch for this guest, or plan exactly how you would, using the card and the kitchen notes. This is a synthetic example from a training kitchen.",
@@ -74,7 +75,7 @@ export const cook: RoleTemplate = {
   },
   taster: {
     title: "Check one café order",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "This order note comes from the café till.",
     material: {

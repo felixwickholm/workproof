@@ -24,8 +24,9 @@ export const driver: RoleTemplate = {
     "a second driver calls in ill and you take two of their stops",
   ],
   challenge: {
+    minutes: 15,
     title: "Check an AI-planned delivery route",
-    format: "plan",
+    format: "make",
     proofKind: "plan",
     brief:
       "Our route tool planned tomorrow's van route below. The driver starts at the depot at 7:00 and must be back by 15:00. Please check the route before the van is loaded tonight, and change what needs changing. This is a synthetic example.",
@@ -67,7 +68,7 @@ export const driver: RoleTemplate = {
   },
   taster: {
     title: "Check a vehicle before you leave",
-    format: "review",
+    format: "fix",
     proofKind: "writing",
     brief: "The vehicle check before the first trip of the day shows this.",
     material: {

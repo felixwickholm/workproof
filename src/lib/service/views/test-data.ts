@@ -35,7 +35,7 @@ const task = (id: string, companyIds: string[], proofKind: Challenge["proofKind"
   need: "",
   coreSkills: skills,
   setAside,
-  format: "plan",
+  format: "make",
   proofKind,
   minutes: 20,
   brief: "",

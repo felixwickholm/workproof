@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ServiceError } from "@/lib/service/support";
 import { talentKey } from "./talent-key";
 
-const withKey = (key?: string) => new Request("http://localhost/api/passport/me", { headers: key === undefined ? {} : { "x-workprint-key": key } });
+const withKey = (key?: string) => new Request("http://localhost/api/passport/me", { headers: key === undefined ? {} : { "x-workproof-key": key } });
 
 describe("talentKey", () => {
   it("reads the private key from the header", () => {

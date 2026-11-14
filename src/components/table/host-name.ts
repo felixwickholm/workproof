@@ -1,5 +1,5 @@
 /** The name of the person hosting the table, remembered in this browser so each invitation is one field shorter. */
-const KEY = "workprint.tableHost";
+const KEY = "workproof.tableHost";
 
 export function readHostName(): string {
   try {

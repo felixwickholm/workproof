@@ -21,7 +21,7 @@ const flows: FlowMapFlow[] = [
   { proofLabel: "X1", companyId: "co-unknown", state: "sent" },
 ];
 
-const build = (width: number) => buildMapLayout({ companies, flows, variant: "panel", width });
+const build = (width: number, list = companies) => buildMapLayout({ companies: list, flows, variant: "panel", width });
 
 describe("buildMapLayout", () => {
   it("is deterministic", () => {
@@ -43,31 +43,53 @@ describe("buildMapLayout", () => {
     expect(build(460).flows.map((f) => f.flow.proofLabel)).not.toContain("X1");
   });
 
-  it("draws accent states last so they sit on top", () => {
-    expect(build(460).flows.map((f) => f.flow.state)).toEqual(["sent", "sent", "answered", "invited", "met"]);
+  it("draws one line per company and stage, dashed handed-in first and the accent last", () => {
+    const { lines } = build(460);
+    expect(lines.map((l) => `${l.companyId}:${l.stage}`)).toEqual(["co-kaari:sent", "co-kuulas:sent", "co-kaari:scored", "co-kaari:invited", "co-otso:invited"]);
   });
 
-  it("gives each proof to the same company its own curve", () => {
-    const kaari = build(460).flows.filter((f) => f.flow.companyId === "co-kaari");
+  it("keeps one travelling dot per piece of work, on its stage's line", () => {
+    const { flows, lines } = build(460);
+    expect(flows).toHaveLength(5);
+    const kaari = flows.filter((f) => f.flow.companyId === "co-kaari");
     expect(new Set(kaari.map((f) => f.path)).size).toBe(3);
+    for (const flow of flows) expect(lines.some((l) => l.path === flow.path)).toBe(true);
   });
 
-  it("sizes nodes by proofs received", () => {
-    const sizes = Object.fromEntries(build(460).nodes.map((n) => [n.company.id, n.size]));
-    expect(sizes["co-kaari"]).toBe(2);
-    expect(sizes["co-merituuli"]).toBe(0);
+  it("sizes pins by work received and shapes them by family", () => {
+    const nodes = Object.fromEntries(build(460).nodes.map((n) => [n.company.id, n]));
+    expect(nodes["co-kaari"].size).toBe(2);
+    expect(nodes["co-merituuli"].size).toBe(0);
+    expect(nodes["co-kaari"].family).toBe("people");
+    expect(nodes["co-merituuli"].family).toBe("commercial");
+    expect(nodes["co-saarnivo"].family).toBe("technical");
   });
 
-  it("labels the venue and the busiest companies without overlaps", () => {
+  it("names the venue and the seven districts without overlaps", () => {
     const { labels } = build(600);
-    expect(labels.map((l) => l.text)).toEqual(expect.arrayContaining(["Espoo Talent Day", "Kaari Home Care"]));
-    for (let i = 0; i < labels.length; i++) {
-      for (let j = i + 1; j < labels.length; j++) {
-        const [a, b] = [labels[i], labels[j]];
-        const apart = a.x + a.width <= b.x || b.x + b.width <= a.x || a.y + a.height <= b.y || b.y + b.height <= a.y;
-        expect(apart, `${a.text} / ${b.text}`).toBe(true);
-      }
-    }
+    expect(labels.map((l) => l.text)).toEqual(
+      expect.arrayContaining(["Espoo Talent Day", "Otaniemi", "Keilaniemi", "Tapiola", "Leppävaara", "Matinkylä", "Espoonlahti", "Espoon keskus"]),
+    );
+    expectApart(labels);
+  });
+
+  it("names Kera only when a company sits there", () => {
+    const district = (list: FlowMapCompany[]) => build(600, list).regions.map((r) => r.name);
+    expect(district(companies)).not.toContain("Kera");
+    expect(district([...companies, { id: "co-k", name: "K", sector: "Robotics", district: "Kera" }])).toContain("Kera");
+  });
+
+  it("adds sea below the coast for the headline figures, and keeps labels out of it", () => {
+    const plain = build(600);
+    const withFigures = buildMapLayout({ companies, flows, variant: "panel", width: 600, withHeadline: true });
+    expect(plain.headline).toBeNull();
+    expect(withFigures.view.height).toBeGreaterThan(plain.view.height);
+    const box = withFigures.headline!;
+    for (const l of withFigures.labels) expect(l.y + l.height <= box.y, l.text).toBe(true);
+  });
+
+  it("never draws figures on the compact thumbnail", () => {
+    expect(buildMapLayout({ companies, flows, variant: "compact", width: 320, withHeadline: true }).headline).toBeNull();
   });
 
   it("draws no labels on the compact thumbnail", () => {
@@ -93,28 +115,26 @@ function expectApart(labels: readonly MapLabel[]) {
 
 describe("buildMapLayout on the demo event", () => {
   const event = demoEvent();
-  const named = (variant: "hero" | "panel", width: number) =>
-    buildMapLayout({ ...event, variant, width })
-      .labels.filter((l) => l.kind === "company")
-      .map((l) => l.text);
+  const DISTRICTS = ["Otaniemi", "Keilaniemi", "Tapiola", "Leppävaara", "Matinkylä", "Espoonlahti", "Espoon keskus"];
 
   it.each([
     ["hero", 560],
     ["hero", 640],
-    ["panel", 680],
-  ] as const)("names every employer on a wide %s map (%ipx)", (variant, width) => {
-    expect(named(variant, width).sort()).toEqual(event.companies.map((c) => c.name).sort());
+    ["panel", 688],
+  ] as const)("names every district on a wide %s map (%ipx)", (variant, width) => {
+    const names = buildMapLayout({ ...event, variant, width, withHeadline: true }).labels.filter((l) => l.kind === "district").map((l) => l.text);
+    expect(names).toEqual(expect.arrayContaining(DISTRICTS));
   });
 
-  it.each([
-    ["hero", 358],
-    ["panel", 318],
-  ] as const)("names only the four busiest employers on a narrow %s map (%ipx)", (variant, width) => {
-    expect(named(variant, width)).toHaveLength(4);
+  it("names no company until a proof is traced", () => {
+    expect(buildMapLayout({ ...event, variant: "hero", width: 640 }).labels.filter((l) => l.kind === "company")).toEqual([]);
+    const proof = event.flows[0].proofLabel;
+    const traced = buildMapLayout({ ...event, variant: "hero", width: 640, highlightProof: proof });
+    expect(traced.labels.map((l) => l.kind)).toEqual(expect.arrayContaining(["proof", "company"]));
   });
 
-  it.each([358, 600, 680])("keeps every label apart, inside the map and off the inset at %ipx", (width) => {
-    const { labels, view, inset, nodes, venue } = buildMapLayout({ ...event, variant: "hero", width });
+  it.each([358, 600, 680])("keeps every label apart, inside the map, off the inset and off every pin at %ipx", (width) => {
+    const { labels, view, inset, nodes, venue } = buildMapLayout({ ...event, variant: "hero", width, withHeadline: true });
     expectApart(labels);
     for (const l of labels) {
       expect(l.x).toBeGreaterThanOrEqual(view.x);
@@ -130,14 +150,20 @@ describe("buildMapLayout on the demo event", () => {
     }
   });
 
-  it("draws plain dots: no company dot is large enough for initials", () => {
-    const { nodes, scale } = buildMapLayout({ ...event, variant: "hero", width: 640 });
-    for (const node of nodes) expect(node.r * 2 * scale).toBeLessThan(28);
+  it("sets no map text under 14px on a wide map or 13px on a phone", () => {
+    for (const l of buildMapLayout({ ...event, variant: "hero", width: 640 }).labels) expect(l.fontSize).toBeGreaterThanOrEqual(14);
+    for (const l of buildMapLayout({ ...event, variant: "hero", width: 358 }).labels) expect(l.fontSize).toBeGreaterThanOrEqual(13);
   });
 
-  it("joins a label that sits further out to its dot with a leader", () => {
+  it("weights lines in three steps", () => {
+    const weights = new Set(buildMapLayout({ ...event, variant: "panel", width: 680 }).lines.map((l) => l.weight));
+    expect(weights.size).toBeLessThanOrEqual(3);
+    expect(weights.size).toBeGreaterThan(1);
+  });
+
+  it("joins a venue or company label that sits further out to its marker with a leader", () => {
     const { labels, leaders } = buildMapLayout({ ...event, variant: "hero", width: 600 });
-    expect(leaders.map((l) => l.id).sort()).toEqual(labels.filter((l) => l.leader).map((l) => l.id).sort());
+    const ids = labels.filter((l) => l.leader && (l.kind === "venue" || l.kind === "company")).map((l) => l.id);
+    expect(leaders.map((l) => l.id).sort()).toEqual(ids.sort());
   });
 });
-

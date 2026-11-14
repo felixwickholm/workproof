@@ -1,57 +1,177 @@
-import { BASE_URL, checkScreen, createSuite, eventually, expect, openVisitor, PHONE, readCityTotals, visible } from "../harness.mjs";
-import { readCityStart, SECRETS } from "./seeker.mjs";
+import { BASE_URL, checkScreen, createSuite, eventually, expect, openVisitor, PHONE, visible } from "../harness.mjs";
+import { SECRETS } from "./seeker.mjs";
 
-const COUNTED = ["Human decisions", "Meetings confirmed by both sides", "Automated decisions"];
+/** The funnel's labels, as the city page sets them on `data-total`. */
+const STEPS = ["Took a challenge", "Scored by a company", "Invited", "Said yes", "Talked at the event", "Follow-up agreed", "Hired (if known)"];
+/** Names a city screen must never show: the visitor's details and the demo person's. */
+const NAMES = [...SECRETS, "Olena", "Kovalenko"];
+/** A reviewer registered for the test company, so every score names a person. */
+const REVIEWER = "Test Reviewer";
 
-/** The three counted figures, as "label: n" lines, for a readable failure. */
-const show = (totals) => COUNTED.map((label) => `${label}: ${totals[label]}`).join(", ");
-const same = (a, b) => COUNTED.every((label) => a[label] === b[label]);
+/** The event funnel's numbers, by label. */
+async function readFunnel(page) {
+  await page.locator('[data-total="Took a challenge"]').first().waitFor({ timeout: 15_000 });
+  return page.evaluate((labels) => {
+    const out = {};
+    for (const label of labels) out[label] = Number(document.querySelector(`[data-total="${label}"]`)?.textContent?.trim());
+    return out;
+  }, STEPS);
+}
+
+const show = (f) => STEPS.map((label) => `${label}: ${f[label]}`).join(", ");
+const same = (a, b) => STEPS.every((label) => a[label] === b[label]);
+
+/** The visible text of a page, for the name check. */
+async function noNames(page, where) {
+  const text = await page.locator("body").innerText();
+  for (const name of NAMES) expect(!text.includes(name), `${where} shows the name "${name}"`);
+}
+
+/** This browser's challenges with work, most work first, each with its first company. */
+async function tasksWithWork(page) {
+  const city = await (await page.request.get(`${BASE_URL}/api/city`)).json();
+  return city.insights.impact.tasks
+    .filter((t) => t.took > 0)
+    .map((t) => ({ challengeId: t.challengeId, title: t.title, companyId: city.insights.companies.find((c) => c.name === t.companies[0]).id }));
+}
+
+/** A challenge with a company of the same need and, once all its work is scored, two rows that may be shared. */
+async function shareableTask(page) {
+  for (const task of await tasksWithWork(page)) {
+    const matches = await (await page.request.get(`${BASE_URL}/api/city/tasks/${task.challengeId}/matches`)).json();
+    if (matches.length === 0) continue;
+    while (await scoreOne(page, task));
+    const view = await (await page.request.get(`${BASE_URL}/api/city/tasks/${task.challengeId}`)).json();
+    if (view.top.filter((t) => t.canShare).length >= 2) return task;
+  }
+  throw new Error("no challenge has a matching company and two scored rows that allow sharing");
+}
+
+/** Companies this browser already registered the test reviewer for. */
+const registered = new Set();
 
 /**
- * Suite 7: the city sees what the earlier suites did in this browser: three decisions by a named
- * person, one meeting both sides confirmed, no automated decision, and an audit log that names the
- * reviewer and never the candidate. Another browser's event is untouched, and Reset demo restores
- * the starting numbers.
+ * A change through the API. The server allows 60 changes a minute per address, which a person never
+ * reaches but this suite can, right after the others; on a 429 it waits for the minute to pass.
+ */
+async function post(page, path, data) {
+  for (let tries = 0; ; tries += 1) {
+    const reply = await page.request.post(`${BASE_URL}${path}`, { data });
+    if (reply.status() !== 429 || tries === 15) return reply;
+    await page.waitForTimeout(5_000);
+  }
+}
+
+/**
+ * Scores one piece of work on the task in this browser's sandbox, as a reviewer registered for its company,
+ * through the company's own routes. Returns the scored proof id, or null when no work is left to score.
+ */
+async function scoreOne(page, task) {
+  if (!registered.has(task.companyId)) {
+    await post(page, `/api/companies/${task.companyId}/reviewers`, { name: REVIEWER });
+    registered.add(task.companyId);
+  }
+  const top = await (await page.request.get(`${BASE_URL}/api/companies/${task.companyId}/tasks/${task.challengeId}/top`)).json();
+  // Older seed work may carry an answer without scores; the server refuses a second decision there.
+  for (const proof of top.waiting) {
+    const reply = await post(page, "/api/decisions", {
+      proofId: proof.proofId,
+      companyId: task.companyId,
+      reviewer: REVIEWER,
+      decision: "hold",
+      feedback: "You found the main risk first and said why. Tell us how you would explain it to the team.",
+      scores: top.challenge.coreSkills.map((skill) => ({ skillId: skill.id, points: 4 })),
+    });
+    if (reply.ok()) return proof.proofId;
+    expect(reply.status() === 409, `scoring failed with ${reply.status()}`);
+  }
+  return null;
+}
+
+/**
+ * Suite 7: the city. The funnel moves when a company scores work in this browser; the challenge page lists
+ * the work by label and score and offers two people to another company; the export and every city screen
+ * carry no name. Another browser's event is untouched, and Reset demo restores the start.
  */
 export async function runCity(journey) {
   const { page, errors, browser } = journey;
   const suite = createSuite("7 City", page);
-  const start = journey.cityStart;
-  // Not now on a waiting proof, Meet on the visitor's, Not now on the Second look proof.
-  const decisionsMade = 3;
+  let start = {};
+  let task = null;
+  let fresh = {};
 
-  await suite.step("0 automated decisions, the human decisions and confirmed meetings went up", async () => {
-    expect(start && journey.secondLookProof, "needs the work seeker, employer and Second look suites");
+  await suite.step("the city page answers its three questions", async () => {
     await page.goto(`${BASE_URL}/city`);
-    await page.locator('[data-total="Human decisions"]').waitFor({ timeout: 15_000 });
-    const now = await readCityTotals(page);
-    expect(now["Automated decisions"] === 0, `${now["Automated decisions"]} automated decisions`);
-    expect(
-      now["Human decisions"] === start["Human decisions"] + decisionsMade,
-      `human decisions went from ${start["Human decisions"]} to ${now["Human decisions"]}, expected +${decisionsMade}`,
-    );
-    expect(
-      now["Meetings confirmed by both sides"] === start["Meetings confirmed by both sides"] + 1,
-      `meetings confirmed by both went from ${start["Meetings confirmed by both sides"]} to ${now["Meetings confirmed by both sides"]}, expected +1`,
-    );
+    start = await readFunnel(page);
+    for (const label of STEPS) expect(Number.isInteger(start[label]), `the funnel shows no number for "${label}"`);
+    await visible(page.getByRole("heading", { name: "Challenge leaderboard" })).waitFor();
+    await visible(page.getByRole("heading", { name: "What companies ask for" })).waitFor();
+    await visible(page.getByText(/follow-up talks? (came out of this event|is agreed yet)/)).waitFor();
+    await noNames(page, "/city");
     await checkScreen(page, errors, "/city");
   });
 
-  await suite.step("the audit log names the reviewer and never the candidate", async () => {
-    const log = page.locator("div").filter({ has: page.getByRole("heading", { name: "Audit log" }) }).filter({ has: page.locator("ol") }).last();
-    await log.getByRole("button", { name: /^Show all \d+$/ }).click();
-    const rows = log.locator("li");
-    const meet = rows.filter({ hasText: "Anna Koivisto" }).filter({ hasText: journey.planProof.label });
-    expect((await meet.count()) > 0, `no audit entry by Anna Koivisto for ${journey.planProof.label}`);
-    const text = await log.innerText();
-    for (const secret of SECRETS) expect(!text.includes(secret), `the audit log names the candidate: "${secret}"`);
+  await suite.step("scoring work raises the funnel in this browser", async () => {
+    const scorable = [];
+    for (const t of await tasksWithWork(page)) if (await scoreOne(page, t)) scorable.push(t);
+    expect(scorable.length > 0, "no challenge has work left to score");
+    let now = {};
+    await eventually(
+      // Work on a shared challenge may already carry the other company's score, so it counts once.
+      async () => {
+        now = await readFunnel(page);
+        return now["Scored by a company"] > start["Scored by a company"] && now["Scored by a company"] <= start["Scored by a company"] + scorable.length;
+      },
+      () => `after ${scorable.length} scores the city shows ${show(now)}; expected "Scored by a company" above ${start["Scored by a company"]}, at most +${scorable.length}`,
+      15_000,
+    );
+    expect(now["Took a challenge"] === start["Took a challenge"], "scoring changed the number who took a challenge");
+  });
+
+  await suite.step("a challenge's page lists top work by label and score and offers two people", async () => {
+    // Not every person allows sharing, so score enough work for two rows that do.
+    task = await shareableTask(page);
+    await page.getByRole("link", { name: task.title }).first().click();
+    await page.waitForURL((url) => url.pathname === `/city/challenges/${task.challengeId}`);
+    await visible(page.getByText(/^Work \S+ · \d+\.\d of 10$/).first()).waitFor({ timeout: 15_000 });
+    await noNames(page, "the challenge page");
+    const boxes = page.locator("label:has(input[type=checkbox])");
+    await eventually(async () => (await boxes.count()) >= 2, () => "fewer than two scored rows allow sharing", 15_000);
+    await boxes.nth(0).click();
+    await boxes.nth(1).click();
+    const company = page.getByRole("radio").first();
+    const name = (await company.locator("span span").first().innerText()).trim();
+    await company.click();
+    await page.getByRole("button", { name: `Offer 2 people to ${name}` }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Offer", exact: true }).click();
+    await eventually(
+      async () => (await page.locator("li").filter({ hasText: `Offered to ${name}` }).count()) >= 2,
+      () => `the two rows do not say "Offered to ${name}"`,
+      15_000,
+    );
+    await checkScreen(page, errors, "/city/challenges/[id]");
+  });
+
+  await suite.step("the talks export and the log carry no name", async () => {
+    const csv = await (await page.request.get(`${BASE_URL}/api/city/meetings.csv`)).text();
+    expect(csv.startsWith("Proof,Employer,Proposed time,Table,Status"), "the export has an unexpected header");
+    for (const name of NAMES) expect(!csv.includes(name), `the export names "${name}"`);
+    await page.goto(`${BASE_URL}/city/log`);
+    await visible(page.getByRole("heading", { name: "The log" })).waitFor();
+    await page.locator("tbody tr").first().waitFor({ timeout: 15_000 });
+    await noNames(page, "/city/log");
+    await checkScreen(page, errors, "/city/log");
   });
 
   await suite.step("another browser's demo event is untouched", async () => {
+    await page.goto(`${BASE_URL}/city`);
     const other = await openVisitor(browser, PHONE, "7 City");
     try {
-      const fresh = await readCityStart(other.page);
-      expect(same(fresh, start), `a fresh visitor sees ${show(fresh)}; expected the starting ${show(start)}`);
+      await other.page.goto(`${BASE_URL}/city`);
+      fresh = await readFunnel(other.page);
+      const mine = await readFunnel(page);
+      // This browser scored work; a fresh visitor's event has neither score.
+      expect(fresh["Scored by a company"] < mine["Scored by a company"], `a fresh visitor sees ${show(fresh)}; this browser sees ${show(mine)}`);
       await checkScreen(other.page, other.errors, "/city in a fresh browser");
     } finally {
       await other.context.close();
@@ -59,12 +179,13 @@ export async function runCity(journey) {
   });
 
   await suite.step("Reset demo restores the starting numbers", async () => {
+    await page.goto(`${BASE_URL}/city`);
     await visible(page.getByRole("button", { name: "Reset demo" })).click();
     await visible(page.getByText("Demo reset. Everything is back at the start.")).waitFor({ timeout: 15_000 });
     let now = {};
     await eventually(
-      async () => same((now = await readCityTotals(page)), start),
-      () => `after the reset the city shows ${show(now)}; expected ${show(start)}`,
+      async () => same((now = await readFunnel(page)), fresh),
+      () => `after the reset the city shows ${show(now)}; a fresh visitor sees ${show(fresh)}`,
       15_000,
     );
     await checkScreen(page, errors, "/city after reset");

@@ -22,7 +22,7 @@ const SELF_CHECK = "is quoted with the same figures in README.md and docs/evals.
 
 /** Runs one vitest suite with its own temp folder, so a parallel run cannot mix up the eval rows. */
 function run(target) {
-  const temp = mkdtempSync(join(tmpdir(), "workprint-evidence-"));
+  const temp = mkdtempSync(join(tmpdir(), "workproof-evidence-"));
   const report = join(temp, "report.json");
   const result = spawnSync("npx", ["vitest", "run", target, "--reporter=json", `--outputFile=${report}`], {
     cwd: root,

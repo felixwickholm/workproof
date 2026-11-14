@@ -2,7 +2,7 @@ import type { CityOverview, Company, EmployerRecord } from "@/lib/domain/types";
 import type { StoreData } from "@/lib/store";
 import { median } from "../reply-totals";
 import { countAutomatedDecisions } from "./automated";
-import { DAY_MS, eventChallenges, eventTotals, HOUR_MS } from "./event";
+import { DAY_MS, eventChallenges, eventTotals, HOUR_MS, peopleAnswered } from "./event";
 import { buildCityInsights } from "./insights";
 import { ownChallenges } from "./queue";
 
@@ -49,6 +49,7 @@ export function buildCityOverview(data: StoreData): CityOverview {
       challenges: challenges.length,
       proofs,
       proofsAnswered,
+      peopleAnswered: peopleAnswered(data),
       medianHoursToFirstAnswer,
       humanDecisions: data.decisions.length,
       meetingsInvited: data.meetings.length,

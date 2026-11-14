@@ -12,7 +12,7 @@ const step = cx(
 
 /**
  * "How many answers can you read?" A compact stepper from 5 to 30. Each task takes a limited number
- * of answers, so every one can be read and answered.
+ * of answers, so an employer can read them all.
  */
 export function PlacesStepper({ value, onChange }: { value: number | undefined; onChange: (places: number) => void }) {
   const places = choosePlaces(value);
@@ -37,7 +37,7 @@ export function PlacesStepper({ value, onChange }: { value: number | undefined; 
         </div>
       </div>
       <p id={noteId} className="text-footnote mt-1 text-pretty text-label-2">
-        Each task takes a limited number of answers, so every one can be read.
+        Each task takes a limited number of answers, so an employer can read them all.
       </p>
     </div>
   );

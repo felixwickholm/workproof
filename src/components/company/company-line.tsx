@@ -18,7 +18,7 @@ interface Props {
 }
 
 /**
- * "Kaari Home Care · Home care · Matinkylä · change": the company this screen acts for, in one
+ * "Halla Supply · Wholesale · Leppävaara · change": the company this screen acts for, in one
  * quiet line. "change" opens the event's employers in a sheet; one tap switches. Built from spans,
  * so it can sit inside a sentence such as a page's subtitle.
  */

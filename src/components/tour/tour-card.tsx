@@ -1,12 +1,16 @@
 "use client";
 
-import { ArrowRight, Pause, Play, X } from "lucide-react";
+import { ArrowRight, Pause, Play } from "lucide-react";
 import { AnimatePresence, motion, useTransform, type MotionValue } from "motion/react";
 import type { FocusEvent, KeyboardEvent, PointerEvent, Ref, RefObject } from "react";
+import { MODES } from "../shell/modes";
 import { cx } from "../ui/cx";
 import { Spinner } from "../ui/spinner";
-import { modeChip, tours, type TourKind, type TourMode, type TourStep } from "./steps";
+import { modeChip, tours, type EndAction, type TourKind, type TourMode, type TourStep } from "./steps";
 import { counterText } from "./tour-machine";
+
+/** What the card says while the next step is being prepared. */
+export type Wait = "none" | "short" | "long";
 
 interface Props {
   ref: Ref<HTMLDivElement>;
@@ -14,23 +18,22 @@ interface Props {
   step: TourStep;
   index: number;
   stepCount: number;
-  /** The next step is being prepared: Next shows a spinner and waits. */
+  /** The next step is being prepared: Next waits. */
   busy: boolean;
-  /** While the screen changes hands, the line that says so ("Now the employer's side."), else null. */
-  handOver: string | null;
-  /** The mode of the step being prepared, for the hand-over's dot. */
+  /** How long the move has taken: a spinner after a short wait, a plain line after a long one. */
+  wait: Wait;
+  /** Whose screen comes next while the move runs, else null. The chip says so at once. */
   comingMode: TourMode | null;
+  /** The step has a target but none showed up, so the card sits on its own. */
+  fallback: boolean;
   /** The tallest the card may be on this screen; its text scrolls inside, the buttons stay. */
   maxHeight: number;
   reduce: boolean;
   nextRef: RefObject<HTMLButtonElement | null>;
   onNext: () => void;
   onBack: () => void;
-  onClose: () => void;
-  onExplore: () => void;
-  onTry: () => void;
-  /** Opens Olena's story from the last step of the one-minute walkthrough. */
-  onStory: () => void;
+  onSkip: () => void;
+  onEnd: (action: EndAction) => void;
   /** How far the current step's time has run, 0 to 1. Drawn as the line that fills. */
   progress: MotionValue<number>;
   /** The step moves on by itself: the line fills and Pause shows. */
@@ -49,11 +52,21 @@ function Segment({ state, progress, auto }: { state: "done" | "now" | "later"; p
   return (
     <span className="relative h-[3px] min-w-0 flex-1 overflow-hidden rounded-full bg-label/15">
       {state === "later" ? null : (
-        <motion.span
-          className="absolute inset-0 origin-left rounded-full bg-label"
-          style={state === "now" ? { scaleX } : { scaleX: 1, opacity: 0.45 }}
-        />
+        <motion.span className="absolute inset-0 origin-left rounded-full bg-label" style={state === "now" ? { scaleX } : { scaleX: 1, opacity: 0.45 }} />
       )}
+    </span>
+  );
+}
+
+/** Whose screen it is: the mode's own icon and plain words, on a neutral chip. */
+function Chip({ mode, wait }: { mode: TourMode; wait: Wait }) {
+  const label = wait === "long" ? "Loading the next screen" : modeChip(mode);
+  if (!label) return <span />;
+  const Icon = wait === "long" ? null : MODES.find((m) => m.id === mode)?.Icon;
+  return (
+    <span data-tour-chip role={wait === "long" ? "status" : undefined} className="inline-flex h-8 max-w-full min-w-0 items-center gap-2 rounded-full bg-fill px-3 text-[14px] leading-5 font-medium text-label">
+      {Icon ? <Icon aria-hidden className="size-4 shrink-0 text-label-2" strokeWidth={1.75} /> : null}
+      <span className="truncate">{label}</span>
     </span>
   );
 }
@@ -63,7 +76,7 @@ const mouse = (event: PointerEvent) => event.pointerType === "mouse";
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
-/** Keeps Tab inside the card while the walkthrough is open. */
+/** Keeps Tab inside the card while the tour is open. */
 function trapTab(event: KeyboardEvent<HTMLDivElement>) {
   if (event.key !== "Tab") return;
   const focusable = [...event.currentTarget.querySelectorAll<HTMLElement>("button:not([disabled])")].filter((el) => el.offsetParent !== null);
@@ -79,30 +92,31 @@ function trapTab(event: KeyboardEvent<HTMLDivElement>) {
   }
 }
 
-const pill = "press inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 text-[16px] leading-5 font-semibold transition-colors duration-150";
+/** 52px tall on a phone, 44px on a laptop. */
+const pill = "press inline-flex h-[52px] min-[640px]:h-11 shrink-0 items-center justify-center gap-2 rounded-full text-[17px] leading-5 font-semibold transition-colors duration-150";
+const quiet = "text-label-2 hover:bg-fill hover:text-label";
 
 /**
- * The walkthrough's card: whose screen this is, the step in big type, and the way on. Its content
- * crossfades between steps; the card itself is moved by the layer.
+ * The tour's card: whose screen it is, one headline, one sentence, and the way on. Nothing else:
+ * the screen behind it shows the rest. Its content crossfades between steps; the layer moves it.
  */
 export function TourCard({
   ref,
+  kind,
   step,
   index,
   stepCount,
   busy,
-  handOver,
+  wait,
   comingMode,
+  fallback,
   maxHeight,
   reduce,
   nextRef,
   onNext,
   onBack,
-  onClose,
-  onExplore,
-  onTry,
-  onStory,
-  kind,
+  onSkip,
+  onEnd,
   progress,
   auto,
   paused,
@@ -111,8 +125,6 @@ export function TourCard({
   onFocusHold,
 }: Props) {
   const last = index === stepCount - 1;
-  const chip = modeChip[handOver && comingMode ? comingMode : step.mode];
-  const minute = kind === "minute";
   // Only a keyboard user on a button holds the timer; a click leaves focus without the ring.
   const onFocus = (event: FocusEvent<HTMLDivElement>) => onFocusHold(event.target instanceof HTMLElement && event.target.matches("button:focus-visible"));
   const onBlur = (event: FocusEvent<HTMLDivElement>) => {
@@ -124,8 +136,10 @@ export function TourCard({
       role="dialog"
       aria-modal="true"
       aria-labelledby="tour-title"
-      aria-describedby="tour-body"
+      aria-describedby={step.body ? "tour-body" : undefined}
       data-tour-kind={kind}
+      data-tour-step={step.id}
+      data-tour-fallback={fallback || undefined}
       tabIndex={-1}
       onKeyDown={trapTab}
       onFocus={onFocus}
@@ -133,131 +147,88 @@ export function TourCard({
       onPointerEnter={(event) => mouse(event) && onHover(true)}
       onPointerLeave={(event) => mouse(event) && onHover(false)}
       style={{ maxHeight }}
-      className="flex flex-col rounded-card bg-raised shadow-float outline-none"
+      className="flex flex-col rounded-card bg-raised shadow-float outline-none max-[639px]:rounded-b-none"
     >
       <div className="shrink-0 px-6 pt-5 max-[639px]:px-5 max-[639px]:pt-4">
         <div className="flex h-8 items-center justify-between gap-3">
-          <span data-tour-counter className="text-footnote min-w-0 truncate font-medium text-label-2 tabular-nums">
-            {tours[kind].name} · {counterText(index, stepCount)}
+          <Chip mode={comingMode ?? step.mode} wait={wait} />
+          <span data-tour-counter className="shrink-0 text-[14px] leading-5 font-medium text-label-2 tabular-nums">
+            {counterText(index, stepCount)}
           </span>
-          <button
-            type="button"
-            aria-label="Close the tour"
-            onClick={onClose}
-            className="press -mr-2 inline-flex size-9 shrink-0 items-center justify-center rounded-full text-label-2 transition-colors duration-150 hover:bg-fill hover:text-label"
-          >
-            <X aria-hidden className="size-[18px]" strokeWidth={1.8} />
-          </button>
         </div>
-        <div aria-hidden data-tour-progress className="mt-2 flex gap-1">
+        <div aria-hidden data-tour-progress className="mt-3 flex gap-1">
           {Array.from({ length: stepCount }, (_, i) => (
             <Segment key={i} state={i < index ? "done" : i === index ? "now" : "later"} progress={progress} auto={auto} />
           ))}
         </div>
-        {chip ? (
-          <span data-tour-chip className="text-footnote mt-4 inline-flex h-7 max-w-full min-w-0 items-center gap-2 rounded-full bg-fill pr-3 pl-2.5 font-medium text-label">
-            <span aria-hidden className="size-2 shrink-0 rounded-full transition-colors duration-300" style={{ backgroundColor: chip.hue }} />
-            <span className="truncate">{chip.label}</span>
-          </span>
-        ) : null}
       </div>
 
       <div data-tour-scroll className="relative min-h-0 overflow-y-auto overscroll-contain px-6 max-[639px]:px-5">
         <AnimatePresence initial={false} mode="popLayout">
-          {handOver ? (
-            <motion.p
-              key={`hand-over-${handOver}`}
-              role="status"
-              initial={{
-                opacity: 0,
-                transform: reduce ? "none" : "translateY(6px)",
-              }}
-              animate={{ opacity: 1, transform: "translateY(0px)" }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, ease: EASE_OUT }}
-              className="mt-4 mb-1 font-serif text-[30px] leading-[36px] tracking-[-0.01em] text-label"
-            >
-              {handOver}
-            </motion.p>
-          ) : (
-            <motion.div
-              key={step.id}
-              initial={{ opacity: 0, filter: "blur(2px)" }}
-              animate={{ opacity: 1, filter: "blur(0px)" }}
-              exit={{ opacity: 0, filter: "blur(2px)" }}
-              transition={{ duration: reduce ? 0.12 : 0.16, ease: EASE_OUT }}
-            >
-              <h2 id="tour-title" className="mt-4 text-[22px] leading-7 font-semibold tracking-[-0.015em] text-balance text-label">
-                {step.title}
-              </h2>
-              <p id="tour-body" className="mt-2 text-[17px] leading-[26px] text-pretty text-label-2">
+          <motion.div
+            key={step.id}
+            initial={{ opacity: 0, transform: reduce ? "none" : "translateY(4px)" }}
+            animate={{ opacity: 1, transform: "translateY(0px)" }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: reduce ? 0.12 : 0.2, ease: EASE_OUT }}
+          >
+            <h2 id="tour-title" className="mt-4 text-[26px] leading-8 font-semibold tracking-[-0.015em] text-balance text-label min-[640px]:text-[28px] min-[640px]:leading-[34px]">
+              {step.title}
+            </h2>
+            {step.body ? (
+              <p id="tour-body" className="mt-2 text-[19px] leading-7 text-pretty text-label-2 min-[640px]:text-[20px]">
                 {step.body}
               </p>
-              {last && minute ? (
-                <div className="mt-5 flex flex-col gap-2">
-                  <button type="button" onClick={onTry} className={cx(pill, "bg-accent text-accent-ink")}>
-                    Do a 2-minute task
+            ) : null}
+            {last ? (
+              <div className="mt-5 flex flex-col gap-2">
+                {tours[kind].end.map((action, i) => (
+                  <button
+                    key={action.href}
+                    type="button"
+                    autoFocus={i === 0}
+                    onClick={() => onEnd(action)}
+                    className={cx(pill, "w-full px-5", i === 0 ? "bg-accent text-accent-ink" : "bg-fill text-label hover:bg-label/10")}
+                  >
+                    {action.label}
                   </button>
-                  <button type="button" onClick={onExplore} className={cx(pill, "bg-fill text-label hover:bg-label/10")}>
-                    Explore the demo
-                  </button>
-                  <button type="button" onClick={onStory} className={cx(pill, "bg-fill text-label hover:bg-label/10")}>
-                    Olena&apos;s story · 2 min
-                  </button>
-                </div>
-              ) : last ? (
-                <div className="mt-6 flex flex-col gap-2.5 min-[640px]:flex-row">
-                  <button type="button" autoFocus onClick={onExplore} className={cx(pill, "bg-accent text-accent-ink")}>
-                    Explore on your own
-                  </button>
-                  <button type="button" onClick={onTry} className={cx(pill, "bg-fill text-label hover:bg-label/10")}>
-                    Do a 2-minute task
-                  </button>
-                </div>
-              ) : null}
-            </motion.div>
-          )}
+                ))}
+              </div>
+            ) : null}
+          </motion.div>
         </AnimatePresence>
       </div>
 
-      <div className="flex shrink-0 items-center justify-between gap-2 px-6 pt-5 pb-6 max-[639px]:px-5 max-[639px]:pt-4 max-[639px]:pb-5">
-        <div className="flex min-w-0 items-center">
-          {minute && auto ? (
+      <div className="flex shrink-0 items-center justify-between gap-1 px-6 pt-5 pb-6 max-[639px]:px-3 max-[639px]:pt-4 max-[639px]:pb-[calc(12px+env(safe-area-inset-bottom,0px))]">
+        <button type="button" onClick={onSkip} data-tour-skip className={cx(pill, quiet, "-ml-3 px-3 max-[639px]:ml-0")}>
+          {last ? "Close" : "Skip"}
+        </button>
+        <div className="flex shrink-0 items-center gap-1">
+          <button type="button" onClick={onBack} aria-disabled={busy || undefined} className={cx(pill, quiet, "px-3", index === 0 && "invisible")}>
+            Back
+          </button>
+          {auto ? (
             <button
               type="button"
               onClick={onTogglePause}
-              aria-label={paused ? "Play the walkthrough" : "Pause the walkthrough"}
+              aria-label={paused ? "Play the tour" : "Pause the tour"}
               aria-pressed={paused}
               data-tour-pause
-              className="press -ml-2.5 inline-flex size-11 items-center justify-center rounded-full text-label-2 transition-colors duration-150 hover:bg-fill hover:text-label"
+              className={cx(pill, quiet, "w-[52px] min-[640px]:w-11")}
             >
-              {paused ? (
-                <Play aria-hidden className="size-[18px]" strokeWidth={1.8} fill="currentColor" />
-              ) : (
-                <Pause aria-hidden className="size-[18px]" strokeWidth={1.8} fill="currentColor" />
-              )}
+              {paused ? <Play aria-hidden className="size-5" strokeWidth={1.75} /> : <Pause aria-hidden className="size-5" strokeWidth={1.75} />}
             </button>
           ) : null}
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <button
-            type="button"
-            onClick={onBack}
-            aria-disabled={busy || undefined}
-            className={cx(pill, "px-3 text-label-2 hover:text-label", index === 0 && "invisible")}
-          >
-            Back
-          </button>
           {last ? null : (
             <button
               ref={nextRef}
               type="button"
               onClick={onNext}
               aria-disabled={busy || undefined}
-              className={cx(pill, "bg-accent pr-4 text-accent-ink", busy && "cursor-progress")}
+              className={cx(pill, "ml-1 bg-accent pr-4 pl-5 text-accent-ink", busy && "cursor-progress")}
             >
               Next
-              {busy ? <Spinner /> : <ArrowRight aria-hidden className="size-[18px]" strokeWidth={2} />}
+              {busy && wait !== "none" ? <Spinner /> : <ArrowRight aria-hidden className="size-5" strokeWidth={1.75} />}
             </button>
           )}
         </div>

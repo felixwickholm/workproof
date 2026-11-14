@@ -1,13 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApiError } from "@/lib/client/api";
-import { companyErrorText, firstLine, proofHref } from "./format";
-
-describe("firstLine", () => {
-  it("skips empty lines and trims", () => {
-    expect(firstLine("\n  \n  Keep in the morning:\n- A 08:00")).toBe("Keep in the morning:");
-    expect(firstLine("")).toBe("");
-  });
-});
+import { companyErrorText, proofHref } from "./format";
 
 describe("companyErrorText", () => {
   it("shows the API's own words for a validation error", () => {

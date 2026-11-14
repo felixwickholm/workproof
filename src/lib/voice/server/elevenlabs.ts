@@ -22,6 +22,28 @@ interface VoiceServerDeps {
 
 const NOT_SET_UP = "No server voice service is set up. The browser's own voice is used instead.";
 const UPSTREAM_FAILED = "The voice service did not answer. Try again, or type your answer.";
+const TIMED_OUT = "The voice service took too long to answer. Try again, or type your answer.";
+
+/** The longest a voice call may wait for the service, so a stalled call never leaves the page waiting. */
+export const VOICE_TIMEOUT_MS = 15_000;
+
+/**
+ * Runs one call to the voice service with a deadline. Past it the call is cancelled and the caller gets a 504
+ * with a plain message, so the page can offer typing instead. A network failure is a 502.
+ */
+async function withDeadline<T>(run: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), VOICE_TIMEOUT_MS);
+  try {
+    return await run(controller.signal);
+  } catch (error) {
+    if (controller.signal.aborted) throw new ServiceError(504, TIMED_OUT);
+    if (error instanceof ServiceError) throw error;
+    throw new ServiceError(502, UPSTREAM_FAILED);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 function apiKey(env: Env): string {
   const key = env.ELEVENLABS_API_KEY?.trim();
@@ -42,13 +64,17 @@ export async function synthesize(text: string, { env, fetch }: VoiceServerDeps):
   if (!spoken) throw new ServiceError(400, "There is no text to read aloud.");
   if (spoken.length > VOICE_LIMITS.speakChars) throw new ServiceError(413, `Text to read aloud is limited to ${VOICE_LIMITS.speakChars} characters.`);
   const voiceId = env.ELEVENLABS_VOICE_ID?.trim() || DEFAULT_VOICE_ID;
-  const response = await fetch(`${API}/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`, {
-    method: "POST",
-    headers: { "xi-api-key": key, "content-type": "application/json", accept: "audio/mpeg" },
-    body: JSON.stringify({ text: spoken, model_id: TTS_MODEL }),
+  // The deadline covers the wait for the first byte; the audio then streams to the browser as it comes.
+  return withDeadline(async (signal) => {
+    const response = await fetch(`${API}/text-to-speech/${encodeURIComponent(voiceId)}?output_format=mp3_44100_128`, {
+      method: "POST",
+      headers: { "xi-api-key": key, "content-type": "application/json", accept: "audio/mpeg" },
+      body: JSON.stringify({ text: spoken, model_id: TTS_MODEL }),
+      signal,
+    });
+    if (!response.ok || !response.body) throw new ServiceError(502, UPSTREAM_FAILED);
+    return response.body;
   });
-  if (!response.ok || !response.body) throw new ServiceError(502, UPSTREAM_FAILED);
-  return response.body;
 }
 
 /**
@@ -63,11 +89,14 @@ export async function transcribe(audio: Blob, language: string | undefined, { en
   form.append("model_id", STT_MODEL);
   form.append("file", audio, "answer");
   if (language && /^[a-z]{2,3}$/.test(language)) form.append("language_code", language);
-  const response = await fetch(`${API}/speech-to-text`, { method: "POST", headers: { "xi-api-key": key }, body: form });
-  if (!response.ok) throw new ServiceError(502, UPSTREAM_FAILED);
-  const body = (await response.json()) as { text?: unknown };
-  if (typeof body.text !== "string") throw new ServiceError(502, UPSTREAM_FAILED);
-  return { text: body.text.trim() };
+  // The deadline covers the whole reply, the transcript included.
+  return withDeadline(async (signal) => {
+    const response = await fetch(`${API}/speech-to-text`, { method: "POST", headers: { "xi-api-key": key }, body: form, signal });
+    if (!response.ok) throw new ServiceError(502, UPSTREAM_FAILED);
+    const body = (await response.json()) as { text?: unknown };
+    if (typeof body.text !== "string") throw new ServiceError(502, UPSTREAM_FAILED);
+    return { text: body.text.trim() };
+  });
 }
 
 /** Reads a request body as bytes and stops at `max`, whatever the content-length header says. */

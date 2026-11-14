@@ -33,7 +33,7 @@ async function loadOverpass(savedPath) {
   const query = `[out:json][timeout:120];rel(${RELATION_ID});out geom;way["natural"="coastline"](${COAST_BBOX});out geom;`;
   const response = await fetch("https://overpass-api.de/api/interpreter", {
     method: "POST",
-    headers: { "User-Agent": "workprint-espoo-outline/1.0 (one-off build of a static city outline)" },
+    headers: { "User-Agent": "workproof-espoo-outline/1.0 (one-off build of a static city outline)" },
     body: new URLSearchParams({ data: query }),
   });
   if (!response.ok) throw new Error(`Overpass answered ${response.status}`);

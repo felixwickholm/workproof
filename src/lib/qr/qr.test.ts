@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { QUIET_ZONE, qrMatrix, qrPath } from "./qr";
 
 describe("qrMatrix", () => {
-  const matrix = qrMatrix("https://workprint.example.org/try?table=K7M2QX&joined=K7M2QX");
+  const matrix = qrMatrix("https://workproof.example.org/try?table=K7M2QX&joined=K7M2QX");
 
   it("is square, with a size the QR standard allows", () => {
     const size = matrix.length;

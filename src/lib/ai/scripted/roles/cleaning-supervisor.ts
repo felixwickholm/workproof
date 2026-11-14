@@ -25,8 +25,9 @@ export const cleaningSupervisor: RoleTemplate = {
     "you can come in yourself for two hours",
   ],
   challenge: {
+    minutes: 15,
     title: "One cleaner is ill tonight. Re-plan six floors",
-    format: "plan",
+    format: "make",
     proofKind: "plan",
     brief:
       "You lead tonight's cleaning shift in an office building. The plan below has three cleaners. One just called in ill, so two cleaners do the shift. Nobody else is free tonight. Write a new plan for the shift and say who you tell. This is a synthetic example.",
@@ -71,7 +72,7 @@ export const cleaningSupervisor: RoleTemplate = {
   },
   taster: {
     title: "Spot the risk in a night task",
-    format: "plan",
+    format: "make",
     proofKind: "plan",
     brief: "A shift note for one cleaner tonight.",
     material: {
