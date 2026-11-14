@@ -1,6 +1,5 @@
-import Link from "next/link";
-import { Play } from "lucide-react";
 import { BlindProofMini, type ProofPreview } from "@/components/blind-proof";
+import { PlayStoryButton } from "@/components/story/play-story-button";
 import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/card";
 import { Group, Row } from "@/components/ui/group";
@@ -28,12 +27,12 @@ export default function Home() {
         Do the work.
       </h1>
       <p className="rise text-body mt-3 text-label-2" style={riseAt(1)}>
-        20 minutes of real work. A human decides who to meet.
+        20 minutes of real work. A person at the company reads it and decides who to meet.
       </p>
 
       <div className="rise mt-8" style={riseAt(2)}>
-        <Eyebrow className="mb-2 px-1">What a company sees</Eyebrow>
-        <BlindProofMini proof={sample} meta="Robotics team · 20 min task" />
+        <Eyebrow className="mb-2 px-1">The company sees your work, not your name</Eyebrow>
+        <BlindProofMini proof={sample} meta="Anonymous answer · 20 min task" />
       </div>
 
       <div className="rise mt-8" style={riseAt(3)}>
@@ -43,13 +42,7 @@ export default function Home() {
           <Row title="I run the event" href="/city" />
         </Group>
 
-        <Link
-          href="/?demo=1"
-          className="press text-subhead mt-4 flex h-11 items-center gap-2 px-4 font-medium text-label-2"
-        >
-          <Play aria-hidden className="size-4" strokeWidth={2} />
-          Play the story
-        </Link>
+        <PlayStoryButton />
 
         <p className="text-footnote mt-6 px-4 text-label-3">AI drafts the tasks. People make every decision.</p>
       </div>
