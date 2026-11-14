@@ -10,8 +10,31 @@ const tabs = [
   { href: "/passport", label: "My proofs", Icon: WalletCards },
 ];
 
-export function TabBar() {
+export function TabBar({ inline }: { inline?: boolean }) {
   const pathname = usePathname();
+  if (inline) {
+    return (
+      <nav aria-label="Talent" className="flex gap-1">
+        {tabs.map(({ href, label, Icon }) => {
+          const active = pathname.startsWith(href);
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className={cx(
+                "text-subhead flex h-11 items-center gap-2 rounded-full px-4 font-semibold transition-colors duration-150",
+                active ? "bg-surface text-label" : "text-label-2 hover:text-label",
+              )}
+            >
+              <Icon aria-hidden className="size-[18px]" strokeWidth={active ? 2 : 1.6} />
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
+    );
+  }
   return (
     <nav aria-label="Talent" className="fixed inset-x-0 bottom-0 z-20">
       <div className="glass highlight pb-safe mx-auto grid w-full max-w-[440px] grid-cols-2">

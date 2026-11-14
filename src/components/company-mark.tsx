@@ -10,7 +10,7 @@ function initial(name: string) {
 }
 
 /** A company tile: the first letter of its name in a small square. */
-export function CompanyTile({ company, className }: { company: Company; className?: string }) {
+function CompanyTile({ company, className }: { company: Company; className?: string }) {
   return (
     <span
       aria-hidden

@@ -3,7 +3,7 @@ import { Eyebrow } from "../ui/card";
 import { cx } from "../ui/cx";
 import { formatHours } from "./format";
 
-const columns = ["Task live", "Proofs", "Feedback given", "Feedback owed", "Median reply", "Meetings held"];
+const columns = ["Live for", "Proofs", "Feedback given", "Feedback owed", "Median reply", "Meetings held"];
 
 /** On a phone: the three facts that say most about how an employer treats people. The table shows all. */
 const phoneFacts = ["Proofs", "Feedback owed", "Median reply"];
@@ -80,7 +80,7 @@ export function EmployerBoard({ employers }: { employers: EmployerRecord[] }) {
                       f.muted ? "text-label-3" : "text-label",
                     )}
                   >
-                    {f.label === "Task live" ? f.value.replace(" before", "") : f.value}
+                    {f.label === "Live for" ? f.value.replace(" before", "") : f.value}
                   </td>
                 ))}
               </tr>

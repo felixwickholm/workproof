@@ -34,7 +34,7 @@ interface Props {
 
 /** Feedback first, then the decision is sent. Each opening starts with an empty form. */
 export function DecisionSheet({ kind, proof, company, onClose, onDecided, onDone = onClose }: Props) {
-  const [reviewer, setReviewer] = useState(() => (typeof window === "undefined" ? "" : getReviewer()));
+  const [reviewer, setReviewer] = useState(() => (typeof window === "undefined" ? "" : getReviewer(company.id) || seededReviewer(company)));
   const [feedback, setFeedback] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +57,7 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided, onDone
   const short = MIN_FEEDBACK_CHARS - feedback.trim().length;
   const fewWords = MIN_FEEDBACK_WORDS - wordsWithLetters(feedback);
   const ready = !decisionInputProblem(reviewer, feedback);
-  const hint = short > 0 ? `${short} more` : fewWords > 0 ? `${fewWords} more ${fewWords === 1 ? "word" : "words"}` : !ready ? "Add your name" : null;
+  const hint = short > 0 ? `${short} more ${short === 1 ? "character" : "characters"}` : fewWords > 0 ? `${fewWords} more ${fewWords === 1 ? "word" : "words"}` : !ready ? "Add your name" : null;
 
   const inFlight = useRef(false);
   async function submit() {
@@ -67,7 +67,7 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided, onDone
     setError(null);
     try {
       const name = reviewer.trim();
-      saveReviewer(name);
+      saveReviewer(company.id, name);
       const res = await companyApi.decide({ proofId: proof.proofId, companyId: company.id, reviewer: name, decision: openedAs, feedback: feedback.trim() });
       setSent({ kind: openedAs, meeting: res.meeting });
       await onDecided();
@@ -89,14 +89,15 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided, onDone
       ? `Meet ${proof.label}`
       : `Pass on ${proof.label}`;
 
+  const moment = sent?.kind === "meet";
   return (
-    <Sheet open={kind !== null} onClose={onClose} title={title}>
-      <div className="-mx-5 max-h-[calc(85dvh-80px)] overflow-y-auto px-5">
+    <Sheet open={kind !== null} onClose={onClose} title={title} size={moment ? "full" : "auto"} hideTitle={moment}>
+      <div className={moment ? "flex flex-1 flex-col" : "-mx-5 max-h-[calc(85dvh-80px)] overflow-y-auto px-5"}>
         {sent ? (
           <Sent kind={sent.kind} meeting={sent.meeting} proof={proof} company={company} onDone={onDone} />
         ) : (
           <div className="flex flex-col gap-4">
-            <Field label="Your name" value={reviewer} onChange={setReviewer} placeholder="Reviewer name" autoComplete="name" maxLength={LIMITS.reviewer} />
+            <Field label="Your name" value={reviewer} onChange={setReviewer} placeholder="Reviewer name" autoComplete="name" maxLength={LIMITS.reviewer} fill="reviewer" />
             <div>
               <TextArea
                 label={decision === "meet" ? "Why you want to meet" : "Feedback for them"}
@@ -105,6 +106,7 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided, onDone
                 placeholder="Two honest lines about the work"
                 minRows={3}
                 maxLength={LIMITS.feedback}
+                fill={`note-${decision ?? "pass"}`}
               />
               <p className="text-footnote mt-2 flex justify-between gap-3 px-4 text-label-2">
                 <span>They will read this. Two honest lines are enough.</span>
@@ -138,44 +140,75 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided, onDone
   );
 }
 
-/** A calm confirmation: the proof and the company, joined by the human decision. */
+/** The reviewer's name from the company's own data, when the event set one up. */
+function seededReviewer(company: Company): string {
+  const value = (company as Company & { reviewer?: unknown }).reviewer;
+  return typeof value === "string" ? value : "";
+}
+
+/**
+ * A calm confirmation. A meeting gets the whole screen: the proof and the company joined by
+ * the human decision, the slot, and the one green check. Feedback after a pass stays small.
+ */
 function Sent({ kind, meeting, proof, company, onDone }: { kind: DecisionKind; meeting?: Meeting; proof: BlindProof; company: Company; onDone: () => void }) {
   const reduce = useReducedMotion();
   const ease = [0.23, 1, 0.32, 1] as const;
+  if (kind === "pass") {
+    return (
+      <motion.div initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, ease }}>
+        <p className="text-body text-pretty">
+          They will read your note. If the person agreed, other employers with the same skills can now see this proof under Second look.
+        </p>
+        <Button onClick={onDone} className="mt-6">
+          Done
+        </Button>
+      </motion.div>
+    );
+  }
   return (
-    <motion.div initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28, ease }}>
-      {kind === "meet" ? (
-        <>
-          <div aria-hidden className="flex items-center justify-center gap-0 py-4">
+    <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col items-center justify-center text-center">
+        <div aria-hidden className="flex items-center justify-center">
+          <motion.span initial={reduce ? false : { opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.28, ease }}>
             <Monogram label={proof.label} />
-            <span className="relative mx-2 flex h-px w-16 items-center justify-center bg-separator">
-              <motion.span
-                className="absolute flex size-7 items-center justify-center rounded-full bg-accent text-black"
-                initial={reduce ? false : { scale: 0.6, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ duration: 0.24, delay: 0.12, ease }}
-              >
-                <Check className="size-4" strokeWidth={3} />
-              </motion.span>
-            </span>
-            <span className="flex size-11 items-center justify-center rounded-inner bg-white text-subhead font-bold text-black">
-              {company.name.charAt(0)}
-            </span>
-          </div>
-          <p className="text-body text-pretty">Their name appears when they accept.</p>
+          </motion.span>
+          <span className="relative mx-2 flex h-px w-16 items-center justify-center bg-separator">
+            <motion.span
+              className="absolute flex size-9 items-center justify-center rounded-full bg-accent text-black"
+              initial={reduce ? false : { scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.24, delay: 0.16, ease }}
+            >
+              <Check className="size-5" strokeWidth={3} />
+            </motion.span>
+          </span>
+          <motion.span
+            className="flex size-11 items-center justify-center rounded-inner bg-raised text-subhead font-bold text-label"
+            initial={reduce ? false : { opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.28, ease }}
+          >
+            {company.name.charAt(0)}
+          </motion.span>
+        </div>
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.28, delay: 0.1, ease }}
+        >
+          <h2 className="text-title mt-8 font-semibold tracking-[-0.02em] text-balance">Invitation sent</h2>
           {meeting ? (
-            <p className="text-headline tnum mt-4 flex items-center gap-2 rounded-inner bg-raised px-4 py-3 font-semibold">
-              <CalendarClock aria-hidden className="size-5 shrink-0 text-label-2" strokeWidth={1.8} />
+            <p className="text-title-3 tnum mt-3 flex items-center justify-center gap-2 font-semibold">
+              <CalendarClock aria-hidden className="size-6 shrink-0 text-label-2" strokeWidth={1.8} />
               {meeting.slot}
             </p>
           ) : null}
-        </>
-      ) : (
-        <p className="text-body text-pretty">If they agreed, employers with the same skills can now see it under Second look.</p>
-      )}
+          <p className="text-body mt-3 text-label-2 text-pretty">Their name appears when they accept.</p>
+        </motion.div>
+      </div>
       <Button onClick={onDone} className="mt-6">
         Done
       </Button>
-    </motion.div>
+    </div>
   );
 }

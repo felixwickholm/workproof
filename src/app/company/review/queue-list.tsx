@@ -7,13 +7,11 @@ import { useState, type ReactNode } from "react";
 import { Monogram } from "@/components/blind-proof";
 import { CompanySwitcher, CompanySwitcherSkeleton } from "@/components/company/company-switcher";
 import { DecidedDetails, DecisionLine } from "@/components/company/decided-summary";
-import { waitingFor } from "@/components/company/format";
+import { SECOND_LOOK_LINE, waitingFor } from "@/components/company/format";
 import { QueueGroup, QueueRow, QueueRowSkeleton } from "@/components/company/queue-row";
-import { Eyebrow } from "@/components/ui/card";
 import { cx } from "@/components/ui/cx";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tag } from "@/components/ui/tag";
 import type { ReviewQueue } from "@/lib/domain/types";
 import { useReview } from "./review-context";
 
@@ -71,7 +69,7 @@ export function QueueList({ selectedId }: { selectedId: string | null }) {
             )}
           </Section>
 
-          <Section label="Second look" count={queue.secondLook.length} note="Another employer passed. The skills match your task.">
+          <Section label="Second look" count={queue.secondLook.length} note={SECOND_LOOK_LINE}>
             {queue.secondLook.length === 0 ? (
               <Empty>Nothing here yet. Work another employer passed on shows up here when it matches your skills.</Empty>
             ) : (
@@ -83,13 +81,7 @@ export function QueueList({ selectedId }: { selectedId: string | null }) {
                     href={href(p.proofId)}
                     selected={p.proofId === selectedId}
                     right={waitingFor(p.submittedAt, now)}
-                    footer={
-                      <div className="mt-2.5 flex flex-wrap gap-1.5">
-                        {p.sharedSkills.map((s) => (
-                          <Tag key={s}>{s}</Tag>
-                        ))}
-                      </div>
-                    }
+                    footer={<p className="text-footnote mt-1 text-label-2 text-pretty">Matched on {p.sharedSkills.join(", ")}</p>}
                   />
                 ))}
               </QueueGroup>
@@ -157,8 +149,8 @@ function Section({ label, count, note, children }: { label: string; count?: numb
   return (
     <section className="mt-8" data-section={label}>
       <div className="mb-2 flex items-baseline justify-between gap-3 px-5">
-        <Eyebrow>{label}</Eyebrow>
-        {count ? <span className="text-footnote tnum text-label-2">{count}</span> : null}
+        <h2 className="text-headline font-semibold">{label}</h2>
+        {count ? <span className="text-subhead tnum text-label-2">{count}</span> : null}
       </div>
       {note ? <p className="text-footnote -mt-1 mb-2 px-5 text-label-2">{note}</p> : null}
       {children}

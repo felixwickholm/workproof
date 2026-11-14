@@ -3,6 +3,7 @@ import { Users } from "lucide-react";
 import type { Challenge, Company, TaskFormat } from "@/lib/domain/types";
 import { CompanyMark, companiesOf } from "./company-mark";
 import { Skeleton } from "./ui/skeleton";
+import { cx } from "./ui/cx";
 import { Tag } from "./ui/tag";
 
 export const formatLabel: Record<TaskFormat, string> = {
@@ -31,7 +32,19 @@ export function metaLine(challenge: Challenge) {
 const SHOWN_SKILLS = 3;
 
 /** A task as a tappable card in the list: who posted it, what it is, what it takes. */
-export function ProblemCard({ challenge, companies }: { challenge: Challenge; companies: Company[] }) {
+export function ProblemCard({
+  challenge,
+  companies,
+  selected,
+  onSelect,
+}: {
+  challenge: Challenge;
+  companies: Company[];
+  /** Shown beside the list on a laptop. */
+  selected?: boolean;
+  /** On a laptop a tap shows the task beside the list instead of opening it. */
+  onSelect?: () => void;
+}) {
   const blurb = companyLine(challenge, companies);
   const pooled = pooledLabel(challenge);
   const more = challenge.coreSkills.length - SHOWN_SKILLS;
@@ -39,7 +52,19 @@ export function ProblemCard({ challenge, companies }: { challenge: Challenge; co
     <Link
       href={`/challenges/${challenge.id}`}
       data-story={`task-${challenge.id}`}
-      className="press highlight block rounded-card bg-surface p-5 transition-colors duration-150 active:bg-raised"
+      aria-current={selected ? "true" : undefined}
+      onClick={
+        onSelect
+          ? (e) => {
+              e.preventDefault();
+              onSelect();
+            }
+          : undefined
+      }
+      className={cx(
+        "press highlight block rounded-card p-5 transition-colors duration-150 active:bg-raised",
+        selected ? "bg-raised shadow-[inset_0_0_0_1px_var(--color-label-3)]" : "bg-surface",
+      )}
     >
       <CompanyMark companies={companiesOf(challenge, companies)} />
       <h2 className="mt-3 text-[20px] leading-[25px] font-semibold tracking-[-0.015em] text-pretty">{challenge.title}</h2>

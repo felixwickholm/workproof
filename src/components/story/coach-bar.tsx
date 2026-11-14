@@ -4,30 +4,32 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowRight, ChevronDown, ChevronUp, X } from "lucide-react";
-import { Children, useEffect, useRef, useState, type ReactNode } from "react";
+import { Children, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { api } from "@/lib/client/api";
+import { setCompanyChoice } from "../company/company-choice";
 import { cx } from "../ui/cx";
-import { fillSample } from "./fill-sample";
-import { emptyFields, exists, findTarget, markTarget, pagePrimary } from "./page-scan";
-import { storySteps, type Guide } from "./steps";
+import { fillAndContinue } from "./fill-sample";
+import { dialogName, exists, openDialog, findTarget, firstEmptyField, markTarget, pagePrimary, reviewerFirst } from "./page-scan";
+import { SAARNIVO, storyReviewers, storySteps, TUULOS, type ActionKind, type Guide } from "./steps";
 import { useStory } from "./story-provider";
 import { useBottomClearance } from "./use-bottom-clearance";
 
 const ease = [0.23, 1, 0.32, 1] as const;
 
 /**
- * The guided story's glass bar. Docked above the page's own bottom bar on phones,
- * bottom right on desktop. It points at the page's action in words and never covers it.
- * It folds to a small pill on request and whenever the visitor starts typing.
+ * The guided story's card. Docked above the page's own bottom bar on phones (at the top while a
+ * sheet is open), bottom right on desktop. It either points at the page's action in words, or holds
+ * the one action itself; then the page's main button steps back. It folds to a small pill on request.
  */
 export function CoachBar() {
-  const { state, next, close, start, setCollapsed } = useStory();
+  const { state, close, start, setCollapsed } = useStory();
   const pathname = usePathname();
   const router = useRouter();
   const reduce = useReducedMotion() ?? false;
   const ref = useRef<HTMLDivElement>(null);
-  const { clearance, hidden } = useBottomClearance(ref, Boolean(state));
+  const { clearance, hidden: overSheet } = useBottomClearance(ref, Boolean(state));
   const [resetting, setResetting] = useState(false);
+  const wide = useWide();
 
   // Reserve room under the page so its last lines can scroll clear of the bar.
   useEffect(() => {
@@ -45,14 +47,15 @@ export function CoachBar() {
 
   const step = state && !state.ended ? storySteps[state.index] : null;
   const here = step ? step.at(pathname) : false;
-  const scan = useScreenScan(here ? step : null, pathname, state?.proofLabel);
+  const scan = useScreenScan(here ? step : null, pathname, state?.proofLabel, reduce);
+  const [acting, setActing] = useState(false);
 
   // A new instruction unfolds the bar again, unless the visitor is typing.
-  const hintNow = scan.guide.hint;
+  const hintNow = scan.guide.hint ?? scan.guide.action?.label;
   useEffect(() => {
     if (!hintNow) return;
     const active = document.activeElement;
-    if (active?.matches("input, textarea")) return;
+    if (active?.matches("input, textarea") && !active.hasAttribute("data-fill")) return;
     setCollapsed(false);
   }, [hintNow, setCollapsed]);
 
@@ -65,11 +68,44 @@ export function CoachBar() {
     }
     setResetting(false);
     start();
-    router.push("/");
+    router.push("/challenges");
+  }
+
+  /** Closes a finished sheet with its own Done, then goes on. */
+  async function closeSheetThen(href: string) {
+    const done = openDialog()?.querySelector<HTMLElement>("[data-primary]");
+    if (done) {
+      done.click();
+      await new Promise((resolve) => window.setTimeout(resolve, 60));
+    }
+    router.push(href);
+    window.requestAnimationFrame(() => window.scrollTo({ top: 0 }));
+  }
+
+  /** Opens her proof as one company: picks the company, then the proof itself. */
+  function openAs(companyId: string) {
+    setCompanyChoice(companyId);
+    const id = state?.proofId;
+    return closeSheetThen(id ? `/company/review/${encodeURIComponent(id)}` : "/company/review");
+  }
+
+  async function act(kind: ActionKind) {
+    if (acting) return;
+    setActing(true);
+    try {
+      if (kind === "fill") {
+        const companyId = exists('[role="radio"][aria-label="Saarnivo Grid"][aria-checked="true"]') ? SAARNIVO : TUULOS;
+        await fillAndContinue(reduce, { reviewer: storyReviewers[companyId] });
+      } else if (kind === "tuulos") await openAs(TUULOS);
+      else if (kind === "saarnivo") await openAs(SAARNIVO);
+      else await closeSheetThen("/passport");
+    } finally {
+      setActing(false);
+    }
   }
 
   // Typing needs the room: fold the bar to its pill when the visitor taps or types in a field.
-  // Autofocus and "Fill in her answer" do not count, so the instruction stays in view.
+  // Autofocus and the story's own filling do not count, so the instruction stays in view.
   useEffect(() => {
     if (!state) return;
     const fold = (e: Event) => {
@@ -88,64 +124,74 @@ export function CoachBar() {
   const total = storySteps.length;
   const collapsed = Boolean(state?.collapsed);
   const counter = state?.ended ? "The end" : `${(state?.index ?? 0) + 1} of ${total}`;
+  const controls = <Controls onCollapse={() => setCollapsed(true)} onClose={close} />;
 
-  const controls = (skip?: () => void) => (
-    <Controls onSkip={skip} onCollapse={() => setCollapsed(true)} onClose={close} />
-  );
-
+  // One main action on screen: the guide's button, or the page's own, never both.
+  let lead = false;
   let body: ReactNode = null;
-  if (state?.ended) {
+  if (state?.ended || (step?.final && here)) {
     body = (
       <>
         <Line counter={counter}>
-          <span className="font-semibold text-label">That is Tryout.</span>{" "}
-          <span className="text-label-2">Real work in. A person decides. The city sees what happened.</span>
+          {step?.final ? (
+            <span className="font-medium text-label">{step.text}</span>
+          ) : (
+            <>
+              <span className="font-medium text-label">That is Tryout.</span>{" "}
+              <span className="text-label-2">Real work in. A person decides. The city sees what happened.</span>
+            </>
+          )}
         </Line>
-        <Actions trailing={controls()}>
-          <Pill onClick={startAgain} disabled={resetting} quiet={Boolean(scan.primary)}>
+        <Actions trailing={controls}>
+          <Pill onClick={startAgain} disabled={resetting} quiet>
             {resetting ? "Resetting" : "Start again"}
           </Pill>
         </Actions>
       </>
     );
   } else if (step && state) {
-    const hint = here ? scan.guide.hint : undefined;
-    // Skipping the work itself would leave the later steps without her proof.
-    const canSkip = here && !step.next && !step.sampleFill;
-    // One main action per screen: the bar's button is white only when the page has no main button of its own.
-    const quiet = Boolean(scan.primary);
-    body = (
+    const guide = here ? scan.guide : {};
+    const action = guide.action;
+    lead = !here || Boolean(action);
+    const line = (
+      <Line counter={counter}>
+        <span className="font-medium text-label">{step.text}</span>
+        {guide.hint ? <span className="text-label-2"> {guide.hint}</span> : null}
+      </Line>
+    );
+    body = lead ? (
       <>
-        <Line counter={counter}>
-          <span className="font-medium text-label">{step.text}</span>
-          {hint ? <span className="text-label-2"> {hint}</span> : null}
-        </Line>
-        <Actions trailing={controls(canSkip ? next : undefined)}>
+        {line}
+        <Actions trailing={controls}>
           {!here ? (
-            <Pill href={step.go.href} quiet={quiet}>
+            <Pill href={step.go.href}>
               {step.go.label}
-            </Pill>
-          ) : step.next ? (
-            <Pill
-              quiet={quiet}
-              onClick={() => {
-                next();
-                if (step.next?.href) router.push(step.next.href);
-              }}
-            >
-              {step.next.label}
               <ArrowRight aria-hidden className="size-4" strokeWidth={2.2} />
             </Pill>
-          ) : null}
-          {here && step.sampleFill && scan.fillable ? (
-            <Pill quiet={quiet} onClick={() => fillSample(reduce)}>
-              Fill in her answer
+          ) : action ? (
+            <Pill onClick={() => void act(action.kind)} disabled={acting}>
+              {action.label}
+              {action.kind === "fill" ? null : <ArrowRight aria-hidden className="size-4" strokeWidth={2.2} />}
             </Pill>
           ) : null}
         </Actions>
       </>
+    ) : (
+      // The page holds the action: no button here, and the controls share the text's row.
+      <div className="flex items-start gap-1 pb-1.5">
+        <div className="min-w-0 flex-1">{line}</div>
+        <div className="-mr-2 flex shrink-0 items-center pt-1">{controls}</div>
+      </div>
     );
   }
+
+  // The page's main button steps back to an outline while the guide holds the action.
+  useEffect(() => {
+    const root = document.documentElement;
+    if (lead && !collapsed) root.setAttribute("data-story-lead", "");
+    else root.removeAttribute("data-story-lead");
+    return () => root.removeAttribute("data-story-lead");
+  }, [lead, collapsed]);
 
   return (
     <AnimatePresence>
@@ -156,19 +202,20 @@ export function CoachBar() {
           aria-label="Story guide"
           aria-live="polite"
           className={cx(
-            "glass highlight fixed z-30",
+            // Solid, not glass: this card floats over page text, which must never show through.
+            "highlight fixed z-50 bg-[#2c2c2e] shadow-[0_8px_32px_rgba(0,0,0,0.6)]",
             collapsed
               ? "right-3 rounded-full min-[900px]:right-6"
               : "inset-x-3 mx-auto max-w-[416px] rounded-card px-4 pb-1.5 min-[900px]:inset-x-auto min-[900px]:right-6 min-[900px]:w-[380px]",
-            hidden && "pointer-events-none opacity-0",
           )}
-          style={{
-            // Denser than bar glass: this card floats over page text.
-            background: "rgba(36, 36, 38, 0.96)",
-            bottom: clearance > 0 ? `${clearance + 8}px` : "calc(12px + env(safe-area-inset-bottom, 0px))",
-          }}
+          style={
+            // Over a sheet on a phone the guide moves to the top, so the sheet's buttons stay free.
+            overSheet && !wide
+              ? { top: "calc(12px + env(safe-area-inset-top, 0px))", bottom: "auto" }
+              : { bottom: clearance > 0 && !overSheet ? `${clearance + 8}px` : "calc(12px + env(safe-area-inset-bottom, 0px))" }
+          }
           initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
-          animate={{ opacity: hidden ? 0 : 1, y: 0 }}
+          animate={{ opacity: 1, y: 0 }}
           exit={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
           transition={{ duration: 0.24, ease }}
         >
@@ -220,14 +267,9 @@ function Actions({ children, trailing }: { children: ReactNode; trailing: ReactN
   );
 }
 
-function Controls({ onSkip, onCollapse, onClose }: { onSkip?: () => void; onCollapse: () => void; onClose: () => void }) {
+function Controls({ onCollapse, onClose }: { onCollapse: () => void; onClose: () => void }) {
   return (
     <>
-      {onSkip ? (
-        <button type="button" onClick={onSkip} className="press text-footnote flex h-11 items-center px-3 font-semibold text-label-2">
-          Skip
-        </button>
-      ) : null}
       <button
         type="button"
         onClick={onCollapse}
@@ -275,19 +317,32 @@ function Pill({
   );
 }
 
-interface Scan {
-  guide: Guide;
-  primary?: string;
-  fillable: boolean;
+const WIDE = "(min-width: 900px)";
+
+function subscribeWide(listener: () => void) {
+  const query = window.matchMedia(WIDE);
+  query.addEventListener("change", listener);
+  return () => query.removeEventListener("change", listener);
 }
 
-const emptyScan: Scan = { guide: {}, fillable: false };
+function useWide() {
+  return useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE).matches, () => false);
+}
+
+interface Scan {
+  guide: Guide;
+}
+
+const emptyScan: Scan = { guide: {} };
+
+const sameGuide = (a: Guide, b: Guide) =>
+  a.hint === b.hint && a.target === b.target && a.action?.label === b.action?.label && a.action?.kind === b.action?.kind;
 
 /**
- * Reads the screen a few times a second: the page's main button, empty fields, and the step's guide.
- * Rings the step's target with a data attribute; CSS draws the ring.
+ * Reads the screen a few times a second: the open dialog, the main button, empty story fields,
+ * and the step's guide. Rings the step's target with a data attribute; CSS draws the ring.
  */
-function useScreenScan(step: (typeof storySteps)[number] | null, pathname: string, proofLabel?: string): Scan {
+function useScreenScan(step: (typeof storySteps)[number] | null, pathname: string, proofLabel: string | undefined, reduce: boolean): Scan {
   const [scan, setScan] = useState<Scan>(emptyScan);
   useEffect(() => {
     if (!step) {
@@ -295,19 +350,18 @@ function useScreenScan(step: (typeof storySteps)[number] | null, pathname: strin
       return;
     }
     const read = () => {
-      const primary = pagePrimary();
-      const fillable = Boolean(step.sampleFill) && emptyFields().length > 0;
       const guide =
-        step.guide?.(pathname, { proofLabel, primary, fillable, has: (t) => findTarget(t) !== null, exists }) ?? {};
-      markTarget(guide.target ? findTarget(guide.target) : null);
-      setScan((prev) =>
-        prev.primary === primary &&
-        prev.fillable === fillable &&
-        prev.guide.hint === guide.hint &&
-        prev.guide.target === guide.target
-          ? prev
-          : { guide, primary, fillable },
-      );
+        step.guide?.(pathname, {
+          proofLabel,
+          primary: pagePrimary(),
+          dialog: dialogName(),
+          fillable: firstEmptyField(),
+          reviewerFirst: reviewerFirst(),
+          has: (t) => findTarget(t) !== null,
+          exists,
+        }) ?? {};
+      markTarget(guide.target ? findTarget(guide.target) : null, reduce);
+      setScan((prev) => (sameGuide(prev.guide, guide) ? prev : { guide }));
     };
     read();
     const id = window.setInterval(read, 250);
@@ -315,6 +369,6 @@ function useScreenScan(step: (typeof storySteps)[number] | null, pathname: strin
       window.clearInterval(id);
       markTarget(null);
     };
-  }, [step, pathname, proofLabel]);
+  }, [step, pathname, proofLabel, reduce]);
   return step ? scan : emptyScan;
 }

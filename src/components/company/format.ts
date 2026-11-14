@@ -50,3 +50,6 @@ export function splitAside(line: string): { wish: string; reason: string } {
   const reason = line.slice(at + 2);
   return { wish: line.slice(0, at), reason: reason.charAt(0).toUpperCase() + reason.slice(1) };
 }
+
+/** Second look is a strength: another employer had no opening, and the skills fit this task. */
+export const SECOND_LOOK_LINE = "Another employer had no opening for this proof. The skills match your task.";

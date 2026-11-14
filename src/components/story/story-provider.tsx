@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { createContext, Suspense, useCallback, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, Suspense, useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { api } from "@/lib/client/api";
 import { getTalentId } from "@/lib/client/local";
 import type { PassportEntry } from "@/lib/domain/types";
@@ -26,14 +26,20 @@ export function useStory() {
 }
 
 /** A new step always opens the bar, so its instruction is seen. */
-function goTo(index: number, proofLabel = storyStore.get()?.proofLabel) {
+function goTo(index: number, proof?: { proofLabel?: string; proofId?: string }) {
+  const now = storyStore.get();
   const position = index >= storySteps.length ? { index: storySteps.length - 1, ended: true } : { index, ended: false };
-  storyStore.set({ ...position, ...(proofLabel ? { proofLabel } : {}) });
+  const proofLabel = proof?.proofLabel ?? now?.proofLabel;
+  const proofId = proof?.proofId ?? now?.proofId;
+  storyStore.set({ ...position, ...(proofLabel ? { proofLabel } : {}), ...(proofId ? { proofId } : {}) });
 }
+
+const signals: Signal[] = ["proofs", "passes", "meets", "accepted"];
 
 function countSignal(entries: PassportEntry[], signal: Signal) {
   if (signal === "proofs") return entries.length;
   const responses = entries.flatMap((e) => e.responses);
+  if (signal === "passes") return responses.filter((r) => r.decision === "pass").length;
   if (signal === "meets") return responses.filter((r) => r.decision === "meet").length;
   return responses.filter((r) => r.meeting && r.meeting.status !== "invited").length;
 }
@@ -94,32 +100,48 @@ function StoryRuntime() {
     if (state && step?.leaveWhen?.(pathname)) goTo(state.index + 1);
   }, [pathname, step, state]);
 
-  // Data-based advance: watch the visitor's own proofs while a step waits for an action.
+  // Data-based advance. The visitor's own proofs are polled for the whole story, so a step's
+  // starting count is known the moment it begins, even when the action follows at once.
+  const latest = useRef<Partial<Record<Signal, number>>>({});
+  const active = Boolean(state && !state.ended);
   useEffect(() => {
-    if (!state || !step?.signal) return;
-    const signal = step.signal;
+    if (!active) return;
     let stopped = false;
     const check = async () => {
       try {
         const entries = await api.passport(getTalentId());
-        const count = countSignal(entries, signal);
         if (stopped) return;
-        if (state.baseline === undefined) storyStore.set({ ...state, baseline: count });
-        else if (count > state.baseline) {
-          // The newest proof is the one sent in the story; later hints name it.
-          goTo(state.index + 1, signal === "proofs" ? entries[0]?.proof.label : state.proofLabel);
+        const counts = Object.fromEntries(signals.map((s) => [s, countSignal(entries, s)])) as Record<Signal, number>;
+        latest.current = counts;
+        const now = storyStore.get();
+        const signal = now && !now.ended ? storySteps[now.index].signal : undefined;
+        if (!now || !signal) return;
+        if (now.baseline === undefined) storyStore.set({ ...now, baseline: counts[signal] });
+        else if (counts[signal] > now.baseline) {
+          // The newest proof is the one sent in the story; later steps name it and open it.
+          const newest = signal === "proofs" ? entries[0]?.proof : undefined;
+          goTo(now.index + 1, newest ? { proofLabel: newest.label, proofId: newest.proofId } : undefined);
         }
       } catch {
         // Offline for a moment: try again on the next tick.
       }
     };
     void check();
-    const id = window.setInterval(check, 2000);
+    const id = window.setInterval(check, 1000);
     return () => {
       stopped = true;
       window.clearInterval(id);
     };
-  }, [step, state]);
+  }, [active]);
+
+  // A step that waits for data starts from the last count seen, never from a later one.
+  const index = state?.index;
+  useEffect(() => {
+    const now = storyStore.get();
+    const signal = now && !now.ended ? storySteps[now.index].signal : undefined;
+    const known = signal ? latest.current[signal] : undefined;
+    if (now && signal && now.baseline === undefined && known !== undefined) storyStore.set({ ...now, baseline: known });
+  }, [index]);
 
   return <CoachBar />;
 }

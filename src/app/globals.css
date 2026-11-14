@@ -89,11 +89,18 @@ body {
   outline: none;
 }
 
-/* Glass: bars, sheets and floating actions only. */
+/*
+ * Glass: bars, sheets and floating actions only. The base is nearly opaque, so text behind it
+ * never stays readable; the blur only softens what little shows through. Without blur support
+ * the surface is fully opaque.
+ */
 @utility glass {
-  background: rgba(28, 28, 30, 0.72);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
-  backdrop-filter: blur(40px) saturate(180%);
+  background: rgba(22, 22, 24, 0.97);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  backdrop-filter: blur(30px) saturate(160%);
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    background: rgb(22, 22, 24);
+  }
 }
 
 /* The one inset top highlight. */
@@ -158,9 +165,9 @@ body {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: rgba(28, 28, 30, 0.85);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
-  backdrop-filter: blur(40px) saturate(180%);
+  background: rgba(10, 10, 11, 0.94);
+  -webkit-backdrop-filter: blur(30px) saturate(160%);
+  backdrop-filter: blur(30px) saturate(160%);
   box-shadow: inset 0 -0.5px 0 var(--color-separator);
   opacity: 0;
   transition: opacity 200ms var(--ease-out);
@@ -175,22 +182,32 @@ body {
   position: relative;
 }
 
+/* The ring follows the target's own shape: its radius plus the 4px gap (set by the story as --story-r). */
 [data-story-on]::after {
   content: "";
   position: absolute;
   inset: -4px;
-  border-radius: inherit;
+  border-radius: var(--story-r, 12px);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
   pointer-events: none;
   animation: story-ring 1.6s var(--ease-out) 3;
 }
 
-/* Rows sit in a clipped group, so their ring goes inside. */
-.row[data-story-on]::after,
-.row [data-story-on]::after {
+/* A row sits in a clipped group, so its own ring goes inside. */
+.row[data-story-on]::after {
   inset: 0;
   border-radius: 0;
   box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+
+/*
+ * One white button on screen: while the story guide carries the next action,
+ * the page's own main button steps back to an outline.
+ */
+html[data-story-lead] [data-primary]:not(:disabled) {
+  background: transparent;
+  color: var(--color-label);
+  box-shadow: inset 0 0 0 1px var(--color-label-3);
 }
 
 @keyframes story-ring {
@@ -232,4 +249,13 @@ body {
   [data-story-on]::after {
     animation: none;
   }
+}
+
+/* A sheet is one surface step up, so its fields step up once more. */
+[aria-modal="true"] :is(input, textarea) {
+  background-color: var(--color-raised);
+}
+
+[aria-modal="true"] :is(input, textarea):focus {
+  background-color: #3a3a3c;
 }

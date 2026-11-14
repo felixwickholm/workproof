@@ -1,10 +1,9 @@
 "use client";
 
-import { use } from "react";
+import { use, type ReactNode } from "react";
 import { CompanyMark, companiesOf } from "@/components/company-mark";
 import { companyLine, metaLine, pooledLabel } from "@/components/problem-card";
 import { Button } from "@/components/ui/button";
-import { Card, Section } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { Group, Row } from "@/components/ui/group";
 import { riseAt } from "@/components/ui/rise";
@@ -12,6 +11,7 @@ import { Screen } from "@/components/ui/screen";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/client/api";
 import { useResource } from "@/lib/client/use-resource";
+import type { Challenge, Company } from "@/lib/domain/types";
 
 const back = { href: "/challenges", label: "Tasks" };
 
@@ -35,6 +35,15 @@ export function ChallengeDetail({ params }: { params: Promise<{ id: string }> })
   }
 
   const { challenge, companies } = data;
+  return (
+    <Screen back={back} bottom={<Button href={`/challenges/${challenge.id}/work`}>Start · {challenge.minutes} min</Button>}>
+      <ChallengeBody challenge={challenge} companies={companies} />
+    </Screen>
+  );
+}
+
+/** Who posted the task, in their words, what to hand in, and what the reviewer looks for. */
+export function ChallengeBody({ challenge, companies, action }: { challenge: Challenge; companies: Company[]; action?: ReactNode }) {
   const blurb = companyLine(challenge, companies);
   const pooled = pooledLabel(challenge);
   const skillLabel = (skillId: string) => challenge.coreSkills.find((s) => s.id === skillId)?.label ?? skillId;
@@ -42,7 +51,7 @@ export function ChallengeDetail({ params }: { params: Promise<{ id: string }> })
   const unguided = challenge.coreSkills.filter((s) => !reviewed.has(s.id));
 
   return (
-    <Screen back={back} bottom={<Button href={`/challenges/${challenge.id}/work`}>Start · {challenge.minutes} min</Button>}>
+    <>
       <div className="rise mt-2 [--mark-gap:var(--color-ground)]">
         <CompanyMark companies={companiesOf(challenge, companies)} />
         <h1 className="text-title mt-3 font-bold text-balance">{challenge.title}</h1>
@@ -51,36 +60,32 @@ export function ChallengeDetail({ params }: { params: Promise<{ id: string }> })
           {metaLine(challenge)}
           {pooled ? ` · ${pooled}. Both read your work.` : null}
         </p>
+        {action}
       </div>
 
       <div className="rise" style={riseAt(1)}>
-        <blockquote className="mt-7 shadow-[inset_2px_0_0_var(--color-separator)] pl-4">
-          <p className="text-body text-pretty">&ldquo;{challenge.need}&rdquo;</p>
-          <p className="text-footnote mt-1.5 text-label-2">In the company&apos;s words</p>
-        </blockquote>
+        <h2 className="text-headline mt-7 font-semibold">What the company needs</h2>
+        <p className="text-body mt-1 text-label-2 text-pretty">{challenge.need}</p>
 
-        <Section label="The task">
-          <p className="text-body px-5 text-label-2 whitespace-pre-wrap text-pretty">{challenge.brief}</p>
-          <Card className="mt-4">
-            <p className="text-footnote text-label-2">You hand in</p>
-            <p className="text-body mt-1 text-pretty">{challenge.deliverable}</p>
-          </Card>
-        </Section>
+        <p className="text-body mt-7 whitespace-pre-wrap text-pretty">{challenge.brief}</p>
+        <div className="mt-4 hairline-t pt-4">
+          <p className="text-footnote text-label-2">You hand in</p>
+          <p className="text-body mt-1 text-pretty">{challenge.deliverable}</p>
+        </div>
       </div>
 
       <div className="rise" style={riseAt(2)}>
-        <Section label="What the reviewer looks for">
-          <Group footer="A person at the company reads your work without your name. No AI scores it.">
-            {challenge.reviewGuide.map((g) => (
-              <Row key={g.skillId} title={skillLabel(g.skillId)} detail={g.lookFor} />
-            ))}
-            {unguided.map((s) => (
-              <Row key={s.id} title={s.label} detail={s.why} />
-            ))}
-          </Group>
-        </Section>
+        <h2 className="text-headline mt-8 mb-2 px-5 font-semibold">What the reviewer looks for</h2>
+        <Group footer="A person at the company reads your work without your name. No AI scores it.">
+          {challenge.reviewGuide.map((g) => (
+            <Row key={g.skillId} title={skillLabel(g.skillId)} detail={g.lookFor} />
+          ))}
+          {unguided.map((s) => (
+            <Row key={s.id} title={s.label} detail={s.why} />
+          ))}
+        </Group>
       </div>
-    </Screen>
+    </>
   );
 }
 

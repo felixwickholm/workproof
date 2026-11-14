@@ -8,7 +8,6 @@ import { BlindProofFull } from "@/components/blind-proof";
 import { StepSlide } from "@/components/step-slide";
 import { TaskMaterial } from "@/components/task-material";
 import { Button } from "@/components/ui/button";
-import { Section } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { Field, TextArea } from "@/components/ui/field";
 import { Group, Row } from "@/components/ui/group";
@@ -27,6 +26,8 @@ import { LIMITS } from "@/lib/http/limits";
 
 type Step = "work" | "q0" | "q1" | "identity" | "result";
 const order: Step[] = ["work", "q0", "q1", "identity", "result"];
+
+const SHARE_LABEL = "Let other employers with matching tasks see this proof if this one passes or does not answer in 48 hours";
 
 const nextSteps = [
   "A person at the company reads it without your name.",
@@ -49,7 +50,7 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
   const [startedAt, setStartedAt] = useState(0);
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
-  const [share, setShare] = useState(true);
+  const [share, setShare] = useState(false);
   const [proof, setProof] = useState<OwnProof | null>(null);
   const [restored, setRestored] = useState(false);
 
@@ -142,7 +143,9 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
 
   const finishWork = () =>
     run(async () => {
-      const res = await api.followups(challenge.id, answer.trim());
+      // A name saved on this device is sent too, so a question never quotes it back.
+      const known = name.trim() ? { name: name.trim(), contact: contact.trim() } : undefined;
+      const res = await api.followups(challenge.id, answer.trim(), known);
       setQuestions(res.questions.slice(0, 2));
       go(res.questions.length ? "q0" : "identity");
     });
@@ -186,7 +189,7 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
           }
           answer={
             <>
-              <TextArea label="Your answer" value={answer} onChange={setAnswer} placeholder="Write your answer" minRows={8} maxLength={LIMITS.answer} />
+              <TextArea label="Your answer" value={answer} onChange={setAnswer} placeholder="Write your answer" minRows={8} maxLength={LIMITS.answer} fill="answer" />
               <p className="text-footnote mt-2 px-4 text-label-2">
                 {challenge.aiAllowed ? "AI allowed. Use it the way you would at work. " : ""}Your draft saves on this device.
               </p>
@@ -223,6 +226,7 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
           placeholder="A few sentences is enough"
           maxLength={LIMITS.explain}
           autoFocus
+          fill={`explain-${i}`}
         />
       </>
     );
@@ -240,14 +244,11 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
           Your name and contact
         </StepTitle>
         <div className="flex flex-col gap-4">
-          <Field label="Name" value={name} onChange={setName} placeholder="Your name" autoComplete="name" maxLength={LIMITS.name} />
-          <Field label="Email or phone" type="email" value={contact} onChange={setContact} placeholder="you@example.com" autoComplete="email" maxLength={LIMITS.contact} />
+          <Field label="Name" value={name} onChange={setName} placeholder="Your name" autoComplete="name" maxLength={LIMITS.name} fill="name" />
+          <Field label="Email or phone" type="email" value={contact} onChange={setContact} placeholder="you@example.com" autoComplete="email" maxLength={LIMITS.contact} fill="contact" />
         </div>
-        <Group className="mt-8" footer="A person there decides. Your name stays hidden the same way.">
-          <Row
-            title="Show to similar companies if this one passes"
-            value={<Switch checked={share} onChange={setShare} label="Show to similar companies if this one passes" />}
-          />
+        <Group className="mt-8" footer="They see the same blind proof. No name.">
+          <Row title={SHARE_LABEL} value={<Switch checked={share} onChange={setShare} label={SHARE_LABEL} />} />
         </Group>
       </>
     );
@@ -262,7 +263,8 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
     content = (
       <>
         <h1 className="text-large-title font-bold text-balance">Your proof is in.</h1>
-        <Section label="What happens next">
+        <section className="mt-8">
+          <h2 className="text-headline mb-2 px-5 font-semibold">What happens next</h2>
           <Group className="[--row-inset:48px]">
             {nextSteps.map((text, i) => (
               <Row
@@ -272,10 +274,11 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
               />
             ))}
           </Group>
-        </Section>
-        <Section label="This is what the company sees">
+        </section>
+        <section className="mt-8">
+          <h2 className="text-headline mb-2 px-5 font-semibold">This is what the company sees</h2>
           <BlindProofFull proof={proof} reveal />
-        </Section>
+        </section>
       </>
     );
     bottom = <Button href="/passport">See my proofs</Button>;

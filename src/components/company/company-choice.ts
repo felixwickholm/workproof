@@ -9,7 +9,7 @@ import { useCallback, useSyncExternalStore } from "react";
 
 const COMPANY_KEY = "tryout.companyId";
 const REVIEWER_KEY = "tryout.reviewer";
-export const DEFAULT_COMPANY_ID = "co-tuulos";
+const DEFAULT_COMPANY_ID = "co-tuulos";
 
 const listeners = new Set<() => void>();
 
@@ -47,18 +47,22 @@ export function useCompanyId(): [string, (id: string) => void] {
     () => read(COMPANY_KEY) ?? memoryCompany ?? DEFAULT_COMPANY_ID,
     () => DEFAULT_COMPANY_ID,
   );
-  const set = useCallback((next: string) => {
-    memoryCompany = next;
-    write(COMPANY_KEY, next);
-    listeners.forEach((l) => l());
-  }, []);
+  const set = useCallback((next: string) => setCompanyChoice(next), []);
   return [id, set];
 }
 
-export function getReviewer(): string {
-  return read(REVIEWER_KEY) ?? "";
+/** Acts as another company everywhere at once, for example from the guided story. */
+export function setCompanyChoice(id: string) {
+  memoryCompany = id;
+  write(COMPANY_KEY, id);
+  listeners.forEach((l) => l());
 }
 
-export function saveReviewer(name: string) {
-  write(REVIEWER_KEY, name);
+/** Each company has its own reviewer, so a name typed at one company never shows at another. */
+export function getReviewer(companyId: string): string {
+  return read(`${REVIEWER_KEY}.${companyId}`) ?? "";
+}
+
+export function saveReviewer(companyId: string, name: string) {
+  write(`${REVIEWER_KEY}.${companyId}`, name);
 }

@@ -19,16 +19,16 @@ export function Passport() {
   });
 
   return (
-    <Screen title="My proofs" tabs>
+    <Screen title="My proofs" tabs page>
       {(loading || !talentId) && !data ? (
-        <div aria-busy className="flex flex-col gap-3">
+        <div aria-busy className="flex flex-col gap-3 min-[900px]:grid min-[900px]:grid-cols-2 min-[900px]:gap-5">
           <PassSkeleton />
           <PassSkeleton />
         </div>
       ) : error && !data ? (
         <ErrorState error={error} what="your proofs" onRetry={retry} />
       ) : data && data.length === 0 ? (
-        <Card className="rise">
+        <Card className="rise min-[900px]:max-w-[480px]">
           <p className="text-headline font-semibold">No proofs yet</p>
           <p className="text-subhead mt-1 text-label-2">
             Do a short task. A company sees the work, not your CV.
@@ -38,7 +38,7 @@ export function Passport() {
           </Button>
         </Card>
       ) : (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 min-[900px]:grid min-[900px]:grid-cols-2 min-[900px]:items-start min-[900px]:gap-5">
           {data?.map((entry, i) => (
             <div key={entry.proof.proofId} className="rise" style={riseAt(i)}>
               <ProofPass entry={entry} onChanged={reload} />

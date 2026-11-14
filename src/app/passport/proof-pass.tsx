@@ -4,13 +4,16 @@ import { Clock, Eye } from "lucide-react";
 import { useRef, useState, type ReactNode } from "react";
 import { formatLabel } from "@/components/problem-card";
 import { Button } from "@/components/ui/button";
-import { Eyebrow } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { HumanTag } from "@/components/ui/tag";
 import { api, errorText } from "@/lib/client/api";
 import { getTalentId } from "@/lib/client/local";
 import type { PassportEntry } from "@/lib/domain/types";
 
 type Response = PassportEntry["responses"][number];
+
+/** Practice tasks take 2 minutes (TASTER_MINUTES on the server) and are never shown to employers. */
+const TASTER_MINUTES = 2;
 
 const dateFormat = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" });
 
@@ -36,11 +39,9 @@ export function ProofPass({ entry, onChanged }: { entry: PassportEntry; onChange
 
       <div className="px-5 pt-4 pb-5">
         <h2 className="text-title-3 font-semibold text-pretty">{challenge.title}</h2>
-        <dl className="mt-4 grid grid-cols-3 gap-3">
-          <Fact label="Task" value={formatLabel[challenge.format].replace(" task", "")} />
-          <Fact label="Time" value={`${challenge.minutes} min`} />
-          <Fact label="Sent" value={dateFormat.format(new Date(proof.submittedAt))} />
-        </dl>
+        <p className="text-subhead tnum mt-1.5 text-label-2">
+          {formatLabel[challenge.format]} · {challenge.minutes} min · Sent {dateFormat.format(new Date(proof.submittedAt))}
+        </p>
       </div>
 
       <Perforation />
@@ -57,26 +58,52 @@ export function ProofPass({ entry, onChanged }: { entry: PassportEntry; onChange
         ) : (
           responses.map((r, i) => <ResponseRow key={`${r.companyName}-${i}`} response={r} onChanged={onChanged} />)
         )}
-        {sharedWith.length > 0 ? (
-          <li className="row relative px-5 py-3">
-            <p className="text-subhead text-label-2">
-              Also shown to: <span className="text-label">{sharedWith.join(", ")}</span> (Second look)
-            </p>
-          </li>
+        {challenge.minutes > TASTER_MINUTES ? (
+          <SharingRow proofId={proof.proofId} sharing={entry.sharing} sharedWith={sharedWith} onChanged={onChanged} />
         ) : null}
       </ul>
     </article>
   );
 }
 
-function Fact({ label, value }: { label: string; value: string }) {
+/** The person decides, per proof, whether other employers may take a Second look. */
+function SharingRow({ proofId, sharing, sharedWith, onChanged }: { proofId: string; sharing: boolean; sharedWith: string[]; onChanged: () => Promise<void> }) {
+  const [on, setOn] = useState(sharing);
+  const [synced, setSynced] = useState(sharing);
+  const [error, setError] = useState<string | null>(null);
+  // The server's value wins once it changes, for example after a reload.
+  if (synced !== sharing) {
+    setSynced(sharing);
+    setOn(sharing);
+  }
+  async function change(next: boolean) {
+    setOn(next);
+    setError(null);
+    try {
+      await api.setSharing(proofId, getTalentId(), next);
+      await onChanged();
+    } catch (e) {
+      setOn(!next);
+      setError(errorText(e));
+    }
+  }
   return (
-    <div>
-      <dt>
-        <Eyebrow className="text-label-3">{label}</Eyebrow>
-      </dt>
-      <dd className="text-headline tnum mt-1 font-semibold">{value}</dd>
-    </div>
+    <li className="row relative px-5 py-2">
+      <div className="flex items-center gap-3">
+        <div className="min-w-0 flex-1 py-1.5">
+          <p className="text-body">Shared for a second look</p>
+          <p className="text-subhead text-label-2 text-pretty">
+            {on && sharedWith.length > 0 ? `Shown to ${sharedWith.join(", ")}. No name.` : "Other employers with matching tasks see the same blind proof. No name."}
+          </p>
+        </div>
+        <Switch checked={on} onChange={(next) => void change(next)} label="Shared for a second look" />
+      </div>
+      {error ? (
+        <p role="alert" className="text-footnote mt-1 text-label-2">
+          {error}
+        </p>
+      ) : null}
+    </li>
   );
 }
 
@@ -117,7 +144,7 @@ function ResponseRow({ response, onChanged }: { response: Response; onChanged: (
   let action: ReactNode = null;
 
   if (decision === "pass") {
-    status = <p className="text-subhead text-label-2">Passed, with feedback</p>;
+    status = <p className="text-subhead text-label-2">Passed. Their reason:</p>;
   } else if (!meeting || meeting.status === "invited") {
     status = <HumanTag>Wants to meet</HumanTag>;
     if (meeting) {
@@ -164,7 +191,11 @@ function ResponseRow({ response, onChanged }: { response: Response; onChanged: (
         </p>
       ) : null}
       {feedback ? (
-        <blockquote className="text-subhead mt-3 rounded-inner bg-raised px-4 py-3 text-pretty">&ldquo;{feedback}&rdquo;</blockquote>
+        decision === "pass" ? (
+          <blockquote className="text-body mt-2 text-pretty">&ldquo;{feedback}&rdquo;</blockquote>
+        ) : (
+          <blockquote className="text-subhead mt-3 rounded-inner bg-raised px-4 py-3 text-pretty">&ldquo;{feedback}&rdquo;</blockquote>
+        )
       ) : null}
       {error ? (
         <p role="alert" className="text-footnote mt-2 text-label-2">

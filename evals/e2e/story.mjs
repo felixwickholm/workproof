@@ -27,110 +27,122 @@ export async function runStory(browser, phone) {
     if (overlap) notes.push(`${what} is covered by the coach bar (${Math.round(a.height)}px tall)`);
     expect(!overlap, `coach bar covers ${what}`);
   };
-  const fillHers = async () => {
-    await coach.getByRole("button", { name: "Fill in her answer" }).click();
-    await page.waitForTimeout(900);
+  /** The guide's own button, by its label. Each one is one tap for the visitor. */
+  let taps = 0;
+  const guide = async (name) => {
+    taps++;
+    const button = coach.locator("a, button").filter({ hasText: name });
+    const text = (await button.textContent())?.trim() ?? "";
+    await button.click();
+    return text;
   };
+  /** The reviewer named on each "Fill in ...'s note", one per company. */
+  const reviewers = [];
+  const tap = async (locator) => {
+    taps++;
+    await locator.click();
+  };
+  const started = Date.now();
 
   await suite.step("s1 Play the story", async () => {
     await page.goto(`${BASE_URL}/`);
-    await page.getByRole("button", { name: "Play the story" }).click();
+    await tap(page.getByRole("button", { name: "Play the 2-minute story" }));
+    await page.waitForURL(/\/challenges$/);
     await expectStep(1);
     await checkScreen(page, errors, "story 1");
-    await coach.getByRole("button", { name: "Show me" }).click();
-    await expectStep(2);
   });
   await suite.step("s2 open the Tuulos task as the hint says", async () => {
-    await page.waitForURL(/\/challenges$/);
-    await coach.getByText(/Tuulos Robotics task/).waitFor();
+    await coach.getByText(/Open the Tuulos Robotics task/).waitFor();
     const card = page.locator("[data-story-on]");
     expect((await card.getAttribute("data-story")) === "task-ch-tuulos-ml", "the Tuulos task is not ringed");
-    await page.getByRole("link", { name: /Review an AI-written model evaluation/ }).click();
-    await coach.getByText("Tap Start below.").waitFor();
+    await tap(page.getByRole("link", { name: /Review an AI-written model evaluation/ }));
+    await coach.getByText("Tap Start.").waitFor();
     const start = page.getByRole("link", { name: /^Start · \d+ min$/ });
     await assertNotCovering(start, "Start button");
+    // The ring follows the pill's own shape.
+    const radius = await page.locator("[data-story-on]").evaluate((el) => parseFloat(getComputedStyle(el, "::after").borderTopLeftRadius));
+    expect(radius > 100, `the ring around Start has a ${radius}px radius, not a pill`);
     await checkScreen(page, errors, "story 2");
-    await start.click();
-    await expectStep(3);
+    await tap(start);
+    await expectStep(2);
   });
-  await suite.step("s3 work with Fill in her answer", async () => {
-    await assertNotCovering(page.getByRole("button", { name: "I'm done" }), "I'm done button");
-    await fillHers();
-    await coach.getByText("Now tap I'm done.").waitFor();
-    await page.getByRole("button", { name: "I'm done" }).click();
+  await suite.step("s3 work, both follow-ups and details, all filled in", async () => {
+    await guide("Fill in her answer");
+    await page.getByRole("textbox", { name: "Your explanation" }).waitFor();
     for (let question = 0; question < 2; question++) {
-      await page.getByRole("textbox", { name: "Your explanation" }).waitFor();
-      await fillHers();
+      const heading = await main.locator("h1").first().textContent();
       await assertNotCovering(page.getByRole("button", { name: "Continue" }), "Continue button");
-      await page.getByRole("button", { name: "Continue" }).click();
+      await guide("Fill in her reply");
+      await page.waitForFunction((before) => document.querySelector("main h1")?.textContent !== before, heading, { timeout: 10_000 }).catch(() => {});
     }
     await page.getByRole("heading", { name: "Your name and contact" }).waitFor();
-    await fillHers();
-    await assertNotCovering(page.getByRole("button", { name: "Review and submit" }), "Review and submit button");
-    await page.getByRole("button", { name: "Review and submit" }).click();
-    await page.getByRole("dialog").getByRole("button", { name: "Submit", exact: true }).click();
+    await guide("Fill in her details");
+    const sheet = page.getByRole("dialog", { name: "Submit your proof" });
+    await tap(sheet.getByRole("button", { name: "Submit", exact: true }));
     await page.getByRole("heading", { name: "Your proof is in." }).waitFor();
     await checkScreen(page, errors, "story 3");
-    await expectStep(4);
+    await expectStep(3);
   });
   let label = "";
-  await suite.step("s4 the blind proof, then Next", async () => {
+  await suite.step("s4 the blind proof, two different follow-up answers", async () => {
     label = (await main.getByText(/^Proof [A-Z0-9]+$/).first().textContent())?.trim() ?? "";
-    await coach.getByRole("button", { name: "Next" }).click();
-    await expectStep(5);
+    const text = await main.textContent();
+    expect(
+      text.includes("measures memory, not grasping") && text.includes("The threshold and the full write-up can wait"),
+      "the two follow-up answers are not two different replies",
+    );
+    await guide("See the company side");
+    await expectStep(4);
     await checkScreen(page, errors, "story 4");
   });
-  await suite.step("s5 Tuulos says Pass, Saarnivo says Meet", async () => {
-    await page.waitForURL(/\/company\/review$/);
-    await page.getByRole("radio", { name: "Tuulos Robotics" }).click();
-    await coach.getByText(`Open ${label} under To review.`).waitFor();
-    await page.getByRole("link", { name: new RegExp(`^${label}\\b`) }).click();
-    await assertNotCovering(page.getByRole("button", { name: "Pass", exact: true }), "Pass button");
-    await page.getByRole("button", { name: "Pass", exact: true }).click();
-    let sheet = page.getByRole("dialog");
-    await sheet.getByRole("textbox", { name: "Your name" }).fill("Anna Koivisto");
-    await sheet.getByRole("button", { name: "Thank you for the work. For this role we need" }).click();
-    await sheet.getByRole("textbox", { name: "Feedback for them" }).pressSequentially("someone on site this month.");
-    await sheet.getByRole("button", { name: "Send feedback" }).click();
-    await sheet.getByRole("button", { name: "Done" }).click();
-    await coach.getByText("Switch to Saarnivo at the top.", { exact: false }).waitFor();
-    await page.getByRole("radio", { name: "Saarnivo Grid" }).click();
-    await coach.getByText(`Open ${label} under Second look.`).waitFor();
-    const secondLook = page.locator("section", { has: page.getByText("Second look", { exact: true }) }).filter({ visible: true });
-    await secondLook.getByRole("link", { name: new RegExp(`^${label}\\b`) }).click();
-    await assertNotCovering(page.getByRole("button", { name: "Meet", exact: true }), "Meet button");
-    await page.getByRole("button", { name: "Meet", exact: true }).click();
-    sheet = page.getByRole("dialog");
-    await sheet.getByRole("textbox", { name: "Your name" }).fill("Jussi Rantala");
-    await sheet.getByRole("button", { name: "In your work I noticed" }).click();
-    await sheet.getByRole("textbox", { name: "Why you want to meet" }).pressSequentially("the leak in the split first.");
-    await sheet.getByRole("button", { name: "Send invitation" }).click();
-    await sheet.getByRole("button", { name: "Done" }).click();
+  await suite.step("s5 Tuulos passes with a reason", async () => {
+    await page.waitForURL(/\/company\/review\/.+/);
+    const pass = page.getByRole("button", { name: "Pass", exact: true });
+    await assertNotCovering(pass, "Pass button");
+    await tap(pass);
+    reviewers.push((await guide(/^Fill in .+'s note$/)).replace(/^Fill in (.+)'s note$/, "$1"));
+    await page.getByRole("dialog", { name: "Feedback sent" }).waitFor();
+    await expectStep(5);
     await checkScreen(page, errors, "story 5");
+  });
+  await suite.step("s6 Saarnivo takes a Second look and says Meet", async () => {
+    await guide("Open it at Saarnivo");
+    await main.getByText("Another employer had no opening for this proof.", { exact: false }).waitFor();
+    const meet = page.getByRole("button", { name: "Meet", exact: true });
+    await assertNotCovering(meet, "Meet button");
+    await tap(meet);
+    reviewers.push((await guide(/^Fill in .+'s note$/)).replace(/^Fill in (.+)'s note$/, "$1"));
+    await page.getByRole("dialog", { name: "Invitation sent" }).waitFor();
     await expectStep(6);
-  });
-  await suite.step("s6 accept on her proofs", async () => {
-    await coach.getByRole("link", { name: "Open her proofs" }).click();
-    await coach.getByText("Tap Accept on her proof.").waitFor();
-    const pass = page.locator("article", { hasText: label }).filter({ visible: true });
-    await assertNotCovering(pass.getByRole("button", { name: "Accept" }), "Accept button");
-    await pass.getByRole("button", { name: "Accept" }).click();
     await checkScreen(page, errors, "story 6");
+  });
+  await suite.step("s7 accept on her proofs", async () => {
+    await guide("Open her proofs");
+    await coach.getByText("Tap Accept.").waitFor();
+    const pass = page.locator("article", { hasText: label }).filter({ visible: true });
+    await pass.getByText("We filled this role on Thursday.", { exact: false }).waitFor();
+    await assertNotCovering(pass.getByRole("button", { name: "Accept" }), "Accept button");
+    await tap(pass.getByRole("button", { name: "Accept" }));
     await expectStep(7);
+    await checkScreen(page, errors, "story 7");
   });
-  await suite.step("s7 city, then Finish", async () => {
-    await coach.getByRole("link", { name: "Open the city view" }).click();
+  await suite.step("s8 city view, two named reviewers", async () => {
+    await guide("Open the city view");
     await page.getByText("Automated decisions", { exact: true }).waitFor();
-    await coach.getByRole("button", { name: "Finish" }).click();
-    await coach.getByText("That is Tryout.").waitFor();
+    await coach.getByRole("button", { name: "Start again" }).waitFor();
+    const text = await main.textContent();
+    expect(reviewers.length === 2 && reviewers[0] !== reviewers[1], `one reviewer decided at both companies: ${reviewers.join(", ")}`);
+    for (const name of reviewers) expect(text.includes(name), `${name} is not named in the city's audit log`);
     await checkScreen(page, errors, "story end");
+    notes.push(`story: ${taps} taps, ${((Date.now() - started) / 1000).toFixed(0)}s with a script (no reading time)`);
+    expect(taps <= 18, `the story takes ${taps} taps`);
   });
-  await suite.step("s8 fold and unfold the bar", async () => {
+  await suite.step("s9 fold and unfold the bar", async () => {
     await coach.getByRole("button", { name: "Fold the story guide" }).click();
     const box = await coach.boundingBox();
     expect(box && box.height <= 48, `folded bar is ${box?.height}px tall`);
     await coach.getByRole("button", { name: /Story guide/ }).click();
-    await coach.getByText("That is Tryout.").waitFor();
+    await coach.getByText("The city sees every decision.", { exact: false }).waitFor();
   });
 
   await context.close();

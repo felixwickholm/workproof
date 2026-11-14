@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type RefObject } from "react";
+import { openDialog } from "./page-scan";
 
 /** The nearest ancestor (or self) pinned to the viewport: fixed, or sticky like the review action bar. */
 function fixedBox(el: Element | null): HTMLElement | null {
@@ -25,7 +26,7 @@ export function useBottomClearance(ref: RefObject<HTMLElement | null>, active: b
     const measure = () => {
       const bar = ref.current;
       if (!bar) return;
-      setHidden(Boolean(document.querySelector('[aria-modal="true"]')));
+      setHidden(Boolean(openDialog()));
       const r = bar.getBoundingClientRect();
       const h = window.innerHeight;
       let top = h;

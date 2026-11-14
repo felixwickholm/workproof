@@ -16,9 +16,11 @@ interface FieldProps {
   onEnter?: () => void;
   /** Match the API limit, so a long paste is cut here instead of failing on send. */
   maxLength?: number;
+  /** Which sample the guided story may type here. */
+  fill?: string;
 }
 
-export function Field({ label, value, onChange, placeholder, autoFocus, type = "text", autoComplete, hideLabel, onEnter, maxLength }: FieldProps) {
+export function Field({ label, value, onChange, placeholder, autoFocus, type = "text", autoComplete, hideLabel, onEnter, maxLength, fill }: FieldProps) {
   return (
     <label className="block">
       <span className={cx("text-footnote mb-2 block px-4 text-label-2", hideLabel && "sr-only")}>{label}</span>
@@ -29,6 +31,7 @@ export function Field({ label, value, onChange, placeholder, autoFocus, type = "
         autoComplete={autoComplete}
         placeholder={placeholder}
         maxLength={maxLength}
+        data-fill={fill}
         enterKeyHint="next"
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
@@ -52,10 +55,12 @@ interface TextAreaProps {
   minRows?: number;
   hideLabel?: boolean;
   maxLength?: number;
+  /** Which sample the guided story may type here. */
+  fill?: string;
 }
 
 /** A text area that grows with its content. */
-export function TextArea({ label, value, onChange, placeholder, autoFocus, minRows = 4, hideLabel, maxLength }: TextAreaProps) {
+export function TextArea({ label, value, onChange, placeholder, autoFocus, minRows = 4, hideLabel, maxLength, fill }: TextAreaProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -74,6 +79,7 @@ export function TextArea({ label, value, onChange, placeholder, autoFocus, minRo
         autoFocus={autoFocus}
         placeholder={placeholder}
         maxLength={maxLength}
+        data-fill={fill}
         onChange={(e) => onChange(e.target.value)}
         className="text-body block w-full resize-none overflow-hidden rounded-inner bg-surface px-4 py-3.5 text-label caret-white outline-none placeholder:text-label-3 focus:bg-raised"
       />

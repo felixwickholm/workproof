@@ -9,10 +9,10 @@ export function AiLedger({ audit }: { audit: AuditEvent[] }) {
   const done = countAiWork(audit);
   return (
     <>
-      <Section label="What the AI did" className="mt-0">
+      <Section label="What is automated" className="mt-0">
         <Group>
           <Row title="Drafted tasks" detail="None goes live until a person approves it." value={done.drafted} />
-          <Row title="Described proofs" detail="It describes the work, never the person." value={done.described} />
+          <Row title={`Summarised the shape of ${done.described} ${done.described === 1 ? "proof" : "proofs"}`} detail="Length, points and opening words. Code, not AI, and never about quality." />
           <Row title="Asked about their own answer" detail="Questions the person answers after submitting." value={done.questions} />
           <Row title="Hid personal details" detail="A fixed rule, before anyone reads the work." value={done.hidden} />
         </Group>

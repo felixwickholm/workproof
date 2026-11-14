@@ -7,6 +7,8 @@ export interface StoryState {
   baseline?: number;
   /** The label of the proof the visitor sent in the story, so later hints can name it. */
   proofLabel?: string;
+  /** Its id, so the story can open it on the company side directly. */
+  proofId?: string;
   /** The bar is folded down to a small pill. */
   collapsed?: boolean;
 }

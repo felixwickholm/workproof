@@ -5,7 +5,7 @@ import type { Company } from "@/lib/domain/types";
 import { cx } from "../ui/cx";
 
 /** The first word of a company name, so three fit side by side on a phone. */
-export function shortName(company: Company) {
+function shortName(company: Company) {
   return company.name.split(" ")[0];
 }
 

@@ -1,10 +1,11 @@
+import { Info } from "lucide-react";
 import type { ReactNode } from "react";
 import { ApproveBar } from "@/components/company/approve-bar";
 import { InlineEdit } from "@/components/company/inline-edit";
 import { ReviewGuide } from "@/components/company/review-guide";
 import { CoreSkillList, SetAsideList, TrimHeadline } from "@/components/company/wish-trim";
 import { metaLine } from "@/components/problem-card";
-import { Card, Eyebrow, Section } from "@/components/ui/card";
+import { Card, Section } from "@/components/ui/card";
 import { CodeBlock } from "@/components/ui/code-block";
 import { TextArea } from "@/components/ui/field";
 import { AiTag } from "@/components/ui/tag";
@@ -47,26 +48,28 @@ export function draftStep({ draft, onDraft, companyName, approvedBy, onApprovedB
           className="text-title font-bold text-pretty"
         />
         <p className="text-subhead tnum mt-1 text-label-2">{metaLine({ ...draft, id: "", companyIds: [], createdAt: "" })}</p>
-        <p className="text-subhead mt-1 text-label-2 text-pretty">From your words. Edit anything before you approve.</p>
       </div>
 
-      <Section label="The trim">
+      {draft.note ? (
+        <p role="note" className="rise text-subhead mt-5 flex gap-2.5 rounded-inner bg-surface px-4 py-3 text-label text-pretty">
+          <Info aria-hidden className="mt-0.5 size-[18px] shrink-0 text-label-2" strokeWidth={1.8} />
+          {draft.note}
+        </p>
+      ) : null}
+
+      <blockquote className="rise mt-6 shadow-[inset_2px_0_0_var(--color-separator)] pl-4">
+        <p className="text-body text-pretty">&ldquo;{draft.yourWords ?? draft.need}&rdquo;</p>
+        <p className="text-footnote mt-1.5 text-label-2">In your words. Only your company sees this. Edit anything below before you approve.</p>
+      </blockquote>
+
+      <Section label="Skills">
         <TrimHeadline skills={draft.coreSkills} setAside={draft.setAside} />
-      </Section>
-
-      <Section label="Core skills">
-        <CoreSkillList skills={draft.coreSkills} onRemove={removeSkill} />
+        <div className="mt-3">
+          <CoreSkillList skills={draft.coreSkills} onRemove={removeSkill} />
+        </div>
         <p className="text-footnote mt-2 px-4 text-label-2">Keep 3 to 5. Remove one if it is not the job.</p>
-      </Section>
-
-      <Section label="Set aside">
+        <p className="text-footnote mt-5 mb-2 px-4 text-label-2">Set aside</p>
         <SetAsideList setAside={draft.setAside} />
-      </Section>
-
-      <Section label="In your words">
-        <Card>
-          <p className="text-body text-pretty">&ldquo;{draft.need}&rdquo;</p>
-        </Card>
       </Section>
 
       <Section label="The task">
@@ -83,13 +86,11 @@ export function draftStep({ draft, onDraft, companyName, approvedBy, onApprovedB
             )}
           </div>
         ) : null}
-        <div className="mt-5 px-4">
-          <Eyebrow>Talent hands in</Eyebrow>
-          <p className="text-headline mt-2 font-semibold text-pretty">{draft.deliverable}</p>
-        </div>
+        <p className="text-footnote mt-5 px-4 text-label-2">They hand in</p>
+        <p className="text-headline mt-1 px-4 font-semibold text-pretty">{draft.deliverable}</p>
       </Section>
 
-      <Section label="How your reviewer will judge the work">
+      <Section label="What your reviewer looks for">
         <ReviewGuide guide={draft.reviewGuide} skills={draft.coreSkills} />
         <p className="text-footnote mt-2 px-4 text-label-2">
           A person at {companyName || "your company"} reads each answer with these in mind. No points, no scores.

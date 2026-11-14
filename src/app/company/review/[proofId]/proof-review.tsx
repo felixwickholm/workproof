@@ -1,19 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { BlindProofFull } from "@/components/blind-proof";
 import { DecidedDetails, DecisionLine } from "@/components/company/decided-summary";
 import { DecisionSheet } from "@/components/company/decision-sheet";
-import { waitingFor } from "@/components/company/format";
+import { SECOND_LOOK_LINE, waitingFor } from "@/components/company/format";
 import { LookForRow } from "@/components/company/look-for";
 import { ReviewGuide } from "@/components/company/review-guide";
 import { TaskDisclosure } from "@/components/company/task-disclosure";
 import { Button } from "@/components/ui/button";
-import { Card, Eyebrow } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { riseAt } from "@/components/ui/rise";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tag } from "@/components/ui/tag";
 import { api } from "@/lib/client/api";
 import { useResource } from "@/lib/client/use-resource";
 import type { DecisionKind } from "@/lib/domain/types";
@@ -25,6 +24,12 @@ export function ProofReview({ params }: { params: Promise<{ proofId: string }> }
   const { queue, company, reload, now } = useReview();
   const router = useRouter();
   const [sheet, setSheet] = useState<DecisionKind | null>(null);
+
+  // A proof opens at its top, where the context line says why it is here.
+  const companyKey = company?.id;
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [proofId, companyKey]);
 
   const item = queue ? findInQueue(queue, proofId) : null;
   const challengeId = item?.proof.challengeId ?? null;
@@ -123,8 +128,9 @@ export function ProofReview({ params }: { params: Promise<{ proofId: string }> }
         onDecided={reload}
         onDone={() => {
           setSheet(null);
-          // On a phone the queue is a separate screen: go back to it for the next proof.
+          // On a phone the queue is a separate screen: go back to it, at the top where the company switcher is.
           if (!window.matchMedia("(min-width: 900px)").matches) router.push("/company/review");
+          window.requestAnimationFrame(() => window.scrollTo({ top: 0 }));
         }}
       />
     </div>
@@ -138,7 +144,7 @@ function guideNote(ownTask: boolean) {
 function GuideLabel({ ownTask }: { ownTask: boolean }) {
   return (
     <div className="mb-2 px-5">
-      <Eyebrow>Look for</Eyebrow>
+      <p className="text-headline font-semibold">Look for</p>
       <p className="text-footnote mt-1 text-label-2">{guideNote(ownTask)}</p>
     </div>
   );
@@ -148,23 +154,17 @@ function ContextLine({ item, now }: { item: NonNullable<ReturnType<typeof findIn
   if (item.kind === "second") {
     return (
       <div>
-        <Eyebrow>Second look</Eyebrow>
-        <p className="text-subhead mt-1 text-label-2 text-pretty">Another employer passed. The skills match your task.</p>
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
-          {item.proof.sharedSkills.map((s) => (
-            <Tag key={s}>{s}</Tag>
-          ))}
-        </div>
+        <p className="text-headline font-semibold">Second look</p>
+        <p className="text-subhead mt-1 text-label-2 text-pretty">{SECOND_LOOK_LINE}</p>
+        <p className="text-subhead mt-1 text-label text-pretty">Matched on {item.proof.sharedSkills.join(", ")}</p>
       </div>
     );
   }
-  if (item.kind === "decided") return <Eyebrow>Decided</Eyebrow>;
+  if (item.kind === "decided") return <p className="text-headline font-semibold">Decided</p>;
   const waiting = waitingFor(item.proof.submittedAt, now);
   return (
     <p className="text-footnote tnum text-label-2">
-      <span className="text-eyebrow font-semibold uppercase">To review</span>
-      <span className="mx-1.5 text-label-3">·</span>
-      {waiting === "Just now" ? "Just arrived" : waiting ? `Waiting ${waiting}` : null}
+      {waiting === "Just now" ? "Just arrived" : waiting ? `Waiting ${waiting}` : "To review"}
     </p>
   );
 }

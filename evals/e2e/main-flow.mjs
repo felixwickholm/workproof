@@ -111,6 +111,10 @@ export async function runMainFlow(browser, phone) {
   await suite.step("b5 name and contact, submit", async () => {
     await type(page.getByRole("textbox", { name: "Name", exact: true }), TALENT.name);
     await type(page.getByRole("textbox", { name: "Email or phone" }), TALENT.contact);
+    // Second look is opt-in: the person turns it on, or no other employer sees the proof.
+    const consent = main.getByRole("switch");
+    expect((await consent.getAttribute("aria-checked")) === "false", "Second look consent is on before the person chose it");
+    await consent.click();
     await checkScreen(page, errors, "identity");
     await page.getByRole("button", { name: "Review and submit" }).click();
     const sheet = page.getByRole("dialog", { name: "Submit your proof" });
@@ -179,7 +183,7 @@ export async function runMainFlow(browser, phone) {
     await secondLook.getByRole("link", { name: new RegExp(`^${label}\\b`) }).waitFor();
     await assertIdentityHidden("Saarnivo queue");
     await secondLook.getByRole("link", { name: new RegExp(`^${label}\\b`) }).click();
-    await main.getByText("Another employer passed. The skills match your task.").waitFor();
+    await main.getByText("Another employer had no opening for this proof. The skills match your task.").waitFor();
     await assertIdentityHidden("Saarnivo proof");
     await checkScreen(page, errors, "Second look proof");
   });

@@ -4,9 +4,9 @@ import { EyeOff } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 import type { BlindProof, RedactionReport } from "@/lib/domain/types";
-import { Card, Eyebrow, Section } from "./ui/card";
+import { Card, Section } from "./ui/card";
 import { Group, Row } from "./ui/group";
-import { AiTag, Tag } from "./ui/tag";
+import { Tag } from "./ui/tag";
 import { WorkText } from "./work-text";
 
 const ease = [0.23, 1, 0.32, 1] as const;
@@ -146,9 +146,16 @@ export function BlindProofFull({
 
         {beforeWork}
 
+        {proof.aiSummary ? (
+          <div className="px-5 py-1">
+            <p className="text-headline font-semibold">At a glance</p>
+            <p className="text-subhead mt-1 text-label text-pretty">{proof.aiSummary}</p>
+            <p className="text-footnote mt-1 text-label-2">A plain description. The work itself is below.</p>
+          </div>
+        ) : null}
+
         <Card>
-          <Eyebrow>The work</Eyebrow>
-          <WorkText text={proof.work} className="text-body mt-2 whitespace-pre-wrap text-pretty" />
+          <WorkText text={proof.work} className="text-body whitespace-pre-wrap text-pretty" />
         </Card>
 
         {proof.explain.length > 0 ? (
@@ -162,14 +169,6 @@ export function BlindProofFull({
           </div>
         ) : null}
 
-        <div className="mt-3 px-5">
-          <div className="flex items-center justify-between gap-3">
-            <Eyebrow>Summary of the work</Eyebrow>
-            <AiTag />
-          </div>
-          <p className="text-body mt-2 text-label-2 text-pretty">{proof.aiSummary}</p>
-          <p className="text-footnote mt-2 text-label-3">Describes the work. Never scores it.</p>
-        </div>
       </motion.div>
 
       <Section label={hidden.label} className="mt-8">

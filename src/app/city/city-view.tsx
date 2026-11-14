@@ -42,7 +42,7 @@ export function CityView() {
       </div>
 
       <div className="rise" style={riseAt(1)}>
-        <SummaryTiles totals={data.totals} />
+        <SummaryTiles totals={data.totals} feedbackOwed={data.employers.reduce((sum, e) => sum + e.feedbackOwed, 0)} />
       </div>
 
       <div className="mt-8 grid grid-cols-1 gap-8 min-[900px]:grid-cols-[minmax(0,1fr)_340px] min-[900px]:gap-x-8 min-[900px]:[grid-template-areas:'employers_ai'_'audit_ai']">

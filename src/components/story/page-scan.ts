@@ -38,30 +38,74 @@ export function exists(selector: string) {
   return document.querySelector(selector) !== null;
 }
 
-/** The label of the page's enabled main button, if one is on screen. */
+/** The label of the screen's enabled main button, if one is on screen. A dialog's button comes first. */
 export function pagePrimary(): string | undefined {
-  for (const el of document.querySelectorAll<HTMLElement>("[data-primary]")) {
+  for (const el of scope().querySelectorAll<HTMLElement>("[data-primary]")) {
     if ((el as HTMLButtonElement).disabled || !shown(el)) continue;
     return text(el);
   }
   return undefined;
 }
 
-/** Empty fields on this screen that "Fill in her answer" would type into. */
-export function emptyFields() {
-  // Next keeps recent screens mounted but hidden, so only fields on screen count.
-  const fields = document.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
-    'main textarea, main input[autocomplete="name"], main input[type="email"]',
-  );
-  return Array.from(fields).filter((el) => !el.value.trim() && shown(el));
+/** The open dialog on screen. A route Next keeps mounted but hidden can hold one too; it does not count. */
+export function openDialog(): HTMLElement | null {
+  for (const el of document.querySelectorAll<HTMLElement>('[aria-modal="true"]')) {
+    if (el.getBoundingClientRect().width > 0) return el;
+  }
+  return null;
+}
+
+/** The open dialog, if any, else the whole page: the story reads and acts where the visitor looks. */
+export function scope(): ParentNode {
+  return openDialog() ?? document;
+}
+
+/** The name of the open dialog. */
+export function dialogName(): string | undefined {
+  return openDialog()?.getAttribute("aria-label") ?? undefined;
+}
+
+/** Fields on this screen the story can type into. Next keeps recent screens mounted but hidden. */
+export function storyFields() {
+  return Array.from(scope().querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("[data-fill]")).filter(shown);
+}
+
+/** The first empty story field on screen, by its sample key. */
+export function firstEmptyField(): string | undefined {
+  return storyFields().find((el) => !el.value.trim())?.dataset.fill;
+}
+
+/** The first name in the reviewer field, once it holds one. */
+export function reviewerFirst(): string | undefined {
+  const value = scope().querySelector<HTMLInputElement>('[data-fill="reviewer"]')?.value.trim();
+  return value ? value.split(/\s+/)[0] : undefined;
 }
 
 const MARK = "data-story-on";
 
-/** Rings the target and clears every older ring. */
-export function markTarget(el: HTMLElement | null) {
-  document.querySelectorAll(`[${MARK}]`).forEach((old) => {
-    if (old !== el) old.removeAttribute(MARK);
+/** In a fixed or sticky bar, so always in view: scrolling would only move the page under it. */
+function pinned(el: HTMLElement) {
+  for (let node: HTMLElement | null = el; node && node !== document.body; node = node.parentElement) {
+    const position = getComputedStyle(node).position;
+    if (position === "fixed" || position === "sticky") return true;
+  }
+  return false;
+}
+
+/** Rings the target, following its own corner radius, and clears every older ring. A new target off screen scrolls into view. */
+export function markTarget(el: HTMLElement | null, reduceMotion = false) {
+  document.querySelectorAll<HTMLElement>(`[${MARK}]`).forEach((old) => {
+    if (old !== el) {
+      old.removeAttribute(MARK);
+      old.style.removeProperty("--story-r");
+    }
   });
-  if (el && !el.hasAttribute(MARK)) el.setAttribute(MARK, "");
+  if (!el || el.hasAttribute(MARK)) return;
+  const radius = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+  el.style.setProperty("--story-r", `${radius + 4}px`);
+  el.setAttribute(MARK, "");
+  const r = el.getBoundingClientRect();
+  if (!pinned(el) && (r.top < 56 || r.bottom > window.innerHeight - 160)) {
+    el.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" });
+  }
 }

@@ -100,23 +100,22 @@ export async function type(locator, text) {
   await locator.pressSequentially(text, { delay: 0 });
 }
 
-/** The numbers on the city screen, read from the tiles by their labels. */
+/** The numbers on the city screen, read from each tile by its label. */
 export async function readCityTotals(page) {
   return page.evaluate(() => {
     const labels = [
       "Tasks live",
       "Proofs sent",
       "Human decisions",
-      "Meetings invited",
+      "People invited to meet",
       "Meetings confirmed by both sides",
       "Second look meetings",
+      "Feedback owed",
       "Automated decisions",
     ];
     const totals = {};
     for (const label of labels) {
-      const p = [...document.querySelectorAll("p")].find((el) => el.textContent?.trim() === label);
-      const tile = p?.closest(".rounded-card");
-      const value = tile?.querySelector(":scope > p:last-child")?.textContent?.trim();
+      const value = document.querySelector(`[data-total="${label}"] [data-value]`)?.textContent?.trim();
       totals[label] = value === undefined ? null : Number(value);
     }
     return totals;
