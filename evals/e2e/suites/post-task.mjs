@@ -1,10 +1,10 @@
 import { AI_WAIT_MS, BASE_URL, checkScreen, expect, openVisitor, switchMode, type, visible, visibleText } from "../harness.mjs";
 
-/** Words the way companies write them, with wishes that describe a person, not the work. Added to the "Software engineer" role. */
-const NEED = "our payments API: security, 8 years of experience, young, native Finnish speaker, top university degree";
+/** Words the way companies write them, with wishes that describe a person, not the work. */
+const NEED = "Software engineer for our payments API: security, 8 years of experience, young, native Finnish speaker, top university degree";
 
-/** Words with a fact about the job and a wish about the person. Added to the "Financial analyst" role. */
-const FACTS_NEED = "find errors in a budget, work language English, native Finnish speaker";
+/** Words with a fact about the job and a wish about the person. */
+const FACTS_NEED = "Financial analyst to find errors in a budget, work language English, native Finnish speaker";
 const FACT = "Work language: English";
 
 /** Wishes about the person, as typed. None may reach the challenge that people read. */
@@ -17,37 +17,44 @@ const UNSAFE_LINK = "http://example.org/jobs/analyst";
 
 const draftDoc = (page) => visible(page.getByRole("article", { name: "Your challenge" }));
 
-/** Picks who the company is looking for, adds its own words and asks the AI for a draft. */
-async function draftFromRole(page, role, words) {
-  const roles = visible(page.locator('[data-tour="company-looking-for"]'));
-  await roles.getByRole("radio", { name: role, exact: true }).click();
-  await type(roles.getByRole("textbox", { name: "What they would do" }), words);
-  await roles.getByRole("button", { name: "Draft my challenge" }).click();
-  await page.getByRole("heading", { level: 1, name: "Check your challenge" }).waitFor({ timeout: AI_WAIT_MS });
+/**
+ * Tells the assistant who the company is looking for, answers its size question if it asks one,
+ * and waits for the draft.
+ */
+async function draftFromChat(page, words) {
+  const chat = visible(page.locator('[data-tour="company-looking-for"]'));
+  await type(chat.getByRole("textbox", { name: "Message to the challenge assistant" }), words);
+  await chat.getByRole("button", { name: "Send" }).click();
+  const size = chat.getByRole("button", { name: "10 to 30 minutes" });
+  const draft = page.getByRole("heading", { level: 1, name: "Check your challenge" });
+  await Promise.race([size.waitFor({ timeout: AI_WAIT_MS }), draft.waitFor({ timeout: AI_WAIT_MS })]);
+  if (await size.isVisible()) await size.click();
+  await draft.waitFor({ timeout: AI_WAIT_MS });
 }
 
 /**
- * Suite 6: the Company view makes a new challenge. It starts with who the company is looking for (the
- * role chips); a job ad link is the other way in and refuses an unsafe link. A sample ad becomes a
- * draft. A role plus words full of bias bait becomes a draft with 3 to 5 skills to score and the wishes
- * about the person set aside with a reason; a named person approves it in one click; the published
- * challenge carries none of them and leads the job seeker's list. A challenge written by hand goes
- * live in the same three steps.
+ * Suite 6: the Company view makes a new challenge. It starts with a chat: the assistant asks who the
+ * company is looking for, asks at most two short questions, then drafts the challenge and an example job
+ * description. A job ad link is the other way in and refuses an unsafe link. A sample ad becomes a
+ * draft. Words full of bias bait become a draft with 3 to 5 skills to score and the wishes about the
+ * person set aside with a reason; a named person approves it in one click; the published challenge
+ * carries none of them and leads the job seeker's list.
  */
 export async function runPostTask(browser, device, name) {
   const { context, page, suite, errors } = await openVisitor(browser, device, name);
   const published = { id: "", title: "" };
 
-  await suite.step('My challenges: "New challenge" asks who you are looking for first, then offers the job ad link', async () => {
+  await suite.step('My challenges: "New challenge" opens the chat with the assistant, then offers the job ad link', async () => {
     await page.goto(`${BASE_URL}/employer`);
     await visible(page.getByRole("heading", { level: 1 })).waitFor({ timeout: 15_000 });
     await visible(page.getByRole("link", { name: "New challenge" })).click();
     await page.getByRole("heading", { level: 1, name: "New challenge" }).waitFor({ timeout: 15_000 });
-    const roles = visible(page.locator('[data-tour="company-looking-for"]'));
-    await roles.getByRole("heading", { name: "Who are you looking for?" }).waitFor();
-    expect((await roles.getByRole("radio").count()) >= 5, "the role chips are missing");
-    const draft = roles.getByRole("button", { name: "Draft my challenge" });
-    expect((await draft.getAttribute("aria-disabled")) === "true", '"Draft my challenge" is open before a role is picked');
+    const chat = visible(page.locator('[data-tour="company-looking-for"]'));
+    await chat.getByRole("heading", { name: "Tell the assistant who you need" }).waitFor();
+    await chat.getByText("Who are you looking for?").waitFor();
+    await chat.getByText("Voice coming soon").waitFor();
+    const send = chat.getByRole("button", { name: "Send" });
+    expect((await send.getAttribute("aria-disabled")) === "true", '"Send" is open before anything is written');
     const ad = visible(page.locator('[data-tour="job-ad"]'));
     await ad.getByRole("heading", { name: "Start from your job ad" }).waitFor();
     const make = ad.getByRole("button", { name: "Make my challenge" });
@@ -77,9 +84,20 @@ export async function runPostTask(browser, device, name) {
     await page.getByRole("heading", { level: 1, name: "New challenge" }).waitFor();
   });
 
-  await suite.step("a role with bias bait in the words: the wishes about the person are set aside with a reason", async () => {
-    await draftFromRole(page, "Software engineer", NEED);
-    await page.getByText(/for the Software engineer role/).waitFor();
+  await suite.step("a role name alone: the assistant asks one short question first", async () => {
+    const chat = visible(page.locator('[data-tour="company-looking-for"]'));
+    await type(chat.getByRole("textbox", { name: "Message to the challenge assistant" }), "Data analyst");
+    await chat.getByRole("button", { name: "Send" }).click();
+    await chat.getByText(/What would this person work on in their first month\?/).waitFor({ timeout: AI_WAIT_MS });
+    await checkScreen(page, errors, "/company chat question");
+    await page.reload();
+    await page.getByRole("heading", { level: 1, name: "New challenge" }).waitFor({ timeout: 15_000 });
+  });
+
+  await suite.step("words with bias bait: the wishes about the person are set aside with a reason, and a job description comes with it", async () => {
+    await draftFromChat(page, NEED);
+    await page.getByText(/from your words/).waitFor();
+    await visible(page.getByRole("heading", { name: "Example job description" })).waitFor();
     const doc = await draftDoc(page).innerText();
     const asideAt = doc.indexOf("Set aside");
     expect(asideAt > 0, "the draft shows no wishes set aside");
@@ -125,7 +143,7 @@ export async function runPostTask(browser, device, name) {
 
   await suite.step("a job fact is shown to people under Good to know; a native speaker wish is set aside", async () => {
     await page.goto(`${BASE_URL}/company`);
-    await draftFromRole(page, "Financial analyst", FACTS_NEED);
+    await draftFromChat(page, FACTS_NEED);
     const doc = await draftDoc(page).innerText();
     expect(doc.includes(FACT), `the draft does not show "${FACT}"`);
     const setAside = doc.slice(doc.indexOf("Set aside"));
@@ -140,26 +158,6 @@ export async function runPostTask(browser, device, name) {
     expect((await facts.innerText()).includes(FACT), `people do not see "${FACT}" under Good to know`);
     expect(!/native/i.test(await visibleText(page)), "the published challenge mentions a native speaker");
     await checkScreen(page, errors, "/challenges/[id] with job facts");
-  });
-
-  await suite.step("a challenge written by hand: blank text, the role's skills, and the same approval", async () => {
-    await page.goto(`${BASE_URL}/company`);
-    const roles = visible(page.locator('[data-tour="company-looking-for"]'));
-    await roles.getByRole("radio", { name: "Marketing", exact: true }).click();
-    await roles.getByRole("button", { name: "Write it yourself" }).click();
-    await page.getByRole("heading", { level: 1, name: "Check your challenge" }).waitFor({ timeout: 15_000 });
-    await page.getByText(/You write this challenge for the Marketing role/).waitFor();
-    const doc = draftDoc(page);
-    const skills = Number((await doc.getByText(/^Skills you score \(\d\)$/).textContent()).match(/\d/)[0]);
-    expect(skills === 3, `a hand-written challenge starts with ${skills} skills`);
-    const publish = visible(page.getByRole("button", { name: "Approve and publish" }));
-    expect((await publish.getAttribute("aria-disabled")) === "true", "a blank challenge can be published");
-    await type(doc.getByRole("textbox", { name: "Title" }), "Which of two posts would you send?");
-    await type(doc.getByRole("textbox", { name: "The task" }), "We post one update a week. Read our last two posts and say which one you would send again, and why.");
-    await type(doc.getByRole("textbox", { name: "What the person hands in" }), "A short note in five lines");
-    await publish.click();
-    await page.getByRole("heading", { name: "Your challenge is live" }).waitFor({ timeout: 15_000 });
-    await checkScreen(page, errors, "/company live by hand");
   });
 
   await context.close();
