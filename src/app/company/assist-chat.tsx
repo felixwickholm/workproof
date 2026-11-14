@@ -133,7 +133,7 @@ export function AssistChat({ messages, choices, busy, onSend }: Props) {
             <ArrowUp aria-hidden className="size-5" strokeWidth={2} />
           </button>
         </div>
-        <div className="mt-2 flex items-center justify-between gap-3 px-1">
+        <div className="mt-2 flex flex-col gap-1 px-1 min-[600px]:flex-row min-[600px]:items-center min-[600px]:justify-between min-[600px]:gap-3">
           <p className="text-footnote text-pretty text-label-2">The AI drafts. You edit and approve. Nothing goes live before that.</p>
           <p className="text-footnote inline-flex shrink-0 items-center gap-1 text-label-3">
             <Mic aria-hidden className="size-3.5" strokeWidth={1.75} />

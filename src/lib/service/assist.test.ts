@@ -65,5 +65,8 @@ describe("assist", () => {
   it("makes a bigger event challenge of about 2 hours when asked", async () => {
     const reply = await assist([said("Backend developer for our payments API and its retries"), { from: "assistant", text: "?", ask: "size" }, said(EVENT_SIZE)]);
     expect(reply.kind === "draft" && reply.draft.minutes).toBe(120);
+    // The size answer is about the challenge, never a wish about the job.
+    expect(reply.kind === "draft" && reply.draft.setAside.join(" ")).not.toMatch(/event challenge|2 hours/i);
+    expect(reply.kind === "draft" && reply.draft.jobAd).not.toMatch(/event challenge/i);
   });
 });

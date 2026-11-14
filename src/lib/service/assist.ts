@@ -49,9 +49,10 @@ export function nextAsk(messages: readonly AssistMessage[]): AskId | null {
   return null;
 }
 
+/** What the company said about the work. An answer to the size question is about the challenge, not the job, so it is left out. */
 function companyWords(messages: readonly AssistMessage[]): string {
   return messages
-    .filter((m) => m.from === "company")
+    .filter((m, i) => m.from === "company" && messages[i - 1]?.ask !== "size")
     .map((m) => m.text.trim())
     .filter(Boolean)
     .join("\n");
@@ -59,19 +60,19 @@ function companyWords(messages: readonly AssistMessage[]): string {
 
 /** True when the company asked for a bigger event challenge. */
 export function wantsBig(messages: readonly AssistMessage[]): boolean {
-  return BIG_WORDS.test(companyWords(messages));
+  return BIG_WORDS.test(messages.filter((m) => m.from === "company").map((m) => m.text).join("\n"));
 }
 
 /** An example job description from the draft itself, when the model wrote none. Work and skills only. */
 export function exampleJobAd(draft: ChallengeDraft, role: string | undefined): string {
   const title = role ?? "New team member";
-  const skills = draft.coreSkills.map((s) => s.label.toLowerCase());
+  const skills = draft.coreSkills.map((s) => s.label);
   const list = skills.length > 1 ? `${skills.slice(0, -1).join(", ")} and ${skills.at(-1)}` : (skills[0] ?? "");
   const firstWork = draft.coreSkills[0]?.why ?? "";
   return [
     `${title}, Espoo`,
     `We are looking for a ${title.toLowerCase()} to join our team. ${firstWork}`.trim(),
-    `In your first months you work on tasks like this one: ${draft.title.replace(/\.$/, "").toLowerCase()}. The work needs ${list}.`,
+    `In your first months you work on tasks like this one: "${draft.title.replace(/\.$/, "")}". The work needs these skills: ${list}.`,
     "Show us how you work: do our short challenge instead of sending a CV first. A person on our team reads every answer we take.",
   ].join("\n\n");
 }
@@ -82,8 +83,7 @@ export async function assist(messages: readonly AssistMessage[]): Promise<Assist
   if (ask) return { kind: "question", ask, ...ASKS[ask] };
   const big = wantsBig(messages);
   const said = companyWords(messages);
-  const need = big ? `${said}\nChallenge size: a bigger event challenge of about 2 hours, done before the event.` : said;
-  const draft = await draftChallenge(need);
+  const draft = await draftChallenge(said);
   const role = matchRole(said)?.title;
   const roles = draft.roles?.length ? draft.roles : rolesOf({ title: draft.title, need: `${said} ${draft.need}` });
   const minutes = big ? EVENT_MINUTES_BIG : Math.min(30, Math.max(10, draft.minutes));
