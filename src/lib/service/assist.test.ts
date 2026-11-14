@@ -43,6 +43,15 @@ describe("nextAsk", () => {
   });
 });
 
+describe("exampleJobAd", () => {
+  it("uses the company's words about the work, never a wish about the person", async () => {
+    const reply = await assist([said("Warehouse worker to pack orders, young and a native Finnish speaker"), { from: "assistant", text: "?", ask: "size" }, said(SHORT_SIZE)]);
+    const ad = reply.kind === "draft" ? (reply.draft.jobAd ?? "") : "";
+    expect(ad).toMatch(/Espoo/);
+    expect(ad).not.toMatch(/young|native/i);
+  });
+});
+
 describe("assist", () => {
   it.each([
     ["a role and two answers", [said("Data analyst"), { from: "assistant", text: "?", ask: "work" } as AssistMessage, said("Clean up our weekly sales report"), { from: "assistant", text: "?", ask: "size" } as AssistMessage, said(SHORT_SIZE)]],

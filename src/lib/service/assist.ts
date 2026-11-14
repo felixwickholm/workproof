@@ -1,4 +1,6 @@
 import { matchRole } from "@/lib/ai/scripted/match-role";
+import { parseNeed } from "@/lib/ai/scripted/parse-need";
+import { isNeutral } from "@/lib/guard/check-draft";
 import { rolesOf } from "@/lib/domain/roles";
 import type { ChallengeDraft } from "@/lib/domain/types";
 import { draftChallenge } from "./challenges";
@@ -63,15 +65,21 @@ export function wantsBig(messages: readonly AssistMessage[]): boolean {
   return BIG_WORDS.test(messages.filter((m) => m.from === "company").map((m) => m.text).join("\n"));
 }
 
-/** An example job description from the draft itself, when the model wrote none. Work and skills only. */
-export function exampleJobAd(draft: ChallengeDraft, role: string | undefined): string {
-  const title = role ?? "New team member";
+/** The company's first sentence about the work, when it says nothing about the person; else nothing. */
+function workLine(said: string): string | undefined {
+  const first = parseNeed(said).cleanedNeed.split(/(?<=[.!?])\s+|\n+/)[0]?.trim().replace(/[.!?:;,]+$/, "");
+  if (!first || first.split(/\s+/).length < 3 || !isNeutral(first)) return undefined;
+  return `${first[0].toUpperCase()}${first.slice(1)}.`;
+}
+
+/** An example job description from the draft and the company's own words, when the model wrote none. Work and skills only. */
+export function exampleJobAd(draft: ChallengeDraft, role: string | undefined, said = ""): string {
   const skills = draft.coreSkills.map((s) => s.label);
   const list = skills.length > 1 ? `${skills.slice(0, -1).join(", ")} and ${skills.at(-1)}` : (skills[0] ?? "");
-  const firstWork = draft.coreSkills[0]?.why ?? "";
+  const work = workLine(said);
   return [
-    `${title}, Espoo`,
-    `We are looking for a ${title.toLowerCase()} to join our team. ${firstWork}`.trim(),
+    `${role ?? "Join our team"}, Espoo`,
+    `We are looking for ${role ? `a ${role.toLowerCase()}` : "a new colleague"} to join our team.${work ? ` The work: ${work}` : ""}`,
     `In your first months you work on tasks like this one: "${draft.title.replace(/\.$/, "")}". The work needs these skills: ${list}.`,
     "Show us how you work: do our short challenge instead of sending a CV first. A person on our team reads every answer we take.",
   ].join("\n\n");
@@ -94,7 +102,7 @@ export async function assist(messages: readonly AssistMessage[]): Promise<Assist
       yourWords: said,
       minutes,
       ...(roles.length ? { roles } : {}),
-      jobAd: draft.jobAd ?? exampleJobAd(draft, role),
+      jobAd: draft.jobAd ?? exampleJobAd(draft, role, said),
     },
   };
 }
