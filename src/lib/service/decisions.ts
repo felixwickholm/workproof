@@ -68,7 +68,7 @@ export async function decide(input: DecideInput): Promise<{ decision: Decision; 
     appendAudit(data, {
       actor: "human",
       by: reviewer,
-      action: input.decision === "meet" ? "Chose to meet" : "Passed with feedback",
+      action: input.decision === "meet" ? "Chose to meet" : "Said not now, with a reason",
       detail: `${company.name} on ${proof.label}${viaSecondLook ? " through Second look" : ""}. Feedback sent to the person.`,
     });
 

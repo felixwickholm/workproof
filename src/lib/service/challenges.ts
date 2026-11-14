@@ -1,5 +1,5 @@
 import { getTaskDesigner } from "@/lib/ai";
-import { publishedNeed } from "@/lib/ai/scripted/compose";
+import { countListedWishes, publishedNeed } from "@/lib/ai/scripted/compose";
 import { redact, type KnownIdentity } from "@/lib/blind/redact";
 import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
 import { draftProblems } from "@/lib/guard/check-draft";
@@ -22,7 +22,7 @@ export async function draftChallenge(need: string): Promise<ChallengeDraft> {
       detail: `"${draft.title}": ${draft.coreSkills.length} core skills kept, ${draft.setAside.length} wishes set aside. Waiting for a human to approve.`,
     });
   });
-  return { ...draft, yourWords: need.trim() };
+  return { ...draft, yourWords: need.trim(), wishCount: countListedWishes(need) };
 }
 
 export async function approveChallenge(input: { draft: ChallengeDraft; companyId: string; approvedBy: string }): Promise<Challenge> {
@@ -30,7 +30,7 @@ export async function approveChallenge(input: { draft: ChallengeDraft; companyId
   if (!approvedBy) throw new ServiceError(400, "A named person must approve the challenge");
   // A human may edit the draft, and a request may skip the UI, so the server checks it again.
   // The talent-visible need is rebuilt here; the request's own need, words and note are dropped.
-  const draft: ChallengeDraft = { ...omit(input.draft, ["yourWords", "note"]), need: publishedNeed(input.draft), kind: "event", aiAllowed: true };
+  const draft: ChallengeDraft = { ...omit(input.draft, ["yourWords", "note", "wishCount"]), need: publishedNeed(input.draft), kind: "event", aiAllowed: true };
   const problems = draftProblems(draft);
   if (draft.minutes < 10) problems.push("An event task takes 10 to 30 minutes");
   if (problems.length > 0) throw new ServiceError(400, `This card cannot be published yet. ${problems[0]}.`);

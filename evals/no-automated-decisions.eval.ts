@@ -172,7 +172,7 @@ describe("Eval 3: no automated decisions", () => {
 
   it("(e) the city reports 0 automated decisions and the audit log agrees", async () => {
     const { json } = await call<CityOverview>(cityRoute);
-    const decisionActions = new Set(["Chose to meet", "Passed with feedback"]);
+    const decisionActions = new Set(["Chose to meet", "Said not now, with a reason"]);
     const aiDecisions = json.audit.filter((e) => decisionActions.has(e.action) && e.actor !== "human");
     const ok = json.totals.automatedDecisions === 0 && aiDecisions.length === 0 && json.totals.humanDecisions > 0;
     record(EVAL, "(e) automated decisions", `${json.totals.automatedDecisions} (audit: ${aiDecisions.length} non-human)`, ok);

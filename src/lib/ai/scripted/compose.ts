@@ -1,7 +1,7 @@
 import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
 import { neutralSetAside, NOT_USED_PREFIX, talentNeed, workingLanguagesIn } from "@/lib/guard/check-draft";
 import { isSkillId, SKILLS, toSkill, type SkillId } from "@/lib/skills/vocabulary";
-import { GENERIC_NOTE, genericRole } from "./generic-role";
+import { GENERIC_NOTE, genericRole, nearestNote } from "./generic-role";
 import { matchRole } from "./match-role";
 import { parseNeed } from "./parse-need";
 import type { RoleTemplate, TaskTemplate } from "./role-template";
@@ -61,8 +61,15 @@ function roleForSkills(wished: SkillId[]): RoleTemplate | undefined {
   return chosen;
 }
 
+/** The number of wishes the company's own sentence listed, not counting the words that only name the role. */
+export function countListedWishes(need: string): number {
+  return parseNeed(need, matchRole(need)?.keywords ?? []).listed.length;
+}
+
 export function draftFromNeed(need: string): ChallengeDraft {
-  const role = matchRole(need) ?? roleForSkills(parseNeed(need, []).wishedSkills) ?? genericRole();
+  const named = matchRole(need);
+  const nearest = named ? undefined : roleForSkills(parseNeed(need, []).wishedSkills);
+  const role = named ?? nearest ?? genericRole();
   const generic = role.id === "generic";
   const parsed = parseNeed(need, role.keywords);
   const { kept, dropped } = chooseSkills(role, parsed.wishedSkills, parsed.wishes.length);
@@ -83,7 +90,8 @@ export function draftFromNeed(need: string): ChallengeDraft {
     kind: "event",
     minutes: EVENT_MINUTES,
   });
-  return generic ? { ...draft, note: GENERIC_NOTE } : draft;
+  if (generic) return { ...draft, note: GENERIC_NOTE };
+  return nearest ? { ...draft, note: nearestNote(role.title) } : draft;
 }
 
 export function tasterFor(dreamJob: string): ChallengeDraft {

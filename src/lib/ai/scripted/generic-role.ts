@@ -3,6 +3,10 @@ import type { RoleTemplate } from "./role-template";
 /** Shown on a company draft built from this template, so a person rewrites the brief before publishing. */
 export const GENERIC_NOTE = "No close match in the task library. Edit the brief before you publish.";
 
+/** Shown when the draft borrows the nearest library role by skills, so a person adapts the brief. */
+export const nearestNote = (roleTitle: string) =>
+  `No close match in the task library. This draft uses the nearest role, ${roleTitle.toLowerCase()}, from the skills you named. Edit the brief before you publish.`;
+
 /**
  * A template for roles outside the library. The task asks for judgment on an AI-drafted plan.
  * It uses no words from the company's need or the person's dream job, so nothing typed about

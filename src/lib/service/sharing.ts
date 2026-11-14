@@ -19,7 +19,7 @@ export async function setSharing(proofId: string, talentId: string, share: boole
         by: "Talent",
         action: share ? "Recorded consent" : "Withdrew consent",
         detail: share
-          ? `${label} may be shown to other employers with the same core skills if the first employer passes or does not answer in time.`
+          ? `${label} may be shown to other employers with the same core skills if the first employer says not now or does not answer in time.`
           : `${label} is no longer shown through Second look. Decisions already made stay.`,
       });
     }

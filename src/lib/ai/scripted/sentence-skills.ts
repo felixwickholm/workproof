@@ -27,8 +27,9 @@ const PHRASES: { skill: SkillId; pattern: RegExp }[] = [
   { skill: "data-quality", pattern: /\b(?:billing|invoice|meter|sales|customer|price|pricing)\s(?:data|records|figures)\b/ },
   { skill: "data-visualisation", pattern: /\b(?:charts?|graphs?|dashboards?)\b/ },
   { skill: "safety-thinking", pattern: /\b(?:hurt|injur\w*|unsafe|safely)\b/ },
-  { skill: "prioritisation", pattern: /\b(?:what to (?:build|do|fix) first|what matters most)\b/ },
+  { skill: "prioritisation", pattern: /\b(?:what to (?:build|do|fix) first|what matters most|on schedule|on track)\b/ },
   { skill: "planning", pattern: /\b(?:deadlines?|on time|make a plan|plan (?:the|our))\b/ },
+  { skill: "stakeholder-communication", pattern: /\b(?:suppliers?|vendors?|subcontractors?|contractors?)\b/ },
 ];
 
 /** Skill ids a plain sentence describes, in order of first mention. */

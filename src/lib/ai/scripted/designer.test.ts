@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Challenge } from "@/lib/domain/types";
 import { draftProblems } from "@/lib/guard/check-draft";
 import { protectedNames } from "@/lib/guard/protected";
-import { draftFromNeed, tasterFor } from "./compose";
+import { countListedWishes, draftFromNeed, tasterFor } from "./compose";
 import { followUpQuestions } from "./follow-ups";
 
 function asChallenge(need: string): Challenge {
@@ -65,8 +65,19 @@ describe("scripted designer", () => {
 
   it("picks the closest library role by the skills a need describes", () => {
     const draft = draftFromNeed("We need someone who understands heating prices and billing data");
-    expect(draft.note).toBeUndefined();
+    expect(draft.note).toMatch(/nearest role, data analyst/);
     expect(draft.need).toMatch(/^Data analyst: /);
+  });
+
+  it("keeps the skills of a plain events and suppliers need, and counts only the wishes written", () => {
+    const need = "plan our customer events and keep suppliers on schedule";
+    const draft = draftFromNeed(need);
+    expect(draft.coreSkills.map((s) => s.id)).toEqual(["planning", "stakeholder-communication", "prioritisation"]);
+    expect(draft.setAside).toEqual([]);
+    expect(draft.note).toMatch(/nearest role/);
+    expect(draft.need).not.toMatch(/events|suppliers/);
+    expect(countListedWishes(need)).toBe(2);
+    expect(countListedWishes("Data engineer for our meter data pipelines: pipeline reliability, SQL, error handling, Airflow")).toBe(4);
   });
 
   it("gives an unknown dream job a neutral taster that does not repeat the job name", () => {

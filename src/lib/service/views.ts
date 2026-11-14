@@ -9,6 +9,7 @@ import type {
 import { toBlindProof } from "@/lib/blind/project";
 import { secondLookMatches } from "@/lib/matching/second-look";
 import { getStore, type StoreData } from "@/lib/store";
+import { median, replyTotals } from "./reply-totals";
 import { byArrival, clock, findOrThrow } from "./support";
 
 function matchesFor(data: StoreData, proofId: string, now: Date) {
@@ -94,7 +95,7 @@ function buildPassport(data: StoreData, talentId: string, now: Date): PassportEn
       return [
         {
           proof,
-          challenge: { id: challenge.id, title: challenge.title, minutes: challenge.minutes, format: challenge.format },
+          challenge: { id: challenge.id, title: challenge.title, minutes: challenge.minutes, format: challenge.format, kind: challenge.kind },
           seenByHumans: new Set(decisions.map((d) => `${d.companyId}:${d.reviewer.toLowerCase()}`)).size,
           responses,
           sharedWith: [...shared].map(companyName),
@@ -102,14 +103,6 @@ function buildPassport(data: StoreData, talentId: string, now: Date): PassportEn
         },
       ];
     });
-}
-
-function median(values: number[]): number | null {
-  if (values.length === 0) return null;
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  const value = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
-  return Math.round(value * 10) / 10;
 }
 
 function employerRecord(data: StoreData, company: Company): EmployerRecord {
@@ -143,12 +136,14 @@ function buildCityOverview(data: StoreData): CityOverview {
   const eventIds = new Set(eventChallenges.map((c) => c.id));
   const ownerOf = new Map(eventChallenges.map((c) => [c.id, c.companyIds]));
   const challengeOf = new Map(data.proofs.map((p) => [p.proofId, p.challengeId]));
+  const eventProofs = data.proofs.filter((p) => eventIds.has(p.challengeId));
 
   return {
     event: { name: data.event.name, date: data.event.date },
     totals: {
       challenges: eventChallenges.length,
-      proofs: data.proofs.filter((p) => eventIds.has(p.challengeId)).length,
+      proofs: eventProofs.length,
+      ...replyTotals(eventProofs, data.decisions),
       humanDecisions: data.decisions.length,
       meetingsInvited: data.meetings.length,
       meetingsConfirmedByBoth: data.meetings.filter((m) => m.status === "met").length,

@@ -55,6 +55,8 @@ export type ChallengeDraft = Omit<Challenge, "id" | "approvedBy" | "createdAt" |
   yourWords?: string;
   /** A note for the company, for example when no library role matched. Never published. */
   note?: string;
+  /** How many wishes the company's own sentence listed, for the company's draft screen. Never published. */
+  wishCount?: number;
 };
 
 /** The only place a person's identity is stored. */
@@ -156,7 +158,7 @@ export interface AuditEvent {
 /** A proof as its author sees it in the passport. */
 export interface PassportEntry {
   proof: OwnProof;
-  challenge: Pick<Challenge, "id" | "title" | "minutes" | "format">;
+  challenge: Pick<Challenge, "id" | "title" | "minutes" | "format" | "kind">;
   seenByHumans: number;
   responses: {
     companyName: string;
@@ -197,6 +199,10 @@ export interface CityOverview {
   totals: {
     challenges: number;
     proofs: number;
+    /** Event proofs with at least one employer decision: people who got an answer. */
+    proofsAnswered: number;
+    /** Median hours from sending a proof to its first decision, or null before any answer. */
+    medianHoursToFirstAnswer: number | null;
     humanDecisions: number;
     meetingsInvited: number;
     meetingsConfirmedByBoth: number;

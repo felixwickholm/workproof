@@ -11,6 +11,8 @@ const TOOL_WORDS = [
 export interface ParsedNeed {
   /** Every wish the company listed, in order. */
   wishes: string[];
+  /** The wishes that ask for something, without the ones that only name the role ("ML engineer for our robots"). */
+  listed: string[];
   /** Skill ids named by the wishes, in order of first mention. */
   wishedSkills: SkillId[];
   /** Neutral names of protected attributes the need asked for. */
@@ -80,6 +82,7 @@ function tidy(text: string): string {
 
 export function parseNeed(need: string, roleKeywords: string[]): ParsedNeed {
   const wishes: string[] = [];
+  const listed: string[] = [];
   const wishedSkills: SkillId[] = [];
   const notUsed = new Set<string>();
   const otherWishes: string[] = [];
@@ -95,6 +98,11 @@ export function parseNeed(need: string, roleKeywords: string[]): ParsedNeed {
     const skills = skillsIn(wish);
     for (const id of skills) if (!wishedSkills.includes(id)) wishedSkills.push(id);
 
+    const describesRole = roleKeywords.some((keyword) => containsTerm(normalise(wish), keyword));
+    // The opening names the role ("Data engineer for our meter data"): it is not a wish of its own.
+    const opensWithRole = describesRole && wishes.length === 1;
+    if (blocked.length > 0 || (!opensWithRole && (skills.length > 0 || !describesRole))) listed.push(wish);
+
     if (blocked.length > 0) {
       blocked.forEach((name) => notUsed.add(name));
       cleanedNeed = cleanedNeed.replace(raw, "");
@@ -106,9 +114,8 @@ export function parseNeed(need: string, roleKeywords: string[]): ParsedNeed {
       if (!workingLanguages.includes(language)) workingLanguages.push(language);
       continue;
     }
-    const describesRole = roleKeywords.some((keyword) => containsTerm(normalise(wish), keyword));
     if (!describesRole) otherWishes.push(reasonFor(wish));
   }
 
-  return { wishes, wishedSkills, notUsed: [...notUsed], otherWishes, workingLanguages, cleanedNeed: tidy(cleanedNeed) };
+  return { wishes, listed, wishedSkills, notUsed: [...notUsed], otherWishes, workingLanguages, cleanedNeed: tidy(cleanedNeed) };
 }

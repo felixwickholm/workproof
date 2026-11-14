@@ -138,7 +138,7 @@ export function buildSeed(now: Date): StoreData {
     log(decision.minutesAgo * MINUTE, {
       actor: "human",
       by: reviewer,
-      action: decision.kind === "meet" ? "Chose to meet" : "Passed with feedback",
+      action: decision.kind === "meet" ? "Chose to meet" : "Said not now, with a reason",
       detail: `${company?.name} on ${proof.label}. Feedback sent to the person.`,
     });
     if (decision.meeting) {

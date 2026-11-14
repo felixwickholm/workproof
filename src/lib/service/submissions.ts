@@ -76,7 +76,7 @@ export async function submitWork(input: SubmitInput): Promise<OwnProof> {
         actor: "system",
         by: "Second look",
         action: "Recorded consent",
-        detail: `${proof.label} may be shown to other employers with the same core skills if the first employer passes or does not answer in time.`,
+        detail: `${proof.label} may be shown to other employers with the same core skills if the first employer says not now or does not answer in time.`,
       });
     }
     return proof;
