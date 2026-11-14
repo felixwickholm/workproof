@@ -60,14 +60,17 @@ export const mlEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the frame-level random split that leaks frames of the same grasp into both sets",
+        topic: "the data split",
         cues: ["leak", "same grasp", "group", "per grasp", "by grasp", "by attempt", "split by", "shuffle", "frames from the same", "correlated", "groupkfold", "session"],
       },
       {
         label: "the threshold tuned on the test set",
+        topic: "the threshold choice",
         cues: ["tuned on the test", "on the test set", "on the test data", "validation", "holdout", "test set to pick", "overfit"],
       },
       {
         label: "accuracy hiding the rare dropped grasps",
+        topic: "the choice of metric",
         cues: ["accuracy", "imbalance", "imbalanced", "4%", "recall", "precision", "false positive", "dropped grasps", "confusion matrix", "rare"],
       },
     ],
@@ -92,6 +95,7 @@ export const mlEngineer: RoleTemplate = {
     flaws: [
       {
         label: "normalisation statistics computed before the split",
+        topic: "the normalisation step",
         cues: ["mean", "std", "normali", "before the split", "before splitting", "leak", "whole dataset", "all images"],
       },
     ],

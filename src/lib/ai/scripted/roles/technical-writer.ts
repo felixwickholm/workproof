@@ -52,14 +52,17 @@ export const technicalWriter: RoleTemplate = {
     flaws: [
       {
         label: "the API key step that comes after the call that needs it",
+        topic: "the order of the steps",
         cues: ["order", "step 2", "before step 1", "api key", "auth", "authorization header", "header", "401", "key first"],
       },
       {
         label: "units and timestamp format left unexplained",
+        topic: "units and timestamps",
         cues: ["unit", "native unit", "timestamp", "time zone", "timezone", "format", "utc", "example response"],
       },
       {
         label: "no guidance on errors",
+        topic: "error guidance",
         cues: ["error", "check the logs", "which logs", "status code", "troubleshoot", "goes wrong"],
       },
     ],
@@ -81,6 +84,7 @@ export const technicalWriter: RoleTemplate = {
     flaws: [
       {
         label: "the configure step with no instructions",
+        topic: "the configure step",
         cues: ["configure", "how to configure", "simply", "config file", "command", "example", "what to set", "missing step"],
       },
     ],

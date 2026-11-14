@@ -1,10 +1,10 @@
 import type {
   AuditEvent,
-  BlindProof,
   Challenge,
   Company,
   Decision,
   Meeting,
+  OwnProof,
   Submission,
   Talent,
 } from "@/lib/domain/types";
@@ -26,7 +26,7 @@ export interface StoreData {
   talents: Talent[];
   submissions: Submission[];
   /** Blind projections, keyed by proofId, which equals the submission id. */
-  proofs: BlindProof[];
+  proofs: OwnProof[];
   decisions: Decision[];
   meetings: Meeting[];
   audit: AuditEvent[];

@@ -59,14 +59,17 @@ export const productManager: RoleTemplate = {
     flaws: [
       {
         label: "the evidence that comes almost entirely from one clinic",
+        topic: "where the evidence comes from",
         cues: ["one clinic", "38", "single clinic", "skewed", "sample", "representative", "same clinic"],
       },
       {
         label: "the success measure that cannot be counted",
+        topic: "the success measure",
         cues: ["love", "success measure", "measurable", "metric", "baseline", "how will we know", "time to approve"],
       },
       {
         label: "four items marked as must ship with no priority between them",
+        topic: "priorities",
         cues: ["all must ship", "must ship", "scope", "cut", "too much", "priorit", "mvp", "first release", "payroll"],
       },
     ],
@@ -88,6 +91,7 @@ export const productManager: RoleTemplate = {
     flaws: [
       {
         label: "a sign-up goal that ignores whether new users stay active",
+        topic: "the sign-up goal",
         cues: ["active", "retention", "fake", "spam", "quality", "confirm", "real users", "bots", "activation"],
       },
     ],

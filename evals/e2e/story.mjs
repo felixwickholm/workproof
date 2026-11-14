@@ -14,7 +14,6 @@ export async function runStory(browser, phone) {
   // Next keeps recent routes mounted but hidden, so only the visible screen counts.
   const main = page.locator("main").filter({ visible: true });
 
-  const coachText = async () => (await coach.textContent())?.replace(/\s+/g, " ").trim() ?? "";
   const expectStep = async (n) => {
     await coach.getByText(new RegExp(`^${n} of 7$`)).waitFor({ timeout: 10_000 });
   };
@@ -41,13 +40,14 @@ export async function runStory(browser, phone) {
     await coach.getByRole("button", { name: "Show me" }).click();
     await expectStep(2);
   });
-  await suite.step("s2 open the Tuulos challenge as the hint says", async () => {
+  await suite.step("s2 open the Tuulos task as the hint says", async () => {
     await page.waitForURL(/\/challenges$/);
-    const hint = await coachText();
-    expect(/Tuulos Robotics card/.test(hint), `hint on /challenges: "${hint}"`);
+    await coach.getByText(/Tuulos Robotics task/).waitFor();
+    const card = page.locator("[data-story-on]");
+    expect((await card.getAttribute("data-story")) === "task-ch-tuulos-ml", "the Tuulos task is not ringed");
     await page.getByRole("link", { name: /Review an AI-written model evaluation/ }).click();
     await coach.getByText("Tap Start below.").waitFor();
-    const start = page.getByRole("link", { name: /^Start, \d+ min$/ });
+    const start = page.getByRole("link", { name: /^Start · \d+ min$/ });
     await assertNotCovering(start, "Start button");
     await checkScreen(page, errors, "story 2");
     await start.click();
@@ -56,6 +56,7 @@ export async function runStory(browser, phone) {
   await suite.step("s3 work with Fill in her answer", async () => {
     await assertNotCovering(page.getByRole("button", { name: "I'm done" }), "I'm done button");
     await fillHers();
+    await coach.getByText("Now tap I'm done.").waitFor();
     await page.getByRole("button", { name: "I'm done" }).click();
     for (let question = 0; question < 2; question++) {
       await page.getByRole("textbox", { name: "Your explanation" }).waitFor();
@@ -81,11 +82,8 @@ export async function runStory(browser, phone) {
   });
   await suite.step("s5 Tuulos says Pass, Saarnivo says Meet", async () => {
     await page.waitForURL(/\/company\/review$/);
-    await coach.getByText(/Tuulos, open/).waitFor();
-    const hint = await coachText();
-    if (!hint.includes(label)) notes.push(`step 5 hint does not name the visitor's proof ${label}: "${hint}"`);
-    expect(hint.includes(label), "step 5 hint does not say which proof to open");
     await page.getByRole("radio", { name: "Tuulos Robotics" }).click();
+    await coach.getByText(`Open ${label} under To review.`).waitFor();
     await page.getByRole("link", { name: new RegExp(`^${label}\\b`) }).click();
     await assertNotCovering(page.getByRole("button", { name: "Pass", exact: true }), "Pass button");
     await page.getByRole("button", { name: "Pass", exact: true }).click();
@@ -95,7 +93,9 @@ export async function runStory(browser, phone) {
     await sheet.getByRole("textbox", { name: "Feedback for them" }).pressSequentially("someone on site this month.");
     await sheet.getByRole("button", { name: "Send feedback" }).click();
     await sheet.getByRole("button", { name: "Done" }).click();
+    await coach.getByText("Switch to Saarnivo at the top.", { exact: false }).waitFor();
     await page.getByRole("radio", { name: "Saarnivo Grid" }).click();
+    await coach.getByText(`Open ${label} under Second look.`).waitFor();
     const secondLook = page.locator("section", { has: page.getByText("Second look", { exact: true }) }).filter({ visible: true });
     await secondLook.getByRole("link", { name: new RegExp(`^${label}\\b`) }).click();
     await assertNotCovering(page.getByRole("button", { name: "Meet", exact: true }), "Meet button");

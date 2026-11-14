@@ -54,9 +54,12 @@ export type ChallengeDraft = Omit<Challenge, "id" | "approvedBy" | "createdAt" |
 
 /** The only place a person's identity is stored. */
 export interface Talent {
+  /** The person's private key in this no-login demo. Never sent to a company or the city. */
   id: string;
   name: string;
   contact: string;
+  /** Set by the first event submission with both name and contact. After that, nobody can change them. */
+  locked?: boolean;
 }
 
 export interface ExplainAnswer {
@@ -96,8 +99,14 @@ export interface BlindProof {
   explain: ExplainAnswer[];
   /** Describes the work, never the person. Always shown with an AI label. */
   aiSummary: string;
-  redactions: RedactionReport;
+  /** How many personal details were hidden, as one total. Categories stay with the author. */
+  hiddenCount: number;
   submittedAt: string;
+}
+
+/** A proof as its author sees it: the blind proof plus what was hidden, by category. */
+export interface OwnProof extends BlindProof {
+  redactions: RedactionReport;
 }
 
 export type DecisionKind = "meet" | "pass";
@@ -138,7 +147,7 @@ export interface AuditEvent {
 
 /** A proof as its author sees it in the passport. */
 export interface PassportEntry {
-  proof: BlindProof;
+  proof: OwnProof;
   challenge: Pick<Challenge, "id" | "title" | "minutes" | "format">;
   seenByHumans: number;
   responses: {
@@ -159,7 +168,8 @@ export interface ReviewQueue {
   proofs: BlindProof[];
   /** Proofs another employer passed on, where the challenge shares core skills. Oldest first. */
   secondLook: (BlindProof & { sharedSkills: string[] })[];
-  decided: { proof: BlindProof; decision: Decision; meeting?: Meeting; identity?: Talent }[];
+  /** `identity` appears only after the person accepts. It never carries the talent id. */
+  decided: { proof: BlindProof; decision: Decision; meeting?: Meeting; identity?: Pick<Talent, "name" | "contact"> }[];
 }
 
 export interface EmployerRecord {

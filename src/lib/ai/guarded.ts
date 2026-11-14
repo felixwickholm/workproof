@@ -1,47 +1,52 @@
 import type { ChallengeDraft } from "@/lib/domain/types";
-import { collectText, findJudgement, JudgementError } from "@/lib/guard/no-judgement";
-import { omit } from "@/lib/util/object";
+import { draftProblems, isNeutral } from "@/lib/guard/check-draft";
+import { countsFindings, findJudgement, JudgementError } from "@/lib/guard/no-judgement";
+import { protectedNames } from "@/lib/guard/protected";
 import type { TaskDesigner } from "./task-designer";
 
-/**
- * Fields of a draft written by the AI. `need` and `setAside` hold the company's own words,
- * so they are shown as the company wrote them and are not checked here.
- */
-function authoredText(draft: ChallengeDraft): string[] {
-  return collectText(omit(draft, ["need", "setAside"]));
+/** Rejects an AI draft unless every field, the set-aside list included, is neutral and well formed. */
+function checkDraft(draft: ChallengeDraft): void {
+  const problems = draftProblems(draft);
+  if (problems.length > 0) throw new Error(`Draft rejected: ${problems.join("; ")}`);
 }
 
-function check(texts: string[]): void {
+/** Rejects AI text that judges a person or names a protected attribute. */
+function checkTexts(texts: string[]): void {
   const violations = texts.flatMap(findJudgement);
   if (violations.length > 0) throw new JudgementError(violations);
+  const named = texts.filter((t) => !isNeutral(t)).flatMap(protectedNames);
+  if (named.length > 0) throw new Error(`Text names a protected attribute: ${named.join(", ")}`);
 }
 
 /**
- * Wraps a designer so nothing it produces can score, rank or recommend.
+ * Wraps a designer so nothing it produces can score, rank, recommend or describe a person.
  * When the primary designer fails or its output is rejected, the fallback answers instead.
  * The fallback's output is checked too.
  */
 export function guarded(primary: TaskDesigner, fallback?: TaskDesigner, onFallback?: (method: string, error: unknown) => void): TaskDesigner {
-  async function run<T>(method: string, call: (d: TaskDesigner) => Promise<T>, texts: (value: T) => string[]): Promise<T> {
+  async function run<T>(method: string, call: (d: TaskDesigner) => Promise<T>, check: (value: T) => void): Promise<T> {
     try {
       const value = await call(primary);
-      check(texts(value));
+      check(value);
       return value;
     } catch (error) {
       if (!fallback) throw error;
       onFallback?.(method, error);
       const value = await call(fallback);
-      check(texts(value));
+      check(value);
       return value;
     }
   }
 
   return {
     name: primary.name,
-    draftChallenge: (need) => run("draftChallenge", (d) => d.draftChallenge(need), authoredText),
-    taster: (dreamJob) => run("taster", (d) => d.taster(dreamJob), authoredText),
-    followUps: (challenge, answer) => run("followUps", (d) => d.followUps(challenge, answer), (q) => q),
+    draftChallenge: (need) => run("draftChallenge", (d) => d.draftChallenge(need), checkDraft),
+    taster: (dreamJob) => run("taster", (d) => d.taster(dreamJob), checkDraft),
+    followUps: (challenge, answer) => run("followUps", (d) => d.followUps(challenge, answer), checkTexts),
     summariseWork: (challenge, answer, explain) =>
-      run("summariseWork", (d) => d.summariseWork(challenge, answer, explain), (s) => [s]),
+      run("summariseWork", (d) => d.summariseWork(challenge, answer, explain), (summary) => {
+        checkTexts([summary]);
+        if (countsFindings(summary)) throw new Error("The summary counts what the answer found");
+      }),
   };
 }

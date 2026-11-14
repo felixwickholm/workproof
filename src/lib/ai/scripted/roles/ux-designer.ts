@@ -57,14 +57,17 @@ export const uxDesigner: RoleTemplate = {
     flaws: [
       {
         label: "free and full slots told apart by colour alone",
+        topic: "how free and full slots are shown",
         cues: ["colour", "color", "red", "green", "colour blind", "color blind", "contrast", "screen reader"],
       },
       {
         label: "placeholder text used as field labels",
+        topic: "the form field labels",
         cues: ["placeholder", "label", "disappear", "screen reader", "forget what"],
       },
       {
         label: "no confirmation after booking and an error message that does not help",
+        topic: "the confirmation and error messages",
         cues: ["confirmation", "home screen", "409", "error message", "what happened", "booked", "next step", "try again"],
       },
     ],
@@ -86,6 +89,7 @@ export const uxDesigner: RoleTemplate = {
     flaws: [
       {
         label: "a button label that does not say it will charge the user",
+        topic: "the button label",
         cues: ["ok", "label", "pay", "charge", "button", "unclear", "what happens"],
       },
     ],

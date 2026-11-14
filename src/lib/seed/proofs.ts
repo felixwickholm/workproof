@@ -23,8 +23,11 @@ export interface SeedProof {
   };
 }
 
-/** The demo persona: an ML engineer whose proof waits, undecided, in the first company's queue. */
-export const DEMO_TALENT_ID = "talent-leila";
+/**
+ * The demo persona: an ML engineer whose proof waits, undecided, in the first company's queue.
+ * Talent ids are private keys, so seed ids are random strings, never names.
+ */
+const DEMO_TALENT_ID = "t_4deac0aaba3520e34c57009d";
 
 export const SEED_PROOFS: SeedProof[] = [
   {
@@ -47,7 +50,7 @@ export const SEED_PROOFS: SeedProof[] = [
   },
   {
     id: "proof_seed_02",
-    talent: { id: "talent-joonas", name: "Joonas Peltonen", contact: "+358 50 000 1102" },
+    talent: { id: "t_c056a611e272ed78aafcd364", name: "Joonas Peltonen", contact: "+358 50 000 1102" },
     challenge: "tuulos-ml",
     minutesAgo: 190,
     shareWithSimilar: true,
@@ -71,7 +74,7 @@ export const SEED_PROOFS: SeedProof[] = [
   },
   {
     id: "proof_seed_03",
-    talent: { id: "talent-aino", name: "Aino Mäkelä", contact: "aino.makela@example.org" },
+    talent: { id: "t_54d92c353709508e7d775b69", name: "Aino Mäkelä", contact: "aino.makela@example.org" },
     challenge: "tuulos-ml",
     minutesAgo: 300,
     shareWithSimilar: false,
@@ -94,7 +97,7 @@ export const SEED_PROOFS: SeedProof[] = [
   },
   {
     id: "proof_seed_04",
-    talent: { id: "talent-ravi", name: "Ravi Menon", contact: "ravi.menon@example.org" },
+    talent: { id: "t_5832e491493c58965c1ad94c", name: "Ravi Menon", contact: "ravi.menon@example.org" },
     challenge: "saarnivo-forecast",
     minutesAgo: 30,
     shareWithSimilar: true,
@@ -110,7 +113,7 @@ export const SEED_PROOFS: SeedProof[] = [
   },
   {
     id: "proof_seed_05",
-    talent: { id: "talent-elsa", name: "Elsa Lindqvist", contact: "+358 40 000 2205" },
+    talent: { id: "t_8894c4b1e9c4e638b8adf686", name: "Elsa Lindqvist", contact: "+358 40 000 2205" },
     challenge: "saarnivo-forecast",
     minutesAgo: 420,
     shareWithSimilar: true,
@@ -133,7 +136,7 @@ export const SEED_PROOFS: SeedProof[] = [
   },
   {
     id: "proof_seed_06",
-    talent: { id: "talent-oskari", name: "Oskari Laine", contact: "oskari.laine@example.org" },
+    talent: { id: "t_e1de71d469cc3ed26450c039", name: "Oskari Laine", contact: "oskari.laine@example.org" },
     challenge: "pooled-data",
     minutesAgo: 80 * 60,
     shareWithSimilar: false,
@@ -148,7 +151,7 @@ export const SEED_PROOFS: SeedProof[] = [
   },
   {
     id: "proof_seed_07",
-    talent: { id: "talent-mei", name: "Mei Tanaka", contact: "mei.tanaka@example.org" },
+    talent: { id: "t_248f723bd7078d3c6e092deb", name: "Mei Tanaka", contact: "mei.tanaka@example.org" },
     challenge: "pooled-data",
     minutesAgo: 30 * 60,
     shareWithSimilar: true,
@@ -173,7 +176,7 @@ export const SEED_PROOFS: SeedProof[] = [
   },
   {
     id: "proof_seed_08",
-    talent: { id: "talent-daniel", name: "Daniel Okafor", contact: "daniel.okafor@example.org" },
+    talent: { id: "t_425c1964a4396e6525facaa3", name: "Daniel Okafor", contact: "daniel.okafor@example.org" },
     challenge: "kivira-backend",
     minutesAgo: 26 * 60,
     shareWithSimilar: true,

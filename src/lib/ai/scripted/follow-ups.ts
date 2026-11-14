@@ -1,5 +1,5 @@
 import type { Challenge } from "@/lib/domain/types";
-import { findJudgement } from "@/lib/guard/no-judgement";
+import { isNeutral } from "@/lib/guard/check-draft";
 import { pick } from "@/lib/util/hash";
 import { flawsFor, roleFor } from "./compose";
 
@@ -12,11 +12,12 @@ const WHY_TEMPLATES = [
   (quote: string) => `You wrote "${quote}". What would go wrong if the team skipped this?`,
 ];
 
+/** Sentences worth quoting: long enough, with nothing hidden and nothing about the person. */
 function sentencesOf(text: string): string[] {
   return text
     .split(/(?<=[.!?])\s+|\n+/)
     .map((s) => s.trim())
-    .filter((s) => s.split(/\s+/).length >= 4);
+    .filter((s) => s.split(/\s+/).length >= 4 && !s.includes("[hidden]") && isNeutral(s));
 }
 
 /** A short phrase from the answer, preferably where it talks about a planted flaw. */
@@ -40,7 +41,7 @@ export function quoteFrom(challenge: Challenge, answer: string): string | undefi
     .join(" ")
     .replace(/["“”]/g, "'")
     .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N})]+$/gu, "");
-  if (quote.split(/\s+/).length < 3 || findJudgement(quote).length > 0) return undefined;
+  if (quote.split(/\s+/).length < 3 || !isNeutral(quote)) return undefined;
   return quote;
 }
 

@@ -3,8 +3,7 @@ import { secondLookMatches } from "@/lib/matching/second-look";
 import { getStore, type StoreData } from "@/lib/store";
 import { hash, newId } from "@/lib/util/hash";
 import { appendAudit, clock, findOrThrow, ServiceError } from "./support";
-
-export const MIN_FEEDBACK_CHARS = 20;
+import { decisionInputProblem } from "@/lib/domain/decision-rules";
 
 export interface DecideInput {
   proofId: string;
@@ -32,10 +31,8 @@ function context(data: StoreData, proofId: string) {
 export async function decide(input: DecideInput): Promise<{ decision: Decision; meeting?: Meeting }> {
   const reviewer = input.reviewer.trim();
   const feedback = input.feedback.trim();
-  if (!reviewer) throw new ServiceError(400, "Add the name of the person who decided");
-  if (feedback.length < MIN_FEEDBACK_CHARS) {
-    throw new ServiceError(400, `Feedback needs at least ${MIN_FEEDBACK_CHARS} characters, so the person learns something`);
-  }
+  const problem = decisionInputProblem(reviewer, feedback);
+  if (problem) throw new ServiceError(400, problem);
 
   return getStore().update((data) => {
     const now = clock.now();

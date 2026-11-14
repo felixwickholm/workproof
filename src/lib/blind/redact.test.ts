@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { proofLabel, toBlindProof } from "./project";
+import { proofLabel, toBlindProof, toOwnProof } from "./project";
 import { redact } from "./redact";
 
 describe("redact", () => {
@@ -13,16 +13,17 @@ describe("redact", () => {
     expect(report.contacts).toBe(2);
   });
 
-  it("types schools, places, employers and personal details", () => {
+  it("counts schools, places, employers and personal details, and shows one neutral token", () => {
     const { text, report } = redact(
       "I did my MSc at the University of Tehran and later studied at Aalto. I worked at Nordwave Systems in Espoo. As a mother of two I am 34 years old and a native Arabic speaker. Syrian by birth.",
     );
-    expect(text).toContain("[school]");
-    expect(text).toContain("[place]");
-    expect(text).toContain("[employer]");
-    expect(text).toContain("[personal detail]");
     expect(text).not.toMatch(/Tehran|Aalto|Nordwave|Espoo|mother|34 years|Arabic|Syrian/);
+    expect(text).not.toMatch(/\[(?:name|contact|school|place|employer|personal detail)\]/);
+    expect(text).toContain("[hidden]");
     expect(report.schools).toBe(2);
+    expect(report.places).toBeGreaterThan(0);
+    expect(report.employers).toBe(1);
+    expect(report.other).toBeGreaterThan(0);
   });
 
   it("removes links to profiles and Finnish city forms", () => {
@@ -34,21 +35,59 @@ describe("redact", () => {
     const work = "Retry 3 times with backoff. The query returns 10 rows at 0.05 seconds. Use AWS for storage.";
     expect(redact(work).text).toBe(work);
   });
+
+  it("hides name parts only as capitalised words, never ordinary lowercase words", () => {
+    const willMay = redact("I will split by attempt. It may leak otherwise, and that will hurt. Will May", { name: "Will May" }).text;
+    expect(willMay).toBe("I will split by attempt. It may leak otherwise, and that will hurt. [hidden]");
+    expect(redact("This is an obvious leak. Use an attempt id.", { name: "An Le" }).text).toBe("This is an obvious leak. Use an attempt id.");
+    expect(redact("Thanks to Mark for the idea. We mark the rows.", { name: "Mark Grace" }).text).toBe("Thanks to [hidden] for the idea. We mark the rows.");
+  });
+
+  it("finds the author's name without accents, as initials and as a handle", () => {
+    expect(redact("Split by attempt. Aino Makela", { name: "Aino Mäkelä" }).text).not.toMatch(/Aino|Makela/);
+    expect(redact("L. Haddad / LH / Leilah / leila_haddad / Leila H.", { name: "Leila Haddad" }).text).not.toMatch(/Haddad|LH|Leilah|leila|Leila/);
+  });
+
+  it("does not damage technical words that follow at, for, I am or this is", () => {
+    const work =
+      "I am Confident this is fine. This is GroupShuffleSplit at Scale. Ask for Approval. Run it at Night. Use Pandas for this. The test set at Kaggle style. Look at Figure 2. I'm Running Python. Use it at Monday.";
+    expect(redact(work, { name: "Leila Haddad", contact: "l@e.org" }).text).toBe(work);
+  });
+
+  it("keeps decorators and file names in code", () => {
+    const code = "@pytest.fixture\ndef split():\n    return GroupShuffleSplit(n_splits=1)  # see utils.py";
+    expect(redact(code).text).toBe(code);
+  });
 });
 
-describe("toBlindProof", () => {
-  it("builds the reviewer view by allow-list with a neutral label", () => {
-    const proof = toBlindProof({
-      proofId: "p1",
-      challenge: { id: "c1", title: "Task", coreSkills: [{ id: "sql", label: "SQL", why: "x" }] },
-      work: "w",
-      explain: [{ question: "q", answer: "a", extra: "hidden" } as never],
-      aiSummary: "s",
-      redactions: { names: 0, contacts: 0, places: 0, schools: 0, employers: 0, other: 0 },
-      submittedAt: "2026-01-01T00:00:00.000Z",
-    });
-    expect(JSON.stringify(proof)).not.toContain("hidden");
-    expect(proof.label).toMatch(/^Proof [A-Z][1-9]$/);
-    expect(proofLabel("p1")).toBe(proof.label);
+describe("blind projections", () => {
+  const own = toOwnProof({
+    proofId: "p1",
+    challenge: { id: "c1", title: "Task", coreSkills: [{ id: "sql", label: "SQL", why: "x" }] },
+    work: "w",
+    explain: [{ question: "q", answer: "a", extra: "secret" } as never],
+    aiSummary: "s",
+    redactions: { names: 1, contacts: 0, places: 0, schools: 2, employers: 0, other: 0 },
+    submittedAt: "2026-01-01T00:00:00.000Z",
+  });
+
+  it("builds the author's view by allow-list with a neutral label", () => {
+    expect(JSON.stringify(own)).not.toContain("secret");
+    expect(own.label).toMatch(/^Proof [A-Z][1-9]$/);
+    expect(proofLabel("p1")).toBe(own.label);
+    expect(own.redactions.schools).toBe(2);
+  });
+
+  it("gives the reviewer one total and no categories", () => {
+    const blind = toBlindProof(own);
+    expect(blind.hiddenCount).toBe(3);
+    expect(Object.keys(blind)).not.toContain("redactions");
+  });
+
+  it("keeps labels unique, growing to two digits when one is taken", () => {
+    const taken = new Set<string>();
+    for (let i = 0; i < 400; i++) taken.add(proofLabel(`proof_${i}`, taken));
+    expect(taken.size).toBe(400);
+    expect([...taken].some((label) => /^Proof [A-Z]\d{2}$/.test(label))).toBe(true);
   });
 });

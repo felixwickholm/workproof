@@ -57,14 +57,17 @@ export const dataScientist: RoleTemplate = {
     flaws: [
       {
         label: "the random split that mixes future hours into training",
+        topic: "the data split",
         cues: ["shuffle", "random split", "time series", "time-based", "chronological", "future", "split by time", "timeseriessplit", "walk-forward", "backtest"],
       },
       {
         label: "the measured next-hour temperature that would not exist at forecast time",
+        topic: "the temperature input",
         cues: ["temp_next_hour", "next hour", "next-hour", "shift(-1)", "measured temperature", "actual temperature", "weather forecast", "not available", "leak"],
       },
       {
         label: "the percentage error that breaks when load is near zero",
+        topic: "the error measure",
         cues: ["mape", "near zero", "divide by", "division", "zero load", "mae", "rmse", "percentage error", "small values"],
       },
     ],
@@ -87,6 +90,7 @@ export const dataScientist: RoleTemplate = {
     flaws: [
       {
         label: "the test period that overlaps the training year",
+        topic: "the test period",
         cues: ["2025", "same year", "overlap", "trained on", "test period", "unseen", "out of sample", "held out"],
       },
     ],

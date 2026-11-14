@@ -104,7 +104,7 @@ export async function type(locator, text) {
 export async function readCityTotals(page) {
   return page.evaluate(() => {
     const labels = [
-      "Problem Cards live",
+      "Tasks live",
       "Proofs sent",
       "Human decisions",
       "Meetings invited",

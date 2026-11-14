@@ -8,7 +8,7 @@ Tryout is a prototype for recruitment events. A company posts a short, real task
 
 1. **Company.** Writes its need in one sentence. An AI draft turns it into a Problem Card: a 20-minute task, 3 to 5 core skills and a review guide. A person edits and approves it.
 2. **Talent.** Does the task. AI tools are allowed, because the task asks for judgment. Two follow-up questions ask about the person's own choices.
-3. **Blind review.** Names, contact details, schools, places and employers are removed before a reviewer sees the work. The reviewer writes feedback and chooses Meet or Pass.
+3. **Blind review.** Names, contact details, schools, places, employers and personal details are hidden by fixed rules before a reviewer or an AI model reads the work. The reviewer sees one neutral token, `[hidden]`, and one total. The reviewer writes feedback and chooses Meet or Pass.
 4. **Second look.** If one employer passes, employers whose tasks share core skills can read the same proof. A person there decides.
 5. **Meeting.** The name is shown only after the person accepts the invitation. Both sides confirm that they met.
 6. **City.** The event organiser sees outcomes: decisions, confirmed meetings and feedback owed by each employer.
@@ -17,7 +17,7 @@ Tryout is a prototype for recruitment events. A company posts a short, real task
 
 The AI drafts tasks, removes identity from text and describes what a work sample contains.
 
-The AI never scores, ranks, rates or recommends a person. A guard in `src/lib/guard` rejects such text from any AI output. Review queues are ordered by arrival time. Every decision carries the name of the human who made it and is written to an audit log.
+The AI never scores, ranks, rates or recommends a person. A guard in `src/lib/guard` rejects such text, and any protected attribute (age, gender, family, origin, native language, religion, health, schools, looks, "culture fit"), from every field of every AI output. The server runs the same checks again before a card is published. Review queues are ordered by arrival time. Every decision carries the name of the human who made it and is written to an audit log.
 
 All companies, people and submissions in this repository are synthetic.
 
@@ -43,9 +43,10 @@ npm run lint
 
 | Eval | What it proves |
 | --- | --- |
-| Task generator | 20 needs become clear tasks with 3 to 5 skills and no protected attributes |
-| Blind review | Planted identity strings never reach the reviewer payload |
-| No automated decisions | AI output holds no scores or rankings; every decision has a named person |
+| Task generator | 20 needs become clear tasks with 3 to 5 skills; 27 needs that ask for protected attributes leak none into any field a talent sees |
+| Blind review | Planted identity strings never reach the reviewer payload; 54 identity forms from a review are hidden; technical text stays intact |
+| No automated decisions | AI output holds no scores, rankings or counts; every decision has a named person and real feedback |
+| Consent and privacy | Only the person can accept a meeting; no talent id in any company or city response; identity cannot be overwritten; biased cards are refused |
 | Flow | Draft, approve, submit, pass, Second look, meet, accept, confirm |
 | End to end | The same story through the real interface on a phone-sized screen |
 
@@ -56,13 +57,17 @@ src/app            pages and API routes
 src/components     interface components
 src/lib/ai         task designer (scripted, optional Claude adapter)
 src/lib/blind      redaction and the reviewer projection
-src/lib/guard      no-judgement guard
+src/lib/guard      no-judgement guard, protected attributes, draft checks
 src/lib/matching   second look
 src/lib/service    rules for submissions, decisions and meetings
 src/lib/store      data store
 src/lib/seed       synthetic event data
 evals              evals and fixtures
 ```
+
+## Limits
+
+The blind layer is a set of rules, not a guarantee. It finds the author's own name in many spellings, self-introductions in several languages, signatures, author lines in code, contacts, ids, and listed schools, places and employers. It cannot know an unusual name of a third person written in running text, a place or employer that is on no list and not introduced by a phrase such as "I live in" or "worked at", or identity described in a roundabout way. This is a no-login demo: the talent id kept in the browser is the person's private key.
 
 ## Deploy
 

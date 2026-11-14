@@ -62,14 +62,17 @@ export const embeddedEngineer: RoleTemplate = {
     flaws: [
       {
         label: "no stop when the sensor data goes stale",
+        topic: "stale sensor data",
         cues: ["stale", "last_sensor_ms", "timeout", "watchdog", "sensor fails", "no data", "disconnected", "safe state", "fail safe", "fail-safe"],
       },
       {
         label: "the blocking log call inside the interrupt",
+        topic: "logging in the interrupt",
         cues: ["printf", "log_printf", "inside the isr", "in the interrupt", "blocking", "isr should be short", "uart"],
       },
       {
         label: "loop timing that drifts because of the fixed delay",
+        topic: "loop timing",
         cues: ["delay_ms", "drift", "jitter", "timer", "fixed rate", "period", "10 ms", "deadline"],
       },
     ],
@@ -93,6 +96,7 @@ export const embeddedEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the busy wait with no timeout",
+        topic: "the busy wait",
         cues: ["timeout", "busy wait", "busy-wait", "hang", "forever", "infinite loop", "never returns", "stuck", "watchdog"],
       },
     ],

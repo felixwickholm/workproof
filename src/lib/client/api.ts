@@ -1,5 +1,4 @@
 import type {
-  BlindProof,
   Challenge,
   ChallengeDraft,
   CityOverview,
@@ -8,6 +7,7 @@ import type {
   DecisionKind,
   ExplainAnswer,
   Meeting,
+  OwnProof,
   PassportEntry,
   ReviewQueue,
 } from "@/lib/domain/types";
@@ -54,14 +54,15 @@ export const api = {
     answer: string;
     explain: ExplainAnswer[];
     shareWithSimilar: boolean;
-  }) => request<{ proof: BlindProof }>("/api/submissions", { method: "POST", body: input }),
+  }) => request<{ proof: OwnProof }>("/api/submissions", { method: "POST", body: input }),
   passport: (talentId: string) => request<PassportEntry[]>(`/api/passport/${encodeURIComponent(talentId)}`),
-  acceptMeeting: (id: string) =>
-    request<Meeting>(`/api/meetings/${encodeURIComponent(id)}/accept`, { method: "POST" }),
-  confirmMeeting: (id: string) =>
+  /** The talent id is the person's private key, so only they can accept or confirm. */
+  acceptMeeting: (id: string, talentId: string) =>
+    request<Meeting>(`/api/meetings/${encodeURIComponent(id)}/accept`, { method: "POST", body: { talentId } }),
+  confirmMeeting: (id: string, talentId: string) =>
     request<Meeting>(`/api/meetings/${encodeURIComponent(id)}/confirm`, {
       method: "POST",
-      body: { side: "talent" },
+      body: { side: "talent", talentId },
     }),
   city: () => request<CityOverview>("/api/city"),
   resetDemo: () => request<unknown>("/api/demo/reset", { method: "POST" }),
@@ -82,6 +83,6 @@ export const companyApi = {
   queue: (companyId: string) => request<ReviewQueue>(`/api/companies/${encodeURIComponent(companyId)}/queue`),
   decide: (input: { proofId: string; companyId: string; reviewer: string; decision: DecisionKind; feedback: string }) =>
     request<{ decision: Decision; meeting?: Meeting }>("/api/decisions", { method: "POST", body: input }),
-  confirmMet: (meetingId: string) =>
-    request<Meeting>(`/api/meetings/${encodeURIComponent(meetingId)}/confirm`, { method: "POST", body: { side: "company" } }),
+  confirmMet: (meetingId: string, companyId: string) =>
+    request<Meeting>(`/api/meetings/${encodeURIComponent(meetingId)}/confirm`, { method: "POST", body: { side: "company", companyId } }),
 };

@@ -53,14 +53,17 @@ export const aiEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the search across all customers' contracts",
+        topic: "which contracts the search covers",
         cues: ["customer_id", "filter", "other customer", "tenant", "leak", "isolation", "privacy", "access"],
       },
       {
         label: "the instruction to answer even when the contract does not say",
+        topic: "what the assistant does without an answer",
         cues: ["never say", "do not know", "hallucinat", "make up", "invent", "grounded", "cite", "source", "even if"],
       },
       {
         label: "the five demo questions used as the only test",
+        topic: "how the assistant is tested",
         cues: ["eval", "test set", "five questions", "5 questions", "demo", "regression", "test cases", "temperature"],
       },
     ],
@@ -82,6 +85,7 @@ export const aiEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the instruction to follow text inside untrusted email",
+        topic: "text inside incoming email",
         cues: ["injection", "follow any instructions", "untrusted", "attacker", "instructions in the email", "data not instructions"],
       },
     ],

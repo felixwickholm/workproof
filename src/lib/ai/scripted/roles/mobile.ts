@@ -54,14 +54,17 @@ export const mobileEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the success message shown before the upload finishes",
+        topic: "the success message",
         cues: ["before", "report sent", "success message", "misleading", "shown first", "optimistic", "navigateback"],
       },
       {
         label: "the upload tied to the screen instead of a background job that survives the app closing",
+        topic: "where the upload runs",
         cues: ["viewmodelscope", "background", "workmanager", "killed", "closed", "lock", "lifecycle", "cancelled", "queue"],
       },
       {
         label: "the missing retry and offline handling that loses the report",
+        topic: "retry and offline handling",
         cues: ["offline", "retry", "network", "failure", "catch", "draft", "lost", "connectivity"],
       },
     ],
@@ -85,6 +88,7 @@ export const mobileEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the continuous high-accuracy location that drains the battery",
+        topic: "location use and battery",
         cues: ["battery", "stop", "stopupdatinglocation", "continuous", "accuracy", "requestlocation", "permission", "once"],
       },
     ],

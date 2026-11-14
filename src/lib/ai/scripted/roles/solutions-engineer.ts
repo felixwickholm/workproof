@@ -56,14 +56,17 @@ export const solutionsEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the hosting question left unanswered",
+        topic: "the hosting question",
         cues: ["hosting", "on-premise", "on premise", "cloud only", "did not answer", "does not answer", "not answered", "eu", "where the data"],
       },
       {
         label: "the promised two-week SCADA connector that does not exist",
+        topic: "the connector promise",
         cues: ["scada", "connector", "two weeks", "2 weeks", "roadmap", "overpromis", "promise", "not available", "next year"],
       },
       {
         label: "the guaranteed 30% loss reduction with no basis",
+        topic: "the loss reduction claim",
         cues: ["30%", "guarantee", "reduce your water losses", "evidence", "pilot", "baseline", "claim", "confident"],
       },
     ],
@@ -85,6 +88,7 @@ export const solutionsEngineer: RoleTemplate = {
     flaws: [
       {
         label: "a reply that never answers the yes or no question",
+        topic: "the customer's question",
         cues: ["answer the question", "does not answer", "yes or no", "excel", "csv", "export", "directly", "vague"],
       },
     ],

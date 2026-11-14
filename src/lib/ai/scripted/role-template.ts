@@ -1,10 +1,12 @@
 import type { TaskFormat } from "@/lib/domain/types";
 import type { SkillId } from "@/lib/skills/vocabulary";
 
-/** A flaw planted in the material. Cues let the work summary say which ones an answer names. */
+/** A flaw planted in the material. Cues let the work summary say which topics an answer talks about. */
 export interface PlantedFlaw {
-  /** Short noun phrase used in summaries, for example "the missing timeout". */
+  /** Short noun phrase for the flaw, for example "the missing timeout". Not shown to reviewers. */
   label: string;
+  /** Neutral name of the topic, for example "timeouts". The summary names topics, never found flaws. */
+  topic: string;
   /** Lowercase words or phrases that show an answer talks about this flaw. */
   cues: string[];
 }

@@ -6,6 +6,7 @@ import type {
   ReviewQueue,
   Talent,
 } from "@/lib/domain/types";
+import { toBlindProof } from "@/lib/blind/project";
 import { secondLookMatches } from "@/lib/matching/second-look";
 import { getStore, type StoreData } from "@/lib/store";
 import { byArrival, clock, findOrThrow } from "./support";
@@ -35,13 +36,14 @@ export function buildQueue(data: StoreData, companyId: string, now: Date): Revie
 
   const proofs = data.proofs
     .filter((p) => ownChallengeIds.has(p.challengeId) && !decidedIds.has(p.proofId))
-    .sort(byArrival);
+    .sort(byArrival)
+    .map(toBlindProof);
 
   const secondLook = data.proofs
     .filter((p) => !ownChallengeIds.has(p.challengeId) && !decidedIds.has(p.proofId))
     .flatMap((p) => {
       const match = matchesFor(data, p.proofId, now).find((m) => m.companyId === companyId);
-      return match ? [{ ...p, sharedSkills: match.sharedSkills }] : [];
+      return match ? [{ ...toBlindProof(p), sharedSkills: match.sharedSkills }] : [];
     })
     .sort(byArrival);
 
@@ -51,13 +53,14 @@ export function buildQueue(data: StoreData, companyId: string, now: Date): Revie
     .map((decision) => {
       const proof = findOrThrow(data.proofs, (p) => p.proofId === decision.proofId, "Proof");
       const meeting = data.meetings.find((m) => m.proofId === decision.proofId && m.companyId === companyId);
-      let identity: Talent | undefined;
+      let identity: Pick<Talent, "name" | "contact"> | undefined;
       if (meeting && (meeting.status === "accepted" || meeting.status === "met")) {
         const submission = data.submissions.find((s) => s.id === decision.proofId);
         const talent = data.talents.find((t) => t.id === submission?.talentId);
-        if (talent) identity = { id: talent.id, name: talent.name, contact: talent.contact };
+        // Name and contact only. The talent id is the person's private key.
+        if (talent) identity = { name: talent.name, contact: talent.contact };
       }
-      return { proof, decision, ...(meeting ? { meeting } : {}), ...(identity ? { identity } : {}) };
+      return { proof: toBlindProof(proof), decision, ...(meeting ? { meeting } : {}), ...(identity ? { identity } : {}) };
     });
 
   return { company, challenges, proofs, secondLook, decided };

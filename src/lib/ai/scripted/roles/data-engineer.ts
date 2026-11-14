@@ -56,14 +56,17 @@ export const dataEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the watermark on reading time that drops late readings",
+        topic: "late readings",
         cues: ["late", "watermark", "max(read_at)", "ingested", "arrival", "loaded_at", "lookback", "dropped"],
       },
       {
         label: "the plain insert that duplicates rows on a retry",
+        topic: "retries and duplicates",
         cues: ["duplicate", "idempot", "rerun", "retry", "upsert", "merge", "on conflict", "unique key", "twice"],
       },
       {
         label: "the local server time compared with stored timestamps",
+        topic: "time zones",
         cues: ["timezone", "time zone", "utc", "datetime.now", "local time", "daylight", "dst", "helsinki"],
       },
     ],
@@ -87,6 +90,7 @@ export const dataEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the count of readings instead of distinct meters",
+        topic: "what is counted",
         cues: ["distinct", "count(distinct", "duplicate", "readings not meters", "each reading", "counts rows", "more than once"],
       },
     ],

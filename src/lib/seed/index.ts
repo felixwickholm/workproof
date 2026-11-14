@@ -1,16 +1,16 @@
 import { draftFromNeed } from "@/lib/ai/scripted/compose";
 import { followUpQuestions } from "@/lib/ai/scripted/follow-ups";
 import { describeWork } from "@/lib/ai/scripted/summarise";
-import { toBlindProof } from "@/lib/blind/project";
-import { addReports, redact } from "@/lib/blind/redact";
+import { blindWork } from "@/lib/blind/blind-work";
+import { toOwnProof } from "@/lib/blind/project";
+import { redact } from "@/lib/blind/redact";
 import type { AuditEvent, Challenge, Decision, Meeting } from "@/lib/domain/types";
 import { FOLLOW_UP_ACTION } from "@/lib/service/ai-work";
 import { meetingSlot } from "@/lib/service/decisions";
+import { rememberTalent } from "@/lib/service/talent";
 import type { StoreData } from "@/lib/store/types";
 import { COMPANIES, SEED_CHALLENGES } from "./companies";
 import { SEED_PROOFS } from "./proofs";
-
-export { DEMO_TALENT_ID } from "./proofs";
 
 const MINUTE = 60_000;
 const DAY = 24 * 60 * MINUTE;
@@ -68,29 +68,24 @@ export function buildSeed(now: Date): StoreData {
   for (const seed of SEED_PROOFS) {
     const challenge = challenges[seed.challenge];
     const known = { name: seed.talent.name, contact: seed.talent.contact };
-    const questions = followUpQuestions(challenge, seed.answer);
+    // Like live submissions, the follow-up writer reads the answer only after the blind layer.
+    const questions = followUpQuestions(challenge, redact(seed.answer, known).text);
     const explain = questions.map((question, i) => ({ question, answer: seed.explainAnswers[i] ?? "" }));
 
-    const work = redact(seed.answer, known);
-    let report = work.report;
-    const blindExplain = explain.map(({ question, answer }) => {
-      const q = redact(question, known);
-      const a = redact(answer, known);
-      report = addReports(report, addReports(q.report, a.report));
-      return { question: q.text, answer: a.text };
-    });
+    const blind = blindWork(seed.answer, explain, known);
     const submittedAt = at(seed.minutesAgo * MINUTE);
-    const proof = toBlindProof({
+    const proof = toOwnProof({
       proofId: seed.id,
       challenge,
-      work: work.text,
-      explain: blindExplain,
-      aiSummary: describeWork(challenge, work.text, blindExplain),
-      redactions: report,
+      work: blind.work,
+      explain: blind.explain,
+      aiSummary: describeWork(challenge, blind.work, blind.explain),
+      redactions: blind.report,
       submittedAt,
+      takenLabels: new Set(data.proofs.map((p) => p.label)),
     });
 
-    data.talents.push({ ...seed.talent });
+    rememberTalent(data.talents, seed.talent, true);
     data.submissions.push({
       id: seed.id,
       challengeId: challenge.id,
@@ -107,12 +102,12 @@ export function buildSeed(now: Date): StoreData {
       action: FOLLOW_UP_ACTION,
       detail: `${questions.length} question${questions.length === 1 ? "" : "s"} on "${challenge.title}".`,
     });
-    const hidden = Object.values(report).reduce((sum, n) => sum + n, 0);
+    const hidden = proof.hiddenCount;
     log(seed.minutesAgo * MINUTE, {
       actor: "system",
       by: "Blind layer",
       action: "Hid identity from the work",
-      detail: `${proof.label}: ${hidden} detail${hidden === 1 ? "" : "s"} hidden before any reviewer or AI read it.`,
+      detail: `${proof.label}: ${hidden} detail${hidden === 1 ? "" : "s"} hidden before any reviewer or AI model read it.`,
     });
     log(seed.minutesAgo * MINUTE - 1000, {
       actor: "ai",

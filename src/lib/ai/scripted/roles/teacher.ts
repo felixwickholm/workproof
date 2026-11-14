@@ -26,7 +26,7 @@ export const teacher: RoleTemplate = {
     title: "Review an AI-drafted lesson plan",
     format: "review",
     brief:
-      "A colleague used an AI assistant to plan a 45-minute maths lesson on fractions for year 5. She teaches it tomorrow and asked for a second read. Please read it as if you had to teach it.",
+      "A colleague used an AI assistant to plan a 45-minute maths lesson on fractions for year 5. The lesson is tomorrow, and the colleague asked for a second read. Please read it as if you had to teach it.",
     material: {
       kind: "text",
       title: "Lesson plan: adding fractions, year 5, 45 minutes",
@@ -50,14 +50,17 @@ export const teacher: RoleTemplate = {
     flaws: [
       {
         label: "the wrong method and example for adding fractions",
+        topic: "the method for adding fractions",
         cues: ["2/5", "add the bottoms", "wrong", "common denominator", "5/6", "incorrect", "method"],
       },
       {
         label: "a video that does not serve the lesson goal",
+        topic: "the video",
         cues: ["video", "egypt", "history", "goal", "ten minutes", "10 minutes", "not related"],
       },
       {
         label: "no check of understanding before the worksheet and feedback a week later",
+        topic: "checks of understanding and feedback",
         cues: ["check", "understanding", "practice", "guided", "next week", "feedback", "exit ticket", "30 problems"],
       },
     ],
@@ -78,6 +81,7 @@ export const teacher: RoleTemplate = {
     flaws: [
       {
         label: "an answer option that makes the question confusing",
+        topic: "the answer options",
         cues: ["all of the above", "option e", "confusing", "negative", "not a mammal", "e)"],
       },
     ],

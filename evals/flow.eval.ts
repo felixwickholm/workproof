@@ -112,12 +112,12 @@ describe("Flow: from need to a confirmed Second look meeting", () => {
       entry?.responses.length === 2 && entry.seenByHumans === 2 && entry.responses.some((r) => r.viaSecondLook && r.meeting?.status === "invited"),
     );
 
-    await call(acceptRoute, { method: "POST", params: { id: meet.json.meeting.id } });
+    await call(acceptRoute, { body: { talentId: TALENT.id }, params: { id: meet.json.meeting.id } });
     const shown = (await call<ReviewQueue>(queueRoute, { params: { id: B } })).json.decided.find((d) => d.proof.proofId === proof.proofId);
     step("talent accepts and identity appears", shown?.identity?.name === TALENT.name);
 
-    await call(confirmRoute, { body: { side: "talent" }, params: { id: meet.json.meeting.id } });
-    const met = await call<Meeting>(confirmRoute, { body: { side: "company" }, params: { id: meet.json.meeting.id } });
+    await call(confirmRoute, { body: { side: "talent", talentId: TALENT.id }, params: { id: meet.json.meeting.id } });
+    const met = await call<Meeting>(confirmRoute, { body: { side: "company", companyId: B }, params: { id: meet.json.meeting.id } });
     step("both sides confirm the meeting", met.json.status === "met");
 
     const city = (await call<CityOverview>(cityRoute)).json;

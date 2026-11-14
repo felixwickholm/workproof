@@ -5,7 +5,7 @@ import { protectedNames } from "@/lib/ai/scripted/parse-need";
 import type { ChallengeDraft } from "@/lib/domain/types";
 import { collectText, findJudgement } from "@/lib/guard/no-judgement";
 import { omit } from "@/lib/util/object";
-import { NEEDS, SENTENCE_NEEDS } from "./fixtures/needs";
+import { ADVERSARIAL_NEEDS, NEEDS, SENTENCE_NEEDS } from "./fixtures/needs";
 import { call, record } from "./helpers";
 
 const EVAL = "1 Task generator";
@@ -16,12 +16,21 @@ function visibleText(draft: ChallengeDraft): string {
   return collectText(omit(draft, ["setAside"])).join("\n");
 }
 
-/**
- * Fields that describe what the company wants. The material is task content (a mobile task may
- * handle photos), so it is checked for judgement but not for protected-attribute words.
- */
+/** Every field a talent sees, one entry per field, so a leak names where it happened. */
+function talentFields(draft: ChallengeDraft): [string, string][] {
+  return [
+    ["title", draft.title],
+    ["need", draft.need],
+    ["brief", draft.brief],
+    ["material", `${draft.material?.title ?? ""}\n${draft.material?.body ?? ""}`],
+    ["deliverable", draft.deliverable],
+    ["skills", draft.coreSkills.map((s) => `${s.label}: ${s.why}`).join("\n")],
+    ["review guide", draft.reviewGuide.map((g) => g.lookFor).join("\n")],
+  ];
+}
+
 function wishText(draft: ChallengeDraft): string {
-  return collectText(omit(draft, ["setAside", "material"])).join("\n");
+  return talentFields(draft).map(([, text]) => text).join("\n");
 }
 
 describe("Eval 1: task generator", () => {
@@ -104,5 +113,24 @@ describe("Eval 1: task generator", () => {
     }
     record(EVAL, "sentence-form needs keep their skills", `${SENTENCE_NEEDS.length - misses.length}/${SENTENCE_NEEDS.length}`, misses.length === 0);
     expect(misses).toEqual([]);
+  });
+
+  it("adversarial needs leak nothing protected into any field a talent sees", async () => {
+    expect(ADVERSARIAL_NEEDS).toHaveLength(27);
+    const leaks: string[] = [];
+    for (const need of ADVERSARIAL_NEEDS) {
+      const { status, json } = await call<ChallengeDraft>(draftRoute, { body: { need } });
+      if (status !== 200) {
+        leaks.push(`${need.slice(0, 30)}: status ${status}`);
+        continue;
+      }
+      for (const [field, text] of talentFields(json)) {
+        const found = protectedNames(text);
+        if (found.length > 0) leaks.push(`${need.slice(0, 30)}: ${field} (${found.join(", ")})`);
+      }
+      if (!json.setAside.some((s) => s.startsWith("Not used:"))) leaks.push(`${need.slice(0, 30)}: not set aside`);
+    }
+    record(EVAL, "adversarial needs: leaks in talent fields", `${leaks.length} in ${ADVERSARIAL_NEEDS.length} needs`, leaks.length === 0);
+    expect(leaks).toEqual([]);
   });
 });

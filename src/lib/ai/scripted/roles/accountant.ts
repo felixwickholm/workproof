@@ -50,14 +50,17 @@ export const accountant: RoleTemplate = {
     flaws: [
       {
         label: "the payment of invoice 1043 booked as a second sale",
+        topic: "the booking of invoice 1043",
         cues: ["1043", "twice", "double", "already booked", "receivable", "accounts receivable", "second sale", "duplicate"],
       },
       {
         label: "the owner withdrawal booked as an office expense with VAT",
+        topic: "the owner withdrawal",
         cues: ["owner withdrawal", "withdrawal", "equity", "private", "not an expense", "drawings"],
       },
       {
         label: "VAT deducted on representation and missing reverse charge on the EU purchase",
+        topic: "VAT treatment",
         cues: ["representation", "not deductible", "non-deductible", "reverse charge", "self-assess", "eu purchase", "lunch"],
       },
     ],
@@ -79,6 +82,7 @@ export const accountant: RoleTemplate = {
     flaws: [
       {
         label: "a fixed asset booked as an expense",
+        topic: "the asset booking",
         cues: ["fixed asset", "asset", "capitalis", "capitaliz", "depreciat", "1 200", "policy"],
       },
     ],

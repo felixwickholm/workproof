@@ -75,7 +75,7 @@ export async function runMainFlow(browser, phone) {
     await page.getByRole("button", { name: "Show my proof" }).click();
   });
   await suite.step("a6 blind proof result", async () => {
-    await page.getByRole("heading", { name: "This is what the company sees." }).waitFor();
+    await page.getByRole("heading", { name: "This is what a company would see." }).waitFor();
     await main.getByText("Hidden from the reviewer").waitFor();
     expect(!(await main.textContent()).includes("Aino"), "the first name shows on the blind proof");
     await checkScreen(page, errors, "/try result");
@@ -83,17 +83,17 @@ export async function runMainFlow(browser, phone) {
 
   // (b) A real challenge, two follow-ups, identity, submit, passport.
   await suite.step("b1 challenges", async () => {
-    await page.getByRole("link", { name: "See real challenges" }).click();
-    await page.getByRole("heading", { name: "Challenges" }).waitFor();
+    await page.getByRole("link", { name: "See real tasks" }).click();
+    await page.getByRole("heading", { name: "Tasks" }).waitFor();
     await checkScreen(page, errors, "/challenges");
   });
   await suite.step("b2 open the ML challenge", async () => {
     await page.getByRole("link", { name: /Review an AI-written model evaluation/ }).click();
-    await page.getByRole("link", { name: /^Start, \d+ min$/ }).waitFor();
+    await page.getByRole("link", { name: /^Start · \d+ min$/ }).waitFor();
     await checkScreen(page, errors, "/challenges/[id]");
   });
   await suite.step("b3 work", async () => {
-    await page.getByRole("link", { name: /^Start, \d+ min$/ }).click();
+    await page.getByRole("link", { name: /^Start · \d+ min$/ }).click();
     await type(page.getByRole("textbox", { name: "Your answer" }), ANSWER);
     await checkScreen(page, errors, "work");
     await page.getByRole("button", { name: "I'm done" }).click();
@@ -133,7 +133,7 @@ export async function runMainFlow(browser, phone) {
     await page.goto(`${BASE_URL}/`);
     await page.getByRole("link", { name: "I'm hiring" }).click();
     await page.getByRole("heading", { name: "What do you need?" }).waitFor();
-    await page.getByRole("button", { name: "Backend, 10 wishes" }).click();
+    await page.getByRole("button", { name: "Backend (long wish list)" }).click();
     await checkScreen(page, errors, "/company need");
     await page.getByRole("button", { name: "Draft the task" }).click();
   });
@@ -143,8 +143,9 @@ export async function runMainFlow(browser, phone) {
     await checkScreen(page, errors, "/company draft");
   });
   await suite.step("c3 approve and go live", async () => {
-    await type(page.getByRole("textbox", { name: "Approved by" }), "Tomas Berg");
-    await page.getByRole("button", { name: "Approve and publish" }).click();
+    await page.getByRole("button", { name: "Approve as…" }).click();
+    await type(page.getByRole("dialog").getByRole("textbox", { name: "Approved by" }), "Tomas Berg");
+    await page.getByRole("dialog").getByRole("button", { name: "Approve and publish" }).click();
     await page.getByRole("heading", { name: "Live. Talent can start now." }).waitFor();
     await checkScreen(page, errors, "/company live");
   });
@@ -232,7 +233,7 @@ export async function runMainFlow(browser, phone) {
     moved("Meetings confirmed by both sides", 1);
     moved("Second look meetings", 1);
     moved("Human decisions", 2);
-    moved("Problem Cards live", 1);
+    moved("Tasks live", 1);
     expect(after["Automated decisions"] === 0, `Automated decisions is ${after["Automated decisions"]}`);
   });
 

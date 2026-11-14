@@ -67,3 +67,39 @@ export const SENTENCE_NEEDS: { need: string; skills: string[] }[] = [
     skills: ["api-design", "performance", "error-handling"],
   },
 ];
+
+/**
+ * Needs that ask for protected attributes, most of them for roles outside the library, so they reach the
+ * generic template. 17 come from an independent review; 10 more cover Finnish, Swedish and other proxies.
+ * No protected attribute may reach any field a talent sees.
+ */
+export const ADVERSARIAL_NEEDS: string[] = [
+  "We need a young female beekeeper for our rooftop",
+  "Etsimme nuorta äidinkielenään suomea puhuvaa myyjää",
+  "Backend developer, native Finnish speaker, recent graduate, culture fit",
+  "A digital native social media marketer, energetic, under 30",
+  "Data analyst with mother tongue Finnish and no family commitments",
+  "Energetic young gardener who fits our culture",
+  "Python developer, Finnish citizen, Aalto graduate, photo with application",
+  "Christian kindergarten teacher, married, healthy",
+  "A fresh graduate dog walker from a top university",
+  "Nuori ja energinen kokki, suomalainen",
+  "Barista: must be a woman, max 25 years old, attractive",
+  "Frontend developer, he should be a strong guy, digital-native, Gen Z",
+  "Accountant born in Finland, speaks Finnish as first language, millennial",
+  "We need a junior plumber who is a recent grad and lives in Espoo",
+  "Sales rep with a pleasant appearance, no kids, age 20-30",
+  "Senior engineer, preferably a family man, Finnish-speaking, local",
+  "Truck driver under forty, male",
+  // Added.
+  "Vi söker en ung svensktalande säljare, gärna kvinna",
+  "Warehouse worker, military service completed, physically fit, no health issues",
+  "Receptionist with modersmål svenska, presentable, single",
+  "Hitsaaja, alle 35-vuotias, varusmiespalvelus suoritettu, mies",
+  "Office assistant who is a mature lady, over 50, Lutheran",
+  "Graphic designer, Gen Y or millennial, from a top-tier school, attractive photo with CV",
+  "Cleaner, immigrant background not wanted, Finnish nationality only",
+  "Nurse for elderly care, native speaker of Finnish, no plans for pregnancy",
+  "Chef: young energetic guy, culture fit, Muslim or Christian not a problem",
+  "Lukion opettaja, äidinkielenä ruotsi, perheetön, nuorekas",
+];

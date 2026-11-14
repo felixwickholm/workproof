@@ -1,27 +1,7 @@
+import { protectedNames, workingLanguage } from "@/lib/guard/protected";
 import { SKILLS, SKILL_IDS, type SkillId } from "@/lib/skills/vocabulary";
 import { containsTerm, normalise } from "./match-role";
 import { skillsInSentence } from "./sentence-skills";
-
-/**
- * Wishes that describe a person instead of the work. They never become skills
- * and never reach the brief. Each maps to a neutral name for the set-aside note.
- */
-/** Builds a case-insensitive pattern with Unicode word edges, so Finnish words match whole. */
-function words(source: string): RegExp {
-  return new RegExp(`(?<![\\p{L}\\p{N}])(?:${source})(?![\\p{L}\\p{N}])`, "iu");
-}
-
-const PROTECTED: { name: string; pattern: RegExp }[] = [
-  { name: "age", pattern: words("young|younger|youthful|aged?|under \\d{2}|over \\d{2}|\\d{2}\\s*-\\s*\\d{2}\\s*(?:years|yrs|vuotias)|years old|digital natives?|recent grad\\p{L}*|fresh grad\\p{L}*|energetic|nuori|nuoria|nuorekas|ikä\\p{L}*|alle \\d{2}") },
-  { name: "native language", pattern: words("(?<!cloud[- ]|react )natives?(?![- ](?:app|apps|mobile|ios|android|code|modules?|integrations?))|äidinkiel\\p{L}*|syntyperäi\\p{L}*") },
-  { name: "nationality", pattern: words("nationality|citizens?|citizenship|finnish[- ]born|born in|local only|kansalai\\p{L}*|suomalainen|kantasuomalai\\p{L}*") },
-  { name: "gender", pattern: words("male|female|man|woman|men|women|guy|guys|girl|girls|lady|ladies|gentleman|mies|miehiä|nainen|naisia") },
-  { name: "school", pattern: words("(?:top|elite|prestigious|leading|ivy|best|good)[- ](?:league[- ])?(?:university|universities|school|schools|college|colleges)|aalto|mit|stanford|oxford|cambridge|harvard|kth|eth|huippuyliopisto\\p{L}*") },
-  { name: "photo", pattern: words("(?:photo|photos|picture|valokuva\\p{L}*) (?:with|of|on|in|for) (?:the |your |an? )?(?:application|applicant|cv|yourself|candidate|hakemu\\p{L}*)|headshot|good[- ]looking|attractive|presentable|appearance") },
-  { name: "culture fit", pattern: words("culture fit|cultural fit|fits? (?:our|the|in with the) (?:culture|team|vibe)|like[- ]minded|one of us") },
-  { name: "family status", pattern: words("no kids|no children|childless|single(?![- ](?:sign|page|source|point|tenant))|married|family status|family plans|pregnan\\p{L}*|parental leave|perheetön") },
-  { name: "religion or health", pattern: words("religio\\p{L}*|christian|muslim|healthy|disabilit\\p{L}*|uskonto") },
-];
 
 const TOOL_WORDS = [
   "python", "java", "javascript", "typescript", "golang", "rust", "c#", "kotlin", "swift", "excel",
@@ -37,6 +17,8 @@ export interface ParsedNeed {
   notUsed: string[];
   /** Wishes that did not map to a skill, each with a short reason. */
   otherWishes: string[];
+  /** Languages asked for as a working language, in neutral form: "Working language: Finnish". */
+  workingLanguages: string[];
   /** The need with protected wishes replaced, safe to show to talent. */
   cleanedNeed: string;
 }
@@ -48,10 +30,7 @@ export function splitWishes(need: string): string[] {
     .filter((part) => part.length >= 2);
 }
 
-export function protectedNames(text: string): string[] {
-  const lower = normalise(text);
-  return PROTECTED.filter(({ pattern }) => pattern.test(lower)).map(({ name }) => name);
-}
+export { protectedNames };
 
 export function skillsIn(text: string): SkillId[] {
   const lower = normalise(text);
@@ -89,9 +68,11 @@ const ONLY_A_PERSON = /^(?:an?\s+|the\s+)?(?:someone|somebody|person|people|one|
 /** Closes the gaps left where a wish was removed from the sentence. */
 function tidy(text: string): string {
   return text
+    .replace(/\s+(?:who|that|joka|som)(?=\s*(?:[,.;]|$|\band\b|\bja\b))/gi, "")
+    .replace(/\s+(?:and|ja|och|with)\s+(?=[,.;]|$|(?:and|ja|och)\b)/gi, " ")
     .replace(/\s+,/g, ",")
     .replace(/(?:,\s*)+,/g, ",")
-    .replace(/[,;\s]+(?:and|or)?\s*$/i, "")
+    .replace(/[,;:\s]+(?:and|or)?\s*$/i, "")
     .replace(/:\s*,\s*/g, ": ")
     .replace(/\s{2,}/g, " ")
     .replace(/^[,;\s]*(?:(?:and|with)\s+)?/i, "")
@@ -104,6 +85,7 @@ export function parseNeed(need: string, roleKeywords: string[]): ParsedNeed {
   const wishedSkills: SkillId[] = [];
   const notUsed = new Set<string>();
   const otherWishes: string[] = [];
+  const workingLanguages: string[] = [];
   let cleanedNeed = need;
 
   for (const raw of splitWishes(need)) {
@@ -121,9 +103,14 @@ export function parseNeed(need: string, roleKeywords: string[]): ParsedNeed {
       continue;
     }
     if (skills.length > 0) continue;
+    const language = workingLanguage(wish);
+    if (language) {
+      if (!workingLanguages.includes(language)) workingLanguages.push(language);
+      continue;
+    }
     const describesRole = roleKeywords.some((keyword) => containsTerm(normalise(wish), keyword));
     if (!describesRole) otherWishes.push(reasonFor(wish));
   }
 
-  return { wishes, wishedSkills, notUsed: [...notUsed], otherWishes, cleanedNeed: tidy(cleanedNeed) };
+  return { wishes, wishedSkills, notUsed: [...notUsed], otherWishes, workingLanguages, cleanedNeed: tidy(cleanedNeed) };
 }

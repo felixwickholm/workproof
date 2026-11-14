@@ -46,7 +46,8 @@ export function summaryPrompt(brief: string, answer: string, explain: string): s
   return `Task brief: """${brief}"""
 Work: """${answer}"""
 Follow-up answers: """${explain}"""
-Describe in 2 or 3 neutral sentences what the work contains: which issues it names, which changes it proposes, what it does not mention.
-Descriptive only. Do not judge, score, rank, praise or recommend.
-JSON shape: {"summary": string}`;
+List what the work talks about, as neutral topics (short noun phrases such as "the data split").
+Do not say whether a topic is handled well, do not count anything, and do not use "all", "most" or "only".
+"changes": topics where the work proposes a change. "notMentioned": up to 2 topics a reader might expect, such as tests or rollout.
+JSON shape: {"topics": [string], "changes": [string], "notMentioned": [string]}`;
 }

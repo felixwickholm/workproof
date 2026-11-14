@@ -1,4 +1,5 @@
 import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
+import { neutralSetAside, NOT_USED_PREFIX, talentNeed } from "@/lib/guard/check-draft";
 import { SKILLS, toSkill, type SkillId } from "@/lib/skills/vocabulary";
 import { genericRole } from "./generic-role";
 import { matchRole } from "./match-role";
@@ -61,18 +62,22 @@ function roleForSkills(wished: SkillId[]): RoleTemplate | undefined {
 }
 
 export function draftFromNeed(need: string): ChallengeDraft {
-  const role = matchRole(need) ?? roleForSkills(parseNeed(need, []).wishedSkills) ?? genericRole(need);
+  const role = matchRole(need) ?? roleForSkills(parseNeed(need, []).wishedSkills) ?? genericRole();
   const parsed = parseNeed(need, role.keywords);
   const { kept, dropped } = chooseSkills(role, parsed.wishedSkills, parsed.wishes.length);
 
+  const otherWishes = neutralSetAside(parsed.otherWishes);
   const setAside = [
     ...dropped.map((id) => `${SKILLS[id].label}: not core for this task`),
-    ...parsed.otherWishes,
+    ...parsed.workingLanguages.map((language) => `${language}: talk about it in the meeting`),
+    ...otherWishes,
   ];
-  if (parsed.notUsed.length > 0) setAside.push(`Not used: ${parsed.notUsed.join(", ")} (not skills)`);
+  // A wish that judges a person is left out of the card, and counted with the protected ones.
+  const notUsed = [...parsed.notUsed, ...(otherWishes.length < parsed.otherWishes.length ? ["wishes about the person"] : [])];
+  if (notUsed.length > 0) setAside.push(`${NOT_USED_PREFIX} ${notUsed.join(", ")} (not skills)`);
 
   return toDraft(role, role.challenge, kept, {
-    need: parsed.cleanedNeed,
+    need: talentNeed(parsed.cleanedNeed, role.title, kept, parsed.workingLanguages),
     setAside,
     kind: "event",
     minutes: EVENT_MINUTES,
@@ -81,8 +86,9 @@ export function draftFromNeed(need: string): ChallengeDraft {
 
 export function tasterFor(dreamJob: string): ChallengeDraft {
   const role = matchRole(dreamJob) ?? genericRole(dreamJob);
-  return toDraft(role, role.taster, role.skills.slice(0, 3), {
-    need: dreamJob.trim().slice(0, 120),
+  const skills = role.skills.slice(0, 3);
+  return toDraft(role, role.taster, skills, {
+    need: talentNeed(dreamJob.slice(0, 120), role.title, skills),
     setAside: [],
     kind: "taster",
     minutes: TASTER_MINUTES,
@@ -101,7 +107,7 @@ export function roleFor(challenge: ChallengeRef): RoleTemplate {
     const task = taskOf(role, challenge);
     return task.title === challenge.title && task.material.title === challenge.material?.title;
   });
-  return known ?? genericRole(challenge.need);
+  return known ?? genericRole(challenge.kind === "taster" ? challenge.need : "");
 }
 
 /** The planted flaws for a challenge, or none when it was written by hand or by a model. */

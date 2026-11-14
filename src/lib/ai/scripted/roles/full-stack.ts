@@ -56,14 +56,17 @@ export const fullStackEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the check-then-insert race that overbooks a slot",
+        topic: "concurrent bookings",
         cues: ["race", "concurren", "transaction", "lock", "overbook", "same time", "constraint", "for update", "atomic"],
       },
       {
         label: "the unsafe query built from user input",
+        topic: "how the query is built",
         cues: ["injection", "sql.unsafe", "unsafe", "parameter", "string interpolation", "escape"],
       },
       {
         label: "the note placed unescaped into an HTML email",
+        topic: "the note in the email",
         cues: ["html", "escape", "xss", "note", "email", "sanitize", "sanitise", "markup"],
       },
     ],
@@ -86,6 +89,7 @@ export const fullStackEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the role check that runs only in the browser",
+        topic: "where the role check runs",
         cues: ["server", "localstorage", "client side", "client-side", "anyone", "authoriz", "backend", "edit the value"],
       },
     ],

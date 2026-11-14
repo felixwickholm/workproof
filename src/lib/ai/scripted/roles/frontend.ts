@@ -58,14 +58,17 @@ export const frontendEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the race where an older response overwrites newer results",
+        topic: "the order of responses",
         cues: ["race", "out of order", "stale", "abort", "cancel", "older request", "cleanup", "debounce"],
       },
       {
         label: "the clickable divs and placeholder-only label that block keyboard and screen reader users",
+        topic: "keyboard and screen reader use",
         cues: ["keyboard", "button", "label", "aria", "screen reader", "focus", "accessib", "placeholder", "div"],
       },
       {
         label: "the missing loading, empty and error states",
+        topic: "loading, empty and error states",
         cues: ["loading", "error", "empty", "catch", "no results", "spinner", "failed"],
       },
     ],
@@ -90,6 +93,7 @@ export const frontendEngineer: RoleTemplate = {
     flaws: [
       {
         label: "the stale state value that adds one instead of three",
+        topic: "the state update",
         cues: ["stale", "functional update", "prev", "c => c + 1", "only one", "adds 1", "batch", "closure"],
       },
     ],

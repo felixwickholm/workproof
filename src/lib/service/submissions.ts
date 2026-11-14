@@ -1,10 +1,12 @@
 import { getTaskDesigner } from "@/lib/ai";
-import { toBlindProof } from "@/lib/blind/project";
-import { addReports, emptyReport, redact } from "@/lib/blind/redact";
-import type { BlindProof, ExplainAnswer, Submission, Talent } from "@/lib/domain/types";
+import { blindWork } from "@/lib/blind/blind-work";
+import { toOwnProof } from "@/lib/blind/project";
+import type { ExplainAnswer, OwnProof, Submission, Talent } from "@/lib/domain/types";
 import { getStore } from "@/lib/store";
 import { newId } from "@/lib/util/hash";
+import { DESCRIBE_ACTION, HIDE_ACTION } from "./ai-work";
 import { appendAudit, clock, findOrThrow, ServiceError } from "./support";
+import { rememberTalent } from "./talent";
 
 export interface SubmitInput {
   challengeId: string;
@@ -14,7 +16,7 @@ export interface SubmitInput {
   shareWithSimilar: boolean;
 }
 
-export async function submitWork(input: SubmitInput): Promise<BlindProof> {
+export async function submitWork(input: SubmitInput): Promise<OwnProof> {
   const store = getStore();
   const snapshot = await store.read();
   const challenge = findOrThrow(snapshot.challenges, (c) => c.id === input.challengeId, "Challenge");
@@ -25,16 +27,8 @@ export async function submitWork(input: SubmitInput): Promise<BlindProof> {
   }
 
   // The blind layer runs before the AI sees the work, so the summary never sees identity.
-  const known = { name: input.talent.name, contact: input.talent.contact };
-  const work = redact(input.answer, known);
-  let report = work.report;
-  const explain = input.explain.map(({ question, answer }) => {
-    const q = redact(question, known);
-    const a = redact(answer, known);
-    report = addReports(report, addReports(q.report, a.report));
-    return { question: q.text, answer: a.text };
-  });
-  const summary = await getTaskDesigner().summariseWork(challenge, work.text, explain);
+  const blind = blindWork(input.answer, input.explain, { name: input.talent.name, contact: input.talent.contact });
+  const summary = await getTaskDesigner().summariseWork(challenge, blind.work, blind.explain);
 
   const submittedAt = clock.now().toISOString();
   const submission: Submission = {
@@ -46,37 +40,32 @@ export async function submitWork(input: SubmitInput): Promise<BlindProof> {
     shareWithSimilar: input.shareWithSimilar,
     submittedAt,
   };
-  const proof = toBlindProof({
-    proofId: submission.id,
-    challenge,
-    work: work.text,
-    explain,
-    aiSummary: summary,
-    redactions: report ?? emptyReport(),
-    submittedAt,
-  });
 
-  await store.update((data) => {
-    const talent = data.talents.find((t) => t.id === input.talent.id);
-    if (talent) {
-      if (input.talent.name.trim()) talent.name = input.talent.name.trim();
-      if (input.talent.contact.trim()) talent.contact = input.talent.contact.trim();
-    } else {
-      data.talents.push({ id: input.talent.id, name: input.talent.name.trim(), contact: input.talent.contact.trim() });
-    }
+  return store.update((data) => {
+    const proof = toOwnProof({
+      proofId: submission.id,
+      challenge,
+      work: blind.work,
+      explain: blind.explain,
+      aiSummary: summary,
+      redactions: blind.report,
+      submittedAt,
+      takenLabels: new Set(data.proofs.map((p) => p.label)),
+    });
+    rememberTalent(data.talents, input.talent, challenge.kind === "event");
     data.submissions.push(submission);
     data.proofs.push(proof);
-    const hidden = Object.values(report).reduce((sum, n) => sum + n, 0);
+    const hidden = proof.hiddenCount;
     appendAudit(data, {
       actor: "system",
       by: "Blind layer",
-      action: "Hid identity from the work",
-      detail: `${proof.label}: ${hidden} detail${hidden === 1 ? "" : "s"} hidden before any reviewer or AI read it.`,
+      action: HIDE_ACTION,
+      detail: `${proof.label}: ${hidden} detail${hidden === 1 ? "" : "s"} hidden before any reviewer or AI model read it.`,
     });
     appendAudit(data, {
       actor: "ai",
       by: "Work describer",
-      action: "Described the work",
+      action: DESCRIBE_ACTION,
       detail: `${proof.label}: a neutral summary of what the work contains. No score, no ranking.`,
     });
     if (input.shareWithSimilar && challenge.kind === "event") {
@@ -87,6 +76,6 @@ export async function submitWork(input: SubmitInput): Promise<BlindProof> {
         detail: `${proof.label} may be shown to other employers with the same core skills if the first employer passes.`,
       });
     }
+    return proof;
   });
-  return proof;
 }

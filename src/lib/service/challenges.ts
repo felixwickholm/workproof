@@ -1,8 +1,10 @@
 import { getTaskDesigner } from "@/lib/ai";
+import { redact } from "@/lib/blind/redact";
 import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
+import { draftProblems } from "@/lib/guard/check-draft";
 import { getStore } from "@/lib/store";
 import { newId } from "@/lib/util/hash";
-import { FOLLOW_UP_ACTION } from "./ai-work";
+import { DRAFT_ACTION, FOLLOW_UP_ACTION } from "./ai-work";
 import { appendAudit, clock, findOrThrow, ServiceError } from "./support";
 
 export const TASK_DRAFTER = "Task drafter";
@@ -13,7 +15,7 @@ export async function draftChallenge(need: string): Promise<ChallengeDraft> {
     appendAudit(data, {
       actor: "ai",
       by: TASK_DRAFTER,
-      action: "Drafted a Problem Card",
+      action: DRAFT_ACTION,
       detail: `"${draft.title}": ${draft.coreSkills.length} core skills kept, ${draft.setAside.length} wishes set aside. Waiting for a human to approve.`,
     });
   });
@@ -23,8 +25,9 @@ export async function draftChallenge(need: string): Promise<ChallengeDraft> {
 export async function approveChallenge(input: { draft: ChallengeDraft; companyId: string; approvedBy: string }): Promise<Challenge> {
   const approvedBy = input.approvedBy.trim();
   if (!approvedBy) throw new ServiceError(400, "A named person must approve the challenge");
-  const skills = input.draft.coreSkills.length;
-  if (skills < 3 || skills > 5) throw new ServiceError(400, "A challenge needs 3 to 5 core skills");
+  // A human may edit the draft, and a request may skip the UI, so the server checks it again.
+  const problems = draftProblems(input.draft);
+  if (problems.length > 0) throw new ServiceError(400, `This card cannot be published yet. ${problems[0]}.`);
 
   return getStore().update((data) => {
     const company = findOrThrow(data.companies, (c) => c.id === input.companyId, "Company");
@@ -82,7 +85,8 @@ export async function createTaster(dreamJob: string): Promise<Challenge> {
 
 export async function followUpsFor(challengeId: string, answer: string): Promise<string[]> {
   const challenge = await getChallenge(challengeId);
-  const questions = await getTaskDesigner().followUps(challenge, answer);
+  // The follow-up writer reads the answer only after the blind layer, like the work describer.
+  const questions = await getTaskDesigner().followUps(challenge, redact(answer).text);
   await getStore().update((data) => {
     appendAudit(data, {
       actor: "ai",

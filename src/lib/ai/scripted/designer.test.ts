@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { Challenge } from "@/lib/domain/types";
+import { draftProblems } from "@/lib/guard/check-draft";
+import { protectedNames } from "@/lib/guard/protected";
 import { draftFromNeed, tasterFor } from "./compose";
 import { followUpQuestions } from "./follow-ups";
+import { countsFindings } from "@/lib/guard/no-judgement";
 import { describeWork } from "./summarise";
 
 function asChallenge(need: string): Challenge {
@@ -47,10 +50,46 @@ describe("scripted designer", () => {
     expect(followUpQuestions(asChallenge("Backend developer"), "Add a timeout.")[0]).toContain("reasoning");
   });
 
-  it("describes which planted issues the work names", () => {
+  it("names the topics the work talks about, never a count of what it found", () => {
     const challenge = asChallenge("Backend developer for a payments API");
-    const summary = describeWork(challenge, "There is no timeout on the fetch. Add one of five seconds.", []);
-    expect(summary).toContain("the outbound call without a timeout");
-    expect(summary).toContain("Does not mention tests");
+    const summary = describeWork(challenge, "There is no timeout on the fetch. Add a timeout of five seconds.", []);
+    expect(summary).toBe("Discusses timeouts. Proposes a change to timeouts. Does not mention tests and rollout.");
+  });
+
+  it("gives a keyword list the same kind of summary as a careful answer, without counting", () => {
+    const challenge = asChallenge("ML engineer for grasp detection: model evaluation, data quality, code review");
+    const keywords = describeWork(challenge, "split leak, threshold on validation, report recall.", []);
+    const careful = describeWork(
+      challenge,
+      "Split by grasp attempt, because frames of one attempt leak into test. Pick the threshold on a validation split. Report recall on dropped grasps.",
+      [],
+    );
+    for (const summary of [keywords, careful]) {
+      expect(summary).toMatch(/^Discusses /);
+      expect(countsFindings(summary)).toBe(false);
+      expect(summary).not.toMatch(/\b(?:one|two|three|issues?|flaws?)\b/i);
+    }
+  });
+
+  it("builds a draft for an unknown role without any word from the need", () => {
+    const draft = draftFromNeed("We need a young female beekeeper for our rooftop");
+    const shown = [draft.title, draft.need, draft.brief, draft.material?.body ?? "", draft.deliverable].join("\n");
+    expect(shown).not.toMatch(/young|female|beekeeper|rooftop/i);
+    expect(draft.need).toBe("A role: Prioritisation, Planning, Stakeholder communication");
+    expect(draftProblems(draft)).toEqual([]);
+  });
+
+  it("shows the need as the company wrote it when nothing in it is protected", () => {
+    expect(draftFromNeed("Backend developer for our payments API: API design, error handling, security, testing").need).toBe(
+      "Backend developer for our payments API: API design, error handling, security, testing",
+    );
+  });
+
+  it("keeps a working language as a neutral line, never a native-speaker wish", () => {
+    const working = draftFromNeed("Accountant for monthly closing who works in Finnish with customers");
+    expect(working.setAside).toContain("Working language: Finnish: talk about it in the meeting");
+    const native = draftFromNeed("Accountant for monthly closing, native Finnish speaker");
+    expect(protectedNames(native.need)).toEqual([]);
+    expect(native.setAside.join(" ")).toContain("Not used: native language");
   });
 });

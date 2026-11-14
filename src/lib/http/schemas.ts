@@ -48,4 +48,9 @@ export const decisionRequest = z.object({
   feedback: z.string().max(LIMITS.feedback),
 });
 
-export const confirmRequest = z.object({ side: z.enum(["talent", "company"]) });
+export const acceptRequest = z.object({ talentId: z.string().min(1).max(100) });
+
+export const confirmRequest = z.discriminatedUnion("side", [
+  z.object({ side: z.literal("talent"), talentId: z.string().min(1).max(100) }),
+  z.object({ side: z.literal("company"), companyId: z.string().min(1).max(100) }),
+]);
