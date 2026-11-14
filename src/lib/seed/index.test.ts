@@ -30,12 +30,12 @@ describe("seed world", () => {
   const onBehalf = data.challenges.filter((c) => c.onBehalf);
 
   it("has the employers, tasks, people and work the contract describes", () => {
-    expect(data.companies).toHaveLength(18);
-    expect(data.challenges).toHaveLength(30);
+    expect(data.companies).toHaveLength(28);
+    expect(data.challenges).toHaveLength(40);
     expect(data.challenges.filter((c) => c.companyIds.length === 2)).toHaveLength(2);
-    expect(new Set(data.challenges.flatMap((c) => c.companyIds)).size).toBe(18);
-    expect(data.proofs.length).toBeGreaterThanOrEqual(70);
-    expect(data.proofs.length).toBeLessThanOrEqual(80);
+    expect(new Set(data.challenges.flatMap((c) => c.companyIds)).size).toBe(28);
+    expect(data.proofs.length).toBeGreaterThanOrEqual(75);
+    expect(data.proofs.length).toBeLessThanOrEqual(85);
     expect(data.talents.length).toBeGreaterThanOrEqual(42);
     expect(data.talents.length).toBeLessThanOrEqual(48);
   });
@@ -54,14 +54,14 @@ describe("seed world", () => {
     expect(data.challenges.filter((c) => c.proofKind === "code").length).toBeLessThanOrEqual(2);
   });
 
-  it("states every task plainly: a short title, a brief with at most one question, one sentence to hand in, 5 to 15 minutes", () => {
+  it("states every task plainly: a short title, a brief with at most one question, one sentence to hand in, 5 to 30 minutes", () => {
     for (const c of data.challenges) {
       expect(words(c.title), c.id).toBeLessThanOrEqual(9);
       expect(words(c.brief), c.id).toBeLessThan(120);
       expect(c.brief.split("?").length - 1, c.id).toBeLessThanOrEqual(1);
       expect(c.deliverable.replace(/\.$/, ""), c.id).not.toMatch(/[.?!]\s/);
       expect(c.minutes, c.id).toBeGreaterThanOrEqual(5);
-      expect(c.minutes, c.id).toBeLessThanOrEqual(15);
+      expect(c.minutes, c.id).toBeLessThanOrEqual(30);
       expect(draftProblems(c), c.id).toEqual([]);
       if (c.format === "choose") expect(c.options?.map((o) => o.id), c.id).toEqual(["a", "b"]);
     }
@@ -105,8 +105,8 @@ describe("seed world", () => {
 
   it("scores every decided proof by the company's named reviewer, one point per core skill, with a reason", () => {
     expect(data.decisions.filter((d) => d.decision === "meet")).toHaveLength(17);
-    expect(data.decisions.filter((d) => d.decision === "pass")).toHaveLength(18);
-    expect(data.decisions.filter((d) => d.decision === "hold")).toHaveLength(11);
+    expect(data.decisions.filter((d) => d.decision === "pass")).toHaveLength(19);
+    expect(data.decisions.filter((d) => d.decision === "hold")).toHaveLength(12);
     for (const d of data.decisions) {
       const challenge = challengeOf(d.proofId);
       expect(challenge?.companyIds, d.id).toContain(d.companyId);

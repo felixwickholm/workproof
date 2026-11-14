@@ -16,8 +16,8 @@ export interface ChallengeFilters {
 
 export const NO_FILTERS: ChallengeFilters = { roles: [], formats: [], companies: [], maxMinutes: null, query: "", savedOnly: false };
 
-/** The time limits a person can pick. Seeded challenges take 5 to 15 minutes. */
-export const MINUTE_LIMITS = [5, 10, 15] as const;
+/** The time limits a person can pick. Seeded challenges take 8 to 30 minutes. */
+export const MINUTE_LIMITS = [10, 15, 30] as const;
 
 interface FilterTask {
   challenge: Pick<Challenge, "id" | "title" | "need" | "roles" | "format" | "minutes" | "coreSkills">;

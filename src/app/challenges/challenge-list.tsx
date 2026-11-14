@@ -11,7 +11,7 @@ import { api } from "@/lib/client/api";
 export function ChallengeList() {
   const { data, error, loading, retry } = useSeekerData((talentId) => api.seekerHome(talentId).then((home) => home.tasks));
   return (
-    <Screen title="Challenges" subtitle="Real work from Espoo companies. Most take under 30 minutes." page tone="grey">
+    <Screen title="Challenges" subtitle="Real work from Espoo companies, 8 to 30 minutes each." page tone="grey">
       {loading && !data ? (
         <div aria-busy>
           <Skeleton className="h-6 w-56" />

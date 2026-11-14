@@ -15,7 +15,7 @@
 
 ## How it meets each judging criterion
 
-Routes are pages of the live demo; files and tests are in this repository. Demo event counts are for the default story stage: 18 companies, 30 challenges, 76 pieces of work from 46 people.
+Routes are pages of the live demo; files and tests are in this repository. Demo event counts are for the default story stage: 28 companies, 40 challenges, 80 pieces of work from 46 people.
 
 | Criterion | What we built | See it | Code | Test |
 |---|---|---|---|---|
@@ -182,7 +182,7 @@ Measured on 2026-11-14 with `npm run evidence`, which runs both commands and cop
 | No automated decisions | Planted judging phrases rejected by the guard | 70 of 70 judging phrases rejected | `evals/no-automated-decisions.eval.ts` |
 | No automated decisions | Neutral task phrases let through by the guard | 33 of 33 neutral phrases passed | `evals/no-automated-decisions.eval.ts` |
 | No automated decisions | Text fields of drafted tasks and follow-up questions that pass the guard | 575 of 575 text fields from 32 designer outputs (20 drafts, 12 follow-up sets) | `evals/no-automated-decisions.eval.ts` |
-| No automated decisions | HTTP status of 2 decisions sent without a reviewer or feedback; stored decisions with a named reviewer | refused: HTTP 400 for a decision without a name, HTTP 400 without feedback; 46 stored decisions all named | `evals/no-automated-decisions.eval.ts` |
+| No automated decisions | HTTP status of 2 decisions sent without a reviewer or feedback; stored decisions with a named reviewer | refused: HTTP 400 for a decision without a name, HTTP 400 without feedback; 48 stored decisions all named | `evals/no-automated-decisions.eval.ts` |
 | No automated decisions | Automated decisions in the city totals and the audit log | 0 automated decisions; 0 decision audit lines by a non-human | `evals/no-automated-decisions.eval.ts` |
 | No automated decisions | Decisions signed by software or by a name the company has not registered | refused: HTTP 400 for "AI bot", HTTP 403 for an unregistered name, HTTP 400 for a bot as reviewer; accepted after the explicit step: HTTP 200 | `evals/no-automated-decisions.eval.ts` |
 | Table screen | Names, emails and numbers typed on phones that reach the public big screen | 0 of 10 names, emails and numbers found; extra fields: none | `evals/table.eval.ts` |
@@ -195,7 +195,7 @@ Measured on 2026-11-14 with `npm run evidence`, which runs both commands and cop
 
 Details and how to read each output: [docs/evals.md](docs/evals.md).
 
-## Four formats, thirty challenges
+## Four formats, forty challenges
 
 A challenge looks like a job listing: the company's logo and name, the title, the skills it scores and a picture of the work. It is done in one of four ways, so not every expert has to write an essay or code:
 
@@ -204,7 +204,7 @@ A challenge looks like a job listing: the company's logo and name, the title, th
 - **Fix**: find what is wrong and say what it changes.
 - **Read**: a chart, a table or a report; say what matters.
 
-The person writes how they think while working, with no camera; only text is kept. Voice is planned. A sketch can be sent as a photo. The demo event has 30 challenges from 18 companies, mostly business and tech: 10 Read, 9 Fix, 6 Make and 5 Choose.
+The person writes how they think while working, with no camera; only text is kept. Voice is planned. A sketch can be sent as a photo. The demo event has 40 challenges from 28 companies, mostly business and tech: 13 Read, 10 Fix, 10 Make and 7 Choose.
 
 | Company | Challenges |
 |---|---|
@@ -227,8 +227,18 @@ The person writes how they think while working, with no camera; only text is kep
 | Kaste Water | Find why a water sensor drifts (Read); Pick which pilot to fund this spring (Choose) |
 | Kuura Capital | Fix a cash-flow forecast before a loan decision (Fix); Find the risks in a new login flow (Read) |
 | Pilvi Works | Write up last night's outage for the customer (Read); Cut a cloud bill without losing uptime (Choose) |
+| Polar Byte | Find why some web shop orders arrive twice (Fix) |
+| Tähkä Analytics | Explain the jump in last night's harvest numbers (Read) |
+| Kaarna AI | Write the test set for a city assistant (Make; 30 minutes, 30 places) |
+| Lieko Security | Decide what to do with a strange login (Read) |
+| Utu Mobile | Choose how inspection photos sync offline (Choose) |
+| Kenno Apps | Pick the tests before Friday's release (Make) |
+| Rasti Trails | Design the warning for a closed trail (Make) |
+| Laituri Logistics | Explain why picking slowed down in week 44 (Read) |
+| Ulappa Hotels | Price the rooms for a congress week (Choose) |
+| Perusta Build | Re-plan the week after a late concrete delivery (Make) |
 
-Eighteen take 10 minutes, eight take 12, three take 15 and one takes 8. Five sample job ads for these companies are at `/ads/[slug]`; on `/company`, press one under "Try a sample ad" to see an ad become a draft. Without an AI key the built-in designer still drafts: 49 professions have their own task today; any other gets the nearest one or a general planning task.
+Eighteen take 10 minutes, nine take 12, seven take 15, four take 20, one takes 30 and one takes 8. Five sample job ads for these companies are at `/ads/[slug]`; on `/company`, press one under "Try a sample ad" to see an ad become a draft. Without an AI key the built-in designer still drafts: 49 professions have their own task today; any other gets the nearest one or a general planning task.
 
 | | | |
 |---|---|---|

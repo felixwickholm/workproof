@@ -6,13 +6,13 @@ There is no landing page. `/` opens the Job seeker home. The three views are Job
 
 ## What the demo holds
 
-All people and companies are invented. At the default story stage the event has 18 companies, 30 challenges, 76 pieces of work from 46 people, 46 scored by a person, 17 invited, 10 said yes, 6 talks held, 5 follow-ups agreed and 3 hires. These are the numbers the city view shows, marked "Demo data".
+All people and companies are invented. At the default story stage the event has 28 companies, 40 challenges, 80 pieces of work from 46 people, 48 scored by a person, 17 invited, 10 said yes, 6 talks held, 5 follow-ups agreed and 3 hires. These are the numbers the city view shows, marked "Demo data".
 
 **The people.** Mikko Lahtinen is the job seeker, an AI developer. Laura Niemi at Halla Supply is the company person. Sanna Mattila is the city person.
 
 **The story.** Halla Supply asks "What should we automate first?" Mikko picks the invoices, not the chatbot, says why, plans two weeks and names the risk. Laura reads the work without his name, gives 1 to 5 points for each skill and writes why. The work gets 9 of 10. She invites him, and sees his name only after he says yes.
 
-**The challenges.** 30 challenges, listed in the README under "Four formats, thirty challenges". Each one looks like a job listing, with the company's logo and a picture of the work, and is done in one of four ways: Choose, Make, Fix or Read. The City of Espoo made the Kide Silicon challenge from the company's job ad. Kide Silicon has not opened it yet, and 20 people already did it.
+**The challenges.** 40 challenges, listed in the README under "Four formats, forty challenges". Each one looks like a job listing, with the company's logo and a picture of the work, and is done in one of four ways: Choose, Make, Fix or Read. The City of Espoo made the Kide Silicon challenge from the company's job ad. Kide Silicon has not opened it yet, and 20 people already did it.
 
 ## 2 minutes, alone (judge)
 
@@ -55,7 +55,7 @@ Do not send a score unless you want to; the buttons stay locked until every skil
 Say: "Laura tells the AI who she needs. The AI drafts a short challenge with the skills to score. She checks it, edits it and presses Approve and publish. Nothing goes live before that." If someone asks about job ads, point at "Start from your job ad" and the sample ads under "Try a sample ad".
 
 **4:00 City of Espoo.** Press the view switcher and choose "City of Espoo". `/city` opens as Sanna Mattila.
-Say, pointing at "From challenge to hire": "76 pieces of work. 46 scored by a person. 17 invited, 10 said yes, 6 talks, 5 follow-ups, 3 hired. All demo data."
+Say, pointing at "From challenge to hire": "80 pieces of work. 48 scored by a person. 17 invited, 10 said yes, 6 talks, 5 follow-ups, 3 hired. All demo data."
 Scroll to "Companies hiring right now" and press "Make a challenge" on the first company.
 Say: "The city sees who is hiring now from public job ads. WorkProof makes a challenge from the ad, and the city invites the company to try it." Point at "Publish and invite"; you do not need to press it.
 

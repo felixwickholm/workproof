@@ -9,7 +9,7 @@ export const PROMISE = "Companies see how well people do the real work before th
 /** The product in six steps. Each: a 4 to 8 word headline and one sentence of at most 16 words. */
 export const STEPS = [
   { id: "ad", headline: "A company shares its job ad.", sentence: "The AI drafts a short challenge from it, and a person approves it." },
-  { id: "work", headline: "A person does the challenge.", sentence: "They work for 5 to 15 minutes and write how they think. No camera." },
+  { id: "work", headline: "A person does the challenge.", sentence: "They work for 8 to 30 minutes and write how they think. No camera." },
   { id: "score", headline: "The company scores the work, not the name.", sentence: "A person scores it against 3 to 5 skills and writes why." },
   { id: "invite", headline: "The top people get invited.", sentence: "The name shows only after the person says yes." },
   { id: "talk", headline: "They meet face to face at the event.", sentence: "After the first talk, they agree a follow-up, or not." },
@@ -50,7 +50,7 @@ export const AI_NEVER = ["Never gives a score.", "Never ranks people.", "Never d
 export const FAIR_QUESTIONS = [
   {
     question: "Will people do unpaid tasks?",
-    answer: "A challenge takes 5 to 15 minutes. One challenge can reach several companies.",
+    answer: "A challenge takes 5 to 30 minutes. One challenge can reach several companies.",
   },
   {
     question: "Will companies read and answer?",
@@ -76,7 +76,7 @@ export const FAIR_QUESTIONS = [
 
 /** Most recruiting AI against WorkProof, row by row. */
 export const COMPARISON = [
-  ["Reads a profile", "Reads real work, 5 to 15 minutes long"],
+  ["Reads a profile", "Reads real work, 5 to 30 minutes long"],
   ["An algorithm gives a match score", "A person scores the work and signs it"],
   ["AI interviews or ranks people", "AI only drafts challenges and marks skills"],
   ["Silence after you apply", "Every score comes with a written reason"],

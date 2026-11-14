@@ -104,6 +104,16 @@ export const STAFF_LOOKS: Readonly<Record<string, AvatarLook>> = {
   "Oliver Grahn": man(SKIN.fair, HAIR.lightBrown, 12),
   "Petra Huotari": woman(SKIN.fair, HAIR.black, 16),
   "Sanna Mattila": woman(SKIN.fair, HAIR.brown, 42),
+  "Kaisa Lehto": woman(SKIN.fair, HAIR.lightBrown, 24, { glasses: true }),
+  "Joel Hakala": man(SKIN.fair, HAIR.blonde, 9),
+  "Sofia Lindberg": woman(SKIN.light, HAIR.darkBrown, 31),
+  "Markus Rinne": man(SKIN.fair, HAIR.darkBrown, 4, { beard: true }),
+  "Teemu Nurmi": man(SKIN.medium, HAIR.black, 8),
+  "Emilia Koski": woman(SKIN.fair, HAIR.auburn, 17),
+  "Hilla Peltola": woman(SKIN.fair, HAIR.blonde, 46),
+  "Juha Salmi": man(SKIN.fair, HAIR.grey, 1, { glasses: true }),
+  "Maria Lund": woman(SKIN.tan, HAIR.black, 40),
+  "Timo Väisänen": man(SKIN.fair, HAIR.lightBrown, 43, { beard: true }),
 };
 
 /** "Elina Heikkilä" becomes "elina-heikkila". */

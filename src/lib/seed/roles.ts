@@ -36,6 +36,16 @@ export const SEED_ROLES: Record<SeedChallengeKey, readonly JobRole[]> = {
   "revontuli-level": ["data-analyst", "product-manager"],
   "tuulos-stop": ["hardware-engineer", "software-engineer"],
   "kivira-checkout": ["software-engineer", "designer"],
+  "polarbyte-orders": ["software-engineer"],
+  "tahka-pipeline": ["software-engineer", "data-analyst"],
+  "kaarna-eval": ["ai-developer", "software-engineer"],
+  "lieko-alert": ["software-engineer"],
+  "utu-sync": ["software-engineer"],
+  "kenno-release": ["software-engineer"],
+  "rasti-trail": ["designer"],
+  "laituri-picking": ["data-analyst"],
+  "ulappa-congress": ["financial-analyst", "sales"],
+  "perusta-delay": ["civil-engineer"],
 };
 
 /** The demo person, Mikko, is an AI developer: his roles are chosen until the visitor picks their own. */
