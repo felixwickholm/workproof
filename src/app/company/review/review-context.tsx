@@ -46,7 +46,11 @@ export function ReviewProvider({ children }: { children: ReactNode }) {
     queue: queue.data,
     error: queue.error,
     loading: queue.loading,
-    retry: queue.retry,
+    // The company list fails together with the queue when the network is down; retry both.
+    retry: () => {
+      if (!companies.data) companies.retry();
+      queue.retry();
+    },
     reload: queue.reload,
     now,
   };

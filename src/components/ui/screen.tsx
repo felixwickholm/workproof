@@ -37,8 +37,12 @@ export function Screen({ children, title, subtitle, back, center, right, bottom,
 
       <main
         className={cx(
-          "flex flex-1 flex-col px-5 pt-3",
-          bottom ? "pb-[calc(112px+env(safe-area-inset-bottom,0px))]" : tabs ? "pb-[calc(96px+env(safe-area-inset-bottom,0px))]" : "pb-10",
+          // Clip sideways so a step sliding in never widens the page on a phone.
+          "flex flex-1 flex-col overflow-x-clip px-5 pt-3",
+          // Below 360px two-button bars stack, so they need more room.
+          bottom
+            ? "pb-[calc(112px+env(safe-area-inset-bottom,0px))] max-[359px]:pb-[calc(176px+env(safe-area-inset-bottom,0px))]"
+            : tabs ? "pb-[calc(96px+env(safe-area-inset-bottom,0px))]" : "pb-10",
         )}
       >
         {title ? (

@@ -70,11 +70,13 @@ const hiddenCopy = {
   talent: {
     label: "Hidden from the reviewer",
     identity: "Your name and contact",
+    nothingFound: "Nothing personal found in your text",
     footer: "Removed before any person at the company sees the work.",
   },
   reviewer: {
     label: "Hidden from you",
     identity: "Name and contact",
+    nothingFound: "Nothing personal found in the text",
     footer: "Removed before you see the work. The name appears only when they accept a meeting.",
   },
 };
@@ -96,6 +98,11 @@ export function BlindProofFull({
   const hidden = hiddenCopy[audience];
   const reduce = useReducedMotion();
   const animate = reveal && !reduce;
+  const found = redactionRows.filter((r) => proof.redactions[r.key] > 0).map((r) => ({ ...r, value: proof.redactions[r.key] }));
+  const rows = [
+    { key: "identity", label: hidden.identity, value: "Not shared" },
+    ...(found.length > 0 ? found : [{ key: "none", label: hidden.nothingFound, value: undefined }]),
+  ];
 
   return (
     <div>
@@ -139,7 +146,7 @@ export function BlindProofFull({
 
       <Section label={hidden.label} className="mt-8">
         <Group footer={hidden.footer}>
-          {[{ key: "identity", label: hidden.identity, value: "Not shared" }, ...redactionRows.map((r) => ({ ...r, value: proof.redactions[r.key] }))].map((r, i) => (
+          {rows.map((r, i) => (
             <motion.div
               key={r.key}
               className="row relative"

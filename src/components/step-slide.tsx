@@ -1,13 +1,32 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
-/** One screen of a step flow. Enters from the side it comes from: forward from the right, back from the left. */
+/**
+ * One screen of a step flow. Enters from the side it comes from: forward from the right, back from the left.
+ * When the step changes and nothing inside took focus, focus moves to the step's heading,
+ * so keyboard and screen reader users start at the top of the new step.
+ */
 export function StepSlide({ stepKey, direction, children }: { stepKey: string | number; direction: 1 | -1; children: ReactNode }) {
   const reduce = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const shown = useRef(stepKey);
+
+  useEffect(() => {
+    if (shown.current === stepKey) return;
+    shown.current = stepKey;
+    const box = ref.current;
+    if (!box || box.contains(document.activeElement)) return;
+    const heading = box.querySelector<HTMLElement>("h1");
+    if (!heading) return;
+    heading.tabIndex = -1;
+    heading.focus({ preventScroll: true });
+  }, [stepKey]);
+
   return (
     <motion.div
+      ref={ref}
       key={stepKey}
       initial={reduce ? { opacity: 0 } : { opacity: 0, x: 24 * direction }}
       animate={{ opacity: 1, x: 0 }}

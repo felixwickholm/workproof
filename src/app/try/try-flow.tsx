@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { useRef, useState, type ReactNode } from "react";
 import { AnswerQuote } from "@/components/answer-quote";
 import { BlindProofFull } from "@/components/blind-proof";
 import { StepSlide } from "@/components/step-slide";
@@ -13,7 +14,9 @@ import { StepProgress } from "@/components/ui/step-progress";
 import { TimerChip } from "@/components/ui/timer-chip";
 import { api, errorText } from "@/lib/client/api";
 import { getSavedIdentity, getTalentId, saveIdentity } from "@/lib/client/local";
+import { backInFlow, useFlowHistory } from "@/lib/client/use-flow-history";
 import type { BlindProof, Challenge } from "@/lib/domain/types";
+import { LIMITS } from "@/lib/http/limits";
 
 const suggestions = ["AI engineer", "Backend developer", "Data scientist", "Product manager", "UX designer", "Robotics engineer"];
 
@@ -21,6 +24,7 @@ type Step = "job" | "task" | "explain" | "name" | "result";
 const order: Step[] = ["job", "task", "explain", "name", "result"];
 
 export function TryFlow() {
+  const router = useRouter();
   const [step, setStep] = useState<Step>("job");
   const [direction, setDirection] = useState<1 | -1>(1);
   const [busy, setBusy] = useState(false);
@@ -44,7 +48,11 @@ export function TryFlow() {
     window.scrollTo({ top: 0 });
   };
 
+  /** One request at a time: a double tap or a repeated Enter never sends twice. */
+  const inFlight = useRef(false);
   async function run(action: () => Promise<void>) {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -52,6 +60,7 @@ export function TryFlow() {
     } catch (e) {
       setError(errorText(e));
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
@@ -59,7 +68,7 @@ export function TryFlow() {
   const startTask = () =>
     run(async () => {
       const job = dreamJob.trim();
-      if (!job) return;
+      if (job.length < 2) return;
       if (!challenge || job !== taskFor) {
         const next = await api.taster(job);
         setChallenge(next);
@@ -95,13 +104,21 @@ export function TryFlow() {
       go("result");
     });
 
+  // The browser's back and forward move between steps. A sent proof cannot be reopened for editing.
+  useFlowHistory(step, (popped) => {
+    const next = popped as Step;
+    if (proof && next !== "result") return router.replace("/passport");
+    const ready = next === "job" || (next === "task" && challenge) || ((next === "explain" || next === "name") && question);
+    if (order.includes(next) && ready) go(next);
+  });
+
   const index = order.indexOf(step);
   const back =
     step === "job"
       ? { href: "/" }
       : step === "result"
         ? undefined
-        : { onBack: () => go(order[index - 1]) };
+        : { onBack: () => backInFlow(() => go(order[index - 1])) };
 
   const errorLine = error ? (
     <p role="alert" className="text-footnote mb-3 text-center text-label-2">
@@ -122,6 +139,7 @@ export function TryFlow() {
           value={dreamJob}
           onChange={setDreamJob}
           placeholder="For example, AI engineer"
+          maxLength={LIMITS.dreamJob}
           autoFocus
           onEnter={startTask}
         />
@@ -146,7 +164,7 @@ export function TryFlow() {
     bottom = (
       <>
         {errorLine}
-        <Button onClick={startTask} disabled={!dreamJob.trim()} loading={busy}>
+        <Button onClick={startTask} disabled={dreamJob.trim().length < 2} loading={busy}>
           {busy ? "Making your task" : "Continue"}
         </Button>
       </>
@@ -159,7 +177,7 @@ export function TryFlow() {
         <StepTitle>{challenge.title}</StepTitle>
         <TaskMaterial challenge={challenge} />
         <div className="mt-5">
-          <TextArea label="Your answer" hideLabel value={answer} onChange={setAnswer} placeholder="Write your answer" minRows={5} />
+          <TextArea label="Your answer" hideLabel value={answer} onChange={setAnswer} placeholder="Write your answer" minRows={5} maxLength={LIMITS.answer} />
           {challenge.aiAllowed ? (
             <p className="text-footnote mt-2 px-4 text-label-2">AI allowed. Use it the way you would at work.</p>
           ) : null}
@@ -181,7 +199,7 @@ export function TryFlow() {
       <>
         <StepTitle long={question.length > 60}>{question}</StepTitle>
         <AnswerQuote text={answer} />
-        <TextArea label="Your explanation" hideLabel value={explain} onChange={setExplain} placeholder="A few sentences is enough" autoFocus />
+        <TextArea label="Your explanation" hideLabel value={explain} onChange={setExplain} placeholder="A few sentences is enough" maxLength={LIMITS.explain} autoFocus />
       </>
     );
     bottom = (
@@ -200,7 +218,7 @@ export function TryFlow() {
         <StepTitle sub="So the company can greet you, if you both say yes. You can skip this.">
           What&apos;s your first name?
         </StepTitle>
-        <Field label="First name" hideLabel value={name} onChange={setName} placeholder="First name" autoComplete="given-name" autoFocus onEnter={submitProof} />
+        <Field label="First name" hideLabel value={name} onChange={setName} placeholder="First name" autoComplete="given-name" maxLength={LIMITS.name} autoFocus onEnter={submitProof} />
       </>
     );
     bottom = (
@@ -221,11 +239,11 @@ export function TryFlow() {
       </>
     );
     bottom = (
-      <div className="flex gap-3">
-        <Button href="/passport" variant="secondary" className="w-auto! px-6">
+      <div className="flex flex-col-reverse gap-2 min-[360px]:flex-row min-[360px]:gap-3">
+        <Button href="/passport" variant="secondary" className="min-[360px]:w-auto! min-[360px]:px-6">
           My proofs
         </Button>
-        <Button href="/challenges" className="flex-1">
+        <Button href="/challenges" className="min-[360px]:flex-1">
           See real challenges
         </Button>
       </div>

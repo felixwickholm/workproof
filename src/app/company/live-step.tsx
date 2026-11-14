@@ -26,11 +26,11 @@ export function liveStep({ challenge, companies, onStartOver }: { challenge: Cha
     </>
   );
   const bottom = (
-    <div className="flex gap-3">
-      <Button href={`/challenges/${challenge.id}`} variant="secondary" className="w-auto! px-6">
+    <div className="flex flex-col-reverse gap-2 min-[360px]:flex-row min-[360px]:gap-3">
+      <Button href={`/challenges/${challenge.id}`} variant="secondary" className="min-[360px]:w-auto! min-[360px]:px-6">
         Open task
       </Button>
-      <Button href="/company/review" className="flex-1">
+      <Button href="/company/review" className="min-[360px]:flex-1">
         Review queue
       </Button>
     </div>

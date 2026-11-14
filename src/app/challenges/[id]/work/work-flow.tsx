@@ -1,6 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { use, useEffect, useRef, useState, type ReactNode } from "react";
 import { AnswerQuote } from "@/components/answer-quote";
 import { BlindProofFull } from "@/components/blind-proof";
@@ -19,8 +20,10 @@ import { Switch } from "@/components/ui/switch";
 import { TimerChip } from "@/components/ui/timer-chip";
 import { api, errorText } from "@/lib/client/api";
 import { clearDraft, getSavedIdentity, getTalentId, loadDraft, saveDraft, saveIdentity } from "@/lib/client/local";
+import { backInFlow, useFlowHistory } from "@/lib/client/use-flow-history";
 import { useResource } from "@/lib/client/use-resource";
 import type { BlindProof } from "@/lib/domain/types";
+import { LIMITS } from "@/lib/http/limits";
 
 type Step = "work" | "q0" | "q1" | "identity" | "result";
 const order: Step[] = ["work", "q0", "q1", "identity", "result"];
@@ -33,6 +36,7 @@ const nextSteps = [
 
 export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const [step, setStep] = useState<Step>("work");
   const [direction, setDirection] = useState<1 | -1>(1);
   const [busy, setBusy] = useState(false);
@@ -75,11 +79,17 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
     return loaded;
   }, [id]);
 
-  // Autosave the draft while the person works.
+  // Autosave the draft while the person works, and once more when the page goes away,
+  // so a reload right after typing keeps the last words too.
   useEffect(() => {
     if (!restored || step === "result") return;
-    const t = window.setTimeout(() => saveDraft(id, { answer, explain, startedAt }), 300);
-    return () => window.clearTimeout(t);
+    const save = () => saveDraft(id, { answer, explain, startedAt });
+    const t = window.setTimeout(save, 300);
+    window.addEventListener("pagehide", save);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener("pagehide", save);
+    };
   }, [id, answer, explain, startedAt, restored, step]);
 
   const go = (next: Step) => {
@@ -89,7 +99,11 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
     window.scrollTo({ top: 0 });
   };
 
+  /** One request at a time: a double tap or a repeated Enter never sends twice. */
+  const inFlight = useRef(false);
   async function run(action: () => Promise<void>) {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -97,9 +111,19 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
     } catch (e) {
       setError(errorText(e));
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
+
+  // The browser's back and forward move between steps. A sent proof cannot be reopened for editing.
+  useFlowHistory(step, (popped) => {
+    const next = popped as Step;
+    setConfirmOpen(false);
+    if (proof && next !== "result") return router.replace("/passport");
+    const ready = next === "work" || (next === "q0" && questions.length > 0) || (next === "q1" && questions.length > 1) || (next === "identity" && questions.length > 0);
+    if (order.includes(next) && ready) go(next);
+  });
 
   if (!challenge) {
     return (
@@ -110,7 +134,7 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
             <div className="mt-6 h-48 rounded-inner bg-surface" />
           </div>
         ) : (
-          <ErrorState error={loadError} what="this task" onRetry={retry} />
+          <ErrorState error={loadError} what="this task" onRetry={retry} away={{ href: "/challenges", label: "See open challenges" }} />
         )}
       </Screen>
     );
@@ -156,7 +180,7 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
         <StepTitle>{challenge.title}</StepTitle>
         <TaskMaterial challenge={challenge} />
         <div className="mt-5">
-          <TextArea label="Your answer" hideLabel value={answer} onChange={setAnswer} placeholder="Write your answer" minRows={8} />
+          <TextArea label="Your answer" hideLabel value={answer} onChange={setAnswer} placeholder="Write your answer" minRows={8} maxLength={LIMITS.answer} />
           <p className="text-footnote mt-2 px-4 text-label-2">
             {challenge.aiAllowed ? "AI allowed. Use it the way you would at work. " : ""}Your draft saves on this device.
           </p>
@@ -189,6 +213,7 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
           value={explain[i] ?? ""}
           onChange={(v) => setExplainAt(i, v)}
           placeholder="A few sentences is enough"
+          maxLength={LIMITS.explain}
           autoFocus
         />
       </>
@@ -207,8 +232,8 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
           Your name and contact
         </StepTitle>
         <div className="flex flex-col gap-4">
-          <Field label="Name" value={name} onChange={setName} placeholder="Your name" autoComplete="name" />
-          <Field label="Email or phone" type="email" value={contact} onChange={setContact} placeholder="you@example.com" autoComplete="email" />
+          <Field label="Name" value={name} onChange={setName} placeholder="Your name" autoComplete="name" maxLength={LIMITS.name} />
+          <Field label="Email or phone" type="email" value={contact} onChange={setContact} placeholder="you@example.com" autoComplete="email" maxLength={LIMITS.contact} />
         </div>
         <Group className="mt-8" footer="A person there decides. Your name stays hidden the same way.">
           <Row
@@ -253,7 +278,7 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
       ? undefined
       : step === "work"
         ? { href: `/challenges/${challenge.id}` }
-        : { onBack: () => go(order[index - 1]) };
+        : { onBack: () => backInFlow(() => go(order[index - 1])) };
 
   return (
     <>

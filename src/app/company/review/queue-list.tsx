@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import { ChevronDown } from "lucide-react";
+import { useState, type ReactNode } from "react";
 import { Monogram } from "@/components/blind-proof";
 import { CompanySwitcher, CompanySwitcherSkeleton } from "@/components/company/company-switcher";
 import { DecidedDetails, DecisionLine } from "@/components/company/decided-summary";
@@ -13,11 +14,12 @@ import { cx } from "@/components/ui/cx";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tag } from "@/components/ui/tag";
+import type { ReviewQueue } from "@/lib/domain/types";
 import { useReview } from "./review-context";
 
 const href = (proofId: string) => `/company/review/${encodeURIComponent(proofId)}`;
 
-/** The inbox: to review, second look, decided. Always oldest first. */
+/** The inbox: to review and second look, oldest first; then the decided history, newest first. */
 export function QueueList({ selectedId }: { selectedId: string | null }) {
   const { companies, companyId, setCompanyId, company, queue, error, loading, retry, reload, now } = useReview();
   const router = useRouter();
@@ -98,28 +100,56 @@ export function QueueList({ selectedId }: { selectedId: string | null }) {
             {queue.decided.length === 0 ? (
               <Empty>No decisions yet. Each one sends written feedback to the person.</Empty>
             ) : (
-              <ul className="overflow-hidden rounded-card bg-surface">
-                {queue.decided.map((entry) => {
-                  const selected = entry.proof.proofId === selectedId;
-                  return (
-                    <li key={entry.decision.id} className={cx("row relative px-4 pt-3.5 pb-4", selected && "min-[900px]:bg-raised/60")}>
-                      <Link href={href(entry.proof.proofId)} className="-mx-4 -mt-3.5 flex items-center gap-3 px-4 pt-3.5 pb-3">
-                        <Monogram label={entry.proof.label} />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-headline font-semibold">{entry.proof.label}</p>
-                          <DecisionLine entry={entry} />
-                        </div>
-                      </Link>
-                      <DecidedDetails entry={entry} onChanged={reload} />
-                    </li>
-                  );
-                })}
-              </ul>
+              <DecidedList entries={queue.decided} selectedId={selectedId} onChanged={reload} />
             )}
           </Section>
         </div>
       ) : null}
     </div>
+  );
+}
+
+const LATEST = 3;
+
+/** Decisions, newest first. Only the latest few show until the reviewer asks for all. */
+function DecidedList({ entries, selectedId, onChanged }: { entries: ReviewQueue["decided"]; selectedId: string | null; onChanged: () => Promise<void> }) {
+  const [showAll, setShowAll] = useState(false);
+  const newestFirst = [...entries].reverse();
+  const visible = showAll
+    ? newestFirst
+    : newestFirst.filter((entry, i) => i < LATEST || entry.proof.proofId === selectedId);
+  const hidden = newestFirst.length - visible.length;
+
+  return (
+    <ul className="overflow-hidden rounded-card bg-surface">
+      {visible.map((entry) => {
+        const selected = entry.proof.proofId === selectedId;
+        return (
+          <li key={entry.decision.id} className={cx("row relative px-4 pt-3.5 pb-4", selected && "min-[900px]:bg-raised/60")}>
+            <Link href={href(entry.proof.proofId)} className="-mx-4 -mt-3.5 flex items-center gap-3 px-4 pt-3.5 pb-3">
+              <Monogram label={entry.proof.label} />
+              <div className="min-w-0 flex-1">
+                <p className="text-headline font-semibold">{entry.proof.label}</p>
+                <DecisionLine entry={entry} />
+              </div>
+            </Link>
+            <DecidedDetails entry={entry} onChanged={onChanged} />
+          </li>
+        );
+      })}
+      {hidden > 0 ? (
+        <li className="row relative">
+          <button
+            type="button"
+            onClick={() => setShowAll(true)}
+            className="text-body flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-150 active:bg-raised"
+          >
+            Show all {newestFirst.length}
+            <ChevronDown aria-hidden className="size-5 shrink-0 text-label-2" strokeWidth={2.2} />
+          </button>
+        </li>
+      ) : null}
+    </ul>
   );
 }
 

@@ -10,7 +10,8 @@
   --color-raised: #2c2c2e;
   --color-label: #ffffff;
   --color-label-2: rgba(235, 235, 245, 0.6);
-  --color-label-3: rgba(235, 235, 245, 0.3);
+  /* 0.55, not the iOS 0.3: tertiary text still meets WCAG AA (4.5:1) on every surface. */
+  --color-label-3: rgba(235, 235, 245, 0.55);
   --color-separator: rgba(84, 84, 88, 0.65);
   --color-fill: rgba(118, 118, 128, 0.24);
   --color-accent: #30d158;
@@ -62,12 +63,30 @@ html {
   color-scheme: dark;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
+  /* A focused field scrolls clear of the sticky header and the bottom action bar. */
+  scroll-padding-top: 56px;
+  scroll-padding-bottom: 136px;
 }
 
 body {
   background: var(--color-ground);
   color: var(--color-label);
   font-family: var(--font-sans);
+  /* A pasted URL or a long word wraps instead of pushing the page sideways. */
+  overflow-wrap: break-word;
+}
+
+/*
+ * Keyboard focus is always visible. Text fields show focus with their raised background;
+ * headings and sheets that only receive focus from code (tabindex -1) get no ring.
+ */
+:where(a, button, [role="radio"], [role="switch"], [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--color-white);
+  outline-offset: 2px;
+}
+
+:where([tabindex="-1"]):focus {
+  outline: none;
 }
 
 /* Glass: bars, sheets and floating actions only. */

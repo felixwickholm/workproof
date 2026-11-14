@@ -5,6 +5,10 @@ export interface StoryState {
   ended: boolean;
   /** The signal count when the step began; the step moves on when it grows. */
   baseline?: number;
+  /** The label of the proof the visitor sent in the story, so later hints can name it. */
+  proofLabel?: string;
+  /** The bar is folded down to a small pill. */
+  collapsed?: boolean;
 }
 
 const KEY = "tryout.story";

@@ -2,7 +2,7 @@
 
 import { CalendarClock, Check } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { companyApi } from "@/lib/client/api";
 import type { BlindProof, Company, DecisionKind, Meeting } from "@/lib/domain/types";
 import { Monogram } from "../blind-proof";
@@ -11,6 +11,7 @@ import { Field, TextArea } from "../ui/field";
 import { Sheet } from "../ui/sheet";
 import { getReviewer, saveReviewer } from "./company-choice";
 import { companyErrorText } from "./format";
+import { LIMITS } from "@/lib/http/limits";
 
 const MIN_FEEDBACK = 20;
 
@@ -27,10 +28,12 @@ interface Props {
   onClose: () => void;
   /** Called once the decision is saved, before the confirmation shows. */
   onDecided: () => Promise<void>;
+  /** "Done" on the confirmation. Defaults to closing the sheet. */
+  onDone?: () => void;
 }
 
 /** Feedback first, then the decision is sent. Each opening starts with an empty form. */
-export function DecisionSheet({ kind, proof, company, onClose, onDecided }: Props) {
+export function DecisionSheet({ kind, proof, company, onClose, onDecided, onDone = onClose }: Props) {
   const [reviewer, setReviewer] = useState(() => (typeof window === "undefined" ? "" : getReviewer()));
   const [feedback, setFeedback] = useState("");
   const [busy, setBusy] = useState(false);
@@ -53,8 +56,10 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided }: Prop
   const short = MIN_FEEDBACK - feedback.trim().length;
   const ready = reviewer.trim().length > 0 && short <= 0;
 
+  const inFlight = useRef(false);
   async function submit() {
-    if (!openedAs || !ready) return;
+    if (!openedAs || !ready || inFlight.current) return;
+    inFlight.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -66,6 +71,7 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided }: Prop
     } catch (e) {
       setError(companyErrorText(e));
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
@@ -84,10 +90,10 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided }: Prop
     <Sheet open={kind !== null} onClose={onClose} title={title}>
       <div className="-mx-5 max-h-[calc(85dvh-80px)] overflow-y-auto px-5">
         {sent ? (
-          <Sent kind={sent.kind} meeting={sent.meeting} proof={proof} company={company} onDone={onClose} />
+          <Sent kind={sent.kind} meeting={sent.meeting} proof={proof} company={company} onDone={onDone} />
         ) : (
           <div className="flex flex-col gap-4">
-            <Field label="Your name" value={reviewer} onChange={setReviewer} placeholder="Reviewer name" autoComplete="name" />
+            <Field label="Your name" value={reviewer} onChange={setReviewer} placeholder="Reviewer name" autoComplete="name" maxLength={LIMITS.reviewer} />
             <div>
               <TextArea
                 label={decision === "meet" ? "Why you want to meet" : "Feedback for them"}
@@ -95,6 +101,7 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided }: Prop
                 onChange={setFeedback}
                 placeholder="Two honest lines about the work"
                 minRows={3}
+                maxLength={LIMITS.feedback}
               />
               <p className="text-footnote mt-2 flex justify-between gap-3 px-4 text-label-2">
                 <span>They will read this. Two honest lines are enough.</span>
@@ -161,7 +168,7 @@ function Sent({ kind, meeting, proof, company, onDone }: { kind: DecisionKind; m
           ) : null}
         </>
       ) : (
-        <p className="text-body text-pretty">If they agreed, similar employers can now give this a second look.</p>
+        <p className="text-body text-pretty">If they agreed, employers with the same skills can now see it under Second look.</p>
       )}
       <Button onClick={onDone} className="mt-6">
         Done

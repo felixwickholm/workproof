@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { useCompanyId } from "@/components/company/company-choice";
 import { companyErrorText } from "@/components/company/format";
@@ -7,6 +8,7 @@ import { StepSlide } from "@/components/step-slide";
 import { Screen } from "@/components/ui/screen";
 import { StepProgress } from "@/components/ui/step-progress";
 import { api, companyApi } from "@/lib/client/api";
+import { backInFlow, useFlowHistory } from "@/lib/client/use-flow-history";
 import { useResource } from "@/lib/client/use-resource";
 import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
 import { draftStep } from "./draft-step";
@@ -17,6 +19,7 @@ type Step = "need" | "draft" | "live";
 const order: Step[] = ["need", "draft", "live"];
 
 export function IntakeFlow() {
+  const router = useRouter();
   const [step, setStep] = useState<Step>("need");
   const [direction, setDirection] = useState<1 | -1>(1);
   const [busy, setBusy] = useState(false);
@@ -40,7 +43,9 @@ export function IntakeFlow() {
     window.scrollTo({ top: 0 });
   };
 
+  /** One request at a time: a double tap never sends twice. */
   async function run(action: () => Promise<void>) {
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
@@ -117,8 +122,15 @@ export function IntakeFlow() {
     ({ content, bottom } = liveStep({ challenge: published, companies: companies.data ?? [], onStartOver: startOver }));
   }
 
+  // The browser's back and forward move between steps. A published card is not edited here again.
+  useFlowHistory(step, (popped) => {
+    const next = popped as Step;
+    if (published && next !== "live") return router.replace("/company/review");
+    if (next === "need" || (next === "draft" && draft)) go(next);
+  });
+
   const index = order.indexOf(step);
-  const back = step === "need" ? { href: "/" } : step === "draft" ? { onBack: () => go("need") } : undefined;
+  const back = step === "need" ? { href: "/" } : step === "draft" ? { onBack: () => backInFlow(() => go("need")) } : undefined;
 
   return (
     <Screen back={back} center={step === "live" ? null : <StepProgress total={2} current={index} />} bottom={bottom}>

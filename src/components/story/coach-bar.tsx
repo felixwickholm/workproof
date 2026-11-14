@@ -3,11 +3,10 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowRight, X } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronUp, X } from "lucide-react";
 import { Children, useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "@/lib/client/api";
 import { cx } from "../ui/cx";
-import { StepProgress } from "../ui/step-progress";
 import { fillSample } from "./fill-sample";
 import { storySteps } from "./steps";
 import { useStory } from "./story-provider";
@@ -18,9 +17,10 @@ const ease = [0.23, 1, 0.32, 1] as const;
 /**
  * The guided story's glass bar. Docked above the page's own bottom bar on phones,
  * bottom right on desktop. It points at the page's action in words and never covers it.
+ * It folds to a small pill on request and whenever the visitor starts typing.
  */
 export function CoachBar() {
-  const { state, next, close, start } = useStory();
+  const { state, next, close, start, setCollapsed } = useStory();
   const pathname = usePathname();
   const router = useRouter();
   const reduce = useReducedMotion() ?? false;
@@ -57,29 +57,57 @@ export function CoachBar() {
     router.push("/");
   }
 
+  // Typing needs the room: fold the bar to its pill when the visitor taps or types in a field.
+  // Autofocus and "Fill in her answer" do not count, so the instruction stays in view.
+  useEffect(() => {
+    if (!state) return;
+    const fold = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (!e.isTrusted || !target || ref.current?.contains(target)) return;
+      if (target.matches("input:not([type=checkbox]):not([type=radio]), textarea")) setCollapsed(true);
+    };
+    document.addEventListener("pointerdown", fold);
+    document.addEventListener("input", fold);
+    return () => {
+      document.removeEventListener("pointerdown", fold);
+      document.removeEventListener("input", fold);
+    };
+  }, [state, setCollapsed]);
+
+  const total = storySteps.length;
+  const collapsed = Boolean(state?.collapsed);
+  const counter = state?.ended ? "The end" : `${(state?.index ?? 0) + 1} of ${total}`;
+
+  const controls = (skip?: () => void) => (
+    <Controls onSkip={skip} onCollapse={() => setCollapsed(true)} onClose={close} />
+  );
+
   let body: ReactNode = null;
   if (state?.ended) {
     body = (
       <>
-        <p className="text-title-3 font-bold">That is Tryout.</p>
-        <p className="text-subhead mt-1 text-label-2">Real work in. A person decides. The city sees what happened.</p>
-        <Actions>
+        <Line counter={counter}>
+          <span className="font-semibold text-label">That is Tryout.</span>{" "}
+          <span className="text-label-2">Real work in. A person decides. The city sees what happened.</span>
+        </Line>
+        <Actions trailing={controls()}>
           <Pill onClick={startAgain} disabled={resetting}>
             {resetting ? "Resetting" : "Start again"}
-          </Pill>
-          <Pill quiet onClick={close}>
-            Close
           </Pill>
         </Actions>
       </>
     );
   } else if (step && state) {
-    const hint = here ? step.hint?.(pathname) : undefined;
+    const hint = here ? step.hint?.(pathname, { proofLabel: state.proofLabel }) : undefined;
+    // Skipping the work itself would leave the later steps without her proof.
+    const canSkip = here && !step.next && !step.sampleFill;
     body = (
       <>
-        <p className="text-body font-medium text-pretty">{step.text}</p>
-        {hint ? <p className="text-subhead mt-1 text-label-2 text-pretty">{hint}</p> : null}
-        <Actions>
+        <Line counter={counter}>
+          <span className="font-medium text-label">{step.text}</span>
+          {hint ? <span className="text-label-2"> {hint}</span> : null}
+        </Line>
+        <Actions trailing={controls(canSkip ? next : undefined)}>
           {!here ? (
             <Pill href={step.go.href}>{step.go.label}</Pill>
           ) : step.next ? (
@@ -99,10 +127,6 @@ export function CoachBar() {
     );
   }
 
-  const total = storySteps.length;
-  const canSkip = Boolean(step && here && !step.next);
-  const current = state ? (state.ended ? total : state.index) : 0;
-
   return (
     <AnimatePresence>
       {state ? (
@@ -112,8 +136,10 @@ export function CoachBar() {
           aria-label="Story guide"
           aria-live="polite"
           className={cx(
-            "glass highlight fixed inset-x-3 z-30 mx-auto max-w-[416px] rounded-card px-4 pt-3 pb-4",
-            "min-[900px]:inset-x-auto min-[900px]:right-6 min-[900px]:w-[380px]",
+            "glass highlight fixed z-30",
+            collapsed
+              ? "right-3 rounded-full min-[900px]:right-6"
+              : "inset-x-3 mx-auto max-w-[416px] rounded-card px-4 pb-1.5 min-[900px]:inset-x-auto min-[900px]:right-6 min-[900px]:w-[380px]",
             hidden && "pointer-events-none opacity-0",
           )}
           style={{
@@ -126,43 +152,76 @@ export function CoachBar() {
           exit={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }}
           transition={{ duration: 0.24, ease }}
         >
-          <div className="flex items-center gap-3">
-            <p className="text-footnote tnum shrink-0 font-semibold text-label-2">
-              {state.ended ? "The end" : `Step ${state.index + 1} of ${total}`}
-            </p>
-            <StepProgress total={total} current={current} className="max-w-none flex-1" />
-            {canSkip ? (
-              <button type="button" onClick={next} className="press text-footnote -mr-2 flex h-11 items-center px-2 font-semibold text-label-2">
-                Skip
-              </button>
-            ) : null}
+          {collapsed ? (
             <button
               type="button"
-              onClick={close}
-              aria-label="Close the story"
-              className="press -mr-2 flex size-11 shrink-0 items-center justify-center text-label-2"
+              onClick={() => setCollapsed(false)}
+              aria-expanded={false}
+              aria-label={`Story guide, step ${counter}. Show`}
+              className="press text-footnote tnum flex h-11 items-center gap-1.5 rounded-full pr-3 pl-4 font-semibold text-label"
             >
-              <X aria-hidden className="size-5" strokeWidth={2.2} />
+              {state.ended ? "The end" : `Step ${counter}`}
+              <ChevronUp aria-hidden className="size-4 text-label-2" strokeWidth={2.4} />
             </button>
-          </div>
-          <motion.div
-            key={state.ended ? "end" : state.index}
-            initial={reduce ? false : { opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2, ease }}
-          >
-            {body}
-          </motion.div>
+          ) : (
+            <motion.div
+              key={state.ended ? "end" : state.index}
+              initial={reduce ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2, ease }}
+            >
+              {body}
+            </motion.div>
+          )}
         </motion.div>
       ) : null}
     </AnimatePresence>
   );
 }
 
-/** A row of pills; renders nothing when every child is empty. */
-function Actions({ children }: { children: ReactNode }) {
+/** The step and its hint in one short paragraph. */
+function Line({ counter, children }: { counter: string; children: ReactNode }) {
+  return (
+    <p className="text-subhead pt-3 pb-1 text-pretty">
+      <span className="tnum mr-1.5 font-semibold text-label-2">{counter}</span>
+      {children}
+    </p>
+  );
+}
+
+/** Pills on the left, skip, fold and close on the right, all in one row. */
+function Actions({ children, trailing }: { children: ReactNode; trailing: ReactNode }) {
   const items = Children.toArray(children);
-  return items.length ? <div className="mt-3 flex flex-wrap gap-2">{items}</div> : null;
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {items}
+      <div className="-mr-2 ml-auto flex shrink-0 items-center">{trailing}</div>
+    </div>
+  );
+}
+
+function Controls({ onSkip, onCollapse, onClose }: { onSkip?: () => void; onCollapse: () => void; onClose: () => void }) {
+  return (
+    <>
+      {onSkip ? (
+        <button type="button" onClick={onSkip} className="press text-footnote flex h-11 items-center px-3 font-semibold text-label-2">
+          Skip
+        </button>
+      ) : null}
+      <button
+        type="button"
+        onClick={onCollapse}
+        aria-expanded
+        aria-label="Fold the story guide"
+        className="press flex size-11 items-center justify-center text-label-2"
+      >
+        <ChevronDown aria-hidden className="size-5" strokeWidth={2.2} />
+      </button>
+      <button type="button" onClick={onClose} aria-label="Close the story" className="press flex size-11 items-center justify-center text-label-2">
+        <X aria-hidden className="size-5" strokeWidth={2.2} />
+      </button>
+    </>
+  );
 }
 
 function Pill({

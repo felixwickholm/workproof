@@ -28,7 +28,7 @@ export function ChallengeDetail({ params }: { params: Promise<{ id: string }> })
   if (!data) {
     return (
       <Screen back={back}>
-        <ErrorState error={error} what="this challenge" onRetry={retry} />
+        <ErrorState error={error} what="this challenge" onRetry={retry} away={{ href: "/challenges", label: "See open challenges" }} />
       </Screen>
     );
   }

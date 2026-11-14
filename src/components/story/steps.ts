@@ -15,7 +15,7 @@ export interface StoryStep {
   /** Where to go when the visitor is somewhere else. */
   go: { label: string; href: string };
   /** What to tap, in words. Never covers the page's own action. */
-  hint?: (path: string) => string;
+  hint?: (path: string, story: { proofLabel?: string }) => string;
   /** An informational step moves on with this button. `href` also navigates. */
   next?: { label: string; href?: string };
   /** Move on when the visitor reaches a page that belongs to the next step. */
@@ -51,7 +51,7 @@ export const storySteps: StoryStep[] = [
     text: "She does the work. AI is allowed. The task asks for judgment.",
     at: isWork,
     go: { label: "Open the task", href: "/challenges/ch-tuulos-ml/work" },
-    hint: () => "Write an answer or fill in hers, then use the white button below until you submit.",
+    hint: () => "Write an answer or fill in hers. Then tap the white button below until it is sent.",
     signal: "proofs",
     sampleFill: true,
   },
@@ -65,10 +65,13 @@ export const storySteps: StoryStep[] = [
   },
   {
     id: "review",
-    text: "Tuulos Robotics reads it blind and passes, with feedback. Another employer with the same skills takes a Second Look and says Meet.",
+    text: "Tuulos Robotics reads it blind and passes. Saarnivo Grid needs the same skills, takes a Second look and says Meet.",
     at: (p) => p.startsWith("/company/review"),
     go: { label: "Open the company view", href: "/company/review" },
-    hint: () => "Open her proof and pass. Switch company, then tap Meet.",
+    hint: (_, { proofLabel }) => {
+      const proof = proofLabel ?? "her proof";
+      return `As Tuulos, open ${proof} under To review and tap Pass. Then switch to Saarnivo, open ${proof} under Second look and tap Meet.`;
+    },
     signal: "meets",
   },
   {

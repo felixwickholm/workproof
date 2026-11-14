@@ -6,6 +6,7 @@ import { cx } from "@/components/ui/cx";
 import { TextArea } from "@/components/ui/field";
 import { StepTitle } from "@/components/ui/screen";
 import type { Company } from "@/lib/domain/types";
+import { LIMITS } from "@/lib/http/limits";
 
 /** Needs written the way companies write them. The last one is a full wish list, so the trim is visible. */
 const examples = [
@@ -48,6 +49,7 @@ export function needStep({ need, onNeed, companies, companyId, onCompany, busy, 
         onChange={onNeed}
         placeholder="For example: ML engineer for our pick robots who can check how our grasp model is tested"
         minRows={4}
+        maxLength={LIMITS.need}
       />
       <div className="mt-4 flex flex-wrap gap-2">
         {examples.map((e) => (

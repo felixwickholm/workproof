@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 interface Props {
   open: boolean;
@@ -14,12 +14,38 @@ interface Props {
 export function Sheet({ open, onClose, title, children }: Props) {
   const reduce = useReducedMotion();
 
+  const dialog = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  useEffect(() => {
+    closeRef.current = onClose;
+  });
+
+  // Keyboard: focus moves into the sheet, Tab stays inside it, Escape closes, and focus returns after.
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const opener = document.activeElement as HTMLElement | null;
+    dialog.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return closeRef.current();
+      if (e.key !== "Tab" || !dialog.current) return;
+      const items = dialog.current.querySelectorAll<HTMLElement>("button:not(:disabled), input, textarea, a[href]");
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog.current)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      opener?.focus?.();
+    };
+  }, [open]);
 
   return (
     <AnimatePresence>
@@ -36,10 +62,12 @@ export function Sheet({ open, onClose, title, children }: Props) {
             onClick={onClose}
           />
           <motion.div
+            ref={dialog}
             role="dialog"
             aria-modal="true"
             aria-label={title}
-            className="glass highlight absolute inset-x-0 bottom-0 mx-auto w-full max-w-[440px] rounded-t-sheet px-5 pt-2 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
+            tabIndex={-1}
+            className="glass highlight absolute inset-x-0 bottom-0 mx-auto w-full max-w-[440px] rounded-t-sheet px-5 outline-none pt-2 pb-[calc(16px+env(safe-area-inset-bottom,0px))]"
             initial={reduce ? { opacity: 0 } : { y: "100%" }}
             animate={reduce ? { opacity: 1 } : { y: 0 }}
             exit={reduce ? { opacity: 0 } : { y: "100%" }}

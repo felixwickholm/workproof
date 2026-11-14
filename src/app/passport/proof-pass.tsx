@@ -1,7 +1,7 @@
 "use client";
 
 import { Clock, Eye } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { formatLabel } from "@/components/problem-card";
 import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/card";
@@ -24,11 +24,13 @@ export function ProofPass({ entry, onChanged }: { entry: PassportEntry; onChange
         <span aria-hidden className="flex size-11 shrink-0 items-center justify-center rounded-inner bg-raised font-mono text-subhead font-semibold">
           {code}
         </span>
-        <p className="text-headline flex-1 font-semibold">{proof.label}</p>
-        <p className="text-subhead tnum flex items-center gap-1.5 text-label-2">
-          <Eye aria-hidden className="size-4" strokeWidth={1.8} />
-          Seen by {seenByHumans} {seenByHumans === 1 ? "human" : "humans"}
-        </p>
+        <div className="min-w-0 flex-1">
+          <p className="text-headline font-semibold">{proof.label}</p>
+          <p className="text-subhead tnum flex items-center gap-1.5 text-label-2">
+            <Eye aria-hidden className="size-4 shrink-0" strokeWidth={1.8} />
+            Seen by {seenByHumans} {seenByHumans === 1 ? "human" : "humans"}
+          </p>
+        </div>
       </header>
 
       <div className="px-5 pt-4 pb-5">
@@ -57,7 +59,7 @@ export function ProofPass({ entry, onChanged }: { entry: PassportEntry; onChange
         {sharedWith.length > 0 ? (
           <li className="row relative px-5 py-3">
             <p className="text-subhead text-label-2">
-              Also shown to: <span className="text-label">{sharedWith.join(", ")}</span> (Second Look)
+              Also shown to: <span className="text-label">{sharedWith.join(", ")}</span> (Second look)
             </p>
           </li>
         ) : null}
@@ -93,7 +95,10 @@ function ResponseRow({ response, onChanged }: { response: Response; onChanged: (
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const inFlight = useRef(false);
   async function act(action: () => Promise<unknown>) {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -102,6 +107,7 @@ function ResponseRow({ response, onChanged }: { response: Response; onChanged: (
     } catch (e) {
       setError(errorText(e));
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
@@ -139,7 +145,7 @@ function ResponseRow({ response, onChanged }: { response: Response; onChanged: (
         <div className="min-w-0 flex-1">
           <p className="text-body text-pretty">{companyName}</p>
           <div className="mt-0.5">{status}</div>
-          {viaSecondLook ? <p className="text-footnote text-label-2">Via Second Look</p> : null}
+          {viaSecondLook ? <p className="text-footnote text-label-2">Via Second look</p> : null}
         </div>
         {action}
       </div>

@@ -2,17 +2,18 @@
 
 import { useEffect, useState, type RefObject } from "react";
 
-/** The nearest ancestor (or self) fixed to the viewport. */
+/** The nearest ancestor (or self) pinned to the viewport: fixed, or sticky like the review action bar. */
 function fixedBox(el: Element | null): HTMLElement | null {
   for (let node = el; node && node !== document.body; node = node.parentElement) {
-    if (getComputedStyle(node).position === "fixed") return node as HTMLElement;
+    const position = getComputedStyle(node).position;
+    if (position === "fixed" || position === "sticky") return node as HTMLElement;
   }
   return null;
 }
 
 /**
  * How far the coach bar must sit above the bottom edge to clear the page's own fixed bars
- * (action bar, tab bar). It samples the bottom edge under the coach bar's width, so it works
+ * (action bar, tab bar, sticky decision bar). It samples the bottom edge under the coach bar's width, so it works
  * on any page without knowing its markup. `hidden` is true while a modal sheet is open.
  */
 export function useBottomClearance(ref: RefObject<HTMLElement | null>, active: boolean) {
@@ -50,9 +51,23 @@ export function useBottomClearance(ref: RefObject<HTMLElement | null>, active: b
       setClearance((prev) => (prev === next ? prev : next));
     };
     measure();
+    // Measure again in the next frame whenever the page changes, so a bar that appears
+    // after loading pushes the coach up at once. The interval catches animated bars.
+    let frame = 0;
+    const schedule = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        measure();
+      });
+    };
+    const observer = new MutationObserver(schedule);
+    observer.observe(document.body, { childList: true, subtree: true });
     const id = window.setInterval(measure, 250);
     window.addEventListener("resize", measure);
     return () => {
+      observer.disconnect();
+      window.cancelAnimationFrame(frame);
       window.clearInterval(id);
       window.removeEventListener("resize", measure);
     };

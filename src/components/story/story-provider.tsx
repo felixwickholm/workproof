@@ -14,6 +14,7 @@ interface StoryApi {
   start: () => void;
   next: () => void;
   close: () => void;
+  setCollapsed: (collapsed: boolean) => void;
 }
 
 const StoryContext = createContext<StoryApi | null>(null);
@@ -24,8 +25,10 @@ export function useStory() {
   return ctx;
 }
 
-function goTo(index: number) {
-  storyStore.set(index >= storySteps.length ? { index: storySteps.length - 1, ended: true } : { index, ended: false });
+/** A new step always opens the bar, so its instruction is seen. */
+function goTo(index: number, proofLabel = storyStore.get()?.proofLabel) {
+  const position = index >= storySteps.length ? { index: storySteps.length - 1, ended: true } : { index, ended: false };
+  storyStore.set({ ...position, ...(proofLabel ? { proofLabel } : {}) });
 }
 
 function countSignal(entries: PassportEntry[], signal: Signal) {
@@ -47,7 +50,16 @@ export function StoryProvider({ children }: { children: ReactNode }) {
     if (now) goTo(now.index + 1);
   }, []);
   const value = useMemo(
-    () => ({ state, start: () => goTo(0), next, close: () => storyStore.set(null) }),
+    () => ({
+      state,
+      start: () => storyStore.set({ index: 0, ended: false }),
+      next,
+      close: () => storyStore.set(null),
+      setCollapsed: (collapsed: boolean) => {
+        const now = storyStore.get();
+        if (now && Boolean(now.collapsed) !== collapsed) storyStore.set({ ...now, collapsed });
+      },
+    }),
     [state, next],
   );
 
@@ -74,7 +86,7 @@ function StoryRuntime() {
     if (url.searchParams.get("demo") !== "1") return;
     url.searchParams.delete("demo");
     window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
-    goTo(0);
+    storyStore.set({ index: 0, ended: false });
   }, []);
 
   // Route-based advance.
@@ -89,10 +101,14 @@ function StoryRuntime() {
     let stopped = false;
     const check = async () => {
       try {
-        const count = countSignal(await api.passport(getTalentId()), signal);
+        const entries = await api.passport(getTalentId());
+        const count = countSignal(entries, signal);
         if (stopped) return;
         if (state.baseline === undefined) storyStore.set({ ...state, baseline: count });
-        else if (count > state.baseline) goTo(state.index + 1);
+        else if (count > state.baseline) {
+          // The newest proof is the one sent in the story; later hints name it.
+          goTo(state.index + 1, signal === "proofs" ? entries[0]?.proof.label : state.proofLabel);
+        }
       } catch {
         // Offline for a moment: try again on the next tick.
       }

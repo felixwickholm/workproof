@@ -13,9 +13,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const description = "Skip the CV. Do the work. A person at the company reads it and decides who to meet.";
+
 export const metadata: Metadata = {
   title: "Tryout",
-  description: "Skip the CV. Do the work. 20 minutes of real work. A human decides who to meet.",
+  description,
+  applicationName: "Tryout",
+  openGraph: { title: "Tryout", description, type: "website", siteName: "Tryout" },
+  twitter: { card: "summary", title: "Tryout", description },
 };
 
 export const viewport: Viewport = {

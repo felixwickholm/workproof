@@ -9,6 +9,7 @@ import { CodeBlock } from "@/components/ui/code-block";
 import { Field, TextArea } from "@/components/ui/field";
 import { AiTag } from "@/components/ui/tag";
 import type { ChallengeDraft } from "@/lib/domain/types";
+import { LIMITS } from "@/lib/http/limits";
 
 interface Props {
   draft: ChallengeDraft;
@@ -71,7 +72,7 @@ export function draftStep({ draft, onDraft, companyName, approvedBy, onApprovedB
       </Section>
 
       <Section label="The task">
-        <TextArea label="Brief" hideLabel value={draft.brief} onChange={(brief) => onDraft({ ...draft, brief })} minRows={3} />
+        <TextArea label="Brief" hideLabel value={draft.brief} onChange={(brief) => onDraft({ ...draft, brief })} minRows={3} maxLength={LIMITS.brief} />
         {draft.material ? (
           <div className="mt-3">
             {draft.material.kind === "code" ? (
@@ -104,7 +105,7 @@ export function draftStep({ draft, onDraft, companyName, approvedBy, onApprovedB
   const bottom = (
     <>
       {errorLine}
-      <Field label="Approved by" hideLabel value={approvedBy} onChange={onApprovedBy} placeholder="Approved by (your name)" autoComplete="name" />
+      <Field label="Approved by" hideLabel value={approvedBy} onChange={onApprovedBy} placeholder="Approved by (your name)" autoComplete="name" maxLength={LIMITS.approvedBy} />
       <Button onClick={onPublish} disabled={!ready} loading={busy} className="mt-3">
         Approve and publish
       </Button>

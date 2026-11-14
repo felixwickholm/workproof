@@ -2,7 +2,7 @@
 
 import { CalendarClock, EyeOff } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { companyApi } from "@/lib/client/api";
 import type { ReviewQueue } from "@/lib/domain/types";
 import { Button } from "../ui/button";
@@ -27,8 +27,10 @@ export function DecidedDetails({ entry, onChanged }: { entry: Entry; onChanged: 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const inFlight = useRef(false);
   async function confirmMet() {
-    if (!meeting) return;
+    if (!meeting || inFlight.current) return;
+    inFlight.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -37,6 +39,7 @@ export function DecidedDetails({ entry, onChanged }: { entry: Entry; onChanged: 
     } catch (e) {
       setError(companyErrorText(e));
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }

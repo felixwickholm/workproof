@@ -9,7 +9,7 @@ const tiles: { key: Exclude<keyof Totals, "automatedDecisions">; label: string; 
   { key: "humanDecisions", label: "Human decisions", human: true },
   { key: "meetingsInvited", label: "Meetings invited" },
   { key: "meetingsConfirmedByBoth", label: "Meetings confirmed by both sides" },
-  { key: "secondLookMeetings", label: "Second Look meetings" },
+  { key: "secondLookMeetings", label: "Second look meetings" },
 ];
 
 /** Six outcome numbers and the one that matters most: automated decisions, always zero. */

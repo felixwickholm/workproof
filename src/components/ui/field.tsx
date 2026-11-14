@@ -14,9 +14,11 @@ interface FieldProps {
   /** Hide the label visually; it stays for screen readers. */
   hideLabel?: boolean;
   onEnter?: () => void;
+  /** Match the API limit, so a long paste is cut here instead of failing on send. */
+  maxLength?: number;
 }
 
-export function Field({ label, value, onChange, placeholder, autoFocus, type = "text", autoComplete, hideLabel, onEnter }: FieldProps) {
+export function Field({ label, value, onChange, placeholder, autoFocus, type = "text", autoComplete, hideLabel, onEnter, maxLength }: FieldProps) {
   return (
     <label className="block">
       <span className={cx("text-footnote mb-2 block px-4 text-label-2", hideLabel && "sr-only")}>{label}</span>
@@ -26,6 +28,7 @@ export function Field({ label, value, onChange, placeholder, autoFocus, type = "
         autoFocus={autoFocus}
         autoComplete={autoComplete}
         placeholder={placeholder}
+        maxLength={maxLength}
         enterKeyHint="next"
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
@@ -48,10 +51,11 @@ interface TextAreaProps {
   autoFocus?: boolean;
   minRows?: number;
   hideLabel?: boolean;
+  maxLength?: number;
 }
 
 /** A text area that grows with its content. */
-export function TextArea({ label, value, onChange, placeholder, autoFocus, minRows = 4, hideLabel }: TextAreaProps) {
+export function TextArea({ label, value, onChange, placeholder, autoFocus, minRows = 4, hideLabel, maxLength }: TextAreaProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -69,6 +73,7 @@ export function TextArea({ label, value, onChange, placeholder, autoFocus, minRo
         rows={minRows}
         autoFocus={autoFocus}
         placeholder={placeholder}
+        maxLength={maxLength}
         onChange={(e) => onChange(e.target.value)}
         className="text-body block w-full resize-none overflow-hidden rounded-inner bg-surface px-4 py-3.5 text-label caret-white outline-none placeholder:text-label-3 focus:bg-raised"
       />

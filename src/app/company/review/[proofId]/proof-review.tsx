@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { BlindProofFull } from "@/components/blind-proof";
 import { DecidedDetails, DecisionLine } from "@/components/company/decided-summary";
@@ -21,12 +22,13 @@ import { findInQueue, useReview } from "../review-context";
 export function ProofReview({ params }: { params: Promise<{ proofId: string }> }) {
   const proofId = decodeURIComponent(use(params).proofId);
   const { queue, company, reload, now } = useReview();
+  const router = useRouter();
   const [sheet, setSheet] = useState<DecisionKind | null>(null);
 
   const item = queue ? findInQueue(queue, proofId) : null;
   const challengeId = item?.proof.challengeId ?? null;
   const known = challengeId ? queue?.challenges.find((c) => c.id === challengeId) : undefined;
-  // Second Look proofs come from another company's task, so it is not in this queue.
+  // Second look proofs come from another company's task, so it is not in this queue.
   const fetched = useResource(challengeId && !known ? () => api.challenge(challengeId) : null, [challengeId, Boolean(known)]);
   const challenge = known ?? fetched.data;
 
@@ -107,7 +109,19 @@ export function ProofReview({ params }: { params: Promise<{ proofId: string }> }
         </div>
       )}
 
-      <DecisionSheet key={proof.proofId} kind={sheet} proof={proof} company={company} onClose={() => setSheet(null)} onDecided={reload} />
+      <DecisionSheet
+        key={proof.proofId}
+        kind={sheet}
+        proof={proof}
+        company={company}
+        onClose={() => setSheet(null)}
+        onDecided={reload}
+        onDone={() => {
+          setSheet(null);
+          // On a phone the queue is a separate screen: go back to it for the next proof.
+          if (!window.matchMedia("(min-width: 900px)").matches) router.push("/company/review");
+        }}
+      />
     </div>
   );
 }
