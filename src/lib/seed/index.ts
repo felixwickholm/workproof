@@ -13,6 +13,7 @@ import type { SeedTask } from "./extra-challenges";
 import { mikkoHistory } from "./history";
 import { PEOPLE, PERSONA } from "./people";
 import { AUTOMATION_PROOFS } from "./proofs/automation";
+import { BACKEND_PROOFS } from "./proofs/backend";
 import { CHIP_PROOFS } from "./proofs/chip";
 import { DATA_PROOFS } from "./proofs/data";
 import { ENGINEERING_PROOFS } from "./proofs/engineering";
@@ -49,6 +50,7 @@ export const WORLD_PROOFS: readonly SeedProof[] = [
   ...PRODUCT_AND_DESIGN_PROOFS,
   ...RESEARCH_PROOFS,
   ...EXTRA_PROOFS,
+  ...BACKEND_PROOFS,
 ];
 
 /** The proofs that exist at a story stage, oldest first, the way they arrived. */

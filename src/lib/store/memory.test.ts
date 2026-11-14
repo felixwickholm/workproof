@@ -39,10 +39,10 @@ describe("seed", () => {
   const storyProof = (seed: typeof data) =>
     seed.submissions.find((s) => s.talentId === seed.demo.personaTalentId && s.challengeId === STORY_CHALLENGE_ID);
 
-  it("is synthetic Espoo Talent Day with 18 employers, 30 live tasks and about 75 proofs", () => {
+  it("is synthetic Espoo Talent Day with 28 employers, 40 live tasks and about 80 proofs", () => {
     expect(data.event.name).toBe("Espoo Talent Day");
-    expect(data.companies).toHaveLength(18);
-    expect(data.challenges.filter((c) => c.kind === "event" && c.approvedBy)).toHaveLength(30);
+    expect(data.companies).toHaveLength(28);
+    expect(data.challenges.filter((c) => c.kind === "event" && c.approvedBy)).toHaveLength(40);
     expect(data.challenges.some((c) => c.companyIds.length > 1)).toBe(true);
     expect(data.proofs.length).toBeGreaterThanOrEqual(70);
     expect(new Set(data.decisions.map((d) => `${d.companyId}:${d.reviewer}`)).size).toBeGreaterThanOrEqual(3);

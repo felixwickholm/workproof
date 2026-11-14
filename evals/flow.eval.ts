@@ -50,7 +50,7 @@ describe("Flow: from need to a confirmed Second look meeting", () => {
     await call(resetRoute, { method: "POST" });
     const cityBefore = (await call<CityOverview>(cityRoute)).json;
     const companies = (await call<Company[]>(companiesRoute)).json;
-    step("seed has 18 companies", companies.length === 18);
+    step("seed has 28 companies", companies.length === 28);
 
     const taster = await call<Challenge>(tasterRoute, { body: { dreamJob: "data analyst" } });
     step("taster is a 2-minute task", taster.status === 200 && taster.json.minutes === 2 && taster.json.kind === "taster");
