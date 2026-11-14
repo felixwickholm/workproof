@@ -193,6 +193,9 @@ function withoutRoleLine(need: string, roleKeywords: readonly string[]): string 
   return isRoleLine ? rest.join("\n") : need;
 }
 
+/** The opening of a sentence that tells the situation rather than asks for something. */
+const CONTEXT = /^(?:we|we're|our|it|it's|this|that|they|there|the|nobody|no one|everyone|people|customers|currently|right now|today|now)\b/i;
+
 /**
  * Splits a need into wishes and reads each one. With a library role, the role's skills and cues
  * decide close calls, so a home-care wish about "the day when carers are off sick" is care planning.
@@ -243,6 +246,8 @@ export function parseNeed(need: string, role?: CueRole): ParsedNeed {
       continue;
     }
     if (describesRole) continue;
+    // A sentence about the situation ("We do not yet know why people drop off") is context for the task, not a wish to set aside.
+    if (CONTEXT.test(wish) || wish.split(/\s+/).length > 14) continue;
     const other = readOther(wish);
     otherWishes.push(other.line);
     // A wish that judges a person is never echoed as a reason; it is counted as a wish about the person.
