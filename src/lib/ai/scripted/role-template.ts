@@ -1,0 +1,39 @@
+import type { TaskFormat } from "@/lib/domain/types";
+import type { SkillId } from "@/lib/skills/vocabulary";
+
+/** A flaw planted in the material. Cues let the work summary say which ones an answer names. */
+export interface PlantedFlaw {
+  /** Short noun phrase used in summaries, for example "the missing timeout". */
+  label: string;
+  /** Lowercase words or phrases that show an answer talks about this flaw. */
+  cues: string[];
+}
+
+export interface TaskTemplate {
+  title: string;
+  format: TaskFormat;
+  /** The situation, written like a message from the team. Under 120 words. */
+  brief: string;
+  material: { kind: "code" | "text"; title: string; body: string };
+  deliverable: string;
+  flaws: PlantedFlaw[];
+}
+
+export interface RoleTemplate {
+  id: string;
+  title: string;
+  /** Lowercase match terms, English and Finnish. Short terms (up to 3 letters) match whole words only. */
+  keywords: string[];
+  /** Default core skills, most important first. 4 or 5 ids. */
+  skills: SkillId[];
+  /** Role-specific reasons, replacing the vocabulary default. */
+  why?: Partial<Record<SkillId, string>>;
+  /** Role-specific reviewer notes, replacing the vocabulary default. */
+  lookFor?: Partial<Record<SkillId, string>>;
+  /** Constraints used in follow-up questions: "If <constraint>, what would you change?" */
+  constraints: string[];
+  /** 20-minute event challenge. Material: 12 to 25 lines with 2 or 3 planted flaws. */
+  challenge: TaskTemplate;
+  /** 2-minute taster. Material: at most 10 short lines, one sharp question as the deliverable. */
+  taster: TaskTemplate;
+}
