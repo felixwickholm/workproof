@@ -133,7 +133,7 @@ export function ChallengeDetail({ params }: { params: Promise<{ id: string }> })
               </Fact>
               <Fact term="Time">
                 <span className="tnum font-medium">{challenge.minutes} minutes</span>
-                <span className="text-label-2">You think aloud while you work. No camera.</span>
+                <span className="text-label-2">You write how you think while you work. No camera.</span>
               </Fact>
               <Fact term="Skills scored">
                 <ul className="mt-1 flex flex-wrap gap-1.5">

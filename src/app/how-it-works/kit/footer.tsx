@@ -14,7 +14,7 @@ const BUILT_WITH = [
   "Vitest",
   "Playwright",
   "AI: Claude or Gemini, optional",
-  "Voice: Web Speech API or ElevenLabs, optional",
+  "Voice: planned, not live",
 ] as const;
 
 const FOOT_LINK = "inline-flex min-h-11 items-center text-[16px] font-medium text-label underline-offset-4 hover:underline";

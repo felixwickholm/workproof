@@ -21,7 +21,7 @@ Open the link in a normal browser window. The walkthrough starts by itself on th
 | Cards | Chapter | What you see |
 |---|---|---|
 | 1 to 3 | Job seeker | "This is Mikko. He is looking for a job." The role chips, the challenges from Espoo companies, and the Halla Supply challenge he picks. |
-| 4 and 5 | Job seeker | "He does the work." The work screen plays a sample session. "He says out loud how he thinks." The audio is not kept. |
+| 4 and 5 | Job seeker | "He does the work." The work screen plays a sample session. "He writes down how he thinks." |
 | 6 and 7 | Company | "This is Laura at Halla Supply." She picks who she needs, and the AI drafts the challenge. She checks it, or writes her own. |
 | 8 to 10 | Company | "She reads the work without his name." Points for each skill, with a reason. "She picks who to meet." Then the scorecard: the best work first, by her own points. |
 | 11 to 14 | City of Espoo | "The city sees who is hiring now." WorkProof makes a challenge from a public job ad, and the city invites the company to try it. Then the graph from challenge to hire, and the map of Espoo. |
@@ -37,8 +37,8 @@ Open `/?tour=0` before you start, so the walkthrough does not cover the screen. 
 Say: "This is Mikko. He is looking for work as an AI developer. Companies in Espoo post real challenges from their work." Press the chip "Data analyst". The list now starts with "For your roles".
 
 **0:30 A challenge.** Press the challenge "Find the bug in this model test" (Tuulos Robotics).
-Say: "Each challenge looks like a job listing: the company, the work, the skills it scores." Press "Start challenge". On the work screen, point at "Start", "Voice only" and "Type instead".
-Say: "He can type or talk, and he says out loud how he thinks. No camera, and the audio is not kept."
+Say: "Each challenge looks like a job listing: the company, the work, the skills it scores." Press "Start challenge". On the work screen, point at "Start" and the "Voice coming soon" line.
+Say: "He types his work and a few lines on how he thinks. No camera. Voice is coming soon."
 
 **1:15 His answer.** In the sidebar, press "My work".
 Say: "Mikko did Halla Supply's challenge. Laura Niemi gave points for each skill and wrote why. 9 of 10. People score the work. The AI never does." Press "Say yes".

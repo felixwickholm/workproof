@@ -11,7 +11,7 @@ export const VISITOR = {
 /** Every part of the visitor's identity a company must not read before the invite is accepted. */
 export const SECRETS = ["Veera", "Lindqvist", VISITOR.contact, VISITOR.city, "Turku"];
 
-/** Personal details typed into the work, and said (typed, here) into the think-aloud. */
+/** Personal details typed into the work and into the field for how the person thinks. */
 const LEAK = `I am ${VISITOR.name}, I studied at the ${VISITOR.university} and I live in ${VISITOR.city}.`;
 const WORK =
   `${LEAK} First I list what cannot move and do it first. Then I group the rest so nobody waits, ` +
@@ -57,11 +57,11 @@ async function hasOtherWork(page, c) {
 
 /**
  * Suite 3: the home leads with the role tiles and a job-board list (logo, title, skills, Save); a saved
- * challenge stays on this device. Then a visitor starts as themself, does a Make challenge with the think-aloud typed (no
- * microphone here), puts a name, a city and a university into both the work and the think-aloud,
+ * challenge stays on this device. Then a visitor starts as themself, does a Make challenge by typing (voice is planned,
+ * not live, and no voice error shows anywhere), puts a name, a city and a university into both the work and the thinking,
  * sees the hidden words before sending, sends with sharing left off, and finds the work in My work.
- * One work per person per challenge; a full challenge says so. The sample session plays without a
- * microphone. `journey.planProof` is the sent work, for the next suites.
+ * One work per person per challenge; a full challenge says so. The sample session plays the seeded
+ * thinking as text. `journey.planProof` is the sent work, for the next suites.
  */
 export async function runSeeker(journey) {
   const { page, errors } = journey;
@@ -146,38 +146,36 @@ export async function runSeeker(journey) {
     await page.waitForURL(/\/work$/);
   });
 
-  await suite.step("one screen says what is recorded: the thinking, not the face", async () => {
-    await waitForText(page, "We capture the thinking, not the face.");
+  await suite.step("one screen says what the company reads: the thinking, not the face; voice is coming soon", async () => {
+    await waitForText(page, "We read the thinking, not the face.");
     await waitForText(page, "No camera. Nobody sees your face.");
-    await waitForText(page, "The recording stays on this device. The company gets the words as text.");
-    await checkScreen(page, errors, "think-aloud start");
-    // This browser has no microphone to offer, so the person types what they would say.
-    await visible(page.getByRole("button", { name: "Type instead" })).click();
+    await waitForText(page, "Voice coming soon");
+    expect((await page.getByRole("button", { name: /voice|Type instead/i }).count()) === 0, "a voice control is still offered");
+    await checkScreen(page, errors, "work start");
+    await visible(page.getByRole("button", { name: "Start", exact: true })).click();
     await page.locator('[data-tour="do-challenge"]').waitFor({ timeout: 15_000 });
   });
 
-  await suite.step("the workspace: the recorder pill runs, and I'm done waits for the work", async () => {
-    await visible(page.locator('[data-tour="think-aloud"]')).waitFor();
-    await visible(page.getByRole("status", { name: /Recording your thinking/ })).waitFor();
+  await suite.step("the workspace is typed: no recorder, and I'm done waits for the work", async () => {
+    expect((await page.getByRole("status", { name: /Recording/ }).count()) === 0, "a recorder runs in the typed session");
     await visible(page.getByRole("timer")).waitFor();
     const done = visible(page.getByRole("button", { name: "I'm done" }));
     expect(await done.isDisabled(), "I'm done works before there is any work");
     await type(visible(page.getByRole("textbox", { name: "Your work" })), WORK);
-    await type(visible(page.getByPlaceholder("Type what you would say while you work")), THOUGHTS);
+    await type(visible(page.getByPlaceholder("How you think, in a few lines (optional)")), THOUGHTS);
+    await waitForText(page, "Voice coming soon");
     await checkScreen(page, errors, "work session");
     await done.click();
     await visible(page.getByRole("heading", { name: "Two questions" })).waitFor({ timeout: AI_WAIT_MS });
   });
 
-  await suite.step("two questions: one typed, one through the voice sheet's typed fallback", async () => {
+  await suite.step("two questions, both typed; no voice control or voice error", async () => {
     await type(visible(page.getByRole("textbox", { name: "Answer 1" })), FOLLOW_UPS[0]);
-    await visible(page.getByRole("button", { name: "Say it" }).nth(1)).click();
-    const sheet = page.getByRole("dialog", { name: "Your answer" });
-    await sheet.waitFor();
-    await type(sheet.getByRole("textbox", { name: "Your answer" }), FOLLOW_UPS[1]);
-    await sheet.getByRole("button", { name: "Use this answer" }).click();
-    await sheet.waitFor({ state: "hidden" });
-    expect((await page.getByRole("textbox", { name: "Answer 2" }).inputValue()) === FOLLOW_UPS[1], "the typed voice answer did not land in question 2");
+    await type(visible(page.getByRole("textbox", { name: "Answer 2" })), FOLLOW_UPS[1]);
+    expect((await page.getByRole("textbox", { name: "Answer 2" }).inputValue()) === FOLLOW_UPS[1], "the typed answer did not land in question 2");
+    expect((await page.getByRole("button", { name: /Say it|voice/i }).count()) === 0, "a voice button is still offered");
+    const body = await page.locator("body").innerText();
+    expect(!/voice service|did not answer|microphone/i.test(body), "a voice error shows on the questions step");
     await visible(page.getByRole("button", { name: "Continue" })).click();
   });
 
@@ -198,8 +196,8 @@ export async function runSeeker(journey) {
     await visible(page.getByRole("button", { name: /^See what .+ will read$/ })).click();
     await visible(page.getByRole("heading", { name: "This is what the company will read" })).waitFor({ timeout: 15_000 });
     await waitForText(page, "Something still shows who you are? Go back and remove it.");
-    await visible(page.getByRole("heading", { name: "What you said while working" })).waitFor();
-    // The written side marks each detail the company will not see, in the work and in the think-aloud.
+    await visible(page.getByRole("heading", { name: "How you thought while working" })).waitFor();
+    // The written side marks each detail the company will not see, in the work and in the thinking.
     const marked = await page.locator("main mark").allInnerTexts();
     for (const secret of ["Lindqvist", VISITOR.city]) expect(marked.some((m) => m.includes(secret)), `"${secret}" is not marked as hidden in the preview`);
     page.off("request", watch);
@@ -226,7 +224,7 @@ export async function runSeeker(journey) {
     await page.waitForURL((url) => url.pathname === `/my-work/${journey.planProof.proofId}`);
     await visible(page.locator('[data-tour="my-score"]')).waitFor();
     await waitForText(page, /A person at .+ will score it\. You will see the score and the reason here\./);
-    await visible(page.getByRole("heading", { name: "What I said while working" })).waitFor();
+    await visible(page.getByRole("heading", { name: "How I thought while working" })).waitFor();
     await checkScreen(page, errors, "/my-work/[proofId]");
     await page.goto(`${BASE_URL}/passport`);
     await page.waitForURL((url) => url.pathname === "/my-work");
@@ -276,7 +274,7 @@ export async function runSeeker(journey) {
     await checkScreen(page, errors, "full challenge");
   });
 
-  await suite.step("the sample session plays on the real screen, without a microphone", async () => {
+  await suite.step("the sample session plays on the real screen, as text", async () => {
     // The sample plays a seeded work's think-aloud; a challenge without one offers the person's own session instead.
     const options = (await challenges(page)).filter((c) => c.format === "choose" && c.options);
     const samples = await Promise.all(options.map((c) => hasSample(page, c)));
@@ -286,7 +284,7 @@ export async function runSeeker(journey) {
     if (bare) {
       await page.goto(`${BASE_URL}/challenges/${bare.id}/work?demo=1`);
       await visible(page.getByRole("button", { name: "Try it yourself" })).click();
-      await waitForText(page, "We capture the thinking, not the face.");
+      await waitForText(page, "We read the thinking, not the face.");
     }
     await page.goto(`${BASE_URL}/challenges/${choose.id}/work?demo=1`);
     await waitForText(page, "Sample session");

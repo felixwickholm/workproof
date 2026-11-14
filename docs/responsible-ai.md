@@ -50,7 +50,7 @@ The audit log records: AI drafts and follow-up questions, details hidden per pro
 - The person's key stays in their browser (`src/lib/client/local.ts`) and is never in an address: it travels in a header on reads and table answers, and in the request body on submissions, meeting answers and sharing changes (`src/lib/http/talent-key.ts`). No company or city response carries it: 0 of 47 in eval 4.
 - The table's big screen shows labels, tasks and counts, never a visitor's free text, and a name only after its person accepted on the phone. A visitor can decline; the name then never shows.
 - Photos are re-encoded in the browser to a JPEG without metadata (`src/components/seeker/picture.ts`); the server refuses a JPEG that still carries an EXIF or XMP segment (`src/lib/http/jpeg.ts`).
-- Voice: WorkProof stores only the transcript. With a server key, audio goes once to the speech service; WorkProof does not save it, and the speech service's own retention is outside this code (`src/lib/voice/server/elevenlabs.ts`). Browser speech recognition may send audio to the browser vendor's service; the voice sheet says so.
+- Voice is planned, not live: every answer is typed, and no screen asks for a microphone. The planned server route keeps the rule that audio is never stored: it passes audio once to the speech service and returns only text (`src/lib/voice/server/elevenlabs.ts`). The speech service's own retention is outside this code.
 - The city dashboard shows counts and proof labels, never people. The meeting export carries slots and labels, never names.
 - Not built: retention periods and deletion on request. A pilot needs both.
 

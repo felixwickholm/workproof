@@ -29,7 +29,7 @@ export async function runLaptop(browser, device, name) {
     const challenge = (await apiJson(page, "/api/challenges")).find((c) => c.format === "read" && c.material?.image);
     expect(challenge, "no Read challenge has a chart");
     await page.goto(`${BASE_URL}/challenges/${encodeURIComponent(challenge.id)}/work`);
-    await visible(page.getByRole("button", { name: "Type instead" })).click();
+    await visible(page.getByRole("button", { name: "Start", exact: true })).click();
     const chart = visible(page.locator(`img[src="${challenge.material.image}"]`));
     await chart.waitFor({ timeout: 15_000 });
     expect(await chart.evaluate((img) => img.complete && img.naturalWidth > 0), "the chart image did not load");

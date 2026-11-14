@@ -24,7 +24,7 @@ interface Props {
 
 /**
  * The work as the reviewer reads it, without the name: the choice for a Choose challenge, the answer,
- * what the person said while working, and their two follow-up answers. Every removed detail shows as
+ * how the person thought while working, and their two follow-up answers. Every removed detail shows as
  * a "hidden" bar. A toggle underlines the sentences software linked to one skill.
  */
 export function WorkPane({ proof, challenge, related, pictureReport }: Props) {
@@ -77,7 +77,7 @@ export function WorkPane({ proof, challenge, related, pictureReport }: Props) {
       </Part>
 
       {proof.thinkAloud ? (
-        <Part title="What they said while working" note={`${Math.max(1, Math.round(proof.thinkAloud.seconds / 60))} min, shown as text.`}>
+        <Part title="How they thought while working" note={`${Math.max(1, Math.round(proof.thinkAloud.seconds / 60))} min, shown as text.`}>
           {proof.thinkAloud.screen ? <AttachmentView attachment={proof.thinkAloud.screen} className="mb-4" /> : null}
           <MarkedText text={proof.thinkAloud.transcript} quotes={quotes} />
         </Part>

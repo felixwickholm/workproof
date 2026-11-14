@@ -12,7 +12,7 @@ import { runSeeker } from "./suites/seeker.mjs";
 /**
  * Suites 3, 4, 5 and 7 are one person's story in one browser, so one demo event: the work seeker
  * sends, the employer decides, the person accepts and the city counts it. The context has no
- * speech recognition, like headless Chromium, so the voice sheet's typed fallback is used.
+ * speech recognition, like headless Chromium; every flow is typed, since voice is not live.
  */
 async function runJourney(browser, phone) {
   const visitor = await openVisitor(browser, phone, "3 Work seeker", { speech: false });

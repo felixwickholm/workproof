@@ -35,7 +35,7 @@ src/lib/service        rules: challenges, submissions, decisions, meetings, shar
 src/lib/blind          redaction rules, "At a glance" line, allow-list projection to BlindProof
 src/lib/guard          no-judgement guard, protected attributes, draft checks, text normalising
 src/lib/ai             scripted designer (default), Claude and Gemini adapters, provider layer, breaker, guarded wrapper
-src/lib/voice          voice adapters (browser, ElevenLabs, typed) and the server proxy for ElevenLabs
+src/lib/voice          planned voice (not live): adapters and the server proxy for ElevenLabs; no screen calls them. The UI shows `VoiceSoon`
 src/lib/store          in-memory store, per-visitor sandbox registry, cookie helpers
 src/lib/seed           the synthetic Espoo Talent Day and Mikko's story stages
 src/lib/http           request limits, zod schemas, JPEG check, rate guard, responses
@@ -58,7 +58,7 @@ docs                   architecture, evals, responsible AI, demo script, screens
 | Code under `src/lib` never imports from `src/components`. | folder rule | review |
 | Work waiting to be read is in arrival order. The only other order is a task's top work: scored proofs by the reviewers' own totals, highest first, ties by arrival. Software adds no order of its own. | `src/lib/service/views/queue.ts` (`byArrival`), `src/lib/service/views/leaderboard.ts` | `evals/no-automated-decisions.eval.ts` (c), `src/lib/service/views/leaderboard.test.ts` |
 | The demo persona's talent id leaves the server only through `GET /api/demo/session`, to the visitor who owns the sandbox. | `src/lib/service/demo.ts`, `src/app/api/demo/session/route.ts` | `evals/story.eval.ts` ("persona hidden from employer and city") |
-| Audio is never stored. Only the transcript is sent with a submission. | `src/lib/http/schemas.ts` (no audio field), `src/lib/voice/server/elevenlabs.ts` (passes audio through once) | `src/lib/voice/server/elevenlabs.test.ts` ("returns only the text"), `src/app/api/voice/routes.test.ts` |
+| Audio is never stored. Only text is sent with a submission. Voice is planned, not live; every flow is typed. | `src/lib/http/schemas.ts` (no audio field), `src/lib/voice/server/elevenlabs.ts` (passes audio through once) | `src/lib/voice/server/elevenlabs.test.ts` ("returns only the text"), `src/app/api/voice/routes.test.ts` |
 | Identity reaches a company only after the person accepts the meeting. | `src/lib/service/views/queue.ts`, `src/lib/service/meetings.ts` | `evals/blind-review.eval.ts` ("identity hidden until accepted"), `evals/flow.eval.ts` |
 
 ## Conventions
