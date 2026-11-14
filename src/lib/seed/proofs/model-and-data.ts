@@ -20,7 +20,7 @@ export const MODEL_AND_DATA_PROOFS: SeedProof[] = [
     ].join("\n"),
     explainAnswers: [
       "The leak comes first because it inflates every other number. Until the split is fixed, the threshold and the metric are measured on the wrong data.",
-      "I would label failed grasps first, since they are the rare class, and use the new labels only for validation.",
+      "The split and threshold fixes stay. I would add one check on the robot's processor itself: time per prediction, and recall on failed grasps after the model is made smaller.",
     ],
   },
   {
@@ -35,8 +35,8 @@ export const MODEL_AND_DATA_PROOFS: SeedProof[] = [
       "Before release I would run the model in shadow mode on one robot for a week and compare its predictions with real drops.",
     ].join("\n"),
     explainAnswers: [
-      "Shadow mode tells us how it behaves on new parcels without any risk to orders.",
-      "With fewer labels I would still run shadow mode, because it labels itself from the robot logs.",
+      "Because a leak makes every other number look better than it is. To check, I would count grasp ids that appear in both sets, then rerun the evaluation with a split by grasp.",
+      "The new parcel type gets its own line in the results, and shadow mode runs again for a week before the model handles it.",
     ],
   },
   {
@@ -52,7 +52,7 @@ export const MODEL_AND_DATA_PROOFS: SeedProof[] = [
     ].join("\n"),
     explainAnswers: [
       "Readable code makes the next review faster.",
-      "If the release date cannot move, I would only do the refactor after release.",
+      "I would still split the script into functions first. Then it is easier to measure how fast each part runs on the robot.",
     ],
   },
   {
@@ -66,8 +66,8 @@ export const MODEL_AND_DATA_PROOFS: SeedProof[] = [
       "Retries: the plain INSERT duplicates rows when the scheduler reruns a failed job. Add a unique key on meter_id and read_at and use ON CONFLICT DO NOTHING.",
     ].join("\n"),
     explainAnswers: [
-      "Billing uses this table, so missing or double rows turn into wrong invoices.",
-      "With half the time I would add the unique key first. It stops the double rows today.",
+      "Late readings are lost without any error, and billing uses this table. To check, I would send a test reading with an old read_at after a run and see whether it ever reaches the table.",
+      "Nothing in my fixes needs the source to change: the unique key, the conflict rule and a watermark by arrival time all live in our job and our table.",
     ],
     decision: {
       companyId: "co-saarnivo",
@@ -90,8 +90,8 @@ export const MODEL_AND_DATA_PROOFS: SeedProof[] = [
       "I would add a daily check that compares row counts per meter between raw and reporting.",
     ].join("\n"),
     explainAnswers: [
-      "I listed the timezone first because it is silent: nothing fails, the numbers are just wrong twice a year.",
-      "If billing needed the data within minutes, I would move the reconciliation check into the job itself.",
+      "Twice a year an hour of readings is lost or loaded twice. Nothing fails, so nobody notices, and the bills for those days are wrong.",
+      "I would load by arrival time, so each run scans only the new rows, and make the daily row count check read only the last day.",
     ],
     decision: {
       companyId: "co-saarnivo",
@@ -117,7 +117,7 @@ export const MODEL_AND_DATA_PROOFS: SeedProof[] = [
     ].join("\n"),
     explainAnswers: [
       "The empty load is the one nobody notices, the other two at least show up in numbers.",
-      "If Airflow was not allowed I would still keep the unique key, it works with any scheduler.",
+      "I would load the history in monthly chunks with the same unique key, so a chunk that fails can run again without double rows.",
     ],
   },
 ];

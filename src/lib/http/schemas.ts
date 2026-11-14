@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PROOF_KINDS, STORY_STAGES } from "@/lib/domain/kinds";
+import { DEFAULT_PLACES, MAX_PLACES, MIN_PLACES } from "@/lib/domain/places";
 import { pictureProblem } from "./jpeg";
 import { LIMITS } from "./limits";
 
@@ -9,7 +10,8 @@ const skill = z.object({ id: z.string().min(1).max(60), label: text(80), why: te
 
 /**
  * A visitor's own picture of the work. Only a re-encoded JPEG data URL: paths under /demo belong
- * to the seed, and a request can never point at one. No video from a request.
+ * to the seed, and a request can never point at one. No video from a request. Pixels are not analysed,
+ * so the person must confirm they checked it shows the work only.
  */
 const uploadedPicture = z
   .object({
@@ -19,6 +21,7 @@ const uploadedPicture = z
       if (problem) ctx.addIssue({ code: "custom", message: problem });
     }),
     alt: z.string().trim().min(1).max(LIMITS.attachmentAlt),
+    confirmed: z.literal(true, { error: "check the picture first: no face, no name, no badge, no contact details" }),
   })
   .strict();
 
@@ -36,6 +39,24 @@ const challengeDraftSchema = z.object({
   reviewGuide: z.array(z.object({ skillId: z.string().min(1).max(60), lookFor: text(400) })).min(1).max(5),
   aiAllowed: z.boolean(),
   kind: z.enum(["event", "taster"]),
+  /** Answers the task takes; the employer chooses when publishing. */
+  places: z.number().int().min(MIN_PLACES).max(MAX_PLACES).default(DEFAULT_PLACES),
+  /** Company-side only: dropped before publishing. */
+  draftedBy: z.enum(["scripted", "claude", "gemini"]).optional(),
+  /** Job facts in fixed forms. Published as requirements only when each one matches a fixed form. */
+  facts: z.array(text(120)).max(20).optional(),
+  /** Company-side only: dropped before publishing. */
+  wishes: z
+    .array(
+      z.object({
+        text: text(300),
+        outcome: z.enum(["kept", "set-aside", "fact"]),
+        skillId: z.string().max(60).optional(),
+        reason: text(300).optional(),
+      }),
+    )
+    .max(40)
+    .optional(),
 });
 
 export const draftRequest = z.object({ need: z.string().trim().min(10).max(LIMITS.need) });
@@ -80,7 +101,14 @@ export const decisionRequest = z.object({
   feedback: z.string().max(LIMITS.feedback),
 });
 
+/** Only the name: whether it is a person is checked by the service, with one plain message. */
+export const reviewerRequest = z.object({ name: z.string().max(LIMITS.reviewer) });
+
+export const pictureReportRequest = z.object({ companyId: z.string().min(1).max(100), reviewer: z.string().max(LIMITS.reviewer) });
+
 export const acceptRequest = z.object({ talentId: z.string().min(1).max(100) });
+
+export const declineRequest = z.object({ talentId: z.string().min(1).max(100) });
 
 export const confirmRequest = z.discriminatedUnion("side", [
   z.object({ side: z.literal("talent"), talentId: z.string().min(1).max(100) }),

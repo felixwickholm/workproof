@@ -3,8 +3,9 @@ import type { RoleTemplate } from "../role-template";
 export const cloudArchitect: RoleTemplate = {
   id: "cloud-architect",
   title: "Cloud architect",
+  level: "degree",
   keywords: [
-    "cloud architect", "solution architect", "solutions architect", "cloud architecture", "aws",
+    "cloud architect", "solution architect", "solutions architect", "software architect", "enterprise architect", "it architect", "cloud architecture", "aws",
     "azure", "gcp", "serverless", "pilviarkkitehti", "pilviarkkitehtuuri", "ratkaisuarkkitehti",
   ],
   skills: ["cloud-architecture", "architecture-tradeoffs", "error-handling", "security-thinking", "stakeholder-communication"],

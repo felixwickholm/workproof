@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const driver: RoleTemplate = {
   id: "driver",
   title: "Bus and delivery driver",
+  level: "practice",
   keywords: [
     "driver", "bus driver", "delivery driver", "van driver", "truck driver", "courier", "taxi", "taxi driver",
     "pilot", "kuljettaja", "bussikuski", "linja-autonkuljettaja", "jakelukuljettaja", "kuski", "lentäjä",

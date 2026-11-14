@@ -130,36 +130,42 @@ const PROTECTED: { name: string; pattern: RegExp }[] = [
   },
 ];
 
+/**
+ * The people a job serves. A protected word next to one of them describes those people, not the person
+ * wanted: "explains medicine changes to elderly clients" or "iäkkäät asiakkaat" is context, not a wish.
+ * English nouns are plural only, so "young customer service agent" still describes the candidate.
+ */
+const SERVED_NOUNS =
+  "clients|customers|patients|residents|pupils|students|users|guests|children|kids|visitors|families|asiakka\\p{L}{0,10}|asiakkai\\p{L}{0,10}|potila\\p{L}{0,10}|asukka\\p{L}{0,10}|asukkai\\p{L}{0,10}|oppila\\p{L}{0,10}|lapset|lasten|lapsi\\p{L}{0,10}|vanhuks\\p{L}{0,10}|vanhusten|käyttäj\\p{L}{0,10}";
+const SERVED_TRAITS =
+  "elderly|older|old|young|younger|senior|aged|ageing|aging|retired|disabled|female|male|immigrant|foreign|nuor\\p{L}{0,10}|iäk\\p{L}{0,10}|ikääntyn\\p{L}{0,10}|vanh\\p{L}{0,10}|eläkeläis\\p{L}{0,10}";
+/** Finnish nouns that already name a served group by age: "ikäihmisten hoito". */
+const SERVED_GROUPS = "ikäihmi\\p{L}{0,10}|senior citizens|the elderly|elderly care|elder care|senior care";
+
+const SERVED_CONTEXT = new RegExp(
+  [
+    `(?<![\\p{L}\\p{N}])(?:${SERVED_TRAITS})(?:\\s(?:and|or|ja|tai)\\s(?:${SERVED_TRAITS}))?[ -](?:${SERVED_NOUNS})(?![\\p{L}\\p{N}-])`,
+    `(?<![\\p{L}\\p{N}])(?:${SERVED_NOUNS})\\s(?:who|that)\\s(?:are|is)\\s(?:mostly\\s|often\\s|mainly\\s)?(?:${SERVED_TRAITS})(?![\\p{L}\\p{N}])`,
+    `(?<![\\p{L}\\p{N}])(?:${SERVED_NOUNS})\\s(?:ovat|on)\\s(?:${SERVED_TRAITS})(?![\\p{L}\\p{N}])`,
+    `(?<![\\p{L}\\p{N}])(?:(?:care|caring|work|working|serve|serving)\\s(?:for|with)\\s)?(?:${SERVED_GROUPS})(?![\\p{L}\\p{N}])`,
+  ].join("|"),
+  "giu",
+);
+
+/** The text with served-group phrases replaced by a neutral word, so only wishes about the candidate remain. */
+function withoutServedGroups(text: string): string {
+  return text.replace(SERVED_CONTEXT, " people ");
+}
+
 /** Every neutral attribute name the "Not used" note may contain. */
 export const PROTECTED_NAMES: readonly string[] = [...PROTECTED.map(({ name }) => name), "wishes about the person"];
 
 /**
  * Neutral names of the protected attributes the text mentions. The text is scanned in normalised
  * copies (lookalike letters, spacing, leetspeak, identifiers such as `isMale`), so tricks do not hide a word.
+ * Words about the people the job serves ("elderly clients") are context and are not counted.
  */
 export function protectedNames(text: string): string[] {
-  const copies = protectedScanCopies(text.replace(/\s{1,5}/g, " "));
+  const copies = protectedScanCopies(text.replace(/\s{1,5}/g, " ")).map(withoutServedGroups);
   return PROTECTED.filter(({ pattern }) => copies.some((copy) => unicodeWords(pattern).test(copy))).map(({ name }) => name);
-}
-
-/**
- * A language requirement stated as a working language ("works in Finnish with customers") is a job need.
- * Returns the neutral form, "Working language: Finnish", or undefined. A "native" wish never qualifies.
- */
-export function workingLanguage(text: string): string | undefined {
-  if (protectedNames(text).includes("native language")) return undefined;
-  const found = [
-    /\b(?:works?|working|work with \w{1,30}) in (finnish|swedish|english)\b/i,
-    /\bworking language(?: is|:)?\s{1,5}(finnish|swedish|english)\b/i,
-    /\btyökiel\p{L}{0,40}\s{1,5}(?:on\s{1,5})?(suomi|ruotsi|englanti)\b/iu,
-    /\barbetsspråk\p{L}{0,40}\s{1,5}(?:är\s{1,5})?(finska|svenska|engelska)\b/iu,
-  ]
-    .map((pattern) => unicodeWords(pattern).exec(text))
-    .find(Boolean);
-  if (!found) return undefined;
-  const names: Record<string, string> = {
-    finnish: "Finnish", swedish: "Swedish", english: "English", suomi: "Finnish", ruotsi: "Swedish",
-    englanti: "English", finska: "Finnish", svenska: "Swedish", engelska: "English",
-  };
-  return `Working language: ${names[found[1].toLowerCase()]}`;
 }

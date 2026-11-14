@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const accountant: RoleTemplate = {
   id: "accountant",
   title: "Accountant",
+  level: "degree",
   keywords: [
     "accountant", "accounting", "bookkeeper", "bookkeeping", "financial controller", "payroll",
     "kirjanpitäjä", "kirjanpito", "taloushallinto", "tilitoimisto", "controller",

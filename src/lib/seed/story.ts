@@ -1,4 +1,5 @@
-import type { MeetingStatus, StoryStage } from "@/lib/domain/types";
+import type { StoryStage } from "@/lib/domain/types";
+import type { SecondLookSeed } from "./second-look";
 import type { SeedProof } from "./types";
 
 /** The story stages in order. Each stage is the previous one plus a few changes. */
@@ -8,37 +9,39 @@ export function stageReached(stage: StoryStage, at: StoryStage): boolean {
   return STORY_STAGES.indexOf(stage) >= STORY_STAGES.indexOf(at);
 }
 
-export const STORY_PROOF_ID = "proof_story_kaari";
+export const STORY_PROOF_ID = "proof_story_kaari_8";
+
+/** Olena's earlier plan, answered "not now" by its own employer, which reaches Otso Health through Second look. */
+export const OLENA_EARLIER_PLAN_ID = "proof_story_kirkas";
 
 /**
- * Olena's two earlier proofs. The night plan got a "not now" with a reason; the result letter
- * has been read and waits for an answer.
+ * Olena's two earlier proofs. The laboratory night plan got a "not now" with a reason; the result
+ * letter has been read and waits for an answer.
  */
 export const OLENA_EARLIER: SeedProof[] = [
   {
-    id: "proof_story_kirkas",
+    id: OLENA_EARLIER_PLAN_ID,
     person: "olena",
-    challenge: "kirkas-night",
+    challenge: "kirkas-runs",
     hoursAgo: 140,
     shareWithSimilar: true,
     answer: [
-      "Tonight, two cleaners for six floors, 18:00-22:00.",
-      "18:00 A puts the wet floor sign by the lift on floor 5 before anything else. Nobody uses the acid cleaner alone, so floor 5 is done by A and B together at 20:30.",
-      "A: floor 1, then floor 2 with meeting room 2B first, it is needed at 07:30.",
-      "B: floors 3 and 4.",
-      "Floor 6 archive waits one night. I message the client contact at 18:15.",
-      "21:50 both leave together, B gives the key to the guard before the alarm at 22:00.",
-      "I clean offices at night myself, so I know which room the client checks first.",
+      "Tonight, A1 and H1 only, 22:00-06:00.",
+      "A1: emergency samples first, every time one arrives. Troponin and potassium change treatment within the hour. The occupational health batch fills the gaps, the rest on Thursday morning. It has no deadline before Friday.",
+      "INR: to the partner lab by courier at 23:00, 01:30 and 04:00. After 4 hours the result cannot be used, and a patient on a new warfarin dose needs it.",
+      "Ward samples at 05:00: blood counts on H1, chemistry on A1 after the emergency queue.",
+      "22:10 call the emergency department and the doctor on call: which results are slower tonight, and until when.",
+      "I was the doctor waiting for these results for 11 years, so I know which ones cannot be late. I clean offices at night now.",
     ].join("\n"),
     explainAnswers: [
-      "The sign first, because it takes one minute and a fall on a wet floor ends the whole night.",
-      "If the floor machine was broken, floor 5 is mopped by hand and I tell the morning team.",
+      "Emergency first, because a potassium of 6.5 that waits two hours can stop a heart.",
+      "Then the batch stops at midnight and she stays with A1 and the emergency samples. The INR boxes are packed before midnight, so she only hands them to the courier.",
     ],
     decision: {
       companyId: "co-kirkas",
       kind: "pass",
       feedback:
-        "Your plan keeps two people on the wet floor and has meeting room 2B ready for the morning, which is what the client checks. This supervisor drives between three sites every night and needs a driving licence, so it is not now. Please keep writing the plan with times like this, our teams read it on their phones.",
+        "Your plan runs the emergency samples first and sends the INR samples to the partner lab inside four hours, which is the call we needed. This month the planner also runs the night alone on our analyser platform, and that needs a certification we cannot arrange before December, so it is not now. Please keep writing plans with times like this, the night team reads them on their phones.",
       hoursToReply: 6,
     },
   },
@@ -103,12 +106,17 @@ export const ANNA_DECISION = {
 /** Hours ago Olena accepted Kaari's invitation, at stage "met". */
 export const OLENA_ACCEPTED_HOURS_AGO = 0.25;
 
-/** Otso Health reads the same proof through Second look, with Olena's consent, at stage "met". */
-export const OTSO_SECOND_LOOK = {
+/**
+ * At stage "met", Otso Health reads Olena's earlier plan through Second look. Its own employer said
+ * not now and she allowed Second look, and Otso's shared task asks for at least two of the same core
+ * skills (prioritisation and stakeholder communication). The seed test replays the rule on it.
+ */
+export const OTSO_SECOND_LOOK: SecondLookSeed = {
+  proofId: OLENA_EARLIER_PLAN_ID,
   companyId: "co-otso",
-  kind: "meet" as const,
+  kind: "meet",
   feedback:
-    "We read your plan through Second look. You checked the new blood thinner against the hospital list, which is what our nurses do after every discharge. We would like to talk with you about care coordination at our clinic.",
+    "We read your night plan through Second look. You put the results that change treatment first, decided what could wait until Friday and called the emergency department before anyone asked, which is how our nurses plan a short-staffed handover. We would like to talk with you about shift handovers at our clinic.",
   hoursAgo: 0.1,
-  meeting: "invited" as MeetingStatus,
+  meeting: "invited",
 };

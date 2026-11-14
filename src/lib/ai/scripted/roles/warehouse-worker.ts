@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const warehouseWorker: RoleTemplate = {
   id: "warehouse-worker",
   title: "Warehouse worker",
+  level: "practice",
   keywords: [
     "warehouse worker", "warehouse work", "warehouse operative", "logistics worker", "order picker", "picker",
     "forklift", "forklift driver", "stock handler", "varastotyöntekijä", "varasto", "keräilijä", "trukinkuljettaja", "trukki", "logistiikka",

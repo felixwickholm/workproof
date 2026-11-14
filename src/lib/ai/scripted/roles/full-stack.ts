@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const fullStackEngineer: RoleTemplate = {
   id: "full-stack",
   title: "Full-stack engineer",
+  level: "degree",
   keywords: [
     "full-stack", "full stack", "fullstack", "software engineer", "software developer",
     "web application", "ohjelmistokehittäjä", "ohjelmistoinsinööri", "sovelluskehittäjä", "koodari", "programmer", "ohjelmoija",

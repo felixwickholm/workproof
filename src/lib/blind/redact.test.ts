@@ -66,7 +66,7 @@ describe("blind projections", () => {
     challenge: { id: "c1", title: "Task", coreSkills: [{ id: "sql", label: "SQL", why: "x" }], proofKind: "writing" },
     work: "w",
     explain: [{ question: "q", answer: "a", extra: "secret" } as never],
-    aiSummary: "s",
+    glance: "s",
     redactions: { names: 1, contacts: 0, places: 0, schools: 2, employers: 0, other: 0 },
     submittedAt: "2026-01-01T00:00:00.000Z",
   });
@@ -78,9 +78,10 @@ describe("blind projections", () => {
     expect(own.redactions.schools).toBe(2);
   });
 
-  it("gives the reviewer one total and no categories", () => {
+  it("gives the reviewer neither a total nor categories; the author keeps both", () => {
     const blind = toBlindProof(own);
-    expect(blind.hiddenCount).toBe(3);
+    expect(own.hiddenCount).toBe(3);
+    expect(Object.keys(blind)).not.toContain("hiddenCount");
     expect(Object.keys(blind)).not.toContain("redactions");
   });
 

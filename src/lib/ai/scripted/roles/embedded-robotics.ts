@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const embeddedEngineer: RoleTemplate = {
   id: "embedded-engineer",
   title: "Embedded and robotics engineer",
+  level: "degree",
   keywords: [
     "embedded", "firmware", "robotics engineer", "robotics", "ros", "ros2", "rtos", "microcontroller",
     "real-time", "sulautettu", "sulautetut", "sulautettujen", "robotiikka", "robotiikkainsinööri",

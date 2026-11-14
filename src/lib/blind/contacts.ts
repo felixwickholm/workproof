@@ -1,4 +1,4 @@
-import { addReports, escape, L, R, Redactor } from "./redactor";
+import { escape, inProse, L, R, type Redactor } from "./redactor";
 
 const DIGIT_WORDS = "zero|oh|one|two|three|four|five|six|seven|eight|nine|nolla|yksi|kaksi|kolme|neljä|viisi|kuusi|seitsemän|kahdeksan|yhdeksän|noll|ett|två|tre|fyra|fem|sex|sju|åtta|nio";
 
@@ -25,16 +25,7 @@ const BARE_DOMAIN = new RegExp(
 
 /** Bare domains in prose only: inside code, "flask.app" or "request.session.me" are attribute names. */
 function redactBareDomains(r: Redactor): void {
-  r.text = r.text
-    .split(/(```[\s\S]{0,20000}?```|`[^`\n]{1,200}`)/)
-    .map((part, i) => {
-      if (i % 2 === 1) return part;
-      const prose = new Redactor(part);
-      prose.replace(BARE_DOMAIN, "contacts", (domain) => !DOC_HOSTS.test(domain) && /[\p{L}\p{N}-]{3}\./u.test(domain));
-      r.report = addReports(r.report, prose.report);
-      return prose.text;
-    })
-    .join("");
+  inProse(r, (prose) => prose.replace(BARE_DOMAIN, "contacts", (domain) => !DOC_HOSTS.test(domain) && /[\p{L}\p{N}-]{3}\./u.test(domain)));
 }
 
 /** Contacts first, so names inside emails and links go with them. */

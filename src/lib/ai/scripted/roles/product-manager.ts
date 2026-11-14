@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const productManager: RoleTemplate = {
   id: "product-manager",
   title: "Product manager",
+  level: "degree",
   keywords: [
     "product manager", "product owner", "product management", "pm", "po", "roadmap",
     "product lead", "tuotepäällikkö", "tuoteomistaja", "tuotekehitys", "founder", "startup founder", "entrepreneur", "yrittäjä",

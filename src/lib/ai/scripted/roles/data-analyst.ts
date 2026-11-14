@@ -3,8 +3,9 @@ import type { RoleTemplate } from "../role-template";
 export const dataAnalyst: RoleTemplate = {
   id: "data-analyst",
   title: "Data analyst",
+  level: "degree",
   keywords: [
-    "data analyst", "business analyst", "bi analyst", "analyst", "analytics", "power bi", "tableau", "looker",
+    "data analyst", "bi analyst", "analyst", "analytics", "power bi", "tableau", "looker",
     "dashboard", "data-analyytikko", "data analyytikko", "analyytikko", "raportointi", "tietoanalyytikko",
   ],
   skills: ["sql", "metrics-definition", "data-visualisation", "data-quality", "stakeholder-communication"],

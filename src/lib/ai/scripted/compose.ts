@@ -1,14 +1,17 @@
 import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
-import { neutralSetAside, NOT_USED_PREFIX, talentNeed, workingLanguagesIn } from "@/lib/guard/check-draft";
+import { neutralSetAside, NOT_USED_PREFIX, talentNeed } from "@/lib/guard/check-draft";
 import { isSkillId, SKILLS, toSkill, type SkillId } from "@/lib/skills/vocabulary";
-import { GENERIC_NOTE, genericRole, nearestNote, NO_EXACT_TASK_NOTE } from "./generic-role";
+import { GENERIC_NOTE, genericRole, nearestNote, NO_EXACT_TASK_NOTE, NO_SKILLS_NOTE } from "./generic-role";
 import { matchRole } from "./match-role";
-import { parseNeed } from "./parse-need";
+import { parseNeed, type ParsedNeed } from "./parse-need";
 import type { RoleTemplate, TaskTemplate } from "./role-template";
 import { ROLES } from "./roles";
 
-export const EVENT_MINUTES = 20;
-export const TASTER_MINUTES = 2;
+const EVENT_MINUTES = 20;
+const TASTER_MINUTES = 2;
+
+/** The set-aside reason for a skill beyond what one task can test. */
+const MORE_THAN_FIVE = "more than five, a task tests 3 to 5 core skills";
 
 /** When a company lists many wishes, the card keeps four. Otherwise up to five. */
 function skillLimit(wishCount: number): number {
@@ -62,23 +65,28 @@ function roleForSkills(wished: SkillId[]): RoleTemplate | undefined {
   return chosen;
 }
 
-/** The number of wishes the company's own sentence listed, not counting the words that only name the role. */
-export function countListedWishes(need: string): number {
-  return parseNeed(need, matchRole(need)?.keywords ?? []).listed.length;
+/** The role a need is drafted for: the library role it names, else the nearest by the skills it describes, else the generic one. */
+function roleForNeed(need: string): { role: RoleTemplate; nearest: boolean; generic: boolean } {
+  const named = matchRole(need);
+  const nearest = named ? undefined : roleForSkills(parseNeed(need).wishedSkills);
+  const role = named ?? nearest ?? genericRole();
+  return { role, nearest: nearest !== undefined, generic: role.id === "generic" };
+}
+
+/** The need read against its role. The generic role has no skills of its own to prefer. */
+export function parseForRole(need: string): ParsedNeed {
+  const { role, generic } = roleForNeed(need);
+  return parseNeed(need, generic ? undefined : role);
 }
 
 export function draftFromNeed(need: string): ChallengeDraft {
-  const named = matchRole(need);
-  const nearest = named ? undefined : roleForSkills(parseNeed(need, []).wishedSkills);
-  const role = named ?? nearest ?? genericRole();
-  const generic = role.id === "generic";
-  const parsed = parseNeed(need, role.keywords);
+  const { role, nearest, generic } = roleForNeed(need);
+  const parsed = parseNeed(need, generic ? undefined : role);
   const { kept, dropped } = chooseSkills(role, parsed.wishedSkills, parsed.wishes.length);
 
   const otherWishes = neutralSetAside(parsed.otherWishes);
   const setAside = [
-    ...dropped.map((id) => `${SKILLS[id].label}: not core for this task`),
-    ...parsed.workingLanguages.map((language) => `${language}: talk about it in the meeting`),
+    ...dropped.map((id) => `${SKILLS[id].label}: ${MORE_THAN_FIVE}`),
     ...otherWishes,
   ];
   // A wish that judges a person is left out of the card, and counted with the protected ones.
@@ -86,12 +94,14 @@ export function draftFromNeed(need: string): ChallengeDraft {
   if (notUsed.length > 0) setAside.push(`${NOT_USED_PREFIX} ${notUsed.join(", ")} (not skills)`);
 
   const draft = toDraft(role, role.challenge, kept, {
-    need: talentNeed(generic ? undefined : role.title, kept, parsed.workingLanguages),
+    need: talentNeed(generic ? undefined : role.title, kept),
     setAside,
     kind: "event",
     minutes: EVENT_MINUTES,
   });
-  if (generic) return { ...draft, note: GENERIC_NOTE };
+  // Languages and licences are facts about the job: never skills, never set aside.
+  if (parsed.facts.length > 0) draft.facts = parsed.facts;
+  if (generic) return { ...draft, note: parsed.wishedSkills.length === 0 ? NO_SKILLS_NOTE : GENERIC_NOTE };
   return nearest ? { ...draft, note: nearestNote(role.title) } : draft;
 }
 
@@ -125,13 +135,12 @@ export function roleFor(challenge: ChallengeRef): RoleTemplate {
 
 /**
  * The talent-visible need for a draft about to be published, rebuilt on the server from the
- * library role (when the card still matches one), the core skills and the working languages.
- * Whatever need the request carries is ignored.
+ * library role (when the card still matches one) and the core skills. Whatever need the request carries is ignored.
  */
 export function publishedNeed(draft: ChallengeDraft): string {
   const role = roleFor(draft);
   const skills = draft.coreSkills.map((s) => s.id).filter(isSkillId);
-  return talentNeed(role.id === "generic" ? undefined : role.title, skills, workingLanguagesIn(draft.setAside));
+  return talentNeed(role.id === "generic" ? undefined : role.title, skills);
 }
 
 /** The planted flaws for a challenge, or none when it was written by hand or by a model. */

@@ -1,7 +1,7 @@
 import type { Attachment, ExplainAnswer, RedactionReport } from "@/lib/domain/types";
 import { addReports, redact, type KnownIdentity } from "./redact";
 
-export interface BlindWork {
+interface BlindWork {
   work: string;
   explain: ExplainAnswer[];
   /** The attachment with its `alt` text through the blind layer. The picture itself is the work, never the person. */

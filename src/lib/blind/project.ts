@@ -45,7 +45,7 @@ function copyAttachment(attachment: Attachment | undefined): { attachment?: Atta
 
 const spokenFlag = (spoken: boolean | undefined) => (spoken === true ? { spoken } : {});
 
-export interface BlindProofInput {
+interface BlindProofInput {
   proofId: string;
   challenge: Pick<Challenge, "id" | "title" | "coreSkills" | "proofKind">;
   /** Already redacted. */
@@ -56,7 +56,7 @@ export interface BlindProofInput {
   attachment?: Attachment;
   /** The answer was given by voice. */
   spoken?: boolean;
-  aiSummary: string;
+  glance: string;
   redactions: RedactionReport;
   submittedAt: string;
   /** Labels already in use, so the new one is unique. */
@@ -76,14 +76,17 @@ export function toOwnProof(input: BlindProofInput): OwnProof {
     explain: copyExplain(input.explain),
     ...copyAttachment(input.attachment),
     ...spokenFlag(input.spoken),
-    aiSummary: input.aiSummary,
+    glance: input.glance,
     hiddenCount: hiddenTotal(input.redactions),
     redactions: { ...input.redactions },
     submittedAt: input.submittedAt,
   };
 }
 
-/** The reviewer view: one total of hidden details, never the categories. */
+/**
+ * The reviewer view. No count of hidden details and no categories: how much was hidden says something
+ * about a person's background, so every reviewer reads the same fixed sentence instead.
+ */
 export function toBlindProof(proof: OwnProof): BlindProof {
   return {
     proofId: proof.proofId,
@@ -96,8 +99,7 @@ export function toBlindProof(proof: OwnProof): BlindProof {
     explain: copyExplain(proof.explain),
     ...copyAttachment(proof.attachment),
     ...spokenFlag(proof.spoken),
-    aiSummary: proof.aiSummary,
-    hiddenCount: hiddenTotal(proof.redactions),
+    glance: proof.glance,
     submittedAt: proof.submittedAt,
   };
 }

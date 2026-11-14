@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const devopsEngineer: RoleTemplate = {
   id: "devops-sre",
   title: "DevOps and site reliability engineer",
+  level: "degree",
   keywords: [
     "devops", "sre", "site reliability", "platform engineer", "kubernetes", "k8s", "terraform",
     "ci/cd", "infrastructure engineer", "ylläpito", "ylläpitäjä", "palvelinylläpito", "infra",

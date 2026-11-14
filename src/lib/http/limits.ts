@@ -30,3 +30,9 @@ export const POSTS_PER_MINUTE = 60;
  * the guided walkthrough makes about ten, and each rebuilds a whole event.
  */
 export const DEMO_REBUILDS_PER_MINUTE = 30;
+
+/**
+ * Calls to the paid voice service per minute from all visitors together. Each visitor also has their own
+ * smaller count; this one holds when addresses are missing or a script brings many sandboxes.
+ */
+export const VOICE_CALLS_PER_MINUTE_ALL = 60;

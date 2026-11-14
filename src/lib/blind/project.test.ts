@@ -17,7 +17,7 @@ const base = {
   explain: [{ question: "Why this order?", answer: "Cross-contact first.", spoken: true }],
   attachment: { kind: "photo" as const, src: "/demo/plate.jpg", alt: "A plate with rice and salad." },
   spoken: true,
-  aiSummary: "2 sentences",
+  glance: "2 sentences",
   redactions: { names: 1, contacts: 0, places: 1, schools: 0, employers: 0, other: 0 },
   submittedAt: "2026-11-14T10:00:00.000Z",
 };
@@ -33,8 +33,16 @@ describe("blind projection", () => {
     expect(blind.attachment).toEqual(base.attachment);
     expect(blind.spoken).toBe(true);
     expect(blind.explain[0].spoken).toBe(true);
-    expect(blind.hiddenCount).toBe(2);
     expect(blind).not.toHaveProperty("redactions");
+  });
+
+  it("gives the author the hidden count and the reviewer the same view for any count", () => {
+    const few = toOwnProof(base);
+    const many = toOwnProof({ ...base, redactions: { names: 2, contacts: 1, places: 3, schools: 1, employers: 1, other: 2 } });
+    expect(few.hiddenCount).toBe(2);
+    expect(many.hiddenCount).toBe(10);
+    expect(toBlindProof(many)).toEqual(toBlindProof(few));
+    expect(Object.keys(toBlindProof(many))).not.toContain("hiddenCount");
   });
 
   it("keeps out every field it does not name, at every level", () => {

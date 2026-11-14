@@ -10,7 +10,7 @@ const now = new Date("2026-11-14T12:00:00.000Z");
 
 describe("memory store", () => {
   it("persists changes to the JSON file and reloads them", async () => {
-    const file = join(mkdtempSync(join(tmpdir(), "tryout-")), "store.json");
+    const file = join(mkdtempSync(join(tmpdir(), "workprint-")), "store.json");
     const store = createMemoryStore(() => buildSeed(now), file);
     await store.update((data) => {
       data.companies[0].blurb = "Changed";
@@ -22,7 +22,7 @@ describe("memory store", () => {
   });
 
   it("keeps working in memory when the file cannot be written", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "tryout-"));
+    const dir = mkdtempSync(join(tmpdir(), "workprint-"));
     writeFileSync(join(dir, "blocker"), "");
     const store = createMemoryStore(() => buildSeed(now), join(dir, "blocker", "store.json"));
     await store.update((data) => {

@@ -10,9 +10,17 @@ const lines = (body: string) => body.split("\n").length;
 const words = (text: string) => text.trim().split(/\s+/).length;
 
 describe("role library", () => {
-  it("has at least 36 roles with unique ids", () => {
-    expect(ROLES.length).toBeGreaterThanOrEqual(36);
+  it("has at least 46 roles with unique ids", () => {
+    expect(ROLES.length).toBeGreaterThanOrEqual(46);
     expect(new Set(ROLES.map((r) => r.id)).size).toBe(ROLES.length);
+  });
+
+  it("marks the jobs that need no degree as practice tasks and every other role as degree-level", () => {
+    const practice = ROLES.filter((r) => r.level === "practice").map((r) => r.id);
+    expect(practice.sort()).toEqual(
+      ["childcare", "cleaning-supervisor", "cook", "customer-service", "driver", "electrician", "renovation-worker", "sales-assistant", "warehouse-worker"].sort(),
+    );
+    expect(ROLES.filter((r) => r.level === "degree").length).toBe(ROLES.length - practice.length);
   });
 
   for (const role of [...ROLES, genericRole()]) {
@@ -41,6 +49,10 @@ describe("role library", () => {
         for (const task of [role.challenge, role.taster]) {
           if (["photo", "video", "design", "voice"].includes(task.proofKind)) expect(task.deliverable).toMatch(/\b(?:words|write|written|describe|tell)\b/i);
         }
+      });
+
+      it("adds cue words only for its own skills", () => {
+        expect(Object.keys(role.cues ?? {}).filter((id) => !role.skills.some((skill) => skill === id))).toEqual([]);
       });
 
       it("has constraints that read as an if-clause", () => {
@@ -81,7 +93,24 @@ describe("matchRole", () => {
     ["bus driver", "driver"],
     ["warehouse worker", "warehouse-worker"],
     ["myyjä", "sales-assistant"],
-    ["doctor", "nurse"],
+    ["doctor", "doctor"],
+    ["lääkäri", "doctor"],
+    ["food scientist", "food-scientist"],
+    ["elintarviketeknologi", "food-scientist"],
+    ["structural engineer", "structural-engineer"],
+    ["rakennesuunnittelija", "structural-engineer"],
+    ["electronics engineer", "hardware-test-engineer"],
+    ["key account manager", "key-account-manager"],
+    ["avainasiakaspäällikkö", "key-account-manager"],
+    ["biomedical scientist", "lab-operations-planner"],
+    ["bioanalyytikko", "lab-operations-planner"],
+    ["lawyer", "lawyer"],
+    ["juristi", "lawyer"],
+    ["architect", "architect"],
+    ["software architect", "cloud-architect"],
+    ["HR specialist", "hr-specialist"],
+    ["business analyst", "business-analyst"],
+    ["ux researcher", "ux-designer"],
     ["football coach", "teacher"],
     ["game developer", "frontend"],
     ["founder", "product-manager"],

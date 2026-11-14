@@ -3,18 +3,23 @@ import type { RoleTemplate } from "../role-template";
 export const cook: RoleTemplate = {
   id: "cook",
   title: "Cook",
+  level: "practice",
   keywords: [
     "cook", "chef", "line cook", "sous chef", "kitchen", "restaurant", "catering", "barista", "cafe", "café",
     "kokki", "keittiö", "ravintola", "ravintolakokki", "suurtalouskokki",
   ],
   skills: ["food-safety", "serving-customers", "showing-the-work", "prioritisation"],
+  cues: {
+    prioritisation: ["fast", "quick", "on the line", "lunch rush"],
+    "food-safety": ["clean", "station", "allergens", "cold chain"],
+  },
   why: {
-    "food-safety": "A guest with coeliac disease reacts to traces of wheat, not only to bread on the plate.",
-    "showing-the-work": "The plate looks the same either way. The steps around it decide whether it is safe.",
+    "food-safety": "A guest who cannot eat an ingredient reacts to traces of it, not only to what can be seen.",
+    "showing-the-work": "The food looks the same either way. The steps around it decide whether it is safe.",
   },
   lookFor: {
-    "food-safety": "Finds where wheat could reach the plate, from the sauce to shared tools, and keeps it apart.",
-    "serving-customers": "Tells the guest plainly what was changed and what the dish now contains.",
+    "food-safety": "Finds where the allergen could reach the food, from the ingredients to shared tools, and keeps it apart.",
+    "serving-customers": "Tells the guest plainly what was changed and what the order now contains.",
   },
   constraints: [
     "the gluten-free bread runs out at noon",

@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const mlEngineer: RoleTemplate = {
   id: "ml-engineer",
   title: "ML engineer",
+  level: "degree",
   keywords: [
     "ml engineer", "machine learning", "ml", "computer vision", "deep learning", "pytorch",
     "tensorflow", "model training", "koneoppiminen", "koneoppimisinsinööri", "konenäkö",

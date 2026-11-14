@@ -16,7 +16,7 @@ export const SOFTWARE_PROOFS: SeedProof[] = [
     ].join("\n"),
     explainAnswers: [
       "The temperature leak is the largest, because temperature drives most of the load in winter.",
-      "If the release date could not move, I would ship with the forecast temperature and the old model as a fallback.",
+      "I would report a range from the backtest errors, for example the 10th and 90th percentile for each hour, and check that the real load falls inside it as often as it says.",
     ],
     decision: {
       companyId: "co-saarnivo",
@@ -39,7 +39,7 @@ export const SOFTWARE_PROOFS: SeedProof[] = [
     ].join("\n"),
     explainAnswers: [
       "I started with the metric because the team will make its decision on that one number.",
-      "With less time I would keep MAE and the time split and skip the plots.",
+      "Then the model can use only the weather forecast, not measured temperatures. I would backtest it with the forecasts that were known 36 hours before.",
     ],
     decision: {
       companyId: "co-saarnivo",
@@ -60,7 +60,7 @@ export const SOFTWARE_PROOFS: SeedProof[] = [
     ].join("\n"),
     explainAnswers: [
       "I started with what the model can know at prediction time, because that is a question anyone can ask.",
-      "With less time I would only fix the temperature feature.",
+      "I would give the operator the forecast with a band from past errors for each hour, so they see when it is unsure.",
     ],
     decision: {
       companyId: "co-saarnivo",
@@ -83,8 +83,8 @@ export const SOFTWARE_PROOFS: SeedProof[] = [
       "I would add tests for the timeout path and for a repeated request with the same order.",
     ].join("\n"),
     explainAnswers: [
-      "The double charge is the change I would make first, because it costs customers money directly.",
-      "If we could not add a dependency, I would validate the body by hand and keep the same checks.",
+      "Without a timeout, every slow call to the provider holds a connection, and in a busy hour the whole endpoint stops. The double charge costs more, but the timeout is the quickest fix.",
+      "Then I would keep our own table of order ids that were charged, and check it before calling the provider.",
     ],
     decision: {
       companyId: "co-kivira",
@@ -108,7 +108,7 @@ export const SOFTWARE_PROOFS: SeedProof[] = [
     ].join("\n"),
     explainAnswers: [
       "Idempotency first because the money has already left the customer when we notice.",
-      "If the provider had no idempotency support, I would keep our own table of charged order ids.",
+      "The fix stays on the server: the endpoint ignores a second charge for the same order id, so the old app's retries do no harm.",
     ],
   },
   {
@@ -125,7 +125,7 @@ export const SOFTWARE_PROOFS: SeedProof[] = [
     ].join("\n"),
     explainAnswers: [
       "The missing owner comes first, because without access the whole build waits and the date slips.",
-      "If the customer moved the pilot a week earlier, I would cut the alerts to one screen and keep the security review.",
+      "Then the security review moves to week 5 and acceptance testing follows it, still before 2 March. I would book the security team this week.",
     ],
     decision: {
       companyId: "co-kivira",
@@ -148,8 +148,8 @@ export const SOFTWARE_PROOFS: SeedProof[] = [
       "Samuel O., PMP, 6 yrs at Pajala Systems before I moved to Espoo",
     ].join("\n"),
     explainAnswers: [
-      "I looked at dependencies first because that is where fixed dates usually break.",
-      "With one backend developer away, I would drop the mobile alerts from the pilot scope and add them after go-live.",
+      "The backend team would start building before they have API access, then wait, and the 2 March date would slip.",
+      "Then the build starts a week later, and I would take the mobile alerts out of the pilot scope to win that week back.",
     ],
   },
 ];

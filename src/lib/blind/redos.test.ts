@@ -14,20 +14,39 @@ const ADVERSARIAL: Record<string, string> = {
   "dotted words": "a.".repeat(SIZE / 2),
   "hyphen words": "a-".repeat(SIZE / 2),
   "capital words": "Abc ".repeat(SIZE / 4),
+  "casual intros": "im Abc i m ".repeat(SIZE / 11),
+  "here after a greeting": "hey Abc Def here ".repeat(SIZE / 17),
+  "hyphenated names": "Abc-Def-Ghi ".repeat(SIZE / 12),
+  "name fields": "name: Abc ".repeat(SIZE / 10),
+  "sign-off marks": "/Abc br Abc t. Abc - ".repeat(SIZE / 21),
+  "names with ages": "Abc Def, 34, ".repeat(SIZE / 13),
+  "hidden names with ages": "[hidden] here, 34 ".repeat(SIZE / 18),
+  "finnish ages": ", 34 v".repeat(SIZE / 6),
+  "company prefixes": "Kaari Home Kaari ".repeat(SIZE / 17),
+  "legal forms": "Nokia Oy Oy ".repeat(SIZE / 12),
+  "district stems": "Kontula".repeat(SIZE / 7),
 };
+
+const KNOWN = { name: "Sanna Virtanen", contact: "+358 40 123 4567", companies: ["Kaari Home Care", "Tuulos Robotics"] };
 
 describe("long adversarial input", () => {
   // A running server has every pattern compiled already; measure that state, not the first compile.
+  // The engine compiles a pattern apart for one-byte and two-byte text and only after a first run,
+  // so the warm-up runs twice over an ASCII sample and a sample with non-Latin letters.
   beforeAll(() => {
-    const sample = "Sanna Virtanen, sanna@example.org, 王伟. Not a young male.";
-    blindWork(sample, [{ question: "Why?", answer: sample }], { name: "Sanna Virtanen", contact: "+358 40 123 4567" });
-    findJudgement(sample);
-    protectedNames(sample);
+    const samples = ["Sanna Virtanen, sanna@example.org, 8/10. Not a young male.", "Sanna Virtanen, sanna@example.org, 王伟. Not a young male."];
+    for (let round = 0; round < 2; round++) {
+      for (const sample of samples) {
+        blindWork(sample, [{ question: "Why?", answer: sample }], KNOWN);
+        findJudgement(sample);
+        protectedNames(sample);
+      }
+    }
   });
 
   it.each(Object.entries(ADVERSARIAL))("processes 50 kB of %s in under 1 s", (_, text) => {
     const start = performance.now();
-    const blind = blindWork(text, [{ question: "Why?", answer: text.slice(0, 1500) }], { name: "Sanna Virtanen", contact: "+358 40 123 4567" });
+    const blind = blindWork(text, [{ question: "Why?", answer: text.slice(0, 1500) }], KNOWN);
     atAGlance(blind.work, blind.explain);
     expect(performance.now() - start).toBeLessThan(1000);
   });

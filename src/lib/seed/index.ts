@@ -1,4 +1,5 @@
 import { draftFromNeed } from "@/lib/ai/scripted/compose";
+import { DEFAULT_PLACES } from "@/lib/domain/places";
 import type { Challenge, StoryStage } from "@/lib/domain/types";
 import { DRAFT_ACTION } from "@/lib/service/ai-work";
 import type { StoreData } from "@/lib/store/types";
@@ -6,11 +7,11 @@ import { omit } from "@/lib/util/object";
 import { SEED_CHALLENGES, type SeedChallengeKey } from "./challenges";
 import { COMPANIES, companyName, REVIEWERS } from "./companies";
 import { PEOPLE, PERSONA } from "./people";
-import { BUILD_PROOFS } from "./proofs/build";
 import { CALL_AND_DESIGN_PROOFS } from "./proofs/calls-and-design";
 import { CARE_PROOFS } from "./proofs/care";
-import { CLEANING_PROOFS } from "./proofs/cleaning";
+import { ENGINEERING_PROOFS } from "./proofs/engineering";
 import { FOOD_PROOFS } from "./proofs/food";
+import { LAB_PROOFS } from "./proofs/laboratory";
 import { MODEL_AND_DATA_PROOFS } from "./proofs/model-and-data";
 import { SOFTWARE_PROOFS } from "./proofs/software";
 import { SECOND_LOOK_DECISIONS } from "./second-look";
@@ -29,9 +30,9 @@ import { seedWriter } from "./writer";
 /** Everyone else's work at the event. The same at every story stage. */
 export const WORLD_PROOFS: readonly SeedProof[] = [
   ...FOOD_PROOFS,
-  ...BUILD_PROOFS,
+  ...ENGINEERING_PROOFS,
   ...CALL_AND_DESIGN_PROOFS,
-  ...CLEANING_PROOFS,
+  ...LAB_PROOFS,
   ...CARE_PROOFS,
   ...MODEL_AND_DATA_PROOFS,
   ...SOFTWARE_PROOFS,
@@ -52,6 +53,7 @@ function publishChallenges(write: ReturnType<typeof seedWriter>, data: StoreData
     const challenge: Challenge = {
       ...draft,
       id: `ch-${seed.key}`,
+      places: "places" in seed ? seed.places : DEFAULT_PLACES,
       companyIds: [...seed.companyIds],
       approvedBy,
       createdAt: write.at(hoursAgo),
@@ -83,7 +85,7 @@ export function buildSeed(now: Date, stage: StoryStage = "invited"): StoreData {
   const data: StoreData = {
     version: 1,
     event: { name: "Espoo Talent Day", date: now.toISOString().slice(0, 10), responseWindowHours: 48 },
-    companies: COMPANIES.map((c) => ({ ...c })),
+    companies: COMPANIES.map((c) => ({ ...c, reviewers: [...c.reviewers] })),
     challenges: [],
     talents: [],
     submissions: [],
@@ -111,7 +113,7 @@ export function buildSeed(now: Date, stage: StoryStage = "invited"): StoreData {
   if (stageReached(stage, "invited")) write.addDecision({ proofId: STORY_PROOF_ID, ...ANNA_DECISION });
   if (stageReached(stage, "met")) {
     write.acceptMeeting(STORY_PROOF_ID, ANNA_DECISION.companyId, OLENA_ACCEPTED_HOURS_AGO);
-    write.addDecision({ proofId: STORY_PROOF_ID, ...OTSO_SECOND_LOOK }, true);
+    write.addDecision(OTSO_SECOND_LOOK, true);
   }
 
   data.demo.personaTalentId = write.talentId(PERSONA);

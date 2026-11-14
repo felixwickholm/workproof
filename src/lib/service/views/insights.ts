@@ -2,6 +2,7 @@ import { PROOF_KINDS } from "@/lib/domain/kinds";
 import type { CityInsights, FlowState, Meeting } from "@/lib/domain/types";
 import type { StoreData } from "@/lib/store";
 import { byArrival } from "../support";
+import { countAutomatedDecisions } from "./automated";
 import { DAY_MS, eventChallenges, eventProofs, eventTotals } from "./event";
 
 const TOP_SKILLS = 8;
@@ -85,7 +86,7 @@ export function buildCityInsights(data: StoreData): CityInsights {
       met: data.meetings.filter((m) => m.status === "met").length,
     },
     fairness: {
-      automatedDecisions: 0,
+      automatedDecisions: countAutomatedDecisions(data),
       detailsHidden: proofs.reduce((sum, p) => sum + p.hiddenCount, 0),
       decisionsWithNamedHuman: data.decisions.filter((d) => d.reviewer.trim()).length,
       decisionsWithFeedback: data.decisions.filter((d) => d.feedback.trim()).length,

@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const qaEngineer: RoleTemplate = {
   id: "qa-engineer",
   title: "QA and test automation engineer",
+  level: "degree",
   keywords: [
     "qa", "quality assurance", "test automation", "test engineer", "tester", "playwright", "cypress",
     "selenium", "testaaja", "testausautomaatio", "testausinsinööri", "laadunvarmistus",

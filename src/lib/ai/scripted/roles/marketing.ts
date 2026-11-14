@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const marketingSpecialist: RoleTemplate = {
   id: "marketing",
   title: "Marketing specialist",
+  level: "degree",
   keywords: [
     "marketing", "marketer", "growth marketing", "digital marketing", "performance marketing",
     "campaign manager", "content marketing", "markkinointi", "markkinoija", "markkinointipäällikkö",

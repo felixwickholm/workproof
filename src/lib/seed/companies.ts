@@ -1,9 +1,13 @@
 import type { Company } from "@/lib/domain/types";
 
+/** A demo company always has at least one registered reviewer, so no company starts with nobody. */
+type SeedCompany = Company & { reviewers: [string, ...string[]] };
+
 /** Synthetic employers at Espoo Talent Day. Invented names; any match with a real company is accidental. */
-export const COMPANIES: Company[] = [
+export const COMPANIES: SeedCompany[] = [
   {
     id: "co-kaari",
+    reviewers: ["Anna Koivisto"],
     name: "Kaari Home Care",
     blurb: "Home care visits for about 300 clients in south Espoo, day and evening, seven days a week.",
     sector: "Home care",
@@ -16,6 +20,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "co-otso",
+    reviewers: ["Henrik Lund"],
     name: "Otso Health",
     blurb: "Occupational health clinics for employers in the capital region: check-ups, lab tests and follow-up.",
     sector: "Occupational health",
@@ -28,23 +33,25 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "co-merituuli",
-    name: "Merituuli Kitchen",
-    blurb: "A lunch restaurant and catering kitchen. Around 400 lunches a day, many with special diets.",
-    sector: "Restaurants",
+    reviewers: ["Sanna Niemi"],
+    name: "Merituuli Foods",
+    blurb: "Oat drinks and plant-based desserts. The product development and quality team works next to the pilot plant.",
+    sector: "Food technology",
     district: "Tapiola",
-    size: "24 people",
+    size: "130 people",
     workLanguage: "Finnish and English",
     finnishNeeded: false,
-    permitSupport: false,
+    permitSupport: true,
     relocationHelp: false,
   },
   {
     id: "co-harjula",
-    name: "Harjula Build",
-    blurb: "Bathroom and kitchen renovations in apartment buildings, with its own tilers and electricians.",
-    sector: "Renovation",
+    reviewers: ["Pekka Harjula"],
+    name: "Harjula Engineering",
+    blurb: "Structural design for renovating apartment buildings from the 1960s and 1970s: openings, balconies and new floors.",
+    sector: "Structural engineering",
     district: "Espoonlahti",
-    size: "60 people",
+    size: "45 people",
     workLanguage: "Finnish and English",
     finnishNeeded: false,
     permitSupport: true,
@@ -52,10 +59,11 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "co-vesto",
-    name: "Vesto Energy",
-    blurb: "Electricity and district heating for homes. The customer service team answers about 2,000 calls a week.",
-    sector: "Customer service",
-    district: "Leppävaara",
+    reviewers: ["Riikka Aalto"],
+    name: "Vesto Controls",
+    blurb: "Valves and controls for building automation. Six key account managers look after about 60 integrator clients.",
+    sector: "Building automation",
+    district: "Espoon keskus",
     size: "210 people",
     workLanguage: "Finnish",
     finnishNeeded: true,
@@ -64,6 +72,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "co-kuulas",
+    reviewers: ["Iida Rantanen"],
     name: "Kuulas Studio",
     blurb: "A small design studio for public services: letters, signs and screens that people read once and act on.",
     sector: "Design",
@@ -76,9 +85,10 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "co-kirkas",
-    name: "Kirkas Facility Services",
-    blurb: "Night cleaning and facility care for offices and schools. Most shifts start at 18:00.",
-    sector: "Cleaning and facilities",
+    reviewers: ["Jari Mäkelä"],
+    name: "Kirkas Diagnostics",
+    blurb: "Laboratory tests for two hospitals and twelve health centres in the capital region, day and night.",
+    sector: "Laboratory services",
     district: "Leppävaara",
     size: "340 people",
     workLanguage: "Finnish and English",
@@ -88,8 +98,9 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "co-tuulos",
+    reviewers: ["Elias Virta"],
     name: "Tuulos Robotics",
-    blurb: "Pick robots for cold-storage warehouses. A team of 40 that ships to five sites.",
+    blurb: "Pick robots for cold-storage warehouses. Software, electronics and test engineers in one team of 40.",
     sector: "Robotics",
     district: "Kera",
     size: "40 people",
@@ -100,6 +111,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "co-saarnivo",
+    reviewers: ["Mira Salo"],
     name: "Saarnivo Grid",
     blurb: "Forecasting and control software for district heating and power grids.",
     sector: "Energy software",
@@ -112,6 +124,7 @@ export const COMPANIES: Company[] = [
   },
   {
     id: "co-kivira",
+    reviewers: ["Tomas Berg"],
     name: "Kivira Labs",
     blurb: "Payments and billing infrastructure for logistics companies.",
     sector: "Payments software",
@@ -124,19 +137,8 @@ export const COMPANIES: Company[] = [
   },
 ];
 
-/** Each company's own reviewer: the human who approves its tasks and decides on proofs. Synthetic names. */
-export const REVIEWERS: Record<string, string> = {
-  "co-kaari": "Anna Koivisto",
-  "co-otso": "Henrik Lund",
-  "co-merituuli": "Sanna Niemi",
-  "co-harjula": "Pekka Harjula",
-  "co-vesto": "Riikka Aalto",
-  "co-kuulas": "Iida Rantanen",
-  "co-kirkas": "Jari Mäkelä",
-  "co-tuulos": "Elias Virta",
-  "co-saarnivo": "Mira Salo",
-  "co-kivira": "Tomas Berg",
-};
+/** Each company's demo reviewer: the first registered person, who approves its tasks and decides on proofs. */
+export const REVIEWERS: Readonly<Record<string, string>> = Object.fromEntries(COMPANIES.map((c) => [c.id, c.reviewers[0]]));
 
 export function companyName(id: string): string {
   return COMPANIES.find((c) => c.id === id)?.name ?? id;

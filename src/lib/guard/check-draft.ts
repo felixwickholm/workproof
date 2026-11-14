@@ -16,15 +16,11 @@ export function isNeutral(text: string): boolean {
 /**
  * The need as talent sees it, always rebuilt from the role and the core skills in one fixed form.
  * The company's own sentence never reaches talent, so no word list has to catch every bias in it.
+ * Languages and licences travel apart, as the challenge's fixed-form requirements.
  */
-export function talentNeed(role: string | undefined, skills: SkillId[], languages: string[] = []): string {
+export function talentNeed(role: string | undefined, skills: SkillId[]): string {
   const labels = skills.map((id) => SKILLS[id].label).join(", ");
-  return [role ? `${role}: ${labels}` : `Core skills: ${labels}`, ...languages].join(". ");
-}
-
-/** Working languages kept in the set-aside list, in their fixed neutral form. */
-export function workingLanguagesIn(setAside: string[]): string[] {
-  return setAside.flatMap((line) => /^(Working language: (?:Finnish|Swedish|English)):/.exec(line)?.[1] ?? []);
+  return role ? `${role}: ${labels}` : `Core skills: ${labels}`;
 }
 
 /** True for a well-formed "Not used: a, b (not skills)" note that lists only neutral attribute names. */

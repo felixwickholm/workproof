@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const securityEngineer: RoleTemplate = {
   id: "security-engineer",
   title: "Security engineer",
+  level: "degree",
   keywords: [
     "security engineer", "security analyst", "soc analyst", "application security", "appsec", "cybersecurity", "cyber security",
     "penetration testing", "pentest", "infosec", "tietoturva", "tietoturva-asiantuntija", "kyberturvallisuus",

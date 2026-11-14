@@ -1,6 +1,6 @@
-import { COMMON_WORDS, NOT_NAMES } from "./lexicon";
+import { COMMON_WORDS, NAMES_LIKE_WORDS, NOT_NAMES } from "./lexicon";
 import { unicodeWords } from "@/lib/util/regex";
-import { accentFree, caseless, escape, HIDDEN, L, R, type Redactor } from "./redactor";
+import { accentFree, caseless, escape, HIDDEN, inProse, L, R, type Redactor } from "./redactor";
 
 /** Letters of scripts other than Latin: a name written in Chinese, Arabic or Cyrillic. */
 const NON_LATIN = "[^\\p{Script=Latin}\\p{N}\\p{P}\\p{S}\\s]{1,30}";
@@ -27,6 +27,7 @@ const AUTHOR_LINE =
 const NOT_AN_AUTHOR = /^(?:an?|the|ai|chatgpt|claude|copilot|gpt|an ai|hand|me|us|someone|the team|our team|reserved|all rights)\b/i;
 
 function isOrdinaryWord(word: string): boolean {
+  if (NAMES_LIKE_WORDS.has(word)) return false;
   const lower = word.toLowerCase();
   return COMMON_WORDS.has(lower) || NOT_NAMES.has(word) || /(?:ing|ed|ly|ive|ous|ful|able|ible)$/.test(lower);
 }
@@ -37,6 +38,52 @@ function looksLikeName(candidate: string): boolean {
   if (!first || isOrdinaryWord(first)) return false;
   if (/\p{Lu}.*\p{Lu}/u.test(first.slice(1)) || /\p{N}/u.test(first)) return false;
   return true;
+}
+
+/** One capitalised name word, hyphenated or with an apostrophe: "Mikko", "Al-Sayed", "O'Neill". */
+const NAME_WORD = "\\p{Lu}\\p{Ll}{1,30}(?:[-'’]\\p{Lu}?\\p{Ll}{1,30}){0,2}";
+/** One to three name words on one line. */
+const NAME_WORDS = `${NAME_WORD}(?:[ \\t]{1,5}${NAME_WORD}){0,2}`;
+
+/** Where "<name> here" introduces the writer: the start of a sentence, or after a greeting such as "hey" or "its". */
+const BEFORE_HERE = `(?:^|(?<=[.!?]\\s{1,5})|(?<=(?:^|[\\s,.!?])(?:${caseless("hi|hey|hello|moi|hei|terve|its|it's|it’s|this is")})[,!]?\\s{1,5}))`;
+
+/** Phone spellings of "I'm": "im", "i m", "iam", and the spoken Finnish "oon" / "mä oon". */
+const CASUAL_INTROS = caseless("im|i m|iam|mä oon|ma oon|oon");
+
+/** "name: Mikko", "nimi: Mikko" in prose. The name must end there, so "name: retry_count" is never a name. */
+const NAME_FIELD = new RegExp(`(?:^|(?<=[\\s,;(]))(?:${caseless("full name|name|nimi|namn")})\\s{0,3}[:=]\\s{0,3}(${NAME_WORDS})(?![\\p{L}\\p{N}_.(])`, "gmu");
+
+/** A sign-off at the very end of the answer, on the same line as the text: "... hang. /Mikko", "br Mikko", "t. Mikko". */
+const INLINE_SIGN_OFF = new RegExp(
+  `(?:^|(?<=[\\s.!?,;]))(?:[-–—~/]\\s{0,3}|(?:${caseless("br|t\\.|terveisin|terkuin|mvh|regards|cheers|thanks|kiitos")})[,.!:]?\\s{1,3})(${NAME_WORDS})\\s{0,3}[.!]?\\s{0,5}$`,
+  "u",
+);
+
+/** "im Mikko", "oon Mikko", and in lowercase only right before "from": "im mikko from lahti". */
+function redactCasualIntros(r: Redactor): void {
+  const start = "(?<![\\p{L}\\p{N}_'’])";
+  r.replace(new RegExp(`${start}(?:${CASUAL_INTROS})\\s{1,5}(${NAME_WORDS})`, "gu"), "names", looksLikeName);
+  r.replace(
+    new RegExp(`${start}(?:${CASUAL_INTROS}|${MAYBE_INTROS})\\s{1,5}(\\p{Ll}[\\p{L}'’-]{1,30})(?=\\s{1,5}(?:from|kotoisin)(?![\\p{L}]))`, "gu"),
+    "names",
+    (word) => !isOrdinaryWord(word),
+  );
+}
+
+/** "Ahmed Al-Sayed, 34, ..." at the start of a line: a name followed by a bare age gives both away. */
+const NAME_WITH_AGE = new RegExp(
+  `(?:^|(?<=[.!?]\\s{1,5}))(${NAME_WORDS})(?:\\s{1,5}here)?\\s{0,3},\\s{0,3}(\\d{2})(?=\\s{0,3}(?:[,;)]|\\.(?!\\d)|$|(?:y\\/o|yo|v\\.|years? old)(?![\\p{L}]))|\\s{1,5}(?:from|and|ja|och)(?![\\p{L}]))`,
+  "gmu",
+);
+
+function redactNameWithAge(r: Redactor): void {
+  r.text = r.text.replace(NAME_WITH_AGE, (whole, name: string, age: string) => {
+    if (!looksLikeName(name)) return whole;
+    r.report.names += 1;
+    r.report.other += 1;
+    return whole.replace(name, HIDDEN).replace(new RegExp(`(?<!\\d)${age}(?!\\d)`), HIDDEN);
+  });
 }
 
 const IDENTIFIER = /[\p{L}\p{N}_](?:[\p{L}\p{N}_.-]{0,200}[\p{L}\p{N}_])?/gu;
@@ -142,8 +189,13 @@ export function redactNames(r: Redactor, name?: string): void {
   // "I, Sanna Virtanen, ..." names the writer in apposition.
   r.replace(/\bI,\s{1,5}(\p{Lu}\p{Ll}+(?:\s{1,5}\p{Lu}\p{Ll}+){0,2})(?=\s{0,5}[,(]|\s{1,5}(?:from|of|at)\b)/gu, "names", looksLikeName);
 
-  // "Sanna Virtanen here." and "Sanna here," at the start of a sentence.
-  r.replace(/(?:^|(?<=[.!?]\s{1,5}))(\p{Lu}\p{Ll}+(?:\s{1,5}\p{Lu}\p{Ll}+){0,2})\s{1,5}here\b(?=\s{0,5}[.,!:;-]|\s{0,5}$)/gmu, "names", looksLikeName);
+  // "Sanna Virtanen here.", "hey Sanna here," and "its Ahmed Al-Sayed here" at the start of a sentence or after a greeting.
+  r.replace(new RegExp(`${BEFORE_HERE}(${NAME_WORDS})\\s{1,5}here\\b(?=\\s{0,5}[.,!:;-]|\\s{0,5}$)`, "gmu"), "names", looksLikeName);
+
+  redactCasualIntros(r);
+  redactNameWithAge(r);
+  inProse(r, (prose) => prose.replace(NAME_FIELD, "names", looksLikeName));
+  r.replace(INLINE_SIGN_OFF, "names", looksLikeName);
 
   // Author credits in code and documents: hide the rest of the line.
   r.text = r.text.replace(unicodeWords(AUTHOR_LINE), (whole, lead: string, rest: string) => {

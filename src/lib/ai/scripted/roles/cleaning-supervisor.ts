@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const cleaningSupervisor: RoleTemplate = {
   id: "cleaning-supervisor",
   title: "Cleaning shift supervisor",
+  level: "practice",
   keywords: [
     "cleaner", "cleaning", "cleaning supervisor", "cleaning shift supervisor", "facility services", "janitor",
     "housekeeping", "custodian", "siivooja", "siivous", "laitoshuoltaja", "kiinteistönhoitaja", "siivousesimies",

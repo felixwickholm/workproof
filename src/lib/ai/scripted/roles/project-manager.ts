@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const projectManager: RoleTemplate = {
   id: "project-manager",
   title: "Technical project manager",
+  level: "degree",
   keywords: [
     "project manager", "technical project manager", "project management", "delivery manager",
     "program manager", "scrum master", "projektipäällikkö", "projektinhallinta", "projektikoordinaattori",

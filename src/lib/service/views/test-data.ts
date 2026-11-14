@@ -11,9 +11,13 @@ const TRIAGE = skill("triage", "Triage");
 const PLANNING = skill("planning", "Planning");
 const TALK = skill("communication", "Communication");
 
+/** Each company's registered reviewers, as the seed registers them. */
+const REVIEWERS: Record<string, string[]> = { "co-kaari": ["Anna Koivisto"], "co-otso": ["Henrik Lund"], "co-kivira": ["Tomas Berg"] };
+
 const company = (id: string, name: string, sector: string, district: Company["district"]): Company => ({
   id,
   name,
+  reviewers: REVIEWERS[id] ?? [],
   blurb: "",
   sector,
   district,
@@ -52,7 +56,7 @@ const proof = (proofId: string, challenge: Challenge, submittedAt: string, hidde
   proofKind: challenge.proofKind,
   work: "Work",
   explain: [],
-  aiSummary: "",
+  glance: "",
   hiddenCount,
   redactions: { names: hiddenCount, contacts: 0, places: 0, schools: 0, employers: 0, other: 0 },
   submittedAt,

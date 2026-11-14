@@ -363,6 +363,24 @@ export const SKILLS = {
     lookFor: "Shows or describes each step in order and says what is checked before moving on.",
     synonyms: ["hands-on", "practical work", "demonstrate", "käytännön työ"],
   },
+  "lab-practice": {
+    label: "Laboratory practice",
+    why: "A result is only as good as the sample, the control and the order the work was done in.",
+    lookFor: "Checks the controls, the sample and the timing before trusting a result, and says what would make a re-test necessary.",
+    synonyms: ["laboratory", "laboratories", "lab practice", "sample handling", "quality control", "analyser", "analyzer", "laboratorio", "bioanalyytikko", "laadunvalvonta"],
+  },
+  "structural-design": {
+    label: "Structural design",
+    why: "A structure fails where a load has no clear path to the ground, often during the works rather than after.",
+    lookFor: "Follows each load to the ground, checks the bearing at both ends, and plans the temporary support during the works.",
+    synonyms: ["structural design", "structural engineering", "structural engineer", "load-bearing", "eurocode", "rakennesuunnittelu", "rakennesuunnittelija", "statiikka"],
+  },
+  "clinical-reasoning": {
+    label: "Clinical reasoning",
+    why: "A patient is safe only when each finding is read together with the medicines and the history.",
+    lookFor: "Connects the findings, the medicines and the history, and names the check or follow-up that is missing.",
+    synonyms: ["clinical reasoning", "diagnosis", "differential diagnosis", "internal medicine", "general practice", "diagnoosi", "lääketiede", "sisätaudit"],
+  },
 } satisfies Record<string, SkillDefinition>;
 
 export type SkillId = keyof typeof SKILLS;

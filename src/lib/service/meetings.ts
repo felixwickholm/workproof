@@ -3,7 +3,7 @@ import { getStore, type StoreData } from "@/lib/store";
 import { appendAudit, findOrThrow, ServiceError } from "./support";
 
 /** Who confirms a meeting. The talent proves it with their private id, the company with its id. */
-export type ConfirmSide = { side: "talent"; talentId: string } | { side: "company"; companyId: string };
+type ConfirmSide = { side: "talent"; talentId: string } | { side: "company"; companyId: string };
 
 function context(data: StoreData, meetingId: string) {
   const meeting = findOrThrow(data.meetings, (m) => m.id === meetingId, "Meeting");
@@ -32,6 +32,29 @@ export async function acceptMeeting(meetingId: string, talentId: string): Promis
   });
 }
 
+export const DECLINE_ACTION = "Declined a meeting";
+
+/**
+ * Only the author can decline, and only while the invitation is open. The name is never shown:
+ * a declined invitation never reveals identity, and the decision and feedback the company wrote stay.
+ */
+export async function declineMeeting(meetingId: string, talentId: string): Promise<Meeting> {
+  return getStore().update((data) => {
+    const { meeting, company, proof, submission } = context(data, meetingId);
+    if (submission.talentId !== talentId) throw new ServiceError(403, NOT_YOURS);
+    if (meeting.status === "declined") return meeting;
+    if (meeting.status !== "invited") throw new ServiceError(409, "This invitation was already accepted");
+    meeting.status = "declined";
+    appendAudit(data, {
+      actor: "human",
+      by: "Talent",
+      action: DECLINE_ACTION,
+      detail: `${proof.label} declined ${company.name}. The name stays hidden.`,
+    });
+    return meeting;
+  });
+}
+
 export async function confirmMeeting(meetingId: string, who: ConfirmSide): Promise<Meeting> {
   return getStore().update((data) => {
     const { meeting, company, proof, submission } = context(data, meetingId);
@@ -40,6 +63,7 @@ export async function confirmMeeting(meetingId: string, who: ConfirmSide): Promi
       throw new ServiceError(403, "Only the company that sent the invitation can confirm it");
     }
     if (meeting.status === "invited") throw new ServiceError(409, "The meeting has not been accepted yet");
+    if (meeting.status === "declined") throw new ServiceError(409, "The person declined this invitation");
 
     const already = who.side === "talent" ? meeting.talentConfirmedMet : meeting.companyConfirmedMet;
     if (already) return meeting;

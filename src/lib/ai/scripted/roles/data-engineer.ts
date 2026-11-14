@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const dataEngineer: RoleTemplate = {
   id: "data-engineer",
   title: "Data engineer",
+  level: "degree",
   keywords: [
     "data engineer", "data engineering", "data pipeline", "etl", "elt", "airflow", "dbt", "spark",
     "kafka", "data platform", "data-insinööri", "datainsinööri", "tietovarasto",

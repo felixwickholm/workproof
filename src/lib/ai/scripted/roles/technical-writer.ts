@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const technicalWriter: RoleTemplate = {
   id: "technical-writer",
   title: "Technical writer",
+  level: "degree",
   keywords: [
     "technical writer", "technical writing", "documentation", "docs", "developer documentation",
     "api documentation", "tekninen kirjoittaja", "teknistä kirjoittamista", "dokumentaatio", "dokumentointi",

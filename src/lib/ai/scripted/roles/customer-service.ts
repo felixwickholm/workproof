@@ -3,12 +3,17 @@ import type { RoleTemplate } from "../role-template";
 export const customerServiceAgent: RoleTemplate = {
   id: "customer-service",
   title: "Customer service agent",
+  level: "practice",
   keywords: [
     "customer service", "customer support", "customer service agent", "support agent", "asiakaspalvelu",
     "asiakaspalvelija", "call centre", "call center", "contact centre", "helpdesk", "receptionist",
     "vastaanotto", "puhelinpalvelu",
   ],
   skills: ["calm-on-the-phone", "serving-customers", "plain-language", "stakeholder-communication"],
+  cues: {
+    "calm-on-the-phone": ["angry", "callers", "complaints", "difficult calls"],
+    "plain-language": ["bills", "explains", "simply", "plain words"],
+  },
   why: {
     "calm-on-the-phone": "The caller is angry about money. The first half minute decides whether the call can be solved.",
     "serving-customers": "A customer who threatens to leave usually wants the problem fixed, not a discount.",

@@ -32,6 +32,11 @@ export interface Attachment {
   /** Video only. */
   seconds?: number;
   poster?: string;
+  /**
+   * The person checked their own picture: it shows the work only, with no face, name, badge or contact details.
+   * Required for a visitor's picture; pixels are not analysed, so this is the person's own check. Never shown to a reviewer.
+   */
+  confirmed?: true;
 }
 
 export type EspooDistrict =
@@ -62,6 +67,11 @@ export interface Company {
   finnishNeeded: boolean;
   permitSupport: boolean;
   relocationHelp: boolean;
+  /**
+   * The people registered to decide for this company. A decision must name one of them, so no
+   * decision can come from a nameless process. Read it through `companyReviewers`.
+   */
+  reviewers?: string[];
 }
 
 export interface Challenge {
@@ -86,18 +96,49 @@ export interface Challenge {
   reviewGuide: ReviewPrompt[];
   aiAllowed: boolean;
   kind: "event" | "taster";
+  /**
+   * How many answers an event task takes, chosen by the employer when publishing (5 to 30). Unset
+   * means 12; read it through `placesOf` in `places.ts`. A practice task has no limit.
+   */
+  places?: number;
+  /**
+   * Facts about the job, shown to talent as "Good to know": a work language, a language level, a licence
+   * or permit the law asks for. Fixed neutral forms only ("Nurse licence needed"), never the company's words.
+   */
+  requirements?: string[];
   /** AI drafts a challenge. A human at the company approves it before it is published. */
   approvedBy?: string;
   createdAt: string;
 }
 
-export type ChallengeDraft = Omit<Challenge, "id" | "approvedBy" | "createdAt" | "companyIds"> & {
+/** The designer that wrote a draft: the built-in scripted one or a live model. */
+export type DraftedBy = "scripted" | "claude" | "gemini";
+
+/**
+ * What became of one wish the company wrote: kept as a core skill, set aside with a reason, or read as a
+ * fact about the job (a language or a licence) that talent sees under "Good to know".
+ * A wish about the person carries only its neutral category name ("age", "school"), never the words typed.
+ */
+export interface WishOutcome {
+  text: string;
+  outcome: "kept" | "set-aside" | "fact";
+  /** The core skill a kept wish became. */
+  skillId?: string;
+  /** Why a wish was set aside, in a full sentence. */
+  reason?: string;
+}
+
+export type ChallengeDraft = Omit<Challenge, "id" | "approvedBy" | "createdAt" | "companyIds" | "requirements"> & {
+  /** Facts about the job in fixed forms, for the company's draft screen. Published as the challenge's `requirements`. */
+  facts?: string[];
+  /** The designer whose output was accepted, for the company's draft screen. Never published or stored. */
+  draftedBy?: DraftedBy;
   /** The company's own sentence, returned only to the company's draft screen. Never published. */
   yourWords?: string;
   /** A note for the company, for example when no library role matched. Never published. */
   note?: string;
-  /** How many wishes the company's own sentence listed, for the company's draft screen. Never published. */
-  wishCount?: number;
+  /** Each wish the company wrote and what became of it, for the company's draft screen. Never published. */
+  wishes?: WishOutcome[];
 };
 
 /** The only place a person's identity is stored. */
@@ -129,6 +170,8 @@ export interface Submission {
   /** Opt-in: other employers with matching tasks may see the blind proof. The person can withdraw it. */
   shareWithSimilar: boolean;
   submittedAt: string;
+  /** A reviewer reported the picture as possibly identifying, and it was removed for every reader. */
+  pictureRemoved?: true;
 }
 
 export interface RedactionReport {
@@ -155,18 +198,18 @@ export interface BlindProof {
   attachment?: Attachment;
   /** The answer was spoken and is shown as text. The voice is not shared. */
   spoken?: boolean;
-  /**
-   * "At a glance": the shape of the work (points, length, code, opening words), built by code.
-   * Not written by AI and never about quality. The name is kept for API compatibility.
-   */
-  aiSummary: string;
-  /** How many personal details were hidden, as one total. Categories stay with the author. */
-  hiddenCount: number;
+  /** "At a glance": the shape of the work (points, length, code, opening words), built by code, never about quality. */
+  glance: string;
   submittedAt: string;
 }
 
-/** A proof as its author sees it: the blind proof plus what was hidden, by category. */
+/**
+ * A proof as its author sees it: the blind proof plus what was hidden. The count stays with the author:
+ * shown to a reviewer, more hidden details (foreign places, schools, names) would hint at a background.
+ */
 export interface OwnProof extends BlindProof {
+  /** How many personal details were hidden, as one total. */
+  hiddenCount: number;
   redactions: RedactionReport;
 }
 
@@ -184,12 +227,14 @@ export interface Decision {
   decidedAt: string;
 }
 
-export type MeetingStatus = "invited" | "accepted" | "met";
+/** "declined": the person said no. Their name is never shown to the company. */
+export type MeetingStatus = "invited" | "accepted" | "declined" | "met";
 
 export interface Meeting {
   id: string;
   proofId: string;
   companyId: string;
+  /** A proposed time and table, for example "Sat 13:15, Table 2", or "Time to be agreed" when the event day is full. */
   slot: string;
   status: MeetingStatus;
   talentConfirmedMet: boolean;
@@ -209,6 +254,8 @@ export interface AuditEvent {
 /** A proof as its author sees it in the passport. */
 export interface PassportEntry {
   proof: OwnProof;
+  /** The person's own words before the blind layer. Returned only to the person, never to a company or the city. */
+  original: { answer: string; explain: ExplainAnswer[] };
   challenge: Pick<Challenge, "id" | "title" | "minutes" | "format" | "kind">;
   seenByHumans: number;
   responses: {
@@ -222,6 +269,8 @@ export interface PassportEntry {
   sharedWith: string[];
   /** Whether the person currently lets other employers see this proof through Second look. Event proofs only. */
   sharing: boolean;
+  /** A reviewer reported the picture as possibly identifying; it was removed and the written answer stays. */
+  pictureRemoved: boolean;
 }
 
 export interface ReviewQueue {
@@ -231,16 +280,30 @@ export interface ReviewQueue {
   proofs: BlindProof[];
   /** Proofs another employer passed on, where the challenge shares core skills. Oldest first. */
   secondLook: (BlindProof & { sharedSkills: string[] })[];
-  /** `identity` appears only after the person accepts. It never carries the talent id. */
-  decided: { proof: BlindProof; decision: Decision; meeting?: Meeting; identity?: Pick<Talent, "name" | "contact"> }[];
+  /**
+   * `identity` appears only after the person accepts. It never carries the talent id.
+   * `withdrawn`: the person turned Second look off after this company answered through it, and no meeting
+   * was accepted. The decision and feedback stay; the proof is reduced to its label.
+   */
+  decided: { proof: BlindProof; decision: Decision; meeting?: Meeting; identity?: Pick<Talent, "name" | "contact">; withdrawn?: true }[];
 }
 
+/**
+ * One employer's record for the city. The own-task counts add up: received = answered + owed.
+ * Answers given to other employers' proofs through Second look are counted apart, so they never exceed the proofs.
+ */
 export interface EmployerRecord {
   company: Company;
   challengeLiveDaysBeforeEvent: number;
+  /** Proofs sent to this company's own tasks. */
   proofsReceived: number;
-  feedbackGiven: number;
-  feedbackOwed: number;
+  /** Of those, proofs this company answered in writing. */
+  proofsAnswered: number;
+  /** Of those, proofs still waiting for this company's answer. */
+  proofsOwed: number;
+  /** Written answers to other employers' proofs, given through Second look. */
+  secondLookAnswered: number;
+  /** Median hours from arrival to this company's answer, over its own-task proofs. */
   medianHoursToRespond: number | null;
   meetingsHeld: number;
 }
@@ -258,7 +321,8 @@ export interface CityOverview {
     meetingsInvited: number;
     meetingsConfirmedByBoth: number;
     secondLookMeetings: number;
-    automatedDecisions: 0;
+    /** Decisions in the log not made by a registered person. Counted over the log, not assumed. */
+    automatedDecisions: number;
   };
   employers: EmployerRecord[];
   audit: AuditEvent[];
@@ -278,7 +342,8 @@ export interface CityInsights {
   pooled: { challengeId: string; title: string; companies: string[]; proofs: number }[];
   funnel: { proofs: number; answered: number; invited: number; accepted: number; met: number };
   fairness: {
-    automatedDecisions: 0;
+    /** Decisions in the log not made by a registered person. Counted over the log, not assumed. */
+    automatedDecisions: number;
     /** Personal details the blind layer hid, over all event proofs. */
     detailsHidden: number;
     decisionsWithNamedHuman: number;
@@ -324,6 +389,8 @@ export interface SeekerTask {
   medianReplyHours: number | null;
   /** The person has handed in work for this task. */
   mine: boolean;
+  /** Answers this task still takes; at 0 it accepts no new work. */
+  placesLeft: number;
 }
 
 /** The work seeker's home. Built for the person themselves, from their private key. */
@@ -354,7 +421,9 @@ export interface EmployerHome {
     meetings: number;
   };
   /** This company's live tasks, newest first. */
-  tasks: { challenge: Challenge; proofsReceived: number; waiting: number; daysLive: number }[];
+  tasks: { challenge: Challenge; proofsReceived: number; waiting: number; daysLive: number; places: number; placesLeft: number }[];
+  /** An estimate: proofs waiting to be read, at about 4 minutes each. */
+  readingMinutesOwed: number;
   /** The oldest five waiting proofs, in arrival order. */
   queuePreview: BlindProof[];
   secondLookWaiting: number;
@@ -364,7 +433,8 @@ export interface EmployerHome {
   /** For each core skill this company asks for: event proofs handed in for any task with that skill. Counts only. */
   pool: { skillId: string; label: string; proofs: number }[];
   /** The whole event, the same numbers as the city totals. */
-  event: { proofs: number; proofsAnswered: number; medianHoursToFirstAnswer: number | null };
+  /** Event totals, plus the hours an employer has to answer before a consented proof opens to Second look. */
+  event: { proofs: number; proofsAnswered: number; medianHoursToFirstAnswer: number | null; responseWindowHours: number };
 }
 
 /** The caller's demo sandbox. Returned only to the visitor who owns it. */
@@ -374,4 +444,37 @@ export interface DemoSession {
   /** The demo person's private key in this sandbox, and her name. */
   persona: { talentId: string; name: string };
   stage: StoryStage;
+}
+
+/** An invitation from the person hosting the booth table to the author of one practice proof. */
+export type TableInviteStatus = "invited" | "accepted" | "declined";
+
+export interface TableInvite {
+  proofId: string;
+  /** The person hosting the table, as they signed the invitation. */
+  host: string;
+  /** Two sentences to the person. Only the proof's author reads them. */
+  message: string;
+  status: TableInviteStatus;
+  /** The first name the person chose to show. Stored only when they accept; never before, never on a decline. */
+  shownName?: string;
+  invitedAt: string;
+}
+
+/**
+ * One row on the public table screen. No work text, no follow-ups and no count of hidden details:
+ * the room sees that a proof arrived and what it was for, nothing a person wrote.
+ */
+export interface TableProof {
+  proofId: string;
+  label: string;
+  taskTitle: string;
+  proofKind: ProofKind;
+  submittedAt: string;
+  invite?: Pick<TableInvite, "status" | "host" | "shownName">;
+}
+
+/** The table's invitation as the proof's author reads it, with the host's own words. */
+export interface MyTableInvite {
+  invite?: Pick<TableInvite, "status" | "host" | "message">;
 }

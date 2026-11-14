@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const electrician: RoleTemplate = {
   id: "electrician",
   title: "Electrician",
+  level: "practice",
   keywords: [
     "electrician", "electrical installer", "electrical fitter", "installation electrician", "wiring",
     "sähköasentaja", "sähkömies", "sähköasennus", "sähkötyö",

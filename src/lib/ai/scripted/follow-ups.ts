@@ -20,8 +20,33 @@ function sentencesOf(text: string): string[] {
     .filter((s) => s.split(/\s+/).length >= 4 && !s.includes("[hidden]") && isNeutral(s));
 }
 
-/** A short phrase from the answer, preferably where it talks about a planted flaw. */
-function quoteFrom(challenge: Challenge, answer: string): string | undefined {
+const ELLIPSIS = "…";
+
+/** A whole sentence is quoted while it stays this short, so the person reads their own thought complete. */
+export const WHOLE_SENTENCE_CHARS = 140;
+
+/** Quote marks inside the person's words become single ones, and edge punctuation goes. */
+function clean(text: string): string {
+  return text.replace(/["“”]/g, "'").replace(/^[^\p{L}\p{N}']+|[^\p{L}\p{N})']+$/gu, "");
+}
+
+/**
+ * A part of a long sentence, cut at word boundaries around the cue, with an ellipsis at each cut end,
+ * so a quote never stops mid-thought without saying so.
+ */
+function excerpt(words: readonly string[], cueAt: number): string {
+  // Start at the sentence start when the cue is near it, else two words before the cue.
+  const start = cueAt < QUOTE_WORDS - 2 ? 0 : Math.max(0, Math.min(cueAt - 2, words.length - QUOTE_WORDS));
+  const end = Math.min(words.length, start + QUOTE_WORDS);
+  const part = clean(words.slice(start, end).join(" "));
+  return `${start > 0 ? ELLIPSIS : ""}${part}${end < words.length ? ELLIPSIS : ""}`;
+}
+
+/**
+ * The person's own words to quote, preferably where they talk about a planted flaw: the whole sentence
+ * when it is under about 140 characters, otherwise a part of it cut at word boundaries with an ellipsis.
+ */
+export function quoteFrom(challenge: Challenge, answer: string): string | undefined {
   const sentences = sentencesOf(answer);
   if (sentences.length === 0) return undefined;
   const cues = flawsFor(challenge).flatMap((flaw) => flaw.cues);
@@ -29,20 +54,13 @@ function quoteFrom(challenge: Challenge, answer: string): string | undefined {
   let sentence = sentences.find((s) => cues.some((cue) => s.toLowerCase().includes(cue)));
   sentence ??= [...sentences].sort((a, b) => b.length - a.length)[0];
 
+  const whole = clean(sentence);
+  if (whole.length <= WHOLE_SENTENCE_CHARS) return whole.split(/\s+/).length >= 3 ? whole : undefined;
+
   const words = sentence.split(/\s+/);
   const cueAt = words.findIndex((w) => cues.some((cue) => w.toLowerCase().includes(cue.split(" ")[0])));
-  // Start at the sentence start when the cue is near it, else two words before the cue.
-  const start = cueAt < QUOTE_WORDS - 2 ? 0 : Math.max(0, Math.min(cueAt - 2, words.length - QUOTE_WORDS));
-  const window = words.slice(cueAt < 0 ? 0 : start, (cueAt < 0 ? 0 : start) + QUOTE_WORDS);
-  // End at the first clause break once the quote has three words, so it reads as a phrase.
-  const stop = window.findIndex((w, i) => i >= 2 && /[:;,.]$/.test(w));
-  const quote = window
-    .slice(0, stop < 0 ? window.length : stop + 1)
-    .join(" ")
-    .replace(/["“”]/g, "'")
-    .replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N})]+$/gu, "");
-  if (quote.split(/\s+/).length < 3 || !isNeutral(quote)) return undefined;
-  return quote;
+  const quote = excerpt(words, Math.max(0, cueAt));
+  return isNeutral(quote) ? quote : undefined;
 }
 
 export function followUpQuestions(challenge: Challenge, answer: string): string[] {

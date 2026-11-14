@@ -1,6 +1,7 @@
-import { existsSync, statSync } from "node:fs";
+import { existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { roleFor } from "@/lib/ai/scripted/compose";
 import { toBlindProof } from "@/lib/blind/project";
 import { decisionInputProblem } from "@/lib/domain/decision-rules";
 import type { ProofKind, StoryStage } from "@/lib/domain/types";
@@ -11,8 +12,7 @@ import { median } from "@/lib/service/reply-totals";
 import { buildSeed } from ".";
 import { REVIEWERS } from "./companies";
 import { PEOPLE } from "./people";
-import { SECOND_LOOK_DECISIONS } from "./second-look";
-import { STORY_PROOF_ID, STORY_STAGES } from "./story";
+import { OLENA_EARLIER_PLAN_ID, OLENA_STORY, STORY_PROOF_ID, STORY_STAGES } from "./story";
 
 const NOW = new Date("2026-11-14T12:00:00.000Z");
 const HOUR = 3_600_000;
@@ -43,7 +43,7 @@ describe("seed world", () => {
     expect(meets).toBeLessThanOrEqual(13);
     expect(data.meetings.length).toBeGreaterThanOrEqual(8);
     expect(data.meetings.length).toBeLessThanOrEqual(11);
-    expect(new Set(data.meetings.map((m) => m.status))).toEqual(new Set(["invited", "accepted", "met"]));
+    expect(new Set(data.meetings.map((m) => m.status))).toEqual(new Set(["invited", "accepted", "declined", "met"]));
     expect(data.decisions.filter((d) => !ownerOf(d.proofId).includes(d.companyId))).toHaveLength(3);
   });
 
@@ -60,6 +60,24 @@ describe("seed world", () => {
       expect(hoursBefore(c.createdAt) / 24).toBeLessThanOrEqual(9);
     }
     expect(data.challenges.some((c) => c.setAside.some((line) => line.startsWith("Not used:")))).toBe(true);
+  });
+
+  it("leads the newest tasks with five different kinds of work, none of them code, and the story task", () => {
+    const newest = [...data.challenges].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 5);
+    const kinds = newest.map((c) => c.proofKind);
+    expect(new Set(kinds).size).toBe(5);
+    expect(kinds).not.toContain("code");
+    expect(newest.map((c) => c.id)).toContain(`ch-${OLENA_STORY.challenge}`);
+  });
+
+  it("receives every proof after its task was published", () => {
+    for (const stage of STORY_STAGES) {
+      const stageData = build(stage);
+      for (const s of stageData.submissions) {
+        const challenge = stageData.challenges.find((c) => c.id === s.challengeId);
+        expect(new Date(s.submittedAt).getTime()).toBeGreaterThan(new Date(challenge?.createdAt ?? NOW).getTime());
+      }
+    }
   });
 
   it("gives every decision a named reviewer and kind, specific feedback that never scores or ranks", () => {
@@ -103,24 +121,6 @@ describe("seed world", () => {
     expect(owed.length).toBeLessThanOrEqual(5);
   });
 
-  it("makes every Second look decision one the rules allow", () => {
-    for (const look of SECOND_LOOK_DECISIONS) {
-      const submission = data.submissions.find((s) => s.id === look.proofId);
-      const challenge = data.challenges.find((c) => c.id === submission?.challengeId);
-      if (!submission || !challenge) throw new Error(look.proofId);
-      const owners = data.decisions.filter((d) => d.proofId === look.proofId && challenge.companyIds.includes(d.companyId));
-      const matches = secondLookMatches({
-        submission,
-        challenge,
-        decisions: owners,
-        challenges: data.challenges,
-        responseWindowHours: 48,
-        now: new Date(NOW.getTime() - look.hoursAgo * HOUR),
-      });
-      expect(matches.map((m) => m.companyId)).toContain(look.companyId);
-    }
-  });
-
   it("shows pictures of the work from small files in public/demo", () => {
     const attached = data.submissions.filter((s) => s.attachment);
     expect(attached.length).toBeGreaterThanOrEqual(8);
@@ -135,12 +135,82 @@ describe("seed world", () => {
     }
   });
 
+  it("every employer task in the demo event uses a degree-level role", () => {
+    for (const c of data.challenges) {
+      const role = roleFor(c);
+      expect(role.id, c.id).not.toBe("generic");
+      expect(role.level, `${c.id}: ${role.id}`).toBe("degree");
+    }
+  });
+
+  it("no demo media file is unreferenced", () => {
+    const referenced = new Set(
+      buildSeed(NOW, "met").submissions.flatMap((s) => [s.attachment?.src, s.attachment?.poster].filter((x): x is string => Boolean(x))),
+    );
+    const files = readdirSync(join(process.cwd(), "public", "demo")).map((name) => `/demo/${name}`);
+    expect(files.filter((file) => !referenced.has(file))).toEqual([]);
+  });
+
   it("uses only reserved contacts", () => {
     for (const { contact } of Object.values(PEOPLE)) expect(contact).toMatch(/@example\.org$|^\+358 \d\d 000 \d{4}$/);
   });
 });
 
+describe("meeting slots in the seed", () => {
+  it("never puts two meetings at the same time and table, or one person or company in two places at once", () => {
+    for (const stage of STORY_STAGES) {
+      const data = build(stage);
+      const talentOf = new Map(data.submissions.map((s) => [s.id, s.talentId]));
+      const held = data.meetings.filter((m) => m.status !== "declined");
+      const time = (slot: string) => slot.split(",")[0];
+      const unique = (keys: string[]) => expect(new Set(keys).size, `${stage}: ${keys.join(" | ")}`).toBe(keys.length);
+      unique(held.map((m) => m.slot));
+      unique(held.map((m) => `${time(m.slot)} ${talentOf.get(m.proofId)}`));
+      unique(held.map((m) => `${time(m.slot)} ${m.companyId}`));
+    }
+  });
+
+  it("shows one invitation the person declined", () => {
+    expect(build("invited").meetings.filter((m) => m.status === "declined")).toHaveLength(1);
+  });
+});
+
+describe("Second look in the seed", () => {
+  it("makes every decision by an employer that does not own the task one the rules allow when it is made", () => {
+    for (const stage of STORY_STAGES) {
+      const data = build(stage);
+      const others = data.decisions.filter((d) => {
+        const submission = data.submissions.find((s) => s.id === d.proofId);
+        const challenge = data.challenges.find((c) => c.id === submission?.challengeId);
+        return !challenge?.companyIds.includes(d.companyId);
+      });
+      expect(others.length).toBeGreaterThan(0);
+      for (const look of others) {
+        const submission = data.submissions.find((s) => s.id === look.proofId);
+        const challenge = data.challenges.find((c) => c.id === submission?.challengeId);
+        if (!submission || !challenge) throw new Error(look.proofId);
+        const matches = secondLookMatches({
+          submission,
+          challenge,
+          decisions: data.decisions.filter((d) => d.proofId === look.proofId && d.decidedAt < look.decidedAt),
+          challenges: data.challenges,
+          responseWindowHours: data.event.responseWindowHours,
+          now: new Date(look.decidedAt),
+        });
+        expect(matches.map((m) => m.companyId), `${stage}: ${look.companyId} on ${look.proofId}`).toContain(look.companyId);
+      }
+    }
+  });
+});
+
 describe("Olena's story", () => {
+  it("labels the story proof K7 at every stage, as the guided tour calls it", () => {
+    for (const stage of ["sent", "invited", "met"] as const) {
+      const proof = buildSeed(new Date(), stage).proofs.find((p) => p.proofId === STORY_PROOF_ID);
+      expect(proof?.label).toBe("Proof K7");
+    }
+  });
+
   const stages = STORY_STAGES.map((stage) => ({ stage, data: build(stage) }));
 
   it("builds every stage and fills the demo info", () => {
@@ -168,7 +238,8 @@ describe("Olena's story", () => {
     expect(met.decisions.length - invited.decisions.length).toBe(1);
     expect(invited.meetings.find((m) => m.proofId === STORY_PROOF_ID)?.status).toBe("invited");
     expect(met.meetings.find((m) => m.proofId === STORY_PROOF_ID && m.companyId === "co-kaari")?.status).toBe("accepted");
-    expect(met.meetings.find((m) => m.proofId === STORY_PROOF_ID && m.companyId === "co-otso")?.status).toBe("invited");
+    expect(met.meetings.find((m) => m.proofId === STORY_PROOF_ID && m.companyId === "co-otso")).toBeUndefined();
+    expect(met.meetings.find((m) => m.proofId === OLENA_EARLIER_PLAN_ID && m.companyId === "co-otso")?.status).toBe("invited");
   });
 
   it("gives Olena two earlier proofs at every stage: one answered, one waiting", () => {
@@ -194,7 +265,8 @@ describe("Olena's story", () => {
     const proof = data.proofs.find((p) => p.proofId === STORY_PROOF_ID);
     if (!proof) throw new Error("story proof missing");
     const blind = toBlindProof(proof);
-    expect(blind.hiddenCount).toBe(7);
+    expect(proof.hiddenCount).toBe(7);
+    expect(blind).not.toHaveProperty("hiddenCount");
     const shown = collectText(blind).join("\n");
     for (const planted of ["Olena", "Kovalenko", "Kyiv", "Medical Institute", "Yöpuhdas", "Espoo", "Finland", "Ukrainian", "olena.kovalenko"]) {
       expect(shown).not.toContain(planted);

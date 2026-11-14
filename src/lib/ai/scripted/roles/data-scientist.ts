@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const dataScientist: RoleTemplate = {
   id: "data-scientist",
   title: "Data scientist",
+  level: "degree",
   keywords: [
     "data scientist", "data science", "forecasting", "forecast", "time series", "predictive model",
     "datatieteilijä", "datatiede", "ennustemalli", "ennustaminen",

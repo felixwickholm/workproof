@@ -7,6 +7,7 @@ import type {
   OwnProof,
   StoryStage,
   Submission,
+  TableInvite,
   Talent,
 } from "@/lib/domain/types";
 
@@ -40,10 +41,12 @@ export interface StoreData {
   meetings: Meeting[];
   audit: AuditEvent[];
   demo: DemoInfo;
+  /** Invitations sent from the booth table to practice proofs. Missing in data saved before the table could invite. */
+  tableInvites?: TableInvite[];
 }
 
 /**
- * Storage for Tryout. `read` returns the live data: callers only read it and never change it.
+ * Storage for Workprint. `read` returns the live data: callers only read it and never change it.
  * `update` applies a change and persists it. The shape is small enough to keep as one document in any backend.
  */
 export interface ProofStore {

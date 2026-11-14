@@ -9,21 +9,30 @@ export interface Sandbox {
   code: string;
   store: ProofStore;
   createdAt: number;
+  /** Last time any request used this sandbox. */
+  lastUsed: number;
 }
 
-export interface SandboxOptions {
-  /** At most this many sandboxes; the least recently used goes first. */
+interface SandboxOptions {
+  /** At most this many sandboxes. */
   max: number;
   /** A sandbox older than this is replaced by a fresh one. */
   lifetimeMs: number;
+  /**
+   * A sandbox used within this time is never evicted to make room: when every sandbox is this recent,
+   * a new one is refused instead, so a flood of new visitors cannot wipe the demos people are using.
+   */
+  protectedMs: number;
 }
 
 export interface SandboxRegistry {
+  /** The live sandbox for this id, marked as used now. Never creates one. */
+  find(id: string, now: number): Sandbox | undefined;
   /**
-   * The sandbox for this id, created with `build` on first use or after it expired. The caller passes
-   * the builder, so a sandbox made after a dev hot reload uses the current seed, not a stale copy.
+   * A new sandbox for this id, built with `build`. The caller passes the builder, so a sandbox made after a
+   * dev hot reload uses the current seed. Undefined when the registry is full of recently used sandboxes.
    */
-  open(id: string, now: number, build: () => StoreData): Sandbox;
+  create(id: string, now: number, build: () => StoreData): Sandbox | undefined;
   /** The live sandbox behind a share code, if there is one. */
   byCode(code: string, now: number): Sandbox | undefined;
   readonly size: number;
@@ -51,16 +60,15 @@ export function createSandboxRegistry(options: SandboxOptions): SandboxRegistry 
     }
   }
 
-  function create(id: string, now: number, build: () => StoreData): Sandbox {
+  /** Evicts least recently used sandboxes until one more fits. False when only recently used ones are left. */
+  function makeRoom(now: number): boolean {
     while (sandboxes.size >= options.max) {
-      const oldest = sandboxes.keys().next().value;
+      const oldest = sandboxes.values().next().value;
       if (oldest === undefined) break;
-      drop(oldest);
+      if (now - oldest.lastUsed < options.protectedMs) return false;
+      drop(oldest.id);
     }
-    const sandbox: Sandbox = { id, code: uniqueCode(), store: createMemoryStore(build), createdAt: now };
-    sandboxes.set(id, sandbox);
-    codes.set(sandbox.code, id);
-    return sandbox;
+    return true;
   }
 
   function live(id: string, now: number): Sandbox | undefined {
@@ -72,11 +80,20 @@ export function createSandboxRegistry(options: SandboxOptions): SandboxRegistry 
     }
     sandboxes.delete(id);
     sandboxes.set(id, sandbox);
+    sandbox.lastUsed = now;
     return sandbox;
   }
 
   return {
-    open: (id, now, build) => live(id, now) ?? create(id, now, build),
+    find: live,
+    create(id, now, build) {
+      drop(id);
+      if (!makeRoom(now)) return undefined;
+      const sandbox: Sandbox = { id, code: uniqueCode(), store: createMemoryStore(build), createdAt: now, lastUsed: now };
+      sandboxes.set(id, sandbox);
+      codes.set(sandbox.code, id);
+      return sandbox;
+    },
     byCode(code, now) {
       if (code.length !== CODE_LENGTH) return undefined;
       const id = codes.get(code);

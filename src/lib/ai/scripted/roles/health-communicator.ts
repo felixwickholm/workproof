@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const healthCommunicator: RoleTemplate = {
   id: "health-communicator",
   title: "Health communicator",
+  level: "degree",
   keywords: [
     "health communicator", "health communication", "patient letters", "patient letter", "medical writer", "health writer",
     "journalist", "content writer", "copywriter", "terveysviestintä", "toimittaja", "viestintäsuunnittelija",

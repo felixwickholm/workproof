@@ -3,9 +3,10 @@ import type { RoleTemplate } from "../role-template";
 export const nurse: RoleTemplate = {
   id: "nurse",
   title: "Nurse",
+  level: "degree",
   keywords: [
     "nurse", "nursing", "registered nurse", "practical nurse", "ward", "clinical",
-    "sairaanhoitaja", "hoitaja", "lähihoitaja", "terveydenhoitaja", "doctor", "physician", "medical doctor", "lääkäri",
+    "sairaanhoitaja", "hoitaja", "lähihoitaja", "terveydenhoitaja",
   ],
   skills: ["patient-safety", "stakeholder-communication", "prioritisation", "ai-assisted-work"],
   why: {

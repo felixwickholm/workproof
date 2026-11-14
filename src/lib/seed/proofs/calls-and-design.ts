@@ -1,32 +1,33 @@
 import type { SeedProof } from "../types";
 
 /**
- * Synthetic work for the billing line and the reminder redesign.
+ * Synthetic work for the late delivery call and the reminder redesign.
  * Spoken answers keep only the transcript. Pictures show the work, never a person.
  */
 export const CALL_AND_DESIGN_PROOFS: SeedProof[] = [
   {
     id: "proof_call_01",
     person: "hodan",
-    challenge: "vesto-bills",
-    hoursAgo: 130,
+    challenge: "vesto-delivery",
+    hoursAgo: 47,
     shareWithSimilar: true,
     spoken: true,
     answer: [
-      "Hei, you're speaking with Hodan. I can see two bills for October on your account, and one of them has already been taken from your bank. I'm sorry, that's our mistake: your move was entered twice, so the system made two contracts.",
-      "Here is what I can do right now, while we are on the phone. I cancel the open bill, the one due on the 21st, so it will not be taken. For the 64 euros that was already paid, I send a refund request today. The billing team pays it back within ten working days, and I'll send you a text when it's done.",
-      "Is the account number we have still the right one for the refund?",
+      "Hi, this is Hodan. Before anything else: yes, order 4471 is late, it should have been with you on the 3rd, and that is on us, not on you.",
+      "Can I ask one thing first: what does your site need this month? I have your hospital handover on the 28th in my notes.",
+      "Here is what I can do today. We have 120 of the DN25 valves in our own stock. I can ship them on Friday with express freight at our cost, so phase 1 is covered.",
+      "For the other 280 I do not have a date I trust yet. I will call you on Monday with the supplier's written date, and not before.",
     ].join("\n\n"),
     explainAnswers: [
-      "I started with sorry because the caller has called before. If I explain first, it sounds like an excuse.",
-      "If billing was closed until tomorrow I would still cancel the open bill now and promise a call back tomorrow before noon, not the money.",
+      "I asked about the site before offering anything, because the 120 valves only help if phase 1 is what is blocking them.",
+      "Then I would not offer them on this call. I would check with my colleague first and promise the client an answer within the hour.",
     ],
     spokenFollowUps: true,
     decision: {
       companyId: "co-vesto",
       kind: "meet",
       feedback:
-        "You said sorry for our mistake before anything else, and you cancelled the open bill while the caller was still on the line. That is how we want the first half minute to sound. Let us talk at the event about the evening team.",
+        "You owned the delay in the first sentence, asked about the hospital handover before offering anything, and promised a date only after the supplier confirms. That is how we want this call to sound. Let us talk at the event about the integrator accounts.",
       hoursToReply: 2.5,
       meeting: "met",
     },
@@ -34,69 +35,68 @@ export const CALL_AND_DESIGN_PROOFS: SeedProof[] = [
   {
     id: "proof_call_02",
     person: "chiamaka",
-    challenge: "vesto-bills",
-    hoursAgo: 75,
+    challenge: "vesto-delivery",
+    hoursAgo: 46,
     shareWithSimilar: false,
     spoken: true,
     answer: [
-      "Good afternoon, thank you for calling. Okay so I understand, you got two bills for the same month and you are angry, and honestly I would be too.",
-      "Let me look... yes, I see it. The move date went in twice, once on the web and once by phone, so there are two contracts. That's on us.",
-      "The second bill I can cancel now. The first one is paid already, so I will ask for a refund, it comes in about two weeks. I can't give a discount, sorry, but I will put a note so this does not happen again.",
-      "I only moved from Lagos in March so I know how stressful bills are here when everything is new.",
+      "Good afternoon, thank you for calling. I understand, the valves were due on the 3rd and your team is waiting, and honestly I would be frustrated too.",
+      "The delay is from our supplier's casting, and I am sorry it reached you. The new date is the 17th. I can also send 120 valves from our stock this Friday so your team can start.",
+      "I cannot give a discount myself, but I will ask my director today.",
+      "I looked after hospital supply accounts for a medical distributor in Lagos for four years, so I know a late delivery stops a whole site.",
     ].join("\n\n"),
     explainAnswers: [
-      "I wanted the caller to feel heard first, the facts can wait ten seconds.",
-      "With twelve people in the queue I would skip the small talk and go straight to cancelling the open bill.",
+      "The client needs a date to plan the site, so I gave the one in the system. I see now it is not confirmed, so next time I would promise a written date on Monday instead.",
+      "If the 120 valves were promised to another client too, I would check with my director before offering them, not after.",
     ],
     decision: {
       companyId: "co-vesto",
       kind: "pass",
       feedback:
-        "Thank you for a calm opening, and for saying clearly that you cannot give a discount. This billing line is answered in Finnish only, so we cannot offer it now. The way you named the double contract in one sentence is something to keep.",
+        "Thank you for a calm opening, and for offering the 120 valves from stock. The 17th is not yet confirmed by the supplier, and in this role a date we have to take back costs the client's trust. Our integrator clients also call in Finnish, which this role needs from the first day.",
       hoursToReply: 6,
     },
   },
   {
     id: "proof_call_03",
-    person: "zainab",
-    challenge: "vesto-bills",
+    person: "hanna",
+    challenge: "vesto-delivery",
     hoursAgo: 44,
     shareWithSimilar: true,
     spoken: true,
     answer: [
-      "Hyvää päivää, asiakaspalvelu, Zainab puhelimessa. Ymmärrän, kaksi laskua samasta kuukaudesta, se ei ole ok.",
-      "Katson... joo, muuttopäivä on kirjattu kaksi kertaa, web-lomakkeella ja puhelimessa, so you have two contracts. Meidän virhe.",
-      "Peruutan nyt sen avoimen laskun, eräpäivä 21.11, sitä ei veloiteta. Maksettu lasku, 64,20, siitä teen palautuspyynnön, raha tulee tilille kymmenen arkipäivän sisällä. Today I cannot pay it back, but I can send you a confirmation by email right after this call.",
-      "Haluatteko että suljen myös sen ylimääräisen sopimuksen samalla?",
+      "Hei, Hanna Vestolta. Tiedän miksi soitat, tilaus 4471 on kaksi viikkoa myöhässä, ja se on meidän vastuulla.",
+      "Ennen kuin lupaan mitään: mitä työmaa tarvitsee ensin? Muistiinpanoissa on sairaalan luovutus 28. päivä.",
+      "Varastossa on 120 venttiiliä, ne lähtevät perjantaina pikarahtina meidän kustannuksella. The rest I cannot promise today, the supplier has not confirmed in writing. I will call you on Monday with a date I can stand behind.",
     ].join("\n\n"),
     explainAnswers: [
-      "I said the cause early because the customer thinks it will happen again. If they know why, they believe it is fixed.",
-      "If the system showed a third bill I would stop it before ending the call and tell the customer I did it.",
+      "The handover date tells me what the client needs first, so I start there. I check it by asking them before I offer anything, because the stock valves help only if phase 1 is what stops them.",
+      "Then I offer what I can confirm today, express freight for the rest once the supplier confirms, and I ask my colleague whether the stock can be split.",
     ],
     spokenFollowUps: true,
     decision: {
       companyId: "co-vesto",
       kind: "pass",
       feedback:
-        "You explained the two contracts in words a caller would use, and you closed the extra contract during the call. We filled both billing seats this week, so this is not now. Your proof stays open to other employers who ask for the same skills.",
+        "You owned the delay, asked about the site first and kept the date open until the supplier confirms, which is how we want this call handled. We filled both key account roles this week, so this is not now. Your proof stays open to other employers who ask for the same skills.",
       hoursToReply: 3.5,
     },
   },
   {
     id: "proof_call_04",
     person: "johan",
-    challenge: "vesto-bills",
+    challenge: "vesto-delivery",
     hoursAgo: 18,
     shareWithSimilar: true,
     answer: [
       "Written, because I am at work and cannot record here.",
-      "\"Hello, this is Johan. I can see the problem straight away: two bills for October because your move was registered twice. I'll cancel the bill that is still open right now. The one that was already paid I will send for a refund, and you get the money back within ten working days. I cannot make it faster than that, but I can call you on the day it is paid.\"",
-      "I worked at Puhti Contact in the call centre for two summers while studying at Arcada, so this is a call I have heard many times.",
+      "\"Hello, this is Johan. You are right to call, order 4471 is two weeks late and I am sorry. I see your hospital handover is on the 28th. What I can do now: 120 valves from our own stock leave on Friday, freight on us, so phase 1 can go ahead. The rest depends on our supplier, and I will not give you a date until I have it in writing. You will hear from me on Monday either way.\"",
+      "I studied international business at Arcada and did inside sales for a ventilation wholesaler for three years.",
       "/Johan Sundqvist",
     ].join("\n\n"),
     explainAnswers: [
-      "Telling them what I see first shows I have their account open and they do not need to explain again.",
-      "If the caller spoke little of either language I would keep the same three facts and say them slower, maybe in Swedish if that helps.",
+      "Saying the handover date back to the client shows I know their project and they do not need to explain it again.",
+      "I would say that discounts are decided by our sales director and that I will take it to her today. I would not trade a discount against the date.",
     ],
   },
   {
@@ -118,8 +118,8 @@ export const CALL_AND_DESIGN_PROOFS: SeedProof[] = [
       "Xiaoling Wu, graphic design, Metropolia 2021",
     ].join("\n\n"),
     explainAnswers: [
-      "The fasting rule is the reason tests get redone, so it had to sit next to the time and not at the bottom.",
-      "In black and white the teal box becomes a thick black frame, which still works.",
+      "People open a reminder to find when to come, so the time must be the first thing they see. I would check it by asking three people new to Finnish to find the time and the fasting rule, and timing them.",
+      "The time and the numbered steps stay the same in every language. Each language gets its own line under the Finnish one, and I would test that the longest one still fits.",
     ],
     decision: {
       companyId: "co-kuulas",
@@ -127,7 +127,8 @@ export const CALL_AND_DESIGN_PROOFS: SeedProof[] = [
       feedback:
         "The time is the first thing anyone sees, and the three steps read in a few seconds. We would like to hear how you chose the icons and how you would test the poster with patients.",
       hoursToReply: 1.5,
-      meeting: "invited",
+      // She said no: she took another design job the same week. The studio never sees her name.
+      meeting: "declined",
     },
   },
   {
@@ -146,8 +147,8 @@ export const CALL_AND_DESIGN_PROOFS: SeedProof[] = [
       "I am in Tallinn now and move to Espoo in January, I tested the card on two friends who are learning the language. Both found the time in under 3 seconds but one missed the fasting rule, so I put it in the calendar block.",
     ].join("\n\n"),
     explainAnswers: [
-      "I started from the button because changing the time is the action that saves the clinic a wasted slot.",
-      "If it had to fit three languages I would drop the grey English line and let people pick a language at the top.",
+      "Most people would get a layout made for paper on a small screen, zoom in, and miss the fasting rule at the bottom.",
+      "It already starts from the phone. I would check that the time, the fasting rule and the button fit on the first screen without scrolling.",
     ],
     decision: {
       companyId: "co-kuulas",
@@ -199,7 +200,7 @@ export const CALL_AND_DESIGN_PROOFS: SeedProof[] = [
       "Every line suomeksi first, then English, same size. Ukrainian or Arabic could go on the back.",
     ].join("\n\n"),
     explainAnswers: [
-      "The no-food time is first because the old letter hides it and it is the main reason people must come again.",
+      "I had only my phone, so words were the honest way to show the design. The no-food time comes first in it, because the old letter hides it.",
       "If only black and white printing, I would use a thick border around the top box instead of colour.",
     ],
   },

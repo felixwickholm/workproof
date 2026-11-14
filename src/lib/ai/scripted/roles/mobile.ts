@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const mobileEngineer: RoleTemplate = {
   id: "mobile",
   title: "Mobile engineer",
+  level: "degree",
   keywords: [
     "mobile", "ios", "android", "swift", "kotlin", "react native", "flutter", "app developer",
     "mobiilikehittäjä", "mobiilisovellus",

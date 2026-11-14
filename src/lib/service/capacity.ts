@@ -25,7 +25,7 @@ export function makeRoom(data: StoreData): void {
  * A visitor's own pictures per store. Each can be 300 kB, and every visitor has a sandbox,
  * so this keeps the memory of one sandbox small. A written or spoken answer is always accepted.
  */
-export const MAX_UPLOADED_PICTURES = 8;
+export const MAX_UPLOADED_PICTURES = 4;
 
 export function checkPictureRoom(data: StoreData): void {
   const uploaded = data.submissions.filter((s) => s.attachment?.src.startsWith("data:")).length;

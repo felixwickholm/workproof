@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Challenge } from "@/lib/domain/types";
 import { createDesigner } from "../index";
 import { scriptedDesigner } from "../scripted";
+import { createBreaker } from "./breaker";
 import { TIMEOUT_MS } from "./http";
 import type { ProviderConfig } from "./select";
 
@@ -77,6 +78,10 @@ const ADAPTERS: Record<"claude" | "gemini", Adapter> = {
   },
 };
 
+/** What the guarded designer answers when the scripted designer wrote the draft. */
+const scriptedDraft = async () => ({ ...(await scriptedDesigner.draftChallenge(NEED)), draftedBy: "scripted" });
+const scriptedTaster = async () => ({ ...(await scriptedDesigner.taster(DREAM_JOB)), draftedBy: "scripted" });
+
 const fetchMock = vi.fn<typeof fetch>();
 
 function respond(body: unknown, status = 200): Response {
@@ -101,7 +106,7 @@ afterEach(() => {
 describe.each(Object.entries(ADAPTERS))("%s adapter", (_, adapter) => {
   const setup = () => {
     const onFallback = vi.fn();
-    return { designer: createDesigner(adapter.config, onFallback), onFallback };
+    return { designer: createDesigner(adapter.config, onFallback, createBreaker()), onFallback };
   };
 
   it("drafts a challenge from the model's JSON", async () => {
@@ -110,7 +115,7 @@ describe.each(Object.entries(ADAPTERS))("%s adapter", (_, adapter) => {
     const draft = await designer.draftChallenge(NEED);
 
     expect(onFallback).not.toHaveBeenCalled();
-    expect(draft).toMatchObject({ title: TASK.title, proofKind: "code", kind: "event", minutes: 20, aiAllowed: true });
+    expect(draft).toMatchObject({ title: TASK.title, proofKind: "code", kind: "event", minutes: 20, aiAllowed: true, draftedBy: adapter.config.provider });
     expect(draft.coreSkills.map((s) => s.id)).toEqual(["code-review", "error-handling", "testing"]);
     expect(draft.setAside).toContain("Kubernetes: a tool, the task allows any tool");
     const [url, init] = fetchMock.mock.calls[0];
@@ -132,7 +137,7 @@ describe.each(Object.entries(ADAPTERS))("%s adapter", (_, adapter) => {
     const { designer, onFallback } = setup();
     const draft = await designer.taster(DREAM_JOB);
     expect(onFallback).not.toHaveBeenCalled();
-    expect(draft).toMatchObject({ title: TASK.title, kind: "taster", minutes: 2, setAside: [] });
+    expect(draft).toMatchObject({ title: TASK.title, kind: "taster", minutes: 2, setAside: [], draftedBy: adapter.config.provider });
   });
 
   it("asks the model's follow-up questions", async () => {
@@ -145,14 +150,14 @@ describe.each(Object.entries(ADAPTERS))("%s adapter", (_, adapter) => {
   it("falls back to the scripted draft on malformed JSON", async () => {
     fetchMock.mockResolvedValueOnce(respond(adapter.reply('{"title": "Review the change",')));
     const { designer, onFallback } = setup();
-    expect(await designer.draftChallenge(NEED)).toEqual(await scriptedDesigner.draftChallenge(NEED));
+    expect(await designer.draftChallenge(NEED)).toEqual(await scriptedDraft());
     expect(String(onFallback.mock.calls[0][1])).toMatch(/malformed JSON/);
   });
 
   it("falls back when the JSON has the wrong shape", async () => {
     fetchMock.mockResolvedValueOnce(respond(adapter.reply({ ...TASK, coreSkills: [{ id: "charm", why: "Not a skill at all." }] })));
     const { designer, onFallback } = setup();
-    expect(await designer.taster(DREAM_JOB)).toEqual(await scriptedDesigner.taster(DREAM_JOB));
+    expect(await designer.taster(DREAM_JOB)).toEqual(await scriptedTaster());
     expect(String(onFallback.mock.calls[0][1])).toMatch(/wrong shape at coreSkills/);
   });
 
@@ -160,14 +165,14 @@ describe.each(Object.entries(ADAPTERS))("%s adapter", (_, adapter) => {
     const scoring = { ...TASK, reviewGuide: TASK.reviewGuide.map((g) => ({ ...g, lookFor: "Score out of 10 for the strongest candidate." })) };
     fetchMock.mockResolvedValueOnce(respond(adapter.reply(scoring)));
     const { designer, onFallback } = setup();
-    expect(await designer.draftChallenge(NEED)).toEqual(await scriptedDesigner.draftChallenge(NEED));
+    expect(await designer.draftChallenge(NEED)).toEqual(await scriptedDraft());
     expect(onFallback).toHaveBeenCalledOnce();
   });
 
   it("rejects a draft that names a protected attribute and falls back", async () => {
     fetchMock.mockResolvedValueOnce(respond(adapter.reply({ ...TASK, brief: `${TASK.brief} We want a young native Finnish speaker.` })));
     const { designer, onFallback } = setup();
-    expect(await designer.draftChallenge(NEED)).toEqual(await scriptedDesigner.draftChallenge(NEED));
+    expect(await designer.draftChallenge(NEED)).toEqual(await scriptedDraft());
     expect(String(onFallback.mock.calls[0][1])).toMatch(/age|native language/);
   });
 
@@ -185,7 +190,7 @@ describe.each(Object.entries(ADAPTERS))("%s adapter", (_, adapter) => {
   it("does not retry a 401 and falls back", async () => {
     fetchMock.mockResolvedValueOnce(respond({ error: "bad key" }, 401));
     const { designer, onFallback } = setup();
-    expect(await designer.taster(DREAM_JOB)).toEqual(await scriptedDesigner.taster(DREAM_JOB));
+    expect(await designer.taster(DREAM_JOB)).toEqual(await scriptedTaster());
     expect(fetchMock).toHaveBeenCalledOnce();
     expect(String(onFallback.mock.calls[0][1])).toMatch(/status 401/);
   });
@@ -198,7 +203,7 @@ describe.each(Object.entries(ADAPTERS))("%s adapter", (_, adapter) => {
     const { designer, onFallback } = setup();
     const pending = designer.draftChallenge(NEED);
     await vi.advanceTimersByTimeAsync(TIMEOUT_MS);
-    expect(await pending).toEqual(await scriptedDesigner.draftChallenge(NEED));
+    expect(await pending).toEqual(await scriptedDraft());
     expect(String(onFallback.mock.calls[0][1])).toMatch(/timed out/);
   });
 

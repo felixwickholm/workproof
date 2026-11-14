@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const salesAssistant: RoleTemplate = {
   id: "sales-assistant",
   title: "Sales assistant",
+  level: "practice",
   keywords: [
     "sales assistant", "shop assistant", "retail", "retail worker", "cashier", "shop",
     "myyjä", "myymälä", "kassa", "kauppa", "kaupan kassa", "hairdresser", "kampaaja", "barber", "säljare",

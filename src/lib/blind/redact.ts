@@ -4,7 +4,7 @@ import { redactBackground } from "./background";
 import { redactContacts } from "./contacts";
 import { redactNames } from "./names";
 import { redactPersonal } from "./personal";
-import { alternation, caseless, HIDDEN, L, R, Redactor } from "./redactor";
+import { caseless, escape, HIDDEN, L, LEGAL_FORM, R, Redactor } from "./redactor";
 
 export { addReports } from "./redactor";
 
@@ -19,14 +19,25 @@ export interface KnownIdentity {
 /** Longer text is cut before the rules run. The API never accepts more than this in one field. */
 const MAX_REDACT_CHARS = LIMITS.answer;
 
-/** Each company's distinctive first word, so "Tuulos" and "Tuulos Robotics" both go. */
-function redactCompanies(r: Redactor, companies: string[]): void {
-  const words = companies.map((name) => name.trim().split(/\s+/)[0]).filter((word) => word.length >= 4);
-  if (words.length === 0) return;
-  r.replace(new RegExp(`${L}(?:${caseless(alternation(words))})(?:\\s+\\p{Lu}\\p{L}{1,30})?(?:['’]s)?${R}`, "gu"), "employers");
+/**
+ * One company by its distinctive first word, with as much of its full name as follows in any case:
+ * "Kaari Home Care" hides whole, never leaving "Care" behind. A first word alone may take one more capitalised word ("Tuulos Labs").
+ */
+function companyPattern(name: string): string | undefined {
+  const parts = name.trim().split(/\s+/).map((part) => caseless(escape(part)));
+  if (parts.length === 0 || name.trim().split(/\s+/)[0].length < 4) return undefined;
+  const fuller = parts.slice(1).map((_, i) => parts.slice(0, parts.length - i).join("\\s{1,5}"));
+  return [...fuller, `${parts[0]}(?:\\s{1,5}\\p{Lu}\\p{L}{1,30})?`].join("|");
 }
 
-export interface Redacted {
+/** Company names at the event, whole, with a trailing legal form ("Oy") and a possessive. */
+function redactCompanies(r: Redactor, companies: string[]): void {
+  const patterns = companies.map(companyPattern).filter((p): p is string => p !== undefined);
+  if (patterns.length === 0) return;
+  r.replace(new RegExp(`${L}(?:${patterns.join("|")})${LEGAL_FORM}(?:['’]s)?${R}`, "gu"), "employers");
+}
+
+interface Redacted {
   text: string;
   report: RedactionReport;
 }

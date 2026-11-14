@@ -1,7 +1,8 @@
-import type { ChallengeDraft } from "@/lib/domain/types";
+import type { ChallengeDraft, DraftedBy } from "@/lib/domain/types";
 import { draftProblems, isNeutral } from "@/lib/guard/check-draft";
 import { findJudgement, JudgementError } from "@/lib/guard/no-judgement";
 import { protectedNames } from "@/lib/guard/protected";
+import type { Breaker } from "./provider/breaker";
 import type { TaskDesigner } from "./task-designer";
 
 /** Rejects an AI draft unless every field, the set-aside list included, is neutral and well formed. */
@@ -24,30 +25,47 @@ export function checkQuestions(questions: string[]): void {
   checkTexts(questions);
 }
 
+interface Backup {
+  /** Answers when the primary designer fails, is paused or its output is rejected. Its output is checked too. */
+  designer: TaskDesigner;
+  /** Called once per failed primary call; never for a call skipped by the breaker. */
+  onFallback?: (method: string, error: unknown) => void;
+  /** Skips the primary designer for a while after a provider failure. */
+  breaker?: Breaker;
+}
+
 /**
  * Wraps a designer so nothing it produces can score, rank, recommend or describe a person.
- * When the primary designer fails or its output is rejected, the fallback answers instead.
- * The fallback's output is checked too.
+ * Every draft says which designer wrote the accepted output.
  */
-export function guarded(primary: TaskDesigner, fallback?: TaskDesigner, onFallback?: (method: string, error: unknown) => void): TaskDesigner {
-  async function run<T>(method: string, call: (d: TaskDesigner) => Promise<T>, check: (value: T) => void): Promise<T> {
+export function guarded(primary: TaskDesigner, backup?: Backup): TaskDesigner {
+  async function answer<T>(designer: TaskDesigner, call: (d: TaskDesigner) => Promise<T>, check: (value: T) => void): Promise<T> {
+    const value = await call(designer);
+    check(value);
+    return value;
+  }
+
+  async function run<T>(method: string, call: (d: TaskDesigner) => Promise<T>, check: (value: T) => void): Promise<{ value: T; by: DraftedBy }> {
+    if (backup?.breaker?.pause()) return { value: await answer(backup.designer, call, check), by: backup.designer.name };
     try {
-      const value = await call(primary);
-      check(value);
-      return value;
+      return { value: await answer(primary, call, check), by: primary.name };
     } catch (error) {
-      if (!fallback) throw error;
-      onFallback?.(method, error);
-      const value = await call(fallback);
-      check(value);
-      return value;
+      if (!backup) throw error;
+      backup.breaker?.record(error);
+      backup.onFallback?.(method, error);
+      return { value: await answer(backup.designer, call, check), by: backup.designer.name };
     }
+  }
+
+  async function draft(method: string, call: (d: TaskDesigner) => Promise<ChallengeDraft>): Promise<ChallengeDraft> {
+    const { value, by } = await run(method, call, checkDraft);
+    return { ...value, draftedBy: by };
   }
 
   return {
     name: primary.name,
-    draftChallenge: (need) => run("draftChallenge", (d) => d.draftChallenge(need), checkDraft),
-    taster: (dreamJob) => run("taster", (d) => d.taster(dreamJob), checkDraft),
-    followUps: (challenge, answer) => run("followUps", (d) => d.followUps(challenge, answer), checkQuestions),
+    draftChallenge: (need) => draft("draftChallenge", (d) => d.draftChallenge(need)),
+    taster: (dreamJob) => draft("taster", (d) => d.taster(dreamJob)),
+    followUps: async (challenge, answerText) => (await run("followUps", (d) => d.followUps(challenge, answerText), checkQuestions)).value,
   };
 }

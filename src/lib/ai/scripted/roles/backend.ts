@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const backendEngineer: RoleTemplate = {
   id: "backend",
   title: "Backend engineer",
+  level: "degree",
   keywords: [
     "backend", "back-end", "back end", "api developer", "server-side", "node.js", "java", "golang",
     "django", "spring", "microservices", "backend-kehittäjä", "taustajärjestelmä",

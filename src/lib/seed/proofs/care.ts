@@ -19,7 +19,7 @@ export const CARE_PROOFS: SeedProof[] = [
     ].join("\n"),
     explainAnswers: [
       "Insulin first because without it the morning goes wrong for everyone after.",
-      "If the third carer comes at 11, I would give her C so the new medicine is checked the same day.",
+      "My plan does not hang on that call. I would leave a message, keep the visit times as planned, and call again at nine.",
     ],
     decision: {
       companyId: "co-kaari",
@@ -39,11 +39,11 @@ export const CARE_PROOFS: SeedProof[] = [
       "A 8:00 insulin. D 8:45 medicines and breakfast, she is alone and will not remember to eat. C 9:30 new blood thinner, check the dispenser and look at the arms and legs for bruises. F 10:15, G 11:00, H 11:45.",
       "B shower moves to Friday, E shopping to the afternoon carer. Walk with I is cancelled this week, sorry I.",
       "I call F's daughter first: if she is coming on Wednesday anyway, she can do the eye drops and F moves to the afternoon, which gives us one free slot for B.",
-      "I have no care training, I lead night cleaning teams, but I plan people every evening.",
+      "I have no home care training. I plan the night runs in a hospital laboratory, and I plan people every evening.",
     ].join("\n"),
     explainAnswers: [
-      "The daughter call is first because one phone call can free a whole slot.",
-      "If the daughter does not answer I keep F and the shower waits until Friday.",
+      "C first, because the first days on a new blood thinner are when a wrong dose or bleeding shows. I would check by reading the hospital's medicine list against the dispenser.",
+      "That is C. I would take the call, note any change to the dose, and give it to the carer before the 9:30 visit.",
     ],
   },
   {
@@ -56,11 +56,11 @@ export const CARE_PROOFS: SeedProof[] = [
       "The AI draft moves C and D, I would not do that. C has new blood thinner since yesterday, risk of bleeding or wrong dose from the dispenser. D cannot take medicine alone.",
       "So Leena: A, C, D. Tomi: F, G, H. B, E and I move.",
       "Before 8:00 I call B and E. For I, I ask the relative if a walk on Saturday is ok.",
-      "I worked 3 years as hoiva-avustaja at Kotiapu Seniorit in Vantaa before my cooking course.",
+      "I worked 3 years as hoiva-avustaja at Kotiapu Seniorit in Vantaa before my master's in food science.",
     ].join("\n"),
     explainAnswers: [
-      "I split by carer first because they need to know their own route at 7:00.",
-      "If the dispenser alarm rings at A, Leena calls the office and Tomi takes C first.",
+      "A wrong dose from the dispenser or a bleed is the one risk that cannot wait until tomorrow. The other visits can move.",
+      "Then C's visit moves earlier and the carer brings the new instructions. I would write the change in the client's notes for the evening shift.",
     ],
   },
   {
@@ -73,8 +73,8 @@ export const CARE_PROOFS: SeedProof[] = [
     answer:
       "Okej so tomorrow. Insulin at eight stays, obviously. The memory client who is alone stays in the morning, otherwise no breakfast and no pills. And the one who came home from hospital, I keep him too, new blood thinner, someone has to see him today. Then G, the wound, it was done yesterday so it can go to Thursday. Shower and shopping move. And I call the families before seven thirty, all of them, not only the ones who move, so nobody hears it from a confused parent first.",
     explainAnswers: [
-      "I moved the wound dressing because every other day means it is not due until Thursday.",
-      "If nobody answers I leave a text message and call again at nine.",
+      "Then the client sits alone without breakfast and skips the morning pills, and nobody notices until the evening.",
+      "That is the client with the new blood thinner. I would ask what changed, tell the carer before the visit, and move it earlier if the dose changed.",
     ],
     spokenFollowUps: true,
   },
@@ -93,8 +93,8 @@ export const CARE_PROOFS: SeedProof[] = [
       "Book a time: call 09 000 1234, Monday to Friday 8-15.",
     ].join("\n"),
     explainAnswers: [
-      "I put cholesterol first because it is the only result with a step the patient must take.",
-      "In a text message I would keep only the cholesterol line and the phone number.",
+      "The patient would read a list of numbers and not see that one of them needs a new test and a visit. The high cholesterol could then wait a year.",
+      "Then the ranges go in a short table at the end. The letter still opens with the one result that needs action.",
     ],
     decision: {
       companyId: "co-otso",
@@ -120,7 +120,7 @@ export const CARE_PROOFS: SeedProof[] = [
     ].join("\n"),
     explainAnswers: [
       "Cholesterol first because the patient has to act on it.",
-      "If the reader uses a translation app I would avoid words like koholla and write korkeampi kuin pitäisi.",
+      "Then only the cholesterol line and the phone number go in the message. The rest stays in the letter.",
     ],
     decision: {
       companyId: "co-otso",
@@ -143,8 +143,8 @@ export const CARE_PROOFS: SeedProof[] = [
       "I studied public health at the University of Lagos before moving here, we wrote letters like this for clinic patients all the time.",
     ].join("\n"),
     explainAnswers: [
-      "I explained why cholesterol matters, otherwise people ignore the number.",
-      "With the reference ranges kept, I would put them in a small table at the end.",
+      "The patient would not know which numbers to act on. Saying there are two up front makes the rest of the letter easy to follow.",
+      "I would put the two hours in bold right next to the number, so nobody calls and waits at the wrong time.",
     ],
     decision: {
       companyId: "co-otso",
@@ -168,7 +168,7 @@ export const CARE_PROOFS: SeedProof[] = [
     ].join("\n"),
     explainAnswers: [
       "Room 6 first because a low sugar with insulin can turn dangerous within an hour.",
-      "If the doctor cannot be reached I would hold the insulin and measure every hour.",
+      "I would read only room 6 and room 5 aloud and leave the rest on paper. The insulin and the weight cannot wait for the written note.",
     ],
     decision: {
       companyId: "co-kaari",
@@ -189,7 +189,7 @@ export const CARE_PROOFS: SeedProof[] = [
     ].join("\n"),
     explainAnswers: [
       "The insulin because it is given in a few hours and cannot be taken back.",
-      "With one nurse less I would still check room 6 myself first and give the rest by phone.",
+      "I would hold the 22:00 insulin, measure the glucose every hour and give sugar if it drops. I keep calling and write down each value.",
     ],
     decision: {
       companyId: "co-kaari",
@@ -214,7 +214,7 @@ export const CARE_PROOFS: SeedProof[] = [
       "I am not a nurse, I build ML tools, so please read this as a careful outsider.",
     ].join("\n"),
     explainAnswers: [
-      "I wrote it as a list so the night nurse can tick each line.",
+      "The night nurse could give insulin to a patient whose sugar is already low, and the patient could go hypoglycaemic during the night.",
       "If the handover had to take five minutes I would read only rooms 6 and 5 aloud.",
     ],
     decision: {

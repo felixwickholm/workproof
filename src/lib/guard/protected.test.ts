@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { protectedNames, workingLanguage } from "./protected";
+import { protectedNames } from "./protected";
 
 const PROTECTED = [
   "young", "under 30", "under forty, male", "over 50 years", "max 25 years old", "millennial", "Gen Z", "digital native",
@@ -35,9 +35,49 @@ describe("protected attributes", () => {
     expect(protectedNames(text)).toEqual([]);
   });
 
-  it("turns a working language into a neutral line, never a native one", () => {
-    expect(workingLanguage("works in Finnish with customers")).toBe("Working language: Finnish");
-    expect(workingLanguage("työkieli on ruotsi")).toBe("Working language: Swedish");
-    expect(workingLanguage("native Finnish speaker who works in Finnish")).toBeUndefined();
+});
+
+/** Words about the people the job serves are context. The same words about the person wanted are a wish. */
+const SERVED_CONTEXT = [
+  "explain medicine changes to elderly clients and their families",
+  "young patients on the children's ward",
+  "help senior customers with online banking",
+  "work with children in a daycare",
+  "older residents in assisted living",
+  "elderly care home",
+  "care for the elderly",
+  "we serve young and old customers",
+  "patients who are mostly elderly",
+  "retired guests at the spa",
+  "female patients at the clinic",
+  "iäkkäät asiakkaat",
+  "nuoret asiakkaat",
+  "ikäihmisten hoito",
+  "ikääntyneiden asiakkaiden kotihoito",
+  "vanhusten hoito",
+  "asiakkaat ovat iäkkäitä",
+];
+
+const ABOUT_THE_CANDIDATE = [
+  ["young", "age"],
+  ["under 35", "age"],
+  ["recent graduate", "age"],
+  ["young customer service agent", "age"],
+  ["young customer-facing sales rep", "age"],
+  ["elderly clients, young nurse", "age"],
+  ["native speaker", "native language"],
+  ["native Finnish speaker for our elderly clients", "native language"],
+  ["nuori hoitaja", "age"],
+  ["nuori hoitaja iäkkäille asiakkaille", "age"],
+  ["male nurse for elderly patients", "gender"],
+] as const;
+
+describe("served groups", () => {
+  it.each(SERVED_CONTEXT)("reads %s as context, not a wish", (text) => {
+    expect(protectedNames(text)).toEqual([]);
+  });
+
+  it.each(ABOUT_THE_CANDIDATE)("still finds %s as %s", (text, name) => {
+    expect(protectedNames(text)).toContain(name);
   });
 });

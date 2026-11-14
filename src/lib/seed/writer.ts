@@ -4,9 +4,11 @@ import { blindWork } from "@/lib/blind/blind-work";
 import { atAGlance } from "@/lib/blind/glance";
 import { toOwnProof } from "@/lib/blind/project";
 import { redact } from "@/lib/blind/redact";
+import { DECISION_ACTIONS } from "@/lib/domain/decision-rules";
 import type { AuditEvent, Challenge, DecisionKind, MeetingStatus } from "@/lib/domain/types";
 import { FOLLOW_UP_ACTION, HIDE_ACTION, SHAPE_ACTION } from "@/lib/service/ai-work";
-import { meetingSlot } from "@/lib/service/decisions";
+import { pickMeetingSlot } from "@/lib/service/decisions";
+import { DECLINE_ACTION } from "@/lib/service/meetings";
 import { rememberTalent } from "@/lib/service/talent";
 import type { StoreData } from "@/lib/store/types";
 import { companyName, REVIEWERS } from "./companies";
@@ -62,7 +64,7 @@ export function seedWriter(now: Date, data: StoreData) {
       explain: blind.explain,
       attachment: blind.attachment,
       spoken: seed.spoken,
-      aiSummary: atAGlance(blind.work, blind.explain),
+      glance: atAGlance(blind.work, blind.explain),
       redactions: blind.report,
       submittedAt,
       takenLabels: new Set(data.proofs.map((p) => p.label)),
@@ -130,7 +132,7 @@ export function seedWriter(now: Date, data: StoreData) {
     log(input.hoursAgo, {
       actor: "human",
       by: reviewer,
-      action: input.kind === "meet" ? "Chose to meet" : "Said not now, with a reason",
+      action: DECISION_ACTIONS[input.kind],
       detail: `${company} on ${label}${viaSecondLook ? " through Second look" : ""}. Feedback sent to the person.`,
     });
     if (input.kind === "meet") addMeeting(input, label, company);
@@ -143,7 +145,7 @@ export function seedWriter(now: Date, data: StoreData) {
       id: `meet_${input.proofId}_${input.companyId}`,
       proofId: input.proofId,
       companyId: input.companyId,
-      slot: meetingSlot(input.proofId, input.companyId),
+      slot: pickMeetingSlot(data, input.proofId, input.companyId),
       status,
       talentConfirmedMet: met,
       companyConfirmedMet: met,
@@ -154,6 +156,15 @@ export function seedWriter(now: Date, data: StoreData) {
       action: "Sent a meeting invite",
       detail: `${label} invited to meet ${company}. Identity stays hidden until the person accepts.`,
     });
+    if (status === "declined") {
+      log(input.hoursAgo - Math.min(0.5, input.hoursAgo / 2), {
+        actor: "human",
+        by: "Talent",
+        action: DECLINE_ACTION,
+        detail: `${label} declined ${company}. The name stays hidden.`,
+      });
+      return;
+    }
     if (status !== "invited") acceptMeeting(input.proofId, input.companyId, input.hoursAgo - Math.min(0.5, input.hoursAgo / 2));
     if (met) {
       log(input.hoursAgo - Math.min(2, input.hoursAgo * 0.75), {

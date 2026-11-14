@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createBreaker } from "./breaker";
 import { aiStatus, resolveProvider } from "./select";
 
 const CLAUDE = { provider: "claude", apiKey: "a-key", model: "claude-opus-5-5" };
@@ -30,12 +31,12 @@ describe("resolveProvider", () => {
 
 describe("aiStatus", () => {
   it("names the provider and model and never the key", () => {
-    const status = aiStatus({ ANTHROPIC_API_KEY: "sk-secret-value" });
+    const status = aiStatus({ ANTHROPIC_API_KEY: "sk-secret-value" }, createBreaker());
     expect(status).toEqual({ provider: "claude", model: "claude-opus-5-5", live: true });
     expect(JSON.stringify(status)).not.toContain("sk-secret");
   });
 
   it("reports the scripted designer when no key is set", () => {
-    expect(aiStatus({})).toEqual({ provider: "scripted", live: false });
+    expect(aiStatus({}, createBreaker())).toEqual({ provider: "scripted", live: false });
   });
 });

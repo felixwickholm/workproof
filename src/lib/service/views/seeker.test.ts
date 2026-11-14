@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { buildSeed } from "@/lib/seed";
+import { STORY_STAGES } from "@/lib/seed/story";
 import { buildSeekerHome } from "./seeker";
 import { NOW, PRIVATE, sampleEvent } from "./test-data";
 
@@ -58,5 +60,25 @@ describe("seeker home", () => {
     expect(home.greeting.firstName).toBeNull();
     expect(home.counts).toEqual({ proofs: 0, readByPeople: 0, writtenAnswers: 0, invitations: 0 });
     expect(JSON.stringify(home)).not.toContain(PRIVATE.olena);
+  });
+
+  it("tells every person how many places each task has left", () => {
+    const data = sampleEvent();
+    const a = data.challenges.find((c) => c.id === "ch-a");
+    if (!a) throw new Error("sample task missing");
+    a.places = 5;
+    const tasks = buildSeekerHome(data, "t_nobody", NOW).tasks;
+    expect(tasks.map((t) => [t.challenge.id, t.placesLeft])).toEqual([
+      ["ch-b", 11],
+      ["ch-pool", 11],
+      ["ch-a", 3],
+    ]);
+  });
+
+  // The last story stage holds the most proofs, so if it fits, every stage fits.
+  it("leaves every seeded task room for new work at the last story stage", { timeout: 30_000 }, () => {
+    const tasks = buildSeekerHome(buildSeed(NOW, STORY_STAGES[STORY_STAGES.length - 1]), "t_nobody", NOW).tasks;
+    expect(tasks.length).toBeGreaterThan(0);
+    for (const t of tasks) expect(t.placesLeft, t.challenge.id).toBeGreaterThanOrEqual(3);
   });
 });

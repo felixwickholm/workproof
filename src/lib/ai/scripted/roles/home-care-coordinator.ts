@@ -2,12 +2,18 @@ import type { RoleTemplate } from "../role-template";
 
 export const homeCareCoordinator: RoleTemplate = {
   id: "home-care-coordinator",
-  title: "Home care coordinator",
+  title: "Care team coordinator (nursing or medical degree)",
+  level: "degree",
   keywords: [
-    "home care coordinator", "home care", "home care worker", "care coordinator", "care visits", "care worker",
+    "care team coordinator", "care team leader", "nurse coordinator", "home care coordinator", "home care", "home care worker", "care coordinator", "care visits", "care worker",
     "personal care assistant", "kotihoito", "kotihoidon", "kotihoitaja", "hoiva-avustaja", "hoivatyö",
   ],
   skills: ["care-visit-planning", "patient-safety", "prioritisation", "stakeholder-communication", "calm-on-the-phone"],
+  cues: {
+    "care-visit-planning": ["visits", "the day", "sick", "cover", "rota"],
+    "stakeholder-communication": ["evening shift", "next shift", "shift notes", "notes", "handover"],
+    "calm-on-the-phone": ["families", "relatives", "worried"],
+  },
   why: {
     "patient-safety": "A visit that moves can mean a missed dose or a fall nobody sees.",
     "stakeholder-communication": "Clients and families plan their day around the visit, so a change needs a call.",

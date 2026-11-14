@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const teacher: RoleTemplate = {
   id: "teacher",
   title: "Teacher",
+  level: "degree",
   keywords: [
     "teacher", "teaching", "educator", "lecturer", "class teacher", "subject teacher",
     "opettaja", "luokanopettaja", "aineenopettaja", "lehtori", "opetus", "coach", "football coach", "sports coach", "valmentaja",

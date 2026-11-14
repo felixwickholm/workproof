@@ -1,12 +1,12 @@
 import { claudeDesigner } from "./claude/designer";
 import { geminiDesigner } from "./gemini/designer";
 import { guarded } from "./guarded";
+import { providerBreaker, type Breaker } from "./provider/breaker";
 import { resolveProvider, type ProviderConfig } from "./provider/select";
 import { scriptedDesigner } from "./scripted";
 import type { TaskDesigner } from "./task-designer";
 
-export type { TaskDesigner } from "./task-designer";
-export { aiStatus, type AiStatus } from "./provider/select";
+export { aiStatus } from "./provider/select";
 
 type OnFallback = (method: string, error: unknown) => void;
 
@@ -23,10 +23,13 @@ export function modelDesignerFor(config: Exclude<ProviderConfig, { provider: "sc
   return config.provider === "claude" ? claudeDesigner(config.apiKey, config.model) : geminiDesigner(config.apiKey, config.model);
 }
 
-/** The designer for a provider, guarded, with the scripted designer answering whenever the model fails or is rejected. */
-export function createDesigner(config: ProviderConfig, onFallback: OnFallback = warnFallback(config.provider)): TaskDesigner {
+/**
+ * The designer for a provider, guarded, with the scripted designer answering whenever the model fails or is rejected.
+ * After a provider failure the model is skipped for a while, and only that first failure is logged.
+ */
+export function createDesigner(config: ProviderConfig, onFallback: OnFallback = warnFallback(config.provider), breaker: Breaker = providerBreaker()): TaskDesigner {
   if (config.provider === "scripted") return guarded(scriptedDesigner);
-  return guarded(modelDesignerFor(config), scriptedDesigner, onFallback);
+  return guarded(modelDesignerFor(config), { designer: scriptedDesigner, onFallback, breaker });
 }
 
 /**

@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const quantumResearcher: RoleTemplate = {
   id: "quantum-researcher",
   title: "Quantum and deep-tech researcher",
+  level: "degree",
   keywords: [
     "quantum", "qubit", "quantum computing", "deep tech", "deep-tech", "physicist", "research scientist",
     "phd researcher", "kvantti", "kvanttitutkija", "kvanttilaskenta", "tutkija", "fyysikko",

@@ -21,13 +21,23 @@ export interface TaskTemplate {
   flaws: PlantedFlaw[];
 }
 
+/**
+ * "degree": the work normally needs a university or university of applied sciences degree. Espoo's talent
+ * events are for these professions, so the demo event uses only them. "practice": a 2-minute practice task
+ * for anyone who types this job as a dream job.
+ */
+export type RoleLevel = "degree" | "practice";
+
 export interface RoleTemplate {
   id: string;
   title: string;
+  level: RoleLevel;
   /** Lowercase match terms, English and Finnish. Short terms (up to 3 letters) match whole words only. */
   keywords: string[];
   /** Default core skills, most important first. 4 or 5 ids. */
   skills: SkillId[];
+  /** Everyday words this role's companies use for a skill, added to the vocabulary cues ("fast on the line" for a cook). */
+  cues?: Partial<Record<SkillId, string[]>>;
   /** Role-specific reasons, replacing the vocabulary default. */
   why?: Partial<Record<SkillId, string>>;
   /** Role-specific reviewer notes, replacing the vocabulary default. */

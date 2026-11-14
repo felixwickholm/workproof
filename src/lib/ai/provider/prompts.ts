@@ -15,11 +15,11 @@ const MAX_DATA_CHARS = 6000;
 const TAG_PATTERN = new RegExp(`<\\s*/?\\s*(?:${DATA_TAGS.join("|")})\\b[^>]*>`, "gi");
 
 /** User text wrapped in a tag, with every data tag inside it removed so it cannot close its own tag early. */
-export function asData(tag: DataTag, value: string): string {
+function asData(tag: DataTag, value: string): string {
   return `<${tag}>\n${value.slice(0, MAX_DATA_CHARS).replace(TAG_PATTERN, "").trim()}\n</${tag}>`;
 }
 
-export const SYSTEM = `You draft short real work tasks for Tryout, a hiring event where people show their work instead of a CV.
+export const SYSTEM = `You draft short real work tasks for Workprint, a hiring event where people show their work instead of a CV.
 You do two things only: draft a task, and ask follow-up questions about a person's own answer.
 Rules:
 - Never score, rank, rate, grade, praise, criticise or recommend a person or their work. Never describe a person. Never say whether an answer is right, good or complete.

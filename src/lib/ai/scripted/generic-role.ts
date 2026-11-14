@@ -3,7 +3,14 @@ import type { RoleTemplate } from "./role-template";
 /** Shown on a company draft built from this template, so a person rewrites the brief before publishing. */
 export const GENERIC_NOTE = "No close match in the task library. Edit the brief before you publish.";
 
-/** Shown on a taster for a dream job the library has no task for, so the person knows why the task is general. */
+/** Shown when the company's sentence named no skill at all, so the draft falls back on skills almost every job needs. */
+export const NO_SKILLS_NOTE =
+  "No close match in the task library, and your sentence named no skills, so this draft tests skills almost every job needs. Say what the work is, or edit the brief before you publish.";
+
+/**
+ * Carried by a taster for a dream job the library has no task for. The try page reads it as the sign to say so
+ * in its own words, so the brief itself never repeats it.
+ */
 export const NO_EXACT_TASK_NOTE = "There is no task for this exact job yet. This one practises planning, which almost every job needs.";
 
 /** Shown when the draft borrows the nearest library role by skills, so a person adapts the brief. */
@@ -19,6 +26,8 @@ export function genericRole(): RoleTemplate {
   return {
     id: "generic",
     title: "A role",
+    // An unknown job could be any level, so the demo event never uses this template.
+    level: "practice",
     keywords: [],
     skills: ["prioritisation", "planning", "stakeholder-communication", "ai-assisted-work"],
     constraints: [
@@ -76,7 +85,7 @@ export function genericRole(): RoleTemplate {
       title: "Spot the problem in a plan",
       format: "review",
       proofKind: "plan",
-      brief: "We have no task for this exact job yet, so this one is about planning, which almost every job needs. A colleague asked an AI assistant for next week's plan and wants to send it to the team as it is. Read it first.",
+      brief: "A colleague asked an AI assistant for next week's plan and wants to send it to the team as it is. Read it first.",
       material: {
         kind: "text",
         title: "Plan for next week (AI draft)",

@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const frontendEngineer: RoleTemplate = {
   id: "frontend",
   title: "Frontend engineer",
+  level: "degree",
   keywords: [
     "frontend", "front-end", "front end", "react", "vue", "angular", "web developer", "ui engineer",
     "frontend-kehittäjä", "käyttöliittymäkehittäjä", "game developer", "game programmer", "pelinkehittäjä",

@@ -1,3 +1,4 @@
+import { placesLeft } from "@/lib/domain/places";
 import type { Company, Decision, SeekerHome, SeekerInvitation, SeekerTask } from "@/lib/domain/types";
 import type { StoreData } from "@/lib/store";
 import { forTalent } from "../for-talent";
@@ -25,6 +26,7 @@ function taskFeed(data: StoreData, ownChallengeIds: Set<string>): SeekerTask[] {
         proofsSent: proofs.length,
         medianReplyHours: replyTotals(proofs, data.decisions).medianHoursToFirstAnswer,
         mine: ownChallengeIds.has(challenge.id),
+        placesLeft: placesLeft(challenge, proofs.length) ?? 0,
       };
     });
 }

@@ -3,7 +3,13 @@ import type { Talent } from "@/lib/domain/types";
 import { rememberTalent } from "./talent";
 
 describe("rememberTalent", () => {
-  it("lets an event submission complete a name given in a taster", () => {
+  it("keeps no identity for a practice task", () => {
+    const talents: Talent[] = [];
+    rememberTalent(talents, { id: "t1", name: "Aino", contact: "aino@example.org" }, false);
+    expect(talents).toEqual([]);
+  });
+
+  it("stores and locks identity on the first event submission", () => {
     const talents: Talent[] = [];
     rememberTalent(talents, { id: "t1", name: "Aino", contact: "" }, false);
     rememberTalent(talents, { id: "t1", name: "Aino Mäkelä", contact: "aino@example.org" }, true);

@@ -3,7 +3,7 @@ import type { Challenge, Decision, Submission } from "@/lib/domain/types";
 /** A proof needs this many shared core skills before another employer may see it. */
 const MIN_SHARED_SKILLS = 2;
 
-export interface SecondLookInput {
+interface SecondLookInput {
   submission: Submission;
   challenge: Challenge;
   decisions: Decision[];
@@ -12,7 +12,7 @@ export interface SecondLookInput {
   now: Date;
 }
 
-export interface SecondLookMatch {
+interface SecondLookMatch {
   companyId: string;
   /** Labels of the core skills both challenges ask for. */
   sharedSkills: string[];

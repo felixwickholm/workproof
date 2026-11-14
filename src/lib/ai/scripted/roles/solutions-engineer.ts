@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const solutionsEngineer: RoleTemplate = {
   id: "solutions-engineer",
   title: "Solutions and sales engineer",
+  level: "degree",
   keywords: [
     "solutions engineer", "sales engineer", "pre-sales", "presales", "technical sales",
     "customer engineer", "technical account manager", "ratkaisumyynti", "ratkaisumyyjä", "myyntiinsinööri",

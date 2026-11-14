@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const renovationWorker: RoleTemplate = {
   id: "renovation-worker",
   title: "Tiler and renovation worker",
+  level: "practice",
   keywords: [
     "tiler", "tiling", "renovation", "renovation worker", "construction worker", "builder", "painter",
     "plasterer", "carpenter", "bathroom renovation", "laatoittaja", "laatoitus", "remontti", "rakennus",

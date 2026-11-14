@@ -4,8 +4,10 @@ import { isSandboxId, newSandboxId, SANDBOX_COOKIE, sandboxCookie } from "@/lib/
 const JOIN_PATH = "/api/demo/join";
 
 /**
- * Gives every visitor a private sandbox key, and hands `?table=<code>` to the join route.
- * The proxy holds no state: sandboxes live with the route handlers, so joining by code happens there.
+ * Gives every visitor a private sandbox key on a page visit, and hands `?table=<code>` to the join route.
+ * API requests never get a key here: a script calling the API without visiting the site reads the shared
+ * event and cannot fill the registry with sandboxes. The proxy holds no state: sandboxes live with the
+ * route handlers, so joining by code happens there.
  */
 export function proxy(request: NextRequest) {
   const { nextUrl } = request;
@@ -19,7 +21,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(join);
   }
 
-  if (isSandboxId(request.cookies.get(SANDBOX_COOKIE)?.value)) return NextResponse.next();
+  if (nextUrl.pathname.startsWith("/api/") || isSandboxId(request.cookies.get(SANDBOX_COOKIE)?.value)) return NextResponse.next();
 
   // First visit: the route handling this very request already sees the new key.
   const id = newSandboxId();

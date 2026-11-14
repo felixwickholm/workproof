@@ -20,6 +20,9 @@ function redactAge(r: Redactor): void {
   r.replace(/\b(?:born(?: in)?|b\.|syntynyt(?: vuonna)?|född(?: år)?|geboren)\s{0,5}(?:19|20)\d{2}\b/giu, "other");
   r.replace(/\b(?:class of|graduated(?: in)?|valmistuin(?: vuonna)?|vuosikurssi)\s{0,5}(?:19|20)\d{2}\b/giu, "other");
   r.replace(/\b(?:I'm|I am|I’m|olen|jag är|ich bin)\s{1,5}\d{2}\b(?!\s{0,5}(?:%|ms|minutes|hours|days|weeks|percent|years? (?:of|in)|vuotta (?:kokemusta|töissä)))/giu, "other");
+  // A bare age right after a hidden name ("[hidden] here, 34, from ..."), and the Finnish "34 v." after a comma.
+  r.replace(/(?<=\[hidden\](?:\s{1,5}here)?\s{0,3},\s{0,3})\d{2}(?=\s{0,3}(?:[,;)]|\.(?!\d)|$)|\s{1,5}(?:from|and|ja|och)\b)/gu, "other");
+  r.replace(/(?<=,\s{0,3})\d{2}\s{0,3}v\.(?!\p{L})/gu, "other");
   r.replace(/\bin my (?:early |late |mid-?)?(?:twenties|thirties|forties|fifties|sixties|20s|30s|40s|50s|60s)\b/gi, "other");
   r.replace(/\b(?:millennial|gen ?z|boomer|zoomer|digital native)s?\b/gi, "other");
   // "a ten-year-old", "after half a century on this planet".

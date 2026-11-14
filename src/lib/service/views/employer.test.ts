@@ -28,6 +28,14 @@ describe("employer home", () => {
     ]);
   });
 
+  it("shows each task's places and an estimate of the reading still owed", () => {
+    expect(home.tasks.map((t) => [t.challenge.id, t.places, t.placesLeft])).toEqual([
+      ["ch-pool", 12, 11],
+      ["ch-a", 12, 10],
+    ]);
+    expect(home.readingMinutesOwed).toBe(8);
+  });
+
   it("shows the talent pool per core skill and the event totals, as counts only", () => {
     expect(home.pool).toEqual([
       { skillId: "communication", label: "Communication", proofs: 3 },
@@ -36,7 +44,7 @@ describe("employer home", () => {
       { skillId: "testing", label: "Testing", proofs: 1 },
       { skillId: "triage", label: "Triage", proofs: 3 },
     ]);
-    expect(home.event).toEqual(eventTotals(sampleEvent()));
+    expect(home.event).toEqual({ ...eventTotals(sampleEvent()), responseWindowHours: sampleEvent().event.responseWindowHours });
     expect(home.event.proofs).toBe(4);
     expect(home.event.proofsAnswered).toBe(3);
   });

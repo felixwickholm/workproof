@@ -3,9 +3,10 @@ import type { RoleTemplate } from "../role-template";
 export const uxDesigner: RoleTemplate = {
   id: "ux-designer",
   title: "UX designer",
+  level: "degree",
   keywords: [
     "ux designer", "ui designer", "product designer", "interaction designer", "ux", "ui/ux",
-    "service designer", "käyttöliittymäsuunnittelija", "ux-suunnittelija", "palvelumuotoilija",
+    "service designer", "ux researcher", "user researcher", "design researcher", "käyttöliittymäsuunnittelija", "ux-suunnittelija", "palvelumuotoilija",
   ],
   skills: ["interaction-design", "accessibility", "user-research", "writing-clarity", "ai-assisted-work"],
   why: {

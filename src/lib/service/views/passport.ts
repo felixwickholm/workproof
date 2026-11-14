@@ -30,11 +30,13 @@ export function buildPassport(data: StoreData, talentId: string, now: Date): Pas
       return [
         {
           proof,
+          original: { answer: submission.answer, explain: submission.explain },
           challenge: { id: challenge.id, title: challenge.title, minutes: challenge.minutes, format: challenge.format, kind: challenge.kind },
           seenByHumans: new Set(decisions.map((d) => `${d.companyId}:${d.reviewer.toLowerCase()}`)).size,
           responses,
           sharedWith: [...shared].map(companyName),
           sharing: challenge.kind === "event" && submission.shareWithSimilar,
+          pictureRemoved: submission.pictureRemoved === true,
         },
       ];
     });

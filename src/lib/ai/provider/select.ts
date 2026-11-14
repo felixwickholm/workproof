@@ -1,18 +1,27 @@
 /** Which designer drafts tasks, decided once from the environment. Keys are read here and nowhere else. */
 
-export type ProviderName = "scripted" | "claude" | "gemini";
+import type { DraftedBy } from "@/lib/domain/types";
+import { providerBreaker, type Breaker } from "./breaker";
+import type { FailureKind } from "./http";
 
-export const DEFAULT_MODELS = { claude: "claude-opus-5-5", gemini: "gemini-3.8-flash" } as const;
+export type ProviderName = DraftedBy;
+
+const DEFAULT_MODELS = { claude: "claude-opus-5-5", gemini: "gemini-3.8-flash" } as const;
 
 export type ProviderConfig =
   | { provider: "scripted" }
   | { provider: "claude" | "gemini"; apiKey: string; model: string };
 
-/** What the UI badge shows. Never carries a key. */
+/** What the UI badge shows. Never carries a key or a provider's own error message. */
 export interface AiStatus {
+  /** The configured designer, also while it is paused. */
   provider: ProviderName;
   model?: string;
+  /** True when drafts come from the configured model right now. */
   live: boolean;
+  /** ISO time the paused model is tried again. */
+  pausedUntil?: string;
+  pauseReason?: FailureKind;
 }
 
 type Env = Readonly<Record<string, string | undefined>>;
@@ -47,12 +56,14 @@ export function resolveProvider(env: Env): ProviderConfig {
   }
 }
 
-export function statusOf(config: ProviderConfig): AiStatus {
+export function statusOf(config: ProviderConfig, breaker: Breaker = providerBreaker()): AiStatus {
   if (config.provider === "scripted") return { provider: "scripted", live: false };
+  const pause = breaker.pause();
+  if (pause) return { provider: config.provider, model: config.model, live: false, pausedUntil: pause.until, pauseReason: pause.reason };
   return { provider: config.provider, model: config.model, live: true };
 }
 
 /** The active designer for the badge and `GET /api/ai/status`. */
-export function aiStatus(env: Env = process.env): AiStatus {
-  return statusOf(resolveProvider(env));
+export function aiStatus(env: Env = process.env, breaker: Breaker = providerBreaker()): AiStatus {
+  return statusOf(resolveProvider(env), breaker);
 }

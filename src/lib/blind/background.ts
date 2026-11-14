@@ -1,6 +1,6 @@
 import { FINNISH_CITY_STEMS, KNOWN_EMPLOYERS, NOT_EMPLOYERS, PLACES, SCHOOLS, SCHOOLS_ANY_CASE } from "./lexicon";
 import { unicodeWords } from "@/lib/util/regex";
-import { addReports, alternation, CAP, caseless, L, R, Redactor } from "./redactor";
+import { addReports, alternation, CAP, caseless, L, LEGAL_FORM, R, Redactor } from "./redactor";
 
 /** Words after which a lowercase place or employer from the lists is still a place or employer. */
 const BEFORE_PLACE = "(?:at|in|from|for|to|near|i|från|aus|de|en)";
@@ -58,7 +58,7 @@ function redactPlaces(r: Redactor): void {
 function redactEmployers(r: Redactor): void {
   r.replace(new RegExp(`${L}(${CAP}(?:\\s{1,5}${CAP}){0,2}\\s{1,5}(?:Oyj|Oy|Ab|AB|Ltd|Inc|GmbH|AS|ASA|LLC|Corp|Group))${R}`, "gu"), "employers");
   const known = alternation(KNOWN_EMPLOYERS);
-  r.replace(new RegExp(`${L}(?:${known})${R}`, "gu"), "employers");
+  r.replace(new RegExp(`${L}(?:${known})${LEGAL_FORM}${R}`, "gu"), "employers");
   r.replace(new RegExp(`${L}(?:${BEFORE_PLACE}|ex-|former|previously)\\s{0,5}((?:${known}))${R}`, "giu"), "employers");
   r.replace(new RegExp(`${L}ex-(${CAP})`, "gu"), "employers", notEmployer);
   r.replace(new RegExp(`(?:${WORK})\\s{1,5}(${CAP}(?:\\s{1,5}${CAP}){0,2})`, "gu"), "employers", notEmployer);

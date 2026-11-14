@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const graphicDesigner: RoleTemplate = {
   id: "graphic-designer",
   title: "Graphic designer",
+  level: "degree",
   keywords: [
     "graphic designer", "graphic design", "graafikko", "graafinen suunnittelija", "visual designer",
     "illustrator", "kuvittaja", "designer", "layout designer", "brand designer", "photographer", "valokuvaaja",

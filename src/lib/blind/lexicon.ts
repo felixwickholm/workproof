@@ -8,6 +8,23 @@ export const FINNISH_CITY_STEMS = [
   "Lohja", "Lohjal", "Rauma", "Raumal", "Savonlinna", "Kemi", "Tornio", "Iisalmi", "Imatra", "Hamina",
   "Raahe", "Riihimä", "Forssa", "Loviisa", "Tammisaa", "Hanko", "Hangon", "Kirkkonum", "Sipoo", "Tuusula",
   "Kemijärv", "Kuusamo", "Sodankylä", "Inari", "Maarianhamina", "Mariehamn", "Ahvenanmaa", "Åland",
+  // Helsinki districts, as stems so "Kontulassa" and "Vuosaaressa" match too.
+  "Kontula", "Itäkesku", "Vuosaar", "Kamppi", "Kampi", "Töölö", "Sörnäi", "Herttonie", "Lauttasaar", "Munkkinie",
+  "Kannelmä", "Malmi", "Pasila", "Mellunmä", "Kurkimä", "Myllypuro", "Pihlajamä", "Puotila", "Vallila", "Käpylä",
+  "Oulunkylä", "Arabianran", "Kalasatam", "Jätkäsaar", "Ruoholah", "Punavuor", "Kruununhaa", "Katajano",
+  "Vartiokylä", "Laajasalo", "Kulosaar", "Konala", "Pitäjänmä", "Viikki", "Malminkartano", "Tapanila",
+  "Pukinmä", "Siltamä", "Paloheinä", "Maunula", "Pakila", "Kivikko", "Roihuvuor", "Meilahde", "Meilahti",
+  // Espoo, Vantaa and Kauniainen districts.
+  "Kivenlah", "Soukka", "Soukas", "Kauklah", "Niittykumpu", "Olari", "Laaksolah", "Viherla", "Kalajärv",
+  "Haukilah", "Westend", "Karakallio", "Saunalah", "Latokaski", "Nöykkiö", "Iivisnie", "Mankkaa", "Niipperi",
+  "Keilanie", "Suurpelto", "Perkkaa", "Lintuvaara", "Tikkurila", "Myyrmä", "Martinlaakso", "Hakunila",
+  "Korso", "Koivukylä", "Kivistö", "Aviapolis", "Rekola", "Hiekkaharju", "Länsimä", "Askisto", "Pakkala",
+  "Simonkylä", "Ylästö", "Esbo", "Vanda", "Grankulla", "Helsingfors",
+  // Larger towns not listed above, and Swedish names of Finnish towns.
+  "Kouvola", "Kangasala", "Lempäälä", "Ylöjärv", "Pirkkala", "Kaarina", "Raisio", "Naantali", "Uusikaupun",
+  "Uudenkaupun", "Kempele", "Vihti", "Mäntsälä", "Varkau", "Valkeakos", "Ylivieska", "Pietarsaar", "Jakobstad",
+  "Heinola", "Lieto", "Sastamala", "Orimattila", "Pieksämä", "Kuusankos", "Åbo", "Tammerfors", "Uleåborg",
+  "Borgå", "Vasa", "Lahtis",
 ];
 
 export const PLACES = [
@@ -36,11 +53,13 @@ export const PLACES = [
   "Kraków", "Krakow", "Gdańsk", "Gdansk", "Wrocław", "Wroclaw", "Łódź", "Lodz", "Porto", "Seville", "Valencia",
   "Lyon", "Marseille", "Frankfurt", "Cologne", "Stuttgart", "Rotterdam", "Antwerp", "Geneva", "Kaunas",
   "Minsk", "Odesa", "Odessa", "Kharkiv", "Lviv", "Asmara", "Eritrea", "Sudan", "Khartoum", "Yemen",
-  "Sanaa", "Saudi Arabia", "Riyadh", "Dubai", "Abu Dhabi", "Doha", "Qatar", "Kuwait", "Oman", "Erbil",
+  "Enugu", "Sanaa", "Saudi Arabia", "Riyadh", "Dubai", "Abu Dhabi", "Doha", "Qatar", "Kuwait", "Oman", "Erbil",
   "Kurdistan", "Mosul", "Basra", "Herat", "Kandahar", "Mashhad", "Karaj", "Ahvaz", "Tbilisi", "Yerevan",
   "Baku", "Almaty", "Tashkent", "Uzbekistan", "Myanmar", "Cambodia", "Laos", "Mongolia", "Taiwan",
   "Venezuela", "Cuba", "Ecuador", "Bolivia", "Uruguay", "Paraguay", "Cameroon", "Senegal", "Uganda",
   "Tanzania", "Rwanda", "Congo", "Zimbabwe", "Zambia", "Angola", "Mozambique", "Libya", "Mali",
+  // Exact words only: as a stem "Kera" would also take "Keras".
+  "Kera",
 ];
 
 export const SCHOOLS = [
@@ -53,6 +72,7 @@ export const SCHOOLS = [
   "HY", "TY", "TTY", "JY", "OY", "UEF", "TUNI", "TAU", "Tampere Uni", "Turku Uni", "KU Leuven", "LSE", "KCL",
   "UvA", "TU Wien", "Uni Helsinki", "Helsinki Uni", "Humak", "Diak", "Turku AMK", "Haaga", "Hanken School of Economics",
   "Kyiv Medical Institute No. 2", "Kyiv Medical Institute", "Medical Institute No. 2",
+  "TalTech", "Unicamp", "KNUST", "University of Baghdad", "University of Lagos", "Salahaddin University",
 ];
 
 /** School names long enough to match in any case: "aalto university", "metropolia". */
@@ -99,7 +119,7 @@ export const NOT_EMPLOYERS = new Set([
   "November", "December", "Christmas", "Easter",
   "AWS", "GCP", "Azure", "Kubernetes", "Docker", "Python", "Java", "JavaScript", "TypeScript", "SQL",
   "React", "Postgres", "PostgreSQL", "Linux", "Windows", "Mac", "iOS", "Android", "Git", "GitHub",
-  "Terraform", "Kafka", "Spark", "Airflow", "Excel", "Monday's", "Tryout", "Proof", "AI", "API", "UI",
+  "Terraform", "Kafka", "Spark", "Airflow", "Excel", "Monday's", "Workprint", "Proof", "AI", "API", "UI",
   "UX", "QA", "ML", "LLM", "CI", "CD", "PR", "MVP", "Q1", "Q2", "Q3", "Q4", "Week", "Step", "Line",
   "First", "Second", "Third", "Least", "Most", "Some", "All", "Any", "Each", "Every", "Scale", "Risk",
   "Pandas", "NumPy", "Numpy", "SciPy", "PyTorch", "TensorFlow", "Keras", "Jupyter", "Figure", "Fig", "Table",
@@ -128,3 +148,14 @@ export const COMMON_WORDS = new Set(
     "this that these those it its they them their we our you your he she his her i me my am is are was were be been being have has had do does did"
   ).split(/\s+/),
 );
+
+/**
+ * Given names that end like ordinary English words ("-ed", "-ly", "-ing"), so the ordinary-word check
+ * would wave them through: "Ahmed Al-Sayed here" must still read as a name.
+ */
+export const NAMES_LIKE_WORDS = new Set([
+  "Ahmed", "Ahmad", "Mohammed", "Mohamed", "Muhammed", "Mehmed", "Hamed", "Saeed", "Said", "Ted", "Fred", "Ned", "Jed",
+  "Emily", "Kelly", "Molly", "Holly", "Sally", "Polly", "Billy", "Willy", "Ally", "Olly", "Elly", "Nelly", "Shelly",
+  "Beverly", "Kimberly", "Carly", "Charly", "Lily", "Ping", "Ming", "Ying", "Jing", "Xing", "Ling", "Ching", "Qing",
+  "Ning", "Yiming", "Zhiping",
+]);

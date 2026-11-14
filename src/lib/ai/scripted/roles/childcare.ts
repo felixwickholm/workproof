@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const childcareWorker: RoleTemplate = {
   id: "childcare",
   title: "Early education worker",
+  level: "practice",
   keywords: [
     "early education", "early childhood education", "early education worker", "childcare", "child care",
     "daycare", "day care", "nanny", "preschool", "kindergarten", "varhaiskasvatus", "varhaiskasvatuksen",

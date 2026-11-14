@@ -4,6 +4,39 @@ export const TIMEOUT_MS = 12_000;
 const RETRY_DELAY_MS = 1_000;
 const MAX_RETRY_DELAY_MS = 5_000;
 
+/** Why a model API call failed, in one word. Auth and quota failures repeat until someone changes the key or plan. */
+export type FailureKind = "auth" | "quota" | "timeout" | "error";
+
+const FAILURE_KINDS: readonly FailureKind[] = ["auth", "quota", "timeout", "error"];
+
+/** A call that never produced a reply worth reading: the service refused it, failed or did not answer in time. */
+export class ProviderError extends Error {
+  readonly name = "ProviderError";
+
+  constructor(
+    message: string,
+    readonly kind: FailureKind,
+  ) {
+    super(message);
+  }
+}
+
+/**
+ * The failure kind of a provider error, or undefined for any other error. Checked by shape, not `instanceof`:
+ * each route bundle has its own copy of this module, and the breaker is shared between them.
+ */
+export function failureOf(error: unknown): FailureKind | undefined {
+  if (!(error instanceof Error) || error.name !== "ProviderError") return undefined;
+  const kind = (error as { kind?: unknown }).kind;
+  return FAILURE_KINDS.find((k) => k === kind);
+}
+
+function failureKind(status: number): FailureKind {
+  if (status === 401 || status === 403) return "auth";
+  if (status === 429) return "quota";
+  return "error";
+}
+
 interface Reply {
   status: number;
   retryAfter: string | null;
@@ -42,9 +75,9 @@ async function attempt(url: string, headers: Record<string, string>, body: strin
   try {
     const response = await fetch(url, { method: "POST", headers: { "content-type": "application/json", ...headers }, body, signal: controller.signal });
     return { status: response.status, retryAfter: response.headers.get("retry-after"), text: await response.text() };
-  } catch (error) {
-    if (controller.signal.aborted) throw new Error(`${label} request timed out after ${TIMEOUT_MS / 1000} s`);
-    throw error;
+  } catch {
+    if (controller.signal.aborted) throw new ProviderError(`${label} request timed out after ${TIMEOUT_MS / 1000} s`, "timeout");
+    throw new ProviderError(`${label} could not be reached`, "error");
   } finally {
     clearTimeout(timer);
   }
@@ -58,7 +91,9 @@ export async function postJson(url: string, headers: Record<string, string>, pay
     await wait(retryDelay(reply.retryAfter));
     reply = await attempt(url, headers, body, label);
   }
-  if (reply.status < 200 || reply.status >= 300) throw new Error(`${label} request failed with status ${reply.status}${apiReason(reply.text)}`);
+  if (reply.status < 200 || reply.status >= 300) {
+    throw new ProviderError(`${label} request failed with status ${reply.status}${apiReason(reply.text)}`, failureKind(reply.status));
+  }
   try {
     return JSON.parse(reply.text);
   } catch {

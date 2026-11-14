@@ -1,11 +1,13 @@
 import type { Decision, DecisionKind, Meeting } from "@/lib/domain/types";
 import { secondLookMatches } from "@/lib/matching/second-look";
 import { getStore, type StoreData } from "@/lib/store";
-import { hash, newId } from "@/lib/util/hash";
+import { newId } from "@/lib/util/hash";
 import { appendAudit, clock, findOrThrow, ServiceError } from "./support";
-import { decisionInputProblem } from "@/lib/domain/decision-rules";
+import { DECISION_ACTIONS, decisionInputProblem } from "@/lib/domain/decision-rules";
+import { NAMED_PERSON_NEEDED } from "@/lib/domain/guardrails";
+import { isRegisteredReviewer } from "./reviewers";
 
-export interface DecideInput {
+interface DecideInput {
   proofId: string;
   companyId: string;
   reviewer: string;
@@ -13,12 +15,56 @@ export interface DecideInput {
   feedback: string;
 }
 
-/** A 15-minute slot at the event, stable for the same proof and company. */
-export function meetingSlot(proofId: string, companyId: string): string {
-  const h = hash(`${proofId}:${companyId}`);
-  const minutes = 13 * 60 + (h % 15) * 20;
-  const time = `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, "0")}`;
-  return `Sat ${time}, Table ${(Math.floor(h / 15) % 12) + 1}`;
+/** Meetings on the event day: 15-minute steps from 13:00 to 16:45, at six tables. */
+const FIRST_SLOT_MINUTES = 13 * 60;
+const SLOT_STEP_MINUTES = 15;
+const SLOT_TIMES = 16;
+export const MEETING_TABLES = 6;
+/** The slot text when every time is taken for that company or that person. */
+export const TIME_TO_BE_AGREED = "Time to be agreed";
+
+/** "13:00", "13:15", ... "16:45". */
+export const SLOT_TIMES_OF_DAY: readonly string[] = Array.from({ length: SLOT_TIMES }, (_, i) => {
+  const minutes = FIRST_SLOT_MINUTES + i * SLOT_STEP_MINUTES;
+  return `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, "0")}`;
+});
+
+const SLOT = /(\d{1,2}:\d{2}), Table (\d+)$/;
+
+/** The time and table of a slot text, or undefined for "Time to be agreed". */
+export function parseSlot(slot: string): { time: string; table: number } | undefined {
+  const match = SLOT.exec(slot);
+  return match ? { time: match[1], table: Number(match[2]) } : undefined;
+}
+
+/** "Sat" for the event day. */
+function eventWeekday(date: string): string {
+  return new Date(`${date}T12:00:00Z`).toLocaleDateString("en-GB", { weekday: "short", timeZone: "UTC" });
+}
+
+/**
+ * The first free proposed slot for a new invitation, in grid order, so the same store always gives the
+ * same answer. Free means: no other meeting sits at that time and table, the company meets nobody else
+ * at that time, and the person meets no other company at that time. A declined invitation frees its slot.
+ * When the day is full for them, the slot reads "Time to be agreed".
+ */
+export function pickMeetingSlot(data: Pick<StoreData, "event" | "meetings" | "submissions">, proofId: string, companyId: string): string {
+  const talentOf = new Map(data.submissions.map((s) => [s.id, s.talentId]));
+  const person = talentOf.get(proofId);
+  const taken = data.meetings
+    .filter((m) => m.status !== "declined")
+    .flatMap((m) => {
+      const at = parseSlot(m.slot);
+      return at ? [{ ...at, companyId: m.companyId, talentId: talentOf.get(m.proofId) }] : [];
+    });
+  for (const time of SLOT_TIMES_OF_DAY) {
+    const atTime = taken.filter((t) => t.time === time);
+    if (atTime.some((t) => t.companyId === companyId || (person !== undefined && t.talentId === person))) continue;
+    for (let table = 1; table <= MEETING_TABLES; table++) {
+      if (!atTime.some((t) => t.table === table)) return `${eventWeekday(data.event.date)} ${time}, Table ${table}`;
+    }
+  }
+  return TIME_TO_BE_AGREED;
 }
 
 function context(data: StoreData, proofId: string) {
@@ -37,6 +83,9 @@ export async function decide(input: DecideInput): Promise<{ decision: Decision; 
   return getStore().update((data) => {
     const now = clock.now();
     const company = findOrThrow(data.companies, (c) => c.id === input.companyId, "Company");
+    if (!isRegisteredReviewer(company, reviewer)) {
+      throw new ServiceError(403, `${NAMED_PERSON_NEEDED} ${reviewer} is not a reviewer for ${company.name} yet: add yourself as a reviewer first.`);
+    }
     const { submission, proof, challenge } = context(data, input.proofId);
 
     if (data.decisions.some((d) => d.proofId === proof.proofId && d.companyId === company.id)) {
@@ -68,7 +117,7 @@ export async function decide(input: DecideInput): Promise<{ decision: Decision; 
     appendAudit(data, {
       actor: "human",
       by: reviewer,
-      action: input.decision === "meet" ? "Chose to meet" : "Said not now, with a reason",
+      action: DECISION_ACTIONS[input.decision],
       detail: `${company.name} on ${proof.label}${viaSecondLook ? " through Second look" : ""}. Feedback sent to the person.`,
     });
 
@@ -78,7 +127,7 @@ export async function decide(input: DecideInput): Promise<{ decision: Decision; 
         id: newId("meet"),
         proofId: proof.proofId,
         companyId: company.id,
-        slot: meetingSlot(proof.proofId, company.id),
+        slot: pickMeetingSlot(data, proof.proofId, company.id),
         status: "invited",
         talentConfirmedMet: false,
         companyConfirmedMet: false,
@@ -88,7 +137,7 @@ export async function decide(input: DecideInput): Promise<{ decision: Decision; 
         actor: "system",
         by: "Scheduler",
         action: "Sent a meeting invite",
-        detail: `${proof.label} invited to meet ${company.name}, ${meeting.slot}. Identity stays hidden until the person accepts.`,
+        detail: `${proof.label} invited to meet ${company.name}, proposed time: ${meeting.slot}. Identity stays hidden until the person accepts.`,
       });
     } else if (owner) {
       const opened = secondLookMatches({

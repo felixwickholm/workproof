@@ -4,10 +4,10 @@
  */
 import type { DemoSession } from "@/lib/domain/types";
 
-const TALENT_ID = "tryout.talentId";
-const TALENT_NAME = "tryout.talentName";
-const TALENT_CONTACT = "tryout.talentContact";
-const IDENTITY = "tryout.identity";
+const TALENT_ID = "workprint.talentId";
+const TALENT_NAME = "workprint.talentName";
+const TALENT_CONTACT = "workprint.talentContact";
+const IDENTITY = "workprint.identity";
 
 function read(key: string): string | null {
   try {
@@ -38,7 +38,7 @@ export function getTalentId(): string {
 }
 
 /** Who the seeker side acts as: the demo persona (the default) or the visitor's own random key. */
-export type Identity = "persona" | "me";
+type Identity = "persona" | "me";
 
 export function getIdentity(): Identity {
   return read(IDENTITY) === "me" ? "me" : "persona";
@@ -82,13 +82,13 @@ export function saveIdentity(name: string, contact?: string) {
   if (contact !== undefined) write(TALENT_CONTACT, contact);
 }
 
-export interface WorkDraft {
+interface WorkDraft {
   answer: string;
   explain: string[];
   startedAt: number;
 }
 
-const draftKey = (challengeId: string) => `tryout.draft.${challengeId}`;
+const draftKey = (challengeId: string) => `workprint.draft.${challengeId}`;
 
 export function loadDraft(challengeId: string): WorkDraft | null {
   const raw = read(draftKey(challengeId));

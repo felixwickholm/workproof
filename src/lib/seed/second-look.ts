@@ -15,11 +15,11 @@ export interface SecondLookSeed {
 
 export const SECOND_LOOK_DECISIONS: SecondLookSeed[] = [
   {
-    proofId: "proof_clean_02",
+    proofId: "proof_lab_02",
     companyId: "co-kaari",
     kind: "meet",
     feedback:
-      "We read your night plan through Second look. You put up the warning sign and kept two people on the wet floor before anything else, and that is how we want visits planned when we are short of carers. We would like to meet you.",
+      "We read your night plan through Second look. You put the patients in hospital now first and sent the INR samples on before they spoiled, and that is how we want visits planned when we are short of carers. We would like to meet you.",
     hoursAgo: 60,
     meeting: "accepted",
   },
@@ -28,7 +28,7 @@ export const SECOND_LOOK_DECISIONS: SecondLookSeed[] = [
     companyId: "co-otso",
     kind: "pass",
     feedback:
-      "We read your call through Second look. You explained the double contract in words a caller would use and offered a written confirmation. Our patient line needs medical terms in Finnish from the first day, so it is not now.",
+      "We read your call through Second look. You owned the delay and asked about the client's own deadline before promising anything, which is how we want our employer clients handled. Our account role this winter needs someone who knows occupational health contracts, so it is not now.",
     hoursAgo: 30,
   },
   {

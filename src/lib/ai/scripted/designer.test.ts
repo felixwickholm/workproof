@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { Challenge } from "@/lib/domain/types";
 import { draftProblems } from "@/lib/guard/check-draft";
 import { protectedNames } from "@/lib/guard/protected";
-import { countListedWishes, draftFromNeed, tasterFor } from "./compose";
+import { draftFromNeed, tasterFor } from "./compose";
 import { followUpQuestions } from "./follow-ups";
+import { wishOutcomes } from "./wish-outcomes";
 
 function asChallenge(need: string): Challenge {
   return { ...draftFromNeed(need), id: "c1", companyIds: ["A"], createdAt: "2026-01-01T00:00:00.000Z" };
@@ -76,8 +77,8 @@ describe("scripted designer", () => {
     expect(draft.setAside).toEqual([]);
     expect(draft.note).toMatch(/nearest role/);
     expect(draft.need).not.toMatch(/events|suppliers/);
-    expect(countListedWishes(need)).toBe(2);
-    expect(countListedWishes("Data engineer for our meter data pipelines: pipeline reliability, SQL, error handling, Airflow")).toBe(4);
+    expect(wishOutcomes(need, [])).toHaveLength(2);
+    expect(wishOutcomes("Data engineer for our meter data pipelines: pipeline reliability, SQL, error handling, Airflow", [])).toHaveLength(4);
   });
 
   it("gives an unknown dream job a neutral taster that does not repeat the job name", () => {
@@ -85,7 +86,14 @@ describe("scripted designer", () => {
     expect(JSON.stringify(taster)).not.toMatch(/beekeeper|rooftop/i);
     expect(taster.title).toBe("Spot the problem in a plan");
     expect(taster.note).toMatch(/no task for this exact job yet/);
-    expect(taster.brief).toMatch(/no task for this exact job yet/);
+    expect(taster.brief).not.toMatch(/no task for this exact job/i);
+  });
+
+  it("gives the chef taster skill notes that fit its own nut allergy order", () => {
+    const taster = tasterFor("chef");
+    expect(taster.material?.body).toMatch(/nut allergy/);
+    const notes = [...taster.coreSkills.map((s) => s.why), ...taster.reviewGuide.map((g) => g.lookFor)].join(" ");
+    expect(notes).not.toMatch(/wheat|coeliac|gluten|plate/i);
   });
 
   it("carries what the person hands in", () => {
@@ -94,9 +102,14 @@ describe("scripted designer", () => {
     expect(draftFromNeed("Backend developer for a payments API").proofKind).toBe("code");
   });
 
-  it("keeps a working language as a neutral line, never a native-speaker wish", () => {
+  it("keeps languages and licences as facts about the job, never skills, never set aside, never a native-speaker wish", () => {
     const working = draftFromNeed("Accountant for monthly closing who works in Finnish with customers");
-    expect(working.setAside).toContain("Working language: Finnish: talk about it in the meeting");
+    expect(working.facts).toEqual(["Work language: Finnish"]);
+    expect(working.setAside.join(" ")).not.toMatch(/Finnish/);
+    const nurse = draftFromNeed("Nurse for our ward: patient safety, Finnish not required, work language English, driving licence B, work permit needed");
+    expect(nurse.facts).toEqual(["Finnish not required", "Work language: English", "Driving licence B needed", "Right to work in Finland needed"]);
+    expect(nurse.setAside.join(" ")).not.toMatch(/Finnish|English|licence|permit/i);
+    expect(nurse.need).not.toMatch(/Finnish|English|licence/i);
     const native = draftFromNeed("Accountant for monthly closing, native Finnish speaker");
     expect(protectedNames(native.need)).toEqual([]);
     expect(native.setAside.join(" ")).toContain("Not used: native language");

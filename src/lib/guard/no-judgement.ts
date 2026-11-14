@@ -10,7 +10,7 @@ import { VERDICT_PHRASES } from "./verdict-phrases";
 
 export type JudgementKind = "score" | "rank" | "verdict";
 
-export interface JudgementViolation {
+interface JudgementViolation {
   kind: JudgementKind;
   match: string;
 }

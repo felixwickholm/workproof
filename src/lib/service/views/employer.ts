@@ -1,3 +1,4 @@
+import { placesLeft, placesOf, readingMinutes } from "@/lib/domain/places";
 import type { EmployerHome } from "@/lib/domain/types";
 import type { StoreData } from "@/lib/store";
 import { employerRecord } from "./city";
@@ -47,7 +48,7 @@ export function buildEmployerHome(data: StoreData, companyId: string, now: Date)
     greeting: { fact: greetingFact(waiting, accepted - met) },
     counts: {
       waiting,
-      feedbackOwed: record.feedbackOwed,
+      feedbackOwed: record.proofsOwed,
       medianHoursToRespond: record.medianHoursToRespond,
       meetings: meetings.length,
     },
@@ -58,8 +59,11 @@ export function buildEmployerHome(data: StoreData, companyId: string, now: Date)
         proofsReceived: received.length,
         waiting: queue.proofs.filter((p) => p.challengeId === challenge.id).length,
         daysLive: Math.max(0, Math.floor((now.getTime() - new Date(challenge.createdAt).getTime()) / DAY_MS)),
+        places: placesOf(challenge) ?? 0,
+        placesLeft: placesLeft(challenge, received.length) ?? 0,
       };
     }),
+    readingMinutesOwed: readingMinutes(waiting),
     queuePreview: queue.proofs.slice(0, PREVIEW),
     secondLookWaiting: queue.secondLook.length,
     pipeline: [
@@ -71,6 +75,6 @@ export function buildEmployerHome(data: StoreData, companyId: string, now: Date)
     ],
     hoursToFirstMeeting: firstMeet && own[0] ? hoursBetween(own[0].createdAt, firstMeet.decidedAt) : null,
     pool: talentPool(data, companyId),
-    event: eventTotals(data),
+    event: { ...eventTotals(data), responseWindowHours: data.event.responseWindowHours },
   };
 }

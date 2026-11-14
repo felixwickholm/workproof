@@ -3,6 +3,7 @@ import type { RoleTemplate } from "../role-template";
 export const aiEngineer: RoleTemplate = {
   id: "ai-engineer",
   title: "AI engineer",
+  level: "degree",
   keywords: [
     "ai engineer", "llm app developer", "llm", "large language model", "generative ai", "genai", "rag", "prompt engineer",
     "chatbot", "ai assistant", "agents", "tekoälyinsinööri", "tekoälykehittäjä", "kielimalli",

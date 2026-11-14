@@ -1,8 +1,11 @@
 import { getTaskDesigner } from "@/lib/ai";
-import { countListedWishes, publishedNeed } from "@/lib/ai/scripted/compose";
+import { publishedNeed } from "@/lib/ai/scripted/compose";
+import { wishOutcomes } from "@/lib/ai/scripted/wish-outcomes";
 import { redact, type KnownIdentity } from "@/lib/blind/redact";
+import { choosePlaces } from "@/lib/domain/places";
 import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
 import { draftProblems } from "@/lib/guard/check-draft";
+import { isJobFact } from "@/lib/guard/job-facts";
 import { getStore } from "@/lib/store";
 import { newId } from "@/lib/util/hash";
 import { omit } from "@/lib/util/object";
@@ -12,7 +15,22 @@ import { appendAudit, clock, findOrThrow, ServiceError } from "./support";
 
 const TASK_DRAFTER = "Task drafter";
 
-/** A draft for the company's own screen. `yourWords` echoes their sentence; it is never published. */
+/** At most this many facts are published with one task. */
+const MAX_REQUIREMENTS = 8;
+
+/**
+ * The draft's job facts as published requirements: fixed forms only, without repeats, so a request that
+ * skips the UI cannot put free text on the card this way. Undefined when there are none.
+ */
+function publishedRequirements(facts: string[] | undefined): string[] | undefined {
+  const kept = [...new Set((facts ?? []).filter(isJobFact))].slice(0, MAX_REQUIREMENTS);
+  return kept.length > 0 ? kept : undefined;
+}
+
+/**
+ * A draft for the company's own screen. `yourWords` echoes their sentence and `wishes` says what became of
+ * each wish, whichever designer drafted it; neither is ever published.
+ */
 export async function draftChallenge(need: string): Promise<ChallengeDraft> {
   const draft = await getTaskDesigner().draftChallenge(need);
   await getStore().update((data) => {
@@ -23,24 +41,27 @@ export async function draftChallenge(need: string): Promise<ChallengeDraft> {
       detail: `"${draft.title}": ${draft.coreSkills.length} core skills kept, ${draft.setAside.length} wishes set aside. Waiting for a human to approve.`,
     });
   });
-  return { ...draft, yourWords: need.trim(), wishCount: countListedWishes(need) };
+  return { ...draft, yourWords: need.trim(), wishes: wishOutcomes(need, draft.coreSkills.map((s) => s.id)) };
 }
 
 export async function approveChallenge(input: { draft: ChallengeDraft; companyId: string; approvedBy: string }): Promise<Challenge> {
   const approvedBy = input.approvedBy.trim();
   if (!approvedBy) throw new ServiceError(400, "A named person must approve the challenge");
   // A human may edit the draft, and a request may skip the UI, so the server checks it again.
-  // The talent-visible need is rebuilt here; the request's own need, words and note are dropped.
-  const draft: ChallengeDraft = { ...omit(input.draft, ["yourWords", "note", "wishCount"]), need: publishedNeed(input.draft), kind: "event", aiAllowed: true };
+  // The talent-visible need is rebuilt here; the request's own need, words, wish outcomes, note and designer are dropped.
+  const draft: ChallengeDraft = { ...omit(input.draft, ["yourWords", "note", "wishes", "draftedBy", "facts"]), need: publishedNeed(input.draft), kind: "event", aiAllowed: true };
   const problems = draftProblems(draft);
   if (draft.minutes < 10) problems.push("An event task takes 10 to 30 minutes");
   if (problems.length > 0) throw new ServiceError(400, `This card cannot be published yet. ${problems[0]}.`);
+  const requirements = publishedRequirements(input.draft.facts);
 
   return getStore().update((data) => {
     const company = findOrThrow(data.companies, (c) => c.id === input.companyId, "Company");
     const challenge: Challenge = {
       ...draft,
       kind: "event",
+      places: choosePlaces(draft.places),
+      ...(requirements ? { requirements } : {}),
       id: newId("ch"),
       companyIds: [company.id],
       approvedBy,
@@ -79,7 +100,7 @@ export async function createTaster(dreamJob: string): Promise<Challenge> {
   const draft = await getTaskDesigner().taster(dreamJob);
   return getStore().update((data) => {
     const challenge: Challenge = {
-      ...draft,
+      ...omit(draft, ["draftedBy"]),
       id: newId("taster"),
       companyIds: [],
       createdAt: clock.now().toISOString(),

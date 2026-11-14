@@ -12,8 +12,20 @@ export function normalise(text: string): string {
  */
 export function containsTerm(text: string, term: string): boolean {
   if (term.length > 3 && isFinnishStem(term)) return text.includes(term);
-  const escaped = term.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
-  return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?:s|es)?(?![\\p{L}\\p{N}])`, "u").test(text);
+  return wholeWord(term).test(text);
+}
+
+/** Built once per term: every wish is checked against hundreds of synonyms and cues. */
+const WHOLE_WORDS = new Map<string, RegExp>();
+
+function wholeWord(term: string): RegExp {
+  let pattern = WHOLE_WORDS.get(term);
+  if (!pattern) {
+    const escaped = term.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
+    pattern = new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?:s|es)?(?![\\p{L}\\p{N}])`, "u");
+    WHOLE_WORDS.set(term, pattern);
+  }
+  return pattern;
 }
 
 /**
