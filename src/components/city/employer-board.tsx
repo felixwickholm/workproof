@@ -3,7 +3,10 @@ import { Eyebrow } from "../ui/card";
 import { cx } from "../ui/cx";
 import { formatHours } from "./format";
 
-const columns = ["Card live", "Proofs", "Feedback given", "Feedback owed", "Median reply", "Meetings held"];
+const columns = ["Task live", "Proofs", "Feedback given", "Feedback owed", "Median reply", "Meetings held"];
+
+/** On a phone: the three facts that say most about how an employer treats people. The table shows all. */
+const phoneFacts = ["Proofs", "Feedback owed", "Median reply"];
 
 function facts(r: EmployerRecord) {
   return [
@@ -26,15 +29,23 @@ export function EmployerBoard({ employers }: { employers: EmployerRecord[] }) {
         {sorted.map((r) => (
           <li key={r.company.id} className="row relative px-5 py-4">
             <p className="text-headline font-semibold">{r.company.name}</p>
-            <dl className="mt-3 grid grid-cols-3 gap-x-3 gap-y-3">
-              {facts(r).map((f) => (
-                <div key={f.label}>
-                  <dt>
-                    <Eyebrow className="text-label-3">{f.label}</Eyebrow>
-                  </dt>
-                  <dd className={cx("text-subhead tnum mt-0.5 font-semibold", f.muted ? "text-label-3" : "text-label")}>{f.value}</dd>
-                </div>
-              ))}
+            <dl className="mt-2">
+              {facts(r)
+                .filter((f) => phoneFacts.includes(f.label))
+                .map((f) => (
+                  <div key={f.label} className="flex items-baseline justify-between gap-3 py-1">
+                    <dt className="text-subhead text-label-2">{f.label}</dt>
+                    <dd
+                      className={cx(
+                        "text-subhead tnum",
+                        f.muted ? "text-label-3" : "text-label",
+                        f.label === "Feedback owed" && !f.muted && "font-semibold",
+                      )}
+                    >
+                      {f.value}
+                    </dd>
+                  </div>
+                ))}
             </dl>
           </li>
         ))}
@@ -69,7 +80,7 @@ export function EmployerBoard({ employers }: { employers: EmployerRecord[] }) {
                       f.muted ? "text-label-3" : "text-label",
                     )}
                   >
-                    {f.label === "Card live" ? f.value.replace(" before", "") : f.value}
+                    {f.label === "Task live" ? f.value.replace(" before", "") : f.value}
                   </td>
                 ))}
               </tr>
@@ -78,7 +89,7 @@ export function EmployerBoard({ employers }: { employers: EmployerRecord[] }) {
         </table>
       </div>
 
-      <p className="text-footnote mt-2 px-4 text-label-2">
+      <p className="text-footnote mt-2 px-5 text-label-2">
         Outcomes come from both sides confirming a meeting. Nobody fills in a survey.
       </p>
     </div>

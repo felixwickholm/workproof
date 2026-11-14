@@ -34,7 +34,7 @@ export function DecidedDetails({ entry, onChanged }: { entry: Entry; onChanged: 
     setBusy(true);
     setError(null);
     try {
-      await companyApi.confirmMet(meeting.id);
+      await companyApi.confirmMet(meeting.id, meeting.companyId);
       await onChanged();
     } catch (e) {
       setError(companyErrorText(e));

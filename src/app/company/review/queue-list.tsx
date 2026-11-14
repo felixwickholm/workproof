@@ -155,12 +155,12 @@ function DecidedList({ entries, selectedId, onChanged }: { entries: ReviewQueue[
 
 function Section({ label, count, note, children }: { label: string; count?: number; note?: string; children: ReactNode }) {
   return (
-    <section className="mt-8">
-      <div className="mb-2 flex items-baseline justify-between gap-3 px-4">
+    <section className="mt-8" data-section={label}>
+      <div className="mb-2 flex items-baseline justify-between gap-3 px-5">
         <Eyebrow>{label}</Eyebrow>
         {count ? <span className="text-footnote tnum text-label-2">{count}</span> : null}
       </div>
-      {note ? <p className="text-footnote -mt-1 mb-2 px-4 text-label-2">{note}</p> : null}
+      {note ? <p className="text-footnote -mt-1 mb-2 px-5 text-label-2">{note}</p> : null}
       {children}
     </section>
   );

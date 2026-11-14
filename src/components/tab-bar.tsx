@@ -6,7 +6,7 @@ import { Layers, WalletCards } from "lucide-react";
 import { cx } from "./ui/cx";
 
 const tabs = [
-  { href: "/challenges", label: "Challenges", Icon: Layers },
+  { href: "/challenges", label: "Tasks", Icon: Layers },
   { href: "/passport", label: "My proofs", Icon: WalletCards },
 ];
 

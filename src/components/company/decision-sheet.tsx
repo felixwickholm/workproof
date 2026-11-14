@@ -11,9 +11,9 @@ import { Field, TextArea } from "../ui/field";
 import { Sheet } from "../ui/sheet";
 import { getReviewer, saveReviewer } from "./company-choice";
 import { companyErrorText } from "./format";
+import { decisionInputProblem, MIN_FEEDBACK_CHARS, MIN_FEEDBACK_WORDS, wordsWithLetters } from "@/lib/domain/decision-rules";
 import { LIMITS } from "@/lib/http/limits";
 
-const MIN_FEEDBACK = 20;
 
 /** Neutral ways to begin. They help a reviewer start writing; they say nothing about the person. */
 const starters: Record<DecisionKind, string[]> = {
@@ -53,8 +53,11 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided, onDone
   }
 
   const decision = sent?.kind ?? openedAs;
-  const short = MIN_FEEDBACK - feedback.trim().length;
-  const ready = reviewer.trim().length > 0 && short <= 0;
+  // Same rule as the API: a real name, and feedback of at least four words and 20 characters.
+  const short = MIN_FEEDBACK_CHARS - feedback.trim().length;
+  const fewWords = MIN_FEEDBACK_WORDS - wordsWithLetters(feedback);
+  const ready = !decisionInputProblem(reviewer, feedback);
+  const hint = short > 0 ? `${short} more` : fewWords > 0 ? `${fewWords} more ${fewWords === 1 ? "word" : "words"}` : !ready ? "Add your name" : null;
 
   const inFlight = useRef(false);
   async function submit() {
@@ -105,7 +108,7 @@ export function DecisionSheet({ kind, proof, company, onClose, onDecided, onDone
               />
               <p className="text-footnote mt-2 flex justify-between gap-3 px-4 text-label-2">
                 <span>They will read this. Two honest lines are enough.</span>
-                {short > 0 ? <span className="tnum shrink-0 text-label-3">{short} more</span> : null}
+                {hint ? <span className="tnum shrink-0 text-label-3">{hint}</span> : null}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">

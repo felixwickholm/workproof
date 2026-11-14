@@ -17,7 +17,7 @@ export function ChallengeList() {
   );
 
   return (
-    <Screen title="Challenges" subtitle="Real tasks from companies at the event. A person reads every answer." tabs>
+    <Screen title="Tasks" subtitle="Real work from companies at the event. A person reads every answer." tabs>
       {loading && !data ? (
         <div className="flex flex-col gap-3" aria-busy>
           <ProblemCardSkeleton />
@@ -25,9 +25,9 @@ export function ChallengeList() {
           <ProblemCardSkeleton />
         </div>
       ) : error && !data ? (
-        <ErrorState error={error} what="the challenges" onRetry={retry} />
+        <ErrorState error={error} what="the tasks" onRetry={retry} />
       ) : data && data.challenges.length === 0 ? (
-        <p className="text-body px-4 text-label-2">No challenges are open yet. Check back closer to the event.</p>
+        <p className="text-body px-4 text-label-2">No tasks are open yet. Check back closer to the event.</p>
       ) : (
         <div className="flex flex-col gap-3">
           {data?.challenges.map((c, i) => (

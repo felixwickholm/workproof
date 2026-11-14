@@ -2,10 +2,12 @@
 
 import { EyeOff } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
+import type { ReactNode } from "react";
 import type { BlindProof, RedactionReport } from "@/lib/domain/types";
 import { Card, Eyebrow, Section } from "./ui/card";
 import { Group, Row } from "./ui/group";
 import { AiTag, Tag } from "./ui/tag";
+import { WorkText } from "./work-text";
 
 const ease = [0.23, 1, 0.32, 1] as const;
 
@@ -89,16 +91,25 @@ export function BlindProofFull({
   proof,
   reveal = false,
   audience = "talent",
+  beforeWork,
 }: {
-  proof: BlindProof;
+  /** The author's own view carries the hidden details by category; a reviewer gets one total. */
+  proof: BlindProof & { redactions?: RedactionReport };
   reveal?: boolean;
-  /** Who is reading. Only the wording of the "hidden" list changes. */
+  /** Who is reading. A reviewer gets a compact header so the work comes first; the "hidden" list is worded for them. */
   audience?: "talent" | "reviewer";
+  /** Shown between the header and the work, for example the task the person got. */
+  beforeWork?: ReactNode;
 }) {
   const hidden = hiddenCopy[audience];
   const reduce = useReducedMotion();
   const animate = reveal && !reduce;
-  const found = redactionRows.filter((r) => proof.redactions[r.key] > 0).map((r) => ({ ...r, value: proof.redactions[r.key] }));
+  const report = audience === "talent" ? proof.redactions : undefined;
+  const found = report
+    ? redactionRows.filter((r) => report[r.key] > 0).map((r) => ({ ...r, value: report[r.key] }))
+    : proof.hiddenCount > 0
+      ? [{ key: "total", label: "Personal details", value: proof.hiddenCount }]
+      : [];
   const rows = [
     { key: "identity", label: hidden.identity, value: "Not shared" },
     ...(found.length > 0 ? found : [{ key: "none", label: hidden.nothingFound, value: undefined }]),
@@ -112,36 +123,53 @@ export function BlindProofFull({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.28, ease }}
       >
-        <Card className="highlight">
-          <ProofHeader label={proof.label} sub={proof.challengeTitle} />
-          <div className="mt-4 flex flex-wrap gap-2">
-            {proof.skills.map((s) => (
-              <Tag key={s.id}>{s.label}</Tag>
-            ))}
+        {audience === "reviewer" ? (
+          <div className="px-1">
+            <ProofHeader label={proof.label} sub={proof.challengeTitle} />
+            <div className="mt-3 flex flex-wrap gap-2">
+              {proof.skills.map((s) => (
+                <Tag key={s.id}>{s.label}</Tag>
+              ))}
+            </div>
           </div>
-          <NameHidden />
-        </Card>
+        ) : (
+          <Card className="highlight">
+            <ProofHeader label={proof.label} sub={proof.challengeTitle} />
+            <div className="mt-4 flex flex-wrap gap-2">
+              {proof.skills.map((s) => (
+                <Tag key={s.id}>{s.label}</Tag>
+              ))}
+            </div>
+            <NameHidden />
+          </Card>
+        )}
+
+        {beforeWork}
 
         <Card>
           <Eyebrow>The work</Eyebrow>
-          <p className="text-body mt-2 whitespace-pre-wrap text-pretty">{proof.work}</p>
+          <WorkText text={proof.work} className="text-body mt-2 whitespace-pre-wrap text-pretty" />
         </Card>
 
-        {proof.explain.map((e, i) => (
-          <Card key={i}>
-            <p className="text-footnote text-label-2">{e.question}</p>
-            <p className="text-body mt-2 whitespace-pre-wrap font-medium text-pretty">{e.answer}</p>
-          </Card>
-        ))}
+        {proof.explain.length > 0 ? (
+          <div className="overflow-hidden rounded-card bg-surface">
+            {proof.explain.map((e, i) => (
+              <div key={i} className="row relative px-5 py-4">
+                <p className="text-footnote text-label-2 text-pretty">{e.question}</p>
+                <WorkText text={e.answer} className="text-body mt-1.5 whitespace-pre-wrap text-pretty" />
+              </div>
+            ))}
+          </div>
+        ) : null}
 
-        <Card>
+        <div className="mt-3 px-5">
           <div className="flex items-center justify-between gap-3">
             <Eyebrow>Summary of the work</Eyebrow>
             <AiTag />
           </div>
-          <p className="text-body mt-2 text-pretty">{proof.aiSummary}</p>
-          <p className="text-footnote mt-3 text-label-2">Describes the work. Never scores it.</p>
-        </Card>
+          <p className="text-body mt-2 text-label-2 text-pretty">{proof.aiSummary}</p>
+          <p className="text-footnote mt-2 text-label-3">Describes the work. Never scores it.</p>
+        </div>
       </motion.div>
 
       <Section label={hidden.label} className="mt-8">

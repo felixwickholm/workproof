@@ -6,6 +6,27 @@
 /** Counts read from the visitor's own proofs, used to notice that an action happened. */
 export type Signal = "proofs" | "meets" | "accepted";
 
+/** What the bar can read from the screen right now. */
+export interface PageState {
+  /** The label of the proof the visitor sent in the story. */
+  proofLabel?: string;
+  /** The page's enabled main button, by its label. */
+  primary?: string;
+  /** Empty fields that "Fill in her answer" can type into. */
+  fillable: boolean;
+  /** A selector or `text:Label` matches something on screen. */
+  has: (target: string) => boolean;
+  /** A selector matches anywhere, on screen or not. */
+  exists: (selector: string) => boolean;
+}
+
+/** One instruction, naming something visible, and the one thing to ring. */
+export interface Guide {
+  hint?: string;
+  /** A selector or `text:Label`; the bar rings the first match on screen. */
+  target?: string;
+}
+
 export interface StoryStep {
   id: string;
   /** What happens and why it matters. One or two short sentences. */
@@ -14,8 +35,8 @@ export interface StoryStep {
   at: (path: string) => boolean;
   /** Where to go when the visitor is somewhere else. */
   go: { label: string; href: string };
-  /** What to tap, in words. Never covers the page's own action. */
-  hint?: (path: string, story: { proofLabel?: string }) => string;
+  /** What to tap, in words, and what to ring. Reads the screen, so it always names what is visible. */
+  guide?: (path: string, page: PageState) => Guide;
   /** An informational step moves on with this button. `href` also navigates. */
   next?: { label: string; href?: string };
   /** Move on when the visitor reaches a page that belongs to the next step. */
@@ -29,6 +50,36 @@ export interface StoryStep {
 const isWork = (p: string) => /^\/challenges\/[^/]+\/work/.test(p);
 const isDetail = (p: string) => /^\/challenges\/[^/]+$/.test(p);
 
+const company = (name: string) => `[role="radio"][aria-label="${name}"]`;
+const chosen = (name: string) => `${company(name)}[aria-checked="true"]`;
+const row = (section: string, label: string) => `[data-section="${section}"] [data-story="${label}"]`;
+
+/** Point at the page's own main button once it can be tapped. */
+const tapPrimary = (page: PageState): Guide =>
+  page.primary ? { hint: `Now tap ${page.primary}.`, target: "[data-primary]" } : {};
+
+function reviewGuide(page: PageState): Guide {
+  const proof = page.proofLabel ?? "her proof";
+  const asTuulos = page.exists(chosen("Tuulos Robotics"));
+  const asSaarnivo = page.exists(chosen("Saarnivo Grid"));
+  // A proof is open with its decision buttons.
+  if (page.has("text:Pass")) {
+    if (asTuulos) return { hint: "Tap Pass and send a short note.", target: "text:Pass" };
+    if (asSaarnivo) return { hint: "Tap Meet and say why.", target: "text:Meet" };
+  }
+  if (page.proofLabel && asTuulos && page.has(row("To review", proof))) {
+    return { hint: `Open ${proof} under To review.`, target: row("To review", proof) };
+  }
+  if (page.proofLabel && asSaarnivo && page.has(row("Second look", proof))) {
+    return { hint: `Open ${proof} under Second look.`, target: row("Second look", proof) };
+  }
+  if (asTuulos && page.has(company("Saarnivo Grid"))) {
+    return { hint: "Tuulos has decided. Switch to Saarnivo at the top.", target: company("Saarnivo Grid") };
+  }
+  if (page.has(company("Tuulos Robotics"))) return { hint: "Switch to Tuulos at the top.", target: company("Tuulos Robotics") };
+  return { hint: "Go back to the queue." };
+}
+
 export const storySteps: StoryStep[] = [
   {
     id: "intro",
@@ -39,11 +90,14 @@ export const storySteps: StoryStep[] = [
     leaveWhen: (p) => p.startsWith("/challenges"),
   },
   {
-    id: "challenge",
+    id: "task",
     text: "A company posted a real task and what the reviewer will look for.",
     at: (p) => p === "/challenges" || isDetail(p),
-    go: { label: "Open the challenges", href: "/challenges" },
-    hint: (p) => (isDetail(p) ? "Tap Start below." : "Open the Tuulos Robotics card about a model evaluation."),
+    go: { label: "Open the tasks", href: "/challenges" },
+    guide: (p) =>
+      isDetail(p)
+        ? { hint: "Tap Start below.", target: "[data-primary]" }
+        : { hint: "Open the Tuulos Robotics task about a model evaluation.", target: '[data-story="task-ch-tuulos-ml"]' },
     leaveWhen: isWork,
   },
   {
@@ -51,7 +105,7 @@ export const storySteps: StoryStep[] = [
     text: "She does the work. AI is allowed. The task asks for judgment.",
     at: isWork,
     go: { label: "Open the task", href: "/challenges/ch-tuulos-ml/work" },
-    hint: () => "Write an answer or fill in hers. Then tap the white button below until it is sent.",
+    guide: (_, page) => (page.fillable ? { hint: "Tap Fill in her answer, or write your own." } : tapPrimary(page)),
     signal: "proofs",
     sampleFill: true,
   },
@@ -60,6 +114,7 @@ export const storySteps: StoryStep[] = [
     text: "This is all the company sees. No name, no school.",
     at: isWork,
     go: { label: "Open the company view", href: "/company/review" },
+    guide: () => ({ hint: "Tap Next here to see the company side." }),
     next: { label: "Next", href: "/company/review" },
     leaveWhen: (p) => p.startsWith("/company"),
   },
@@ -68,10 +123,7 @@ export const storySteps: StoryStep[] = [
     text: "Tuulos Robotics reads it blind and passes. Saarnivo Grid needs the same skills, takes a Second look and says Meet.",
     at: (p) => p.startsWith("/company/review"),
     go: { label: "Open the company view", href: "/company/review" },
-    hint: (_, { proofLabel }) => {
-      const proof = proofLabel ?? "her proof";
-      return `As Tuulos, open ${proof} under To review and tap Pass. Then switch to Saarnivo, open ${proof} under Second look and tap Meet.`;
-    },
+    guide: (_, page) => reviewGuide(page),
     signal: "meets",
   },
   {
@@ -79,7 +131,7 @@ export const storySteps: StoryStep[] = [
     text: "Leila accepts. Only now do they see her name.",
     at: (p) => p.startsWith("/passport"),
     go: { label: "Open her proofs", href: "/passport" },
-    hint: () => "Tap Accept on her proof.",
+    guide: () => ({ hint: "Tap Accept on her proof.", target: "text:Accept" }),
     signal: "accepted",
     leaveWhen: (p) => p.startsWith("/city"),
   },

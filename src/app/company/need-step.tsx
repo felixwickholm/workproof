@@ -19,7 +19,7 @@ const examples = [
     need: "Data engineer for our meter data pipelines: pipeline reliability, SQL, error handling, Airflow",
   },
   {
-    label: "Backend, 10 wishes",
+    label: "Backend (long wish list)",
     need: "Backend developer for our payments API: API design, error handling, security, testing, Kafka, Docker, 8 years of experience, young, native Finnish speaker, top university degree",
   },
 ];
@@ -60,7 +60,7 @@ export function needStep({ need, onNeed, companies, companyId, onCompany, busy, 
             aria-pressed={need === e.need}
             className={cx(
               "press text-subhead h-11 rounded-full px-4 font-medium transition-colors duration-150",
-              need === e.need ? "bg-white text-black" : "bg-surface text-label",
+              need === e.need ? "bg-raised text-label shadow-[inset_0_0_0_1px_var(--color-white)]" : "bg-surface text-label",
             )}
           >
             {e.label}

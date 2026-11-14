@@ -13,7 +13,7 @@ export function Eyebrow({ children, className }: { children: ReactNode; classNam
 export function Section({ label, children, className }: { label?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <section className={cx("mt-8", className)}>
-      {label ? <Eyebrow className="mb-2 px-4">{label}</Eyebrow> : null}
+      {label ? <Eyebrow className="mb-2 px-5">{label}</Eyebrow> : null}
       {children}
     </section>
   );

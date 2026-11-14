@@ -22,7 +22,7 @@ export function AuditLog({ events }: { events: AuditEvent[] }) {
     <div className="overflow-hidden rounded-card bg-surface">
       <ol className="[--row-inset:16px]">
         {shown.map((e) => (
-          <li key={e.id} className="row relative flex gap-3 px-4 py-3">
+          <li key={e.id} className="row relative flex gap-3 px-5 py-3">
             <span className="mt-0.5 inline-flex h-5 w-[52px] shrink-0 items-center justify-center rounded-full text-caption font-medium text-label-2 shadow-[inset_0_0_0_0.5px_var(--color-label-3)]">
               {actorLabel[e.actor]}
             </span>

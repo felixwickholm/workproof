@@ -8,7 +8,7 @@ export function Group({ children, footer, className }: { children: ReactNode; fo
   return (
     <div className={className}>
       <div className="overflow-hidden rounded-card bg-surface">{children}</div>
-      {footer ? <p className="text-footnote text-label-2 mt-2 px-4">{footer}</p> : null}
+      {footer ? <p className="text-footnote text-label-2 mt-2 px-5">{footer}</p> : null}
     </div>
   );
 }
@@ -40,7 +40,7 @@ export function Row({ title, detail, value, leading, href, onClick, className, s
     </>
   );
   const classes = cx(
-    "row relative flex min-h-11 w-full items-center gap-3 px-4 text-left",
+    "row relative flex min-h-11 w-full items-center gap-3 px-5 text-left",
     interactive && "transition-colors duration-150 active:bg-raised",
     className,
   );

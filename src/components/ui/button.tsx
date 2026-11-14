@@ -47,15 +47,17 @@ export function Button({
     variant === "quiet" && size === "lg" && "w-auto",
     className,
   );
+  // The guided story reads this to know the page's one main action.
+  const primary = variant === "primary" ? { "data-primary": "" } : {};
   if (href && !disabled) {
     return (
-      <Link href={href} className={classes}>
+      <Link href={href} className={classes} {...primary}>
         {children}
       </Link>
     );
   }
   return (
-    <button type={type} onClick={onClick} disabled={disabled || loading} className={classes} aria-busy={loading}>
+    <button type={type} onClick={onClick} disabled={disabled || loading} className={classes} aria-busy={loading} {...primary}>
       {loading ? <Spinner /> : null}
       {children}
     </button>

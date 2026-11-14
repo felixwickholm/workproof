@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Users } from "lucide-react";
 import type { Challenge, Company, TaskFormat } from "@/lib/domain/types";
+import { CompanyMark, companiesOf } from "./company-mark";
 import { Skeleton } from "./ui/skeleton";
 import { Tag } from "./ui/tag";
 
@@ -12,13 +13,10 @@ export const formatLabel: Record<TaskFormat, string> = {
   explain: "Explain task",
 };
 
-/** One company: its blurb. A pooled task: the company names, since several blurbs do not fit one line. */
+/** One company: its blurb. A pooled task: no blurb, since the names already say who posted it. */
 export function companyLine(challenge: Challenge, companies: Company[]) {
-  const found = challenge.companyIds
-    .map((id) => companies.find((c) => c.id === id))
-    .filter((c): c is Company => Boolean(c));
-  if (found.length > 1) return found.map((c) => c.name).join(" and ");
-  return found[0]?.blurb ?? "";
+  const found = companiesOf(challenge, companies);
+  return found.length === 1 ? found[0].blurb : "";
 }
 
 export function pooledLabel(challenge: Challenge) {
@@ -27,24 +25,31 @@ export function pooledLabel(challenge: Challenge) {
 }
 
 export function metaLine(challenge: Challenge) {
-  return [`${challenge.minutes} min`, formatLabel[challenge.format], challenge.aiAllowed ? "AI allowed" : null]
-    .filter(Boolean)
-    .join(" · ");
+  return [`${challenge.minutes} min`, challenge.aiAllowed ? "AI allowed" : null].filter(Boolean).join(" · ");
 }
 
-/** A challenge as a tappable card in the list. */
+const SHOWN_SKILLS = 3;
+
+/** A task as a tappable card in the list: who posted it, what it is, what it takes. */
 export function ProblemCard({ challenge, companies }: { challenge: Challenge; companies: Company[] }) {
   const blurb = companyLine(challenge, companies);
   const pooled = pooledLabel(challenge);
+  const more = challenge.coreSkills.length - SHOWN_SKILLS;
   return (
-    <Link href={`/challenges/${challenge.id}`} className="press highlight block rounded-card bg-surface p-5 transition-colors duration-150 active:bg-raised">
-      {blurb ? <p className="text-footnote line-clamp-2 text-label-2">{blurb}</p> : null}
-      <h2 className="text-title-3 mt-1 font-semibold text-pretty">{challenge.title}</h2>
-      <p className="text-subhead tnum mt-1 text-label-2">{metaLine(challenge)}</p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {challenge.coreSkills.slice(0, 5).map((s) => (
+    <Link
+      href={`/challenges/${challenge.id}`}
+      data-story={`task-${challenge.id}`}
+      className="press highlight block rounded-card bg-surface p-5 transition-colors duration-150 active:bg-raised"
+    >
+      <CompanyMark companies={companiesOf(challenge, companies)} />
+      <h2 className="mt-3 text-[20px] leading-[25px] font-semibold tracking-[-0.015em] text-pretty">{challenge.title}</h2>
+      {blurb ? <p className="text-subhead mt-1 truncate text-label-2">{blurb}</p> : null}
+      <p className="text-footnote tnum mt-1 text-label-2">{metaLine(challenge)}</p>
+      <div className="mt-3.5 flex flex-wrap gap-2">
+        {challenge.coreSkills.slice(0, SHOWN_SKILLS).map((s) => (
           <Tag key={s.id}>{s.label}</Tag>
         ))}
+        {more > 0 ? <Tag className="text-label-2">+{more}</Tag> : null}
       </div>
       {pooled ? (
         <p className="hairline-t text-footnote -mx-5 mt-4 flex items-center gap-2 px-5 pt-3.5 text-label-2">

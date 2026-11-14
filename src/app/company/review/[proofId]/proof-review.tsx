@@ -6,6 +6,7 @@ import { BlindProofFull } from "@/components/blind-proof";
 import { DecidedDetails, DecisionLine } from "@/components/company/decided-summary";
 import { DecisionSheet } from "@/components/company/decision-sheet";
 import { waitingFor } from "@/components/company/format";
+import { LookForRow } from "@/components/company/look-for";
 import { ReviewGuide } from "@/components/company/review-guide";
 import { TaskDisclosure } from "@/components/company/task-disclosure";
 import { Button } from "@/components/ui/button";
@@ -72,18 +73,22 @@ export function ProofReview({ params }: { params: Promise<{ proofId: string }> }
             ) : null}
 
             <div className="rise mt-4" style={riseAt(1)}>
-              {challenge ? <TaskDisclosure challenge={challenge} /> : <div className="h-14 rounded-card bg-surface" />}
-            </div>
-
-            {guide ? (
-              <section className="rise mt-6 min-[1180px]:hidden" style={riseAt(2)}>
-                <GuideLabel ownTask={Boolean(known)} />
-                {guide}
-              </section>
-            ) : null}
-
-            <div className="rise mt-6" style={riseAt(3)}>
-              <BlindProofFull proof={proof} audience="reviewer" />
+              <BlindProofFull
+                proof={proof}
+                audience="reviewer"
+                beforeWork={
+                  <div className="flex flex-col gap-3">
+                    {challenge ? <TaskDisclosure challenge={challenge} /> : <div className="h-14 rounded-card bg-surface" />}
+                    {guide && challenge ? (
+                      <div className="flex min-[1180px]:hidden">
+                        <LookForRow count={challenge.reviewGuide.length} note={guideNote(Boolean(known))}>
+                          {guide}
+                        </LookForRow>
+                      </div>
+                    ) : null}
+                  </div>
+                }
+              />
             </div>
           </div>
 
@@ -126,13 +131,15 @@ export function ProofReview({ params }: { params: Promise<{ proofId: string }> }
   );
 }
 
+function guideNote(ownTask: boolean) {
+  return `${ownTask ? "From the review guide you approved." : "From the review guide of the original task."} Read the work against it.`;
+}
+
 function GuideLabel({ ownTask }: { ownTask: boolean }) {
   return (
-    <div className="mb-2 px-4">
+    <div className="mb-2 px-5">
       <Eyebrow>Look for</Eyebrow>
-      <p className="text-footnote mt-1 text-label-2">
-        {ownTask ? "From the review guide you approved." : "From the review guide of the original task."} Read the work against it.
-      </p>
+      <p className="text-footnote mt-1 text-label-2">{guideNote(ownTask)}</p>
     </div>
   );
 }

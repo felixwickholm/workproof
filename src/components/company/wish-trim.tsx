@@ -32,7 +32,7 @@ export function CoreSkillList({ skills, onRemove }: { skills: Skill[]; onRemove?
   return (
     <ul className="overflow-hidden rounded-card bg-surface">
       {skills.map((s) => (
-        <li key={s.id} className="row relative flex items-start gap-1 py-3 pl-4">
+        <li key={s.id} className="row relative flex items-start gap-1 py-3 pl-5">
           <div className="min-w-0 flex-1">
             <p className="text-headline font-semibold">{s.label}</p>
             <p className="text-subhead mt-0.5 text-label-2 text-pretty">{s.why}</p>
@@ -61,21 +61,21 @@ export function SetAsideList({ setAside }: { setAside: string[] }) {
   const wishes = setAside.filter((line) => !isNotUsed(line));
   const notUsed = setAside.filter(isNotUsed).flatMap(notUsedNames);
   if (wishes.length === 0 && notUsed.length === 0) {
-    return <p className="text-subhead px-4 text-label-2">Nothing. Every wish was part of the job.</p>;
+    return <p className="text-subhead px-5 text-label-2">Nothing. Every wish was part of the job.</p>;
   }
   return (
     <ul className="overflow-hidden rounded-card bg-surface">
       {wishes.map((line) => {
         const { wish, reason } = splitAside(line);
         return (
-          <li key={line} className="row relative px-4 py-3">
+          <li key={line} className="row relative px-5 py-3">
             <p className="text-body text-label-3 line-through decoration-label-3">{wish}</p>
             {reason ? <p className="text-footnote mt-0.5 text-label-2">{reason}</p> : null}
           </li>
         );
       })}
       {notUsed.length > 0 ? (
-        <li className="row relative flex gap-3 px-4 py-3.5">
+        <li className="row relative flex gap-3 px-5 py-3.5">
           <EyeOff aria-hidden className="mt-0.5 size-[18px] shrink-0 text-label-2" strokeWidth={1.8} />
           <div className="min-w-0">
             <p className="text-body text-pretty">Not used: {notUsed.join(", ")}</p>

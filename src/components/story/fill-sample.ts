@@ -1,3 +1,4 @@
+import { emptyFields } from "./page-scan";
 import { sampleAnswers } from "./steps";
 
 /**
@@ -6,21 +7,12 @@ import { sampleAnswers } from "./steps";
  * exactly as if a person typed. The page needs no changes.
  */
 export function fillSample(reduceMotion: boolean) {
-  const main = document.querySelector("main");
-  if (!main) return false;
-
-  const targets: [HTMLInputElement | HTMLTextAreaElement, string][] = [];
-  main.querySelectorAll("textarea").forEach((el) => {
-    if (el.value.trim()) return;
-    targets.push([el, el.placeholder.toLowerCase().includes("your answer") ? sampleAnswers.work : sampleAnswers.explain]);
+  const targets: [HTMLInputElement | HTMLTextAreaElement, string][] = emptyFields().map((el) => {
+    if (el instanceof HTMLTextAreaElement) {
+      return [el, el.placeholder.toLowerCase().includes("your answer") ? sampleAnswers.work : sampleAnswers.explain];
+    }
+    return [el, el.type === "email" ? sampleAnswers.contact : sampleAnswers.name];
   });
-  main.querySelectorAll<HTMLInputElement>('input[autocomplete="name"]').forEach((el) => {
-    if (!el.value.trim()) targets.push([el, sampleAnswers.name]);
-  });
-  main.querySelectorAll<HTMLInputElement>('input[type="email"]').forEach((el) => {
-    if (!el.value.trim()) targets.push([el, sampleAnswers.contact]);
-  });
-
   for (const [el, text] of targets) typeInto(el, text, reduceMotion);
   return targets.length > 0;
 }

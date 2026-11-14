@@ -12,7 +12,7 @@ import { Section } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { Field, TextArea } from "@/components/ui/field";
 import { Group, Row } from "@/components/ui/group";
-import { Screen, StepTitle } from "@/components/ui/screen";
+import { Screen, StepTitle, TwoPane } from "@/components/ui/screen";
 import { Sheet } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StepProgress } from "@/components/ui/step-progress";
@@ -22,7 +22,7 @@ import { api, errorText } from "@/lib/client/api";
 import { clearDraft, getSavedIdentity, getTalentId, loadDraft, saveDraft, saveIdentity } from "@/lib/client/local";
 import { backInFlow, useFlowHistory } from "@/lib/client/use-flow-history";
 import { useResource } from "@/lib/client/use-resource";
-import type { BlindProof } from "@/lib/domain/types";
+import type { OwnProof } from "@/lib/domain/types";
 import { LIMITS } from "@/lib/http/limits";
 
 type Step = "work" | "q0" | "q1" | "identity" | "result";
@@ -50,7 +50,7 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
   const [name, setName] = useState("");
   const [contact, setContact] = useState("");
   const [share, setShare] = useState(true);
-  const [proof, setProof] = useState<BlindProof | null>(null);
+  const [proof, setProof] = useState<OwnProof | null>(null);
   const [restored, setRestored] = useState(false);
 
   // Restore a saved draft and identity once the task has loaded in the browser.
@@ -134,7 +134,7 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
             <div className="mt-6 h-48 rounded-inner bg-surface" />
           </div>
         ) : (
-          <ErrorState error={loadError} what="this task" onRetry={retry} away={{ href: "/challenges", label: "See open challenges" }} />
+          <ErrorState error={loadError} what="this task" onRetry={retry} away={{ href: "/challenges", label: "See open tasks" }} />
         )}
       </Screen>
     );
@@ -177,14 +177,22 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
   if (step === "work") {
     content = (
       <>
-        <StepTitle>{challenge.title}</StepTitle>
-        <TaskMaterial challenge={challenge} />
-        <div className="mt-5">
-          <TextArea label="Your answer" hideLabel value={answer} onChange={setAnswer} placeholder="Write your answer" minRows={8} maxLength={LIMITS.answer} />
-          <p className="text-footnote mt-2 px-4 text-label-2">
-            {challenge.aiAllowed ? "AI allowed. Use it the way you would at work. " : ""}Your draft saves on this device.
-          </p>
-        </div>
+        <TwoPane
+          task={
+            <>
+              <StepTitle>{challenge.title}</StepTitle>
+              <TaskMaterial challenge={challenge} />
+            </>
+          }
+          answer={
+            <>
+              <TextArea label="Your answer" value={answer} onChange={setAnswer} placeholder="Write your answer" minRows={8} maxLength={LIMITS.answer} />
+              <p className="text-footnote mt-2 px-4 text-label-2">
+                {challenge.aiAllowed ? "AI allowed. Use it the way you would at work. " : ""}Your draft saves on this device.
+              </p>
+            </>
+          }
+        />
       </>
     );
     bottom = (
@@ -237,8 +245,8 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
         </div>
         <Group className="mt-8" footer="A person there decides. Your name stays hidden the same way.">
           <Row
-            title="Let other companies with the same skills see this proof if this one passes"
-            value={<Switch checked={share} onChange={setShare} label="Share with companies that need the same skills" />}
+            title="Show to similar companies if this one passes"
+            value={<Switch checked={share} onChange={setShare} label="Show to similar companies if this one passes" />}
           />
         </Group>
       </>
@@ -287,6 +295,7 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
         center={step === "result" ? null : <StepProgress total={4} current={index} />}
         right={step === "work" && startedAt > 0 ? <TimerChip minutes={challenge.minutes} startedAt={startedAt} /> : null}
         bottom={bottom}
+        wide={step === "work"}
       >
         <StepSlide stepKey={step} direction={direction}>
           {content}

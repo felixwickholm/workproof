@@ -8,7 +8,8 @@ import { Children, useEffect, useRef, useState, type ReactNode } from "react";
 import { api } from "@/lib/client/api";
 import { cx } from "../ui/cx";
 import { fillSample } from "./fill-sample";
-import { storySteps } from "./steps";
+import { emptyFields, exists, findTarget, markTarget, pagePrimary } from "./page-scan";
+import { storySteps, type Guide } from "./steps";
 import { useStory } from "./story-provider";
 import { useBottomClearance } from "./use-bottom-clearance";
 
@@ -44,6 +45,16 @@ export function CoachBar() {
 
   const step = state && !state.ended ? storySteps[state.index] : null;
   const here = step ? step.at(pathname) : false;
+  const scan = useScreenScan(here ? step : null, pathname, state?.proofLabel);
+
+  // A new instruction unfolds the bar again, unless the visitor is typing.
+  const hintNow = scan.guide.hint;
+  useEffect(() => {
+    if (!hintNow) return;
+    const active = document.activeElement;
+    if (active?.matches("input, textarea")) return;
+    setCollapsed(false);
+  }, [hintNow, setCollapsed]);
 
   async function startAgain() {
     setResetting(true);
@@ -91,16 +102,18 @@ export function CoachBar() {
           <span className="text-label-2">Real work in. A person decides. The city sees what happened.</span>
         </Line>
         <Actions trailing={controls()}>
-          <Pill onClick={startAgain} disabled={resetting}>
+          <Pill onClick={startAgain} disabled={resetting} quiet={Boolean(scan.primary)}>
             {resetting ? "Resetting" : "Start again"}
           </Pill>
         </Actions>
       </>
     );
   } else if (step && state) {
-    const hint = here ? step.hint?.(pathname, { proofLabel: state.proofLabel }) : undefined;
+    const hint = here ? scan.guide.hint : undefined;
     // Skipping the work itself would leave the later steps without her proof.
     const canSkip = here && !step.next && !step.sampleFill;
+    // One main action per screen: the bar's button is white only when the page has no main button of its own.
+    const quiet = Boolean(scan.primary);
     body = (
       <>
         <Line counter={counter}>
@@ -109,9 +122,12 @@ export function CoachBar() {
         </Line>
         <Actions trailing={controls(canSkip ? next : undefined)}>
           {!here ? (
-            <Pill href={step.go.href}>{step.go.label}</Pill>
+            <Pill href={step.go.href} quiet={quiet}>
+              {step.go.label}
+            </Pill>
           ) : step.next ? (
             <Pill
+              quiet={quiet}
               onClick={() => {
                 next();
                 if (step.next?.href) router.push(step.next.href);
@@ -121,7 +137,11 @@ export function CoachBar() {
               <ArrowRight aria-hidden className="size-4" strokeWidth={2.2} />
             </Pill>
           ) : null}
-          {here && step.sampleFill ? <Pill onClick={() => fillSample(reduce)}>Fill in her answer</Pill> : null}
+          {here && step.sampleFill && scan.fillable ? (
+            <Pill quiet={quiet} onClick={() => fillSample(reduce)}>
+              Fill in her answer
+            </Pill>
+          ) : null}
         </Actions>
       </>
     );
@@ -239,7 +259,7 @@ function Pill({
 }) {
   const classes = cx(
     "press text-subhead inline-flex h-11 items-center gap-1.5 rounded-full px-5 font-semibold",
-    quiet ? "text-label-2" : "bg-fill text-label",
+    quiet ? "text-label shadow-[inset_0_0_0_1px_var(--color-label-3)]" : "bg-white text-black",
   );
   if (href) {
     return (
@@ -253,4 +273,48 @@ function Pill({
       {children}
     </button>
   );
+}
+
+interface Scan {
+  guide: Guide;
+  primary?: string;
+  fillable: boolean;
+}
+
+const emptyScan: Scan = { guide: {}, fillable: false };
+
+/**
+ * Reads the screen a few times a second: the page's main button, empty fields, and the step's guide.
+ * Rings the step's target with a data attribute; CSS draws the ring.
+ */
+function useScreenScan(step: (typeof storySteps)[number] | null, pathname: string, proofLabel?: string): Scan {
+  const [scan, setScan] = useState<Scan>(emptyScan);
+  useEffect(() => {
+    if (!step) {
+      markTarget(null);
+      return;
+    }
+    const read = () => {
+      const primary = pagePrimary();
+      const fillable = Boolean(step.sampleFill) && emptyFields().length > 0;
+      const guide =
+        step.guide?.(pathname, { proofLabel, primary, fillable, has: (t) => findTarget(t) !== null, exists }) ?? {};
+      markTarget(guide.target ? findTarget(guide.target) : null);
+      setScan((prev) =>
+        prev.primary === primary &&
+        prev.fillable === fillable &&
+        prev.guide.hint === guide.hint &&
+        prev.guide.target === guide.target
+          ? prev
+          : { guide, primary, fillable },
+      );
+    };
+    read();
+    const id = window.setInterval(read, 250);
+    return () => {
+      window.clearInterval(id);
+      markTarget(null);
+    };
+  }, [step, pathname, proofLabel]);
+  return step ? scan : emptyScan;
 }

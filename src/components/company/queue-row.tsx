@@ -27,6 +27,7 @@ export function QueueRow({
     <li className="row relative [--row-inset:72px]">
       <Link
         href={href}
+        data-story={proof.label}
         aria-current={selected ? "page" : undefined}
         className={cx(
           "flex gap-3 px-4 py-3.5 transition-colors duration-150 active:bg-raised",

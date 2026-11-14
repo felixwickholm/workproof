@@ -9,7 +9,7 @@ export default function NotFound() {
       bottom={<Button href="/">Back to the start</Button>}
     >
       <Button href="/challenges" variant="secondary">
-        See open challenges
+        See open tasks
       </Button>
     </Screen>
   );

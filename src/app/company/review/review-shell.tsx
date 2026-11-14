@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { ChevronLeft, Plus } from "lucide-react";
 import type { ReactNode } from "react";
 import { cx } from "@/components/ui/cx";
+import { TopBar } from "@/components/ui/top-bar";
 import { Wordmark } from "@/components/wordmark";
 import { QueueList } from "./queue-list";
 
@@ -21,7 +22,7 @@ export function ReviewShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="glass hairline-b pt-safe sticky top-0 z-20">
+      <TopBar>
         <div className="mx-auto grid h-11 w-full max-w-[440px] grid-cols-[auto_1fr_auto] items-center gap-3 px-2 min-[900px]:max-w-[1280px]">
           <div className="flex min-w-11 items-center">
             {detail ? (
@@ -41,7 +42,7 @@ export function ReviewShell({ children }: { children: ReactNode }) {
             New task
           </Link>
         </div>
-      </header>
+      </TopBar>
 
       <div className="mx-auto w-full max-w-[440px] flex-1 min-[900px]:grid min-[900px]:max-w-[1280px] min-[900px]:grid-cols-[400px_minmax(0,1fr)]">
         <aside className={cx(detail && "hidden", "min-[900px]:sticky min-[900px]:block min-[900px]:top-11 min-[900px]:h-[calc(100dvh-44px)] min-[900px]:overflow-y-auto min-[900px]:shadow-[inset_-0.5px_0_0_var(--color-separator)]")}>
@@ -57,11 +58,11 @@ export function ReviewShell({ children }: { children: ReactNode }) {
 export function ReviewShellFallback() {
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="glass hairline-b pt-safe sticky top-0 z-20">
+      <TopBar>
         <div className="mx-auto flex h-11 w-full max-w-[440px] items-center px-2 min-[900px]:max-w-[1280px]">
           <Wordmark className="px-3" />
         </div>
-      </header>
+      </TopBar>
     </div>
   );
 }

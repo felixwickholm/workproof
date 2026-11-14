@@ -58,7 +58,7 @@
 }
 
 html {
-  --row-inset: 16px;
+  --row-inset: 20px;
   background: var(--color-ground);
   color-scheme: dark;
   -webkit-text-size-adjust: 100%;
@@ -152,6 +152,70 @@ body {
   background: var(--color-separator);
 }
 
+/* The top bar is clear at rest and turns to glass with a hairline once content scrolls under it. */
+.top-bar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgba(28, 28, 30, 0.85);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  backdrop-filter: blur(40px) saturate(180%);
+  box-shadow: inset 0 -0.5px 0 var(--color-separator);
+  opacity: 0;
+  transition: opacity 200ms var(--ease-out);
+}
+
+.top-bar[data-scrolled]::before {
+  opacity: 1;
+}
+
+/* The guided story marks the one thing to tap next with a calm ring. */
+[data-story-on] {
+  position: relative;
+}
+
+[data-story-on]::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+  animation: story-ring 1.6s var(--ease-out) 3;
+}
+
+/* Rows sit in a clipped group, so their ring goes inside. */
+.row[data-story-on]::after,
+.row [data-story-on]::after {
+  inset: 0;
+  border-radius: 0;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+
+@keyframes story-ring {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* A detail removed from someone's work before a reviewer reads it. */
+.hidden-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 6px;
+  background: var(--color-raised);
+  color: var(--color-label-2);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -164,5 +228,8 @@ body {
   }
   .press:active:not(:disabled) {
     transform: none;
+  }
+  [data-story-on]::after {
+    animation: none;
   }
 }

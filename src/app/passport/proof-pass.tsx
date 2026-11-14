@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/card";
 import { HumanTag } from "@/components/ui/tag";
 import { api, errorText } from "@/lib/client/api";
+import { getTalentId } from "@/lib/client/local";
 import type { PassportEntry } from "@/lib/domain/types";
 
 type Response = PassportEntry["responses"][number];
@@ -28,7 +29,7 @@ export function ProofPass({ entry, onChanged }: { entry: PassportEntry; onChange
           <p className="text-headline font-semibold">{proof.label}</p>
           <p className="text-subhead tnum flex items-center gap-1.5 text-label-2">
             <Eye aria-hidden className="size-4 shrink-0" strokeWidth={1.8} />
-            Seen by {seenByHumans} {seenByHumans === 1 ? "human" : "humans"}
+            {seenByHumans === 0 ? "Not opened yet" : seenByHumans === 1 ? "Opened by a reviewer" : `Opened by ${seenByHumans} reviewers`}
           </p>
         </div>
       </header>
@@ -121,7 +122,7 @@ function ResponseRow({ response, onChanged }: { response: Response; onChanged: (
     status = <HumanTag>Wants to meet</HumanTag>;
     if (meeting) {
       action = (
-        <Button size="sm" loading={busy} onClick={() => act(() => api.acceptMeeting(meeting.id))}>
+        <Button size="sm" loading={busy} onClick={() => act(() => api.acceptMeeting(meeting.id, getTalentId()))}>
           Accept
         </Button>
       );
@@ -132,7 +133,7 @@ function ResponseRow({ response, onChanged }: { response: Response; onChanged: (
     status = <HumanTag>Meeting accepted</HumanTag>;
     if (!meeting.talentConfirmedMet) {
       action = (
-        <Button size="sm" variant="secondary" loading={busy} onClick={() => act(() => api.confirmMeeting(meeting.id))}>
+        <Button size="sm" variant="secondary" loading={busy} onClick={() => act(() => api.confirmMeeting(meeting.id, getTalentId()))}>
           We met
         </Button>
       );

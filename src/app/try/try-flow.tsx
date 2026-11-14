@@ -9,13 +9,13 @@ import { TaskMaterial } from "@/components/task-material";
 import { Button } from "@/components/ui/button";
 import { cx } from "@/components/ui/cx";
 import { Field, TextArea } from "@/components/ui/field";
-import { Screen, StepTitle } from "@/components/ui/screen";
+import { Screen, StepTitle, TwoPane } from "@/components/ui/screen";
 import { StepProgress } from "@/components/ui/step-progress";
 import { TimerChip } from "@/components/ui/timer-chip";
 import { api, errorText } from "@/lib/client/api";
 import { getSavedIdentity, getTalentId, saveIdentity } from "@/lib/client/local";
 import { backInFlow, useFlowHistory } from "@/lib/client/use-flow-history";
-import type { BlindProof, Challenge } from "@/lib/domain/types";
+import type { Challenge, OwnProof } from "@/lib/domain/types";
 import { LIMITS } from "@/lib/http/limits";
 
 const suggestions = ["AI engineer", "Backend developer", "Data scientist", "Product manager", "UX designer", "Robotics engineer"];
@@ -39,7 +39,7 @@ export function TryFlow() {
   const [question, setQuestion] = useState("");
   const [explain, setExplain] = useState("");
   const [name, setName] = useState("");
-  const [proof, setProof] = useState<BlindProof | null>(null);
+  const [proof, setProof] = useState<OwnProof | null>(null);
 
   const go = (next: Step) => {
     setDirection(order.indexOf(next) > order.indexOf(step) ? 1 : -1);
@@ -152,7 +152,7 @@ export function TryFlow() {
               aria-pressed={dreamJob === s}
               className={cx(
                 "press text-subhead h-11 rounded-full px-4 font-medium transition-colors duration-150",
-                dreamJob === s ? "bg-white text-black" : "bg-surface text-label",
+                dreamJob === s ? "bg-raised text-label shadow-[inset_0_0_0_1px_var(--color-white)]" : "bg-surface text-label",
               )}
             >
               {s}
@@ -174,14 +174,22 @@ export function TryFlow() {
   if (step === "task" && challenge) {
     content = (
       <>
-        <StepTitle>{challenge.title}</StepTitle>
-        <TaskMaterial challenge={challenge} />
-        <div className="mt-5">
-          <TextArea label="Your answer" hideLabel value={answer} onChange={setAnswer} placeholder="Write your answer" minRows={5} maxLength={LIMITS.answer} />
-          {challenge.aiAllowed ? (
-            <p className="text-footnote mt-2 px-4 text-label-2">AI allowed. Use it the way you would at work.</p>
-          ) : null}
-        </div>
+        <TwoPane
+          task={
+            <>
+              <StepTitle>{challenge.title}</StepTitle>
+              <TaskMaterial challenge={challenge} />
+            </>
+          }
+          answer={
+            <>
+              <TextArea label="Your answer" value={answer} onChange={setAnswer} placeholder="Write your answer" minRows={5} maxLength={LIMITS.answer} />
+              {challenge.aiAllowed ? (
+                <p className="text-footnote mt-2 px-4 text-label-2">AI allowed. Use it the way you would at work.</p>
+              ) : null}
+            </>
+          }
+        />
       </>
     );
     bottom = (
@@ -234,7 +242,13 @@ export function TryFlow() {
   if (step === "result" && proof) {
     content = (
       <>
-        <h1 className="text-large-title mb-6 font-bold text-balance">This is what the company sees.</h1>
+        <p className="text-subhead inline-flex h-7 items-center rounded-full bg-surface px-3 font-medium text-label-2">
+          Practice proof. Not sent to any company.
+        </p>
+        <h1 className="text-large-title mt-3 font-bold text-balance">This is what a company would see.</h1>
+        <p className="text-body mt-2 mb-6 text-label-2 text-pretty">
+          Next, pick a real task. A person at that company reads your work and decides who to meet.
+        </p>
         <BlindProofFull proof={proof} reveal />
       </>
     );
@@ -244,7 +258,7 @@ export function TryFlow() {
           My proofs
         </Button>
         <Button href="/challenges" className="min-[360px]:flex-1">
-          See real challenges
+          See real tasks
         </Button>
       </div>
     );
@@ -256,6 +270,7 @@ export function TryFlow() {
       center={step === "result" ? null : <StepProgress total={4} current={index} />}
       right={step === "task" && challenge ? <TimerChip minutes={challenge.minutes} startedAt={startedAt} /> : null}
       bottom={bottom}
+      wide={step === "task"}
     >
       <StepSlide stepKey={step} direction={direction}>
         {content}

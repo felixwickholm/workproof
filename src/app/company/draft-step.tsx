@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
+import { ApproveBar } from "@/components/company/approve-bar";
 import { InlineEdit } from "@/components/company/inline-edit";
 import { ReviewGuide } from "@/components/company/review-guide";
 import { CoreSkillList, SetAsideList, TrimHeadline } from "@/components/company/wish-trim";
 import { metaLine } from "@/components/problem-card";
-import { Button } from "@/components/ui/button";
 import { Card, Eyebrow, Section } from "@/components/ui/card";
 import { CodeBlock } from "@/components/ui/code-block";
-import { Field, TextArea } from "@/components/ui/field";
+import { TextArea } from "@/components/ui/field";
 import { AiTag } from "@/components/ui/tag";
 import type { ChallengeDraft } from "@/lib/domain/types";
 import { LIMITS } from "@/lib/http/limits";
@@ -22,7 +22,7 @@ interface Props {
   onPublish: () => void;
 }
 
-/** The AI draft of the Problem Card. A person edits it and approves it before anyone sees it. */
+/** The AI draft of the task. A person edits it and approves it before anyone sees it. */
 export function draftStep({ draft, onDraft, companyName, approvedBy, onApprovedBy, busy, errorLine, onPublish }: Props) {
   const removeSkill = (id: string) =>
     onDraft({
@@ -31,15 +31,12 @@ export function draftStep({ draft, onDraft, companyName, approvedBy, onApprovedB
       reviewGuide: draft.reviewGuide.filter((g) => g.skillId !== id),
       setAside: [`${draft.coreSkills.find((s) => s.id === id)?.label}: removed by you`, ...draft.setAside],
     });
-  const ready = approvedBy.trim().length > 0 && draft.title.trim().length >= 3 && draft.brief.trim().length >= 10;
+  const draftReady = draft.title.trim().length >= 3 && draft.brief.trim().length >= 10;
 
   const content = (
     <>
-      <div className="rise mt-2 flex items-center gap-2">
-        <span className="shrink-0 whitespace-nowrap">
-          <AiTag />
-        </span>
-        <p className="text-footnote text-label-2">From your words. Edit anything before you approve.</p>
+      <div className="rise mt-2">
+        <AiTag />
       </div>
       <div className="rise mt-3">
         <InlineEdit
@@ -50,6 +47,7 @@ export function draftStep({ draft, onDraft, companyName, approvedBy, onApprovedB
           className="text-title font-bold text-pretty"
         />
         <p className="text-subhead tnum mt-1 text-label-2">{metaLine({ ...draft, id: "", companyIds: [], createdAt: "" })}</p>
+        <p className="text-subhead mt-1 text-label-2 text-pretty">From your words. Edit anything before you approve.</p>
       </div>
 
       <Section label="The trim">
@@ -97,19 +95,18 @@ export function draftStep({ draft, onDraft, companyName, approvedBy, onApprovedB
           A person at {companyName || "your company"} reads each answer with these in mind. No points, no scores.
         </p>
       </Section>
-      {/* Room for the taller bottom bar with the name field. */}
-      <div aria-hidden className="h-16" />
     </>
   );
 
   const bottom = (
-    <>
-      {errorLine}
-      <Field label="Approved by" hideLabel value={approvedBy} onChange={onApprovedBy} placeholder="Approved by (your name)" autoComplete="name" maxLength={LIMITS.approvedBy} />
-      <Button onClick={onPublish} disabled={!ready} loading={busy} className="mt-3">
-        Approve and publish
-      </Button>
-    </>
+    <ApproveBar
+      approvedBy={approvedBy}
+      onApprovedBy={onApprovedBy}
+      canPublish={draftReady}
+      busy={busy}
+      errorLine={errorLine}
+      onPublish={onPublish}
+    />
   );
   return { content, bottom };
 }
