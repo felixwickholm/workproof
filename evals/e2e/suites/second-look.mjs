@@ -20,7 +20,7 @@ async function queueShowsName(page, companyId) {
 }
 
 /**
- * Suite 5: back in Looking for work in the same browser (the same person), after the company scored
+ * Suite 5: back in Job seeker in the same browser (the same person), after the company scored
  * the work and invited. The invite shows the score a person gave and the reason; My work shows the
  * score per skill. Saying yes shows the name to that company only; then the person says "We met".
  */
@@ -32,8 +32,11 @@ export async function runSecondLook(journey) {
 
   await suite.step("the invite is the one focal thing: the reviewer's words, the score, two buttons", async () => {
     expect(work, "needs the work the work seeker suite sent and the employer suite invited");
-    await switchMode(page, "Looking for work", "/seeker");
+    await switchMode(page, "Job seeker", "/");
     companies = await ownerOf(page, work.challengeId);
+    // The home points to the invite in one line; the invite itself lives in My work.
+    await visible(page.getByRole("link", { name: new RegExp(`^${companies.owner.name} wants to meet you\\.`) })).click();
+    await page.waitForURL((url) => url.pathname === "/my-work");
     const invite = visible(page.locator('[data-tour="invitation"]'));
     await invite.waitFor({ timeout: 15_000 });
     const text = await invite.innerText();
@@ -42,7 +45,7 @@ export async function runSecondLook(journey) {
     expect(text.includes(`Saying yes shows your name to ${companies.owner.name} only.`), "the invite does not say who sees the name");
     await invite.getByRole("button", { name: "Say yes" }).waitFor();
     await invite.getByRole("button", { name: "Not now" }).waitFor();
-    await checkScreen(page, errors, "/seeker invite");
+    await checkScreen(page, errors, "/my-work invite");
   });
 
   await suite.step("My work shows the score per skill, the reviewer and the reason", async () => {
@@ -58,7 +61,7 @@ export async function runSecondLook(journey) {
   });
 
   await suite.step("say yes: the name goes to that company only", async () => {
-    await page.goto(`${BASE_URL}/seeker`);
+    await page.goto(`${BASE_URL}/my-work`);
     await visible(page.locator('[data-tour="invitation"]').getByRole("button", { name: "Say yes" })).click();
     await waitForText(page, `You said yes. ${companies.owner.name} now sees your name.`);
     expect(await queueShowsName(page, companies.owner.id), `${companies.owner.name} still does not see the name after yes`);
@@ -69,7 +72,7 @@ export async function runSecondLook(journey) {
   await suite.step('the person taps "We met"', async () => {
     await visible(page.getByRole("button", { name: "We met" })).click();
     await waitForText(page, `You said you met. ${companies.owner.name} still has to confirm.`);
-    await checkScreen(page, errors, "/seeker said yes");
+    await checkScreen(page, errors, "/my-work said yes");
   });
 
   return suite.results;

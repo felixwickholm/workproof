@@ -4,7 +4,7 @@ import type { StoreData } from "@/lib/store";
 /** A small, hand-built event for the view tests. Every number the tests expect can be counted here by hand. */
 export const NOW = new Date("2026-11-14T12:00:00.000Z");
 
-export const PRIVATE = { olena: "t_olena_private_9c1e", sam: "t_sam_private_4b7d" };
+export const PRIVATE = { mikko: "t_mikko_private_9c1e", sam: "t_sam_private_4b7d" };
 
 const skill = (id: string, label: string): Skill => ({ id, label, why: "" });
 const TRIAGE = skill("triage", "Triage");
@@ -86,12 +86,12 @@ export function sampleEvent(): StoreData {
     ],
     challenges: [a, b, pool, taster],
     talents: [
-      { id: PRIVATE.olena, name: "Olena Kovalenko", contact: "olena@example.org", locked: true },
+      { id: PRIVATE.mikko, name: "Mikko Lahtinen", contact: "mikko@example.org", locked: true },
       { id: PRIVATE.sam, name: "Sam Example", contact: "sam@example.org", locked: true },
     ],
     submissions: [
-      submission("p1", "ch-a", PRIVATE.olena, "2026-11-13T10:00:00.000Z", true),
-      submission("p2", "ch-b", PRIVATE.olena, "2026-11-12T10:00:00.000Z", true),
+      submission("p1", "ch-a", PRIVATE.mikko, "2026-11-13T10:00:00.000Z", true),
+      submission("p2", "ch-b", PRIVATE.mikko, "2026-11-12T10:00:00.000Z", true),
       submission("p3", "ch-a", PRIVATE.sam, "2026-11-11T10:00:00.000Z", false),
       submission("p4", "ch-pool", PRIVATE.sam, "2026-11-14T08:00:00.000Z", false),
       submission("p5", "taster-1", PRIVATE.sam, "2026-11-14T09:30:00.000Z", false),
@@ -113,9 +113,9 @@ export function sampleEvent(): StoreData {
       { id: "m3", proofId: "p3", companyId: "co-kaari", slot: "Sat 14:00, Table 2", status: "met", talentConfirmedMet: true, companyConfirmedMet: true },
     ],
     audit: [],
-    demo: { personaTalentId: PRIVATE.olena, personaName: "Olena Kovalenko", stage: "invited" },
+    demo: { personaTalentId: PRIVATE.mikko, personaName: "Mikko Lahtinen", stage: "invited" },
   };
 }
 
 /** Strings that must never reach a company or the city. */
-export const IDENTITY = [PRIVATE.olena, PRIVATE.sam, "Olena", "Kovalenko", "Sam Example", "example.org"];
+export const IDENTITY = [PRIVATE.mikko, PRIVATE.sam, "Mikko", "Lahtinen", "Sam Example", "example.org"];

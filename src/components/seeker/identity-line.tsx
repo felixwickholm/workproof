@@ -7,7 +7,7 @@ import { cx } from "@/components/ui/cx";
 
 const noop = () => () => {};
 
-/** The demo person's first name from the session ("Olena"), once it is known. */
+/** The demo person's first name from the session ("Mikko"), once it is known. */
 export function usePersonaName(): { first: string; full: string } | null {
   const [name, setName] = useState<string | null>(null);
   useEffect(() => {
@@ -24,7 +24,7 @@ export function usePersonaName(): { first: string; full: string } | null {
 }
 
 /** "persona" or "me", read in the browser only; the server renders the persona line. */
-export function useIdentity() {
+function useIdentity() {
   return useSyncExternalStore(noop, getIdentity, () => "persona" as const);
 }
 
@@ -36,7 +36,7 @@ export function IdentityLine({ onSwitch, className }: { onSwitch: () => void; cl
   const persona = usePersonaName();
   const identity = useIdentity();
   const [, rerender] = useState(0);
-  const first = persona?.first ?? "Olena";
+  const first = persona?.first ?? "Mikko";
 
   const change = (next: "me" | "persona") => {
     if (next === "me") switchToOwnIdentity();

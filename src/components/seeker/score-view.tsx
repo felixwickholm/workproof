@@ -1,18 +1,14 @@
 import { SCORE_LEVELS } from "@/lib/domain/scoring";
 import type { SkillScore } from "@/lib/domain/types";
 import { cx } from "../ui/cx";
+import { formatTotal } from "../words";
 
-/** "9.0": a total always keeps its one decimal, so 9 and 9.0 never both appear. */
-export function totalText(total: number): string {
-  return total.toFixed(1);
-}
-
-export function levelWord(points: SkillScore["points"]): string {
+function levelWord(points: SkillScore["points"]): string {
   return SCORE_LEVELS.find((l) => l.points === points)?.label ?? "";
 }
 
 /** Five marks, the given number filled: the 1 to 5 points a reviewer gave one skill. */
-export function PointMarks({ points, className }: { points: number; className?: string }) {
+function PointMarks({ points, className }: { points: number; className?: string }) {
   return (
     <span role="img" aria-label={`${points} of 5`} className={cx("inline-flex gap-1", className)}>
       {[1, 2, 3, 4, 5].map((n) => (
@@ -37,7 +33,7 @@ export function ScoreView({ total, scores, lookFor, size = "lg", className }: Pr
   return (
     <div className={className}>
       <p className="flex items-baseline gap-2 text-label">
-        <span className={cx("tnum font-normal tracking-[-0.02em]", size === "lg" ? "text-[44px] leading-[48px]" : "text-[36px] leading-[40px]")}>{totalText(total)}</span>
+        <span className={cx("tnum font-normal tracking-[-0.02em]", size === "lg" ? "text-[44px] leading-[48px]" : "text-[36px] leading-[40px]")}>{formatTotal(total)}</span>
         <span className="text-body text-label-2">of 10</span>
       </p>
       <ul className={cx("flex flex-col", size === "lg" ? "mt-6 gap-5" : "mt-4 gap-3")}>

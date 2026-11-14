@@ -97,7 +97,7 @@ export function BlindCompare({
   original,
   blind,
   hiddenCount,
-  labels = ["What Olena wrote", "What the company reads"],
+  labels = ["What Mikko wrote", "What the company reads"],
   tour,
   initialSide = "written",
   className,

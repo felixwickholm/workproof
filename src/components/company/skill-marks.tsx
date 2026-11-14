@@ -2,7 +2,7 @@ import type { Skill, SkillScore } from "@/lib/domain/types";
 import { cx } from "../ui/cx";
 
 /** Five dots for one skill, filled up to the points a person gave. */
-export function PointDots({ points, className }: { points: number; className?: string }) {
+function PointDots({ points, className }: { points: number; className?: string }) {
   return (
     <span aria-hidden className={cx("flex shrink-0 gap-1", className)}>
       {[1, 2, 3, 4, 5].map((n) => (

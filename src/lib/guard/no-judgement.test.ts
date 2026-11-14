@@ -31,6 +31,12 @@ const JUDGING = [
   "Svagt svar", "Puutteellinen vastaus", "Osaava tekijä",
   // Scales in a review guide.
   "Rate each answer on a scale.", "Score out of 10.", "Grade the answers.", "Give 3 points for each bug found.",
+  // Recommending a person or their work: the word "recommend" only counts when it points at one.
+  "We recommend moving forward with this person.", "I recommend this candidate.", "Recommended for an interview.",
+  "We would recommend hiring her.", "I recommend this answer to the team.", "Highly recommended.", "Not recommended.", "Recommended.",
+  "Our hiring recommendation is to meet them.",
+  // What a person found, reported: still a count against the material.
+  "They find the flaw in the split.", "Did not catch the flaw in the totals.", "The answer identifies both flaws.",
   // Character tricks.
   "Rеcommended", "Excel\u200blent work.", "Ｅｘｃｅｌｌｅｎｔ", "e x c e l l e n t",
 ];
@@ -50,6 +56,12 @@ const NEUTRAL = [
   "The feature is not ready for release until the review is done.", "Add the item to the user's favourites.",
   "Compute the anomaly score for each reading.", "QA found two bugs last week.", "Check that the totals are correct.",
   "Users misread the dose label.", "The font-weight and line height are off.", "Status reporting: monthly email to the customer.",
+  // "Recommend" as task content: a section of the work, a product feature, a vendor's advice.
+  "Recommendations", "Recommendations: move the refund after the database write.", "The report ends with three recommendations for the board.",
+  "Our recommendation engine suggests products from past orders.", "The vendor recommends a 30-second timeout.",
+  "Write two recommendations for the finance team.",
+  // Asking the person to look for problems is the task, not a verdict.
+  "Catch flaws before the change ships.", "Read the change and find flaws in the retry logic.", "Can you spot flaws in this plan?",
 ];
 
 describe("no-judgement guard", () => {

@@ -10,3 +10,8 @@ export function companyErrorText(error: unknown): string {
 export function proofHref(proofId: string): string {
   return `/company/review/${encodeURIComponent(proofId)}`;
 }
+
+/** A challenge's Top work page. */
+export function challengeHref(challengeId: string): string {
+  return `/employer/challenges/${encodeURIComponent(challengeId)}`;
+}

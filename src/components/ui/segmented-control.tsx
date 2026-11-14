@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { useId, type KeyboardEvent, type ReactNode } from "react";
 import { cx } from "./cx";
 
-export interface Segment<T extends string> {
+interface Segment<T extends string> {
   value: T;
   label: ReactNode;
 }

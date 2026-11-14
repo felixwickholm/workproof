@@ -16,7 +16,7 @@ const submission = (id: string, talentId: string): Submission => ({
 function store(meetings: Meeting[] = [], extra: Submission[] = []) {
   return {
     event: { name: "Test day", date: "2026-11-14", responseWindowHours: 48 },
-    submissions: [submission("p1", "t_olena"), submission("p2", "t_olena"), submission("p3", "t_sam"), submission("p4", "t_sam"), ...extra],
+    submissions: [submission("p1", "t_mikko"), submission("p2", "t_mikko"), submission("p3", "t_sam"), submission("p4", "t_sam"), ...extra],
     meetings,
   };
 }

@@ -39,7 +39,15 @@ const PATTERNS: { kind: JudgementKind; pattern: RegExp }[] = [
   { kind: "rank", pattern: /\bbetter\s{1,5}than\s{1,5}(?:the\s{1,5})?(?:other|others|rest|most|average|everyone)\b/gi },
   { kind: "rank", pattern: /\b(?:outperform\w*|stands?\s{1,5}out|stand-out|standout|above average|below average)\b/gi },
   // Verdicts and recommendations.
-  { kind: "verdict", pattern: /\brecommend(?:s|ed|ing|ation|ations)?\b/gi },
+  // A recommendation of a person or their work. The bare word is task content: a report's "Recommendations"
+  // section or "a recommendation engine" judges nobody.
+  {
+    kind: "verdict",
+    pattern:
+      /\brecommend(?:s|ed|ing|ation|ations)?\b[^.!?\n]{0,60}?\b(?:person|people|candidates?|applicants?|individual|her|him|them|hire|hiring|interview\w*|invit\w+|meet|meeting|advanc\w+|forward|shortlist\w*|role|position|job|answer|submission|proof)\b/gi,
+  },
+  { kind: "verdict", pattern: /\b(?:highly|strongly|warmly)\s{1,5}recommend(?:s|ed)?\b|\bhiring\s{1,5}recommendation\b/gi },
+  { kind: "verdict", pattern: /(?:^|[.!?]\s{1,5})(?:not\s{1,5})?recommended\s*(?:[.!]|$)/gim },
   { kind: "verdict", pattern: /\bshould\s{1,5}(?:not\s{1,5})?(?:be\s{1,5})?(?:hire|hired|interview|interviewed|meet|met|reject|rejected|advance|advanced)\b/gi },
   { kind: "verdict", pattern: /\b(?:good|great|perfect|poor|bad|strong|weak|ideal|natural|solid)\s{1,5}(?:fit|match|candidate|candidates|hire|applicant)\b/gi },
   { kind: "verdict", pattern: /\b(?:not\s{1,5}a\s{1,5}fit|culture fit|hire (?:them|her|him)|worth (?:hiring|interviewing|meeting))\b/gi },

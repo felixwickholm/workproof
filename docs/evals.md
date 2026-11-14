@@ -99,7 +99,7 @@ The full table `npm run eval` printed in that run:
 | 5 Flow (API) | v3: both sides confirm the talk | ok |
 | 5 Flow (API) | v3: a follow-up is agreed and a hire recorded by the company | ok |
 | 5 Flow (API) | v3: the city counts every step for the task, with no name | ok |
-| 6 Demo story (API) | session: persona and stage | Olena Kovalenko, invited |
+| 6 Demo story (API) | session: persona and stage | Mikko Lahtinen, invited |
 | 6 Demo story (API) | unknown stage refused | HTTP 400 for an unknown stage |
 | 6 Demo story (API) | before and sent | 2 proofs before, 3 after sending; story proof queued: true |
 | 6 Demo story (API) | invited: open invitation from the story company | Halla Supply wants to meet you. |
@@ -207,7 +207,7 @@ Runs only from `npm run check:ai`, which loads `.env` and sets `WORKPROOF_LIVE_A
 
 ## Unit tests
 
-The adapters are tested against mocked HTTP (`src/lib/ai/provider/adapters.test.ts`): malformed JSON, the wrong shape, a draft that scores a person, a protected attribute, 401 without retry, 429 with one retry, a timeout, and an injection inside the answer tags. Other groups cover the blind layer (`src/lib/blind/*.test.ts`), the guard (`src/lib/guard/*.test.ts`), the views (`src/lib/service/views/*.test.ts`), the seed and Olena's story (`src/lib/seed/index.test.ts`), sandboxes (`src/lib/store/sandbox.test.ts`), voice (`src/lib/voice/**/*.test.ts`), the tour machine and placement (`src/components/tour/*.test.ts`) and the evidence page (`src/app/for-judges/facts.test.ts`).
+The adapters are tested against mocked HTTP (`src/lib/ai/provider/adapters.test.ts`): malformed JSON, the wrong shape, a draft that scores a person, a protected attribute, 401 without retry, 429 with one retry, a timeout, and an injection inside the answer tags. Other groups cover the blind layer (`src/lib/blind/*.test.ts`), the guard (`src/lib/guard/*.test.ts`), the views (`src/lib/service/views/*.test.ts`), the seed and Mikko's story (`src/lib/seed/index.test.ts`), sandboxes (`src/lib/store/sandbox.test.ts`), voice (`src/lib/voice/**/*.test.ts`), the tour machine and placement (`src/components/tour/*.test.ts`) the evidence page (`src/app/for-judges/facts.test.ts`), its structured data (`src/app/for-judges/json-ld.test.ts`), the two text maps (`src/app/llms.txt/build.test.ts`, `src/app/llms-full.txt/build.test.ts`) and robots and the sitemap (`src/app/seo.test.ts`).
 
 ## End to end (`evals/e2e`)
 

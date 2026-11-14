@@ -28,9 +28,9 @@ export function OpenFirstProof() {
     return (
       <Card>
         <h2 className="text-headline font-semibold">Nothing to read yet</h2>
-        <p className="text-subhead mt-1 text-pretty text-label-2">Work arrives here without a name, in the order it came. Post a task, and the first proof opens here.</p>
+        <p className="text-subhead mt-1 text-pretty text-label-2">Work arrives here without a name, in the order it came. Post a challenge, and the first piece of work opens here.</p>
         <Button href="/company" size="sm" className="mt-4">
-          Post a task
+          Post a challenge
         </Button>
       </Card>
     );

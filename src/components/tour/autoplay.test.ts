@@ -1,26 +1,24 @@
 import { describe, expect, it } from "vitest";
 import { autoAdvances, isHeld, MAX_STEP_MS, MIN_STEP_MS, noHolds, remainingMs, stepDuration } from "./autoplay";
-import { TOUR_KINDS, tours } from "./steps";
+import { storySteps } from "./steps";
 
-/** The time a tour plays by itself: every step but the end card. */
-const playTime = (kind: (typeof TOUR_KINDS)[number]) => tours[kind].steps.slice(0, -1).reduce((sum, step) => sum + stepDuration(step, kind), 0);
+/** The time the story plays by itself: every step but the end card. */
+const playTime = () => storySteps.slice(0, -1).reduce((sum, step) => sum + stepDuration(step), 0);
 
 describe("stepDuration", () => {
   it("gives time to look plus a slow reader's pace, within bounds", () => {
-    expect(stepDuration({ title: "x" }, "minute")).toBe(MIN_STEP_MS);
-    expect(stepDuration({ title: Array(60).fill("w").join(" ") }, "city")).toBe(MAX_STEP_MS);
-    expect(stepDuration({ title: "one two three four", body: "five six seven eight" }, "minute")).toBe(7000);
-    expect(stepDuration({ title: "one two three four", body: "five six seven eight" }, "seeker")).toBe(8500);
+    expect(stepDuration({ title: "x" })).toBe(MIN_STEP_MS);
+    expect(stepDuration({ title: Array(60).fill("w").join(" ") })).toBe(MAX_STEP_MS);
+    expect(stepDuration({ title: "one two three four five six seven eight", body: Array(16).fill("w").join(" ") })).toBe(9500);
   });
 
-  it("plays the overview in about a minute, leaving room for the screens to load", () => {
-    expect(playTime("minute")).toBeGreaterThanOrEqual(40_000);
-    expect(playTime("minute")).toBeLessThanOrEqual(52_000);
+  it("gives every card of the story time to be read", () => {
+    for (const step of storySteps) expect(stepDuration(step), step.id).toBeGreaterThanOrEqual(MIN_STEP_MS);
   });
 
-  it.each(["seeker", "employer", "city"] as const)("plays the %s demo in 45 to 75 seconds before the screens load", (kind) => {
-    expect(playTime(kind)).toBeGreaterThanOrEqual(45_000);
-    expect(playTime(kind)).toBeLessThanOrEqual(75_000);
+  it("plays the whole story in under three minutes before the screens load", () => {
+    expect(playTime()).toBeGreaterThanOrEqual(100_000);
+    expect(playTime()).toBeLessThanOrEqual(160_000);
   });
 });
 

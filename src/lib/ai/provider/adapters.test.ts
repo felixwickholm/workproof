@@ -174,6 +174,53 @@ describe.each(Object.entries(ADAPTERS))("%s adapter", (_, adapter) => {
     expect(onFallback).toHaveBeenCalledOnce();
   });
 
+  it("keeps a choose task's two options as A and B", async () => {
+    const options = [
+      { title: "The big trailer", body: "A polished 30-second trailer with music." },
+      { title: "Beat my level", body: "A 15-second phone clip that dares viewers to try." },
+    ];
+    fetchMock.mockResolvedValueOnce(respond(adapter.reply({ ...TASK, format: "choose", options })));
+    const { designer, onFallback } = setup();
+    const draft = await designer.draftChallenge(NEED);
+    expect(onFallback).not.toHaveBeenCalled();
+    expect(draft.options).toEqual([
+      { id: "a", ...options[0] },
+      { id: "b", ...options[1] },
+    ]);
+  });
+
+  it("drops options from a task that is not a choose task", async () => {
+    fetchMock.mockResolvedValueOnce(respond(adapter.reply({ ...TASK, options: [] })));
+    expect((await setup().designer.draftChallenge(NEED)).options).toBeUndefined();
+  });
+
+  it("falls back when a choose task does not have two options", async () => {
+    fetchMock.mockResolvedValueOnce(respond(adapter.reply({ ...TASK, format: "choose", options: [] })));
+    const { designer, onFallback } = setup();
+    expect(await designer.draftChallenge(NEED)).toEqual(await scriptedDraft());
+    expect(String(onFallback.mock.calls[0][1])).toMatch(/two options/);
+  });
+
+  it("accepts a Recommendations section and a status code in the review guide", async () => {
+    const task = {
+      ...TASK,
+      material: { kind: "text", title: "Recommendations", body: "Recommendations: retry card payments until the provider answers." },
+      reviewGuide: TASK.reviewGuide.map((g, i) => (i === 0 ? { ...g, lookFor: "Notices that a 502 from the provider is retried forever." } : g)),
+    };
+    fetchMock.mockResolvedValueOnce(respond(adapter.reply(task)));
+    const { designer, onFallback } = setup();
+    expect((await designer.draftChallenge(NEED)).draftedBy).toBe(adapter.config.provider);
+    expect(onFallback).not.toHaveBeenCalled();
+  });
+
+  it("rejects a review guide that says how many problems to find and falls back", async () => {
+    const counting = { ...TASK, reviewGuide: TASK.reviewGuide.map((g) => ({ ...g, lookFor: "Spots the two errors in the retry loop." })) };
+    fetchMock.mockResolvedValueOnce(respond(adapter.reply(counting)));
+    const { designer, onFallback } = setup();
+    expect(await designer.draftChallenge(NEED)).toEqual(await scriptedDraft());
+    expect(String(onFallback.mock.calls[0][1])).toMatch(/without points, counts or scales/);
+  });
+
   it("rejects a draft that names a protected attribute and falls back", async () => {
     fetchMock.mockResolvedValueOnce(respond(adapter.reply({ ...TASK, brief: `${TASK.brief} We want a young native Finnish speaker.` })));
     const { designer, onFallback } = setup();

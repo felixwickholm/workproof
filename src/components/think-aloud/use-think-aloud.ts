@@ -22,7 +22,7 @@ function liveRecognition() {
   return recognitionConstructor() ?? null;
 }
 
-export interface ThinkAloud {
+interface ThinkAloud {
   state: RecorderState;
   /** Seconds recorded so far; ticks while recording. */
   seconds: number;

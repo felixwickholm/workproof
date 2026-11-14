@@ -23,7 +23,7 @@ const base = {
 };
 
 /** Identity fields a careless spread could carry into a projection. */
-const SMUGGLED = { talentId: "t_secret", name: "Olena Kovalenko", contact: "olena@example.org", exif: "GPS 60.2,24.8", originalAnswer: "raw text" };
+const SMUGGLED = { talentId: "t_secret", name: "Mikko Lahtinen", contact: "mikko@example.org", exif: "GPS 60.2,24.8", originalAnswer: "raw text" };
 
 describe("blind projection", () => {
   it("carries the proof kind, the picture and the spoken flags", () => {
@@ -68,12 +68,12 @@ describe("blind projection", () => {
   });
 
   it("runs the picture's description through the blind layer", () => {
-    const blind = blindWork("Plated as asked.", [], { name: "Olena Kovalenko" }, {
+    const blind = blindWork("Plated as asked.", [], { name: "Mikko Lahtinen" }, {
       kind: "photo",
       src: "/demo/plate.jpg",
-      alt: "Olena Kovalenko's plate, photographed at olena@example.org's kitchen",
+      alt: "Mikko Lahtinen's plate, photographed at mikko@example.org's kitchen",
     });
-    expect(blind.attachment?.alt).not.toMatch(/Olena|Kovalenko|example\.org/);
+    expect(blind.attachment?.alt).not.toMatch(/Mikko|Lahtinen|example\.org/);
     expect(blind.report.names + blind.report.contacts).toBeGreaterThan(0);
   });
 });

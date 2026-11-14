@@ -1,63 +1,63 @@
 "use client";
 
-import { ChallengeRows } from "@/components/seeker/challenge-rows";
-import { greetingLine, homeFact } from "@/components/seeker/greeting";
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { ChallengeFinder } from "@/components/seeker/challenge-finder";
+import { greetingLine, inviteNotice } from "@/components/seeker/greeting";
 import { IdentityLine } from "@/components/seeker/identity-line";
-import { InvitationFocus } from "@/components/seeker/invitation-focus";
-import { arrangeTasks } from "@/components/seeker/task-filter";
 import { useSeekerData } from "@/components/seeker/use-seeker-data";
-import { ShowMeButton } from "@/components/tour/show-me-button";
 import { ErrorState } from "@/components/ui/error-state";
 import { riseAt } from "@/components/ui/rise";
+import { ShowMeButton } from "@/components/tour/show-me-button";
 import { Screen } from "@/components/ui/screen";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/client/api";
 import type { SeekerHome } from "@/lib/domain/types";
 
 /**
- * "Challenges for you": a greeting with today's one fact, an open invitation as the one focal
- * thing, then every challenge as a large row, the same list for everyone.
+ * The job seeker's home, like a job board's front page: "Hi Mikko. What work do you want?", the role
+ * tiles, then the challenges. A company's invite lives in My work; the home only points to it.
  */
 export function SeekerHomeView() {
-  const { data, error, loading, retry, reload, refresh } = useSeekerData((talentId) => api.seekerHome(talentId));
-  const title = data ? greetingLine(data.greeting.firstName, homeFact(data.invitations, arrangeTasks(data.tasks).open.length), new Date().getHours()) : undefined;
+  const { data, error, loading, retry, refresh } = useSeekerData((talentId) => api.seekerHome(talentId));
+  const title = data ? greetingLine(data.greeting.firstName) : undefined;
 
   return (
-    <Screen greeting title={title} page>
+    <Screen greeting title={title} subtitle={data ? "Pick one or more roles. Their challenges come first." : undefined} page tone="grey">
+      <ShowMeButton view="seeker" className="rise -mt-4 mb-8 min-[900px]:-mt-6" />
       {loading && !data ? (
         <HomeSkeleton />
       ) : error && !data ? (
         <ErrorState error={error} what="your challenges" onRetry={retry} />
       ) : data ? (
-        <HomeBody home={data} onChanged={reload} onSwitch={refresh} />
+        <HomeBody home={data} onSwitch={refresh} />
       ) : null}
     </Screen>
   );
 }
 
-function HomeBody({ home, onChanged, onSwitch }: { home: SeekerHome; onChanged: () => Promise<void>; onSwitch: () => void }) {
-  const { invitations, passport, tasks } = home;
-  // The newest invitation that still needs an answer is the focus; otherwise the newest one at all.
-  const focus = invitations.find((i) => i.status === "invited") ?? invitations[0];
-  const response = focus ? passport.find((e) => e.proof.proofId === focus.proofId)?.responses.find((r) => r.companyName === focus.companyName) : undefined;
-  const confirmedByMe = (meetingId: string) => passport.some((e) => e.responses.some((r) => r.meeting?.id === meetingId && r.meeting.talentConfirmedMet));
-
+function HomeBody({ home, onSwitch }: { home: SeekerHome; onSwitch: () => void }) {
+  const notice = inviteNotice(home.invitations);
   return (
     <>
-      <div className="rise -mt-4 mb-10 flex flex-col gap-4 min-[900px]:-mt-6" style={riseAt(1)}>
-        <ShowMeButton view="seeker" />
+      <div className="rise -mt-3 mb-8 flex flex-col gap-3 min-[900px]:-mt-5" style={riseAt(1)}>
         <IdentityLine onSwitch={onSwitch} />
+        {notice ? (
+          <Link
+            href="/my-work"
+            className="press group flex w-full items-center gap-3 rounded-[14px] bg-peach-wash py-2.5 pr-3 pl-4 text-subhead font-medium text-label min-[640px]:w-fit"
+          >
+            <span className="min-w-0 flex-1">{notice}</span>
+            <span className="flex shrink-0 items-center gap-1 text-link">
+              Answer
+              <ChevronRight aria-hidden className="size-4 transition-transform duration-150 group-hover:translate-x-0.5" strokeWidth={2} />
+            </span>
+          </Link>
+        ) : null}
       </div>
-
-      {focus ? (
-        <div className="rise mb-12" style={riseAt(2)}>
-          <InvitationFocus invitation={focus} response={response} confirmedByMe={confirmedByMe(focus.meetingId)} onChanged={onChanged} tour="invitation" />
-        </div>
-      ) : null}
-
-      <h2 className="text-[28px] leading-[34px] font-semibold tracking-[-0.02em] text-label">Challenges for you</h2>
-      <p className="text-body mt-1 mb-6 text-label-2">Each takes 5 to 15 minutes. Think aloud while you work.</p>
-      <ChallengeRows tasks={tasks} tour="challenge-list" />
+      <div data-tour="challenge-list" className="rise" style={riseAt(2)}>
+        <ChallengeFinder tasks={home.tasks} />
+      </div>
     </>
   );
 }
@@ -66,12 +66,15 @@ function HomeSkeleton() {
   return (
     <div aria-busy>
       <Skeleton className="h-12 w-[min(640px,90%)]" />
-      <Skeleton className="mt-6 h-14 w-56" />
-      <div className="mt-10 h-[280px] rounded-card bg-surface" />
-      <Skeleton className="mt-12 h-8 w-64" />
-      <div className="mt-6 flex flex-col gap-px overflow-hidden rounded-card">
+      <div className="mt-8 flex flex-wrap gap-2.5">
+        {[0, 1, 2, 3, 4, 5].map((i) => (
+          <Skeleton key={i} className="h-[60px] w-40 rounded-[14px]" />
+        ))}
+      </div>
+      <Skeleton className="mt-10 h-9 w-[min(560px,100%)] rounded-full" />
+      <div className="mt-6 flex flex-col gap-px overflow-hidden rounded-[16px]">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="h-[104px] bg-surface" />
+          <div key={i} className="h-[120px] bg-raised" />
         ))}
       </div>
     </div>

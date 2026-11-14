@@ -12,7 +12,7 @@ interface Props {
   companies: Company[] | null;
   value: string;
   onChange: (id: string) => void;
-  /** What the choice means here, for the sheet's title: "Hiring as", "Posting as", "Reviewing as". */
+  /** What the choice means here, for the sheet's title: "Acting as", "Posting as", "Reviewing as". */
   label?: string;
   className?: string;
 }
@@ -22,7 +22,7 @@ interface Props {
  * quiet line. "change" opens the event's employers in a sheet; one tap switches. Built from spans,
  * so it can sit inside a sentence such as a page's subtitle.
  */
-export function CompanyLine({ companies, value, onChange, label = "Hiring as", className }: Props) {
+export function CompanyLine({ companies, value, onChange, label = "Acting as", className }: Props) {
   const [open, setOpen] = useState(false);
   const current = companies?.find((c) => c.id === value) ?? companies?.[0];
   if (!current) return <CompanyLineSkeleton className={className} />;
@@ -82,7 +82,7 @@ export function CompanyLine({ companies, value, onChange, label = "Hiring as", c
   );
 }
 
-export function CompanyLineSkeleton({ className }: { className?: string }) {
+function CompanyLineSkeleton({ className }: { className?: string }) {
   return (
     <span aria-hidden className={cx("flex min-h-8 items-center gap-2", className)}>
       <span className="size-6 rounded-full bg-fill" />

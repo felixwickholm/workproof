@@ -47,6 +47,10 @@ function textFields(draft: ChallengeDraft): { field: string; text: string }[] {
           { field: "material", text: draft.material.body },
         ]
       : []),
+    ...(draft.options ?? []).flatMap((o) => [
+      { field: "option", text: o.title },
+      { field: "option", text: o.body },
+    ]),
     ...draft.coreSkills.flatMap((s) => [
       { field: "skill", text: s.label },
       { field: "skill reason", text: s.why },
@@ -56,9 +60,29 @@ function textFields(draft: ChallengeDraft): { field: string; text: string }[] {
   ];
 }
 
-/** A review guide says what good work shows. Numbers, points and counting would turn it into a scale. */
-const GUIDE_SCALE =
-  /\d|\b(?:points? (?:for|each|per)|count (?:how|the number)|how many|only if|on a scale|scale of|scores?|scoring|rate (?:each|the|them|it|how)|rating|grade|grading|marks? (?:for|out)|out of|pisteet|pistettä|arvosana\p{L}{0,10}|poäng|betyg)\b/iu;
+const COUNT = "(?:\\d{1,3}|one|two|three|four|five|both)";
+const FINDINGS = "(?:issues|problems|bugs|flaws|mistakes|errors)";
+
+/**
+ * A review guide says what good work shows. People give the points; a guide that hands them points, a scale or
+ * a count of what to find would let software set the score. Numbers that name the material ("HTTP 500",
+ * "line 12", "April") are task facts and pass.
+ */
+const GUIDE_SCALE = new RegExp(
+  [
+    "\\d\\s?(?:/|of|out of)\\s?\\d",
+    "\\d{1,3}\\s?(?:points?|pts|marks?|stars?)\\b",
+    "\\bpoints? (?:for|each|per)\\b",
+    `\\b${COUNT} (?:of (?:the )?)?(?:\\p{L}+ )?${FINDINGS}\\b`,
+    "\\bonly if (?:they|he|she|the person|the answer)\\b",
+    "\\bon a scale\\b|\\bscale of\\b",
+    "(?<!(?:credit|risk|test|f1|z|health|nps|confidence|similarity|anomaly|relevance|lead|bleu|quality) )\\bscor(?:e|es|ed|ing)\\b",
+    "\\brat(?:e|es|ed|ing) (?:each|them|it|how|from|on|out|between|\\d)",
+    "\\bgrading\\b|\\bmarks? (?:for|out)\\b|\\bout of (?:\\d|one|two|three|four|five|ten|a hundred)",
+    "\\b(?:pisteet|pistettä|arvosana\\p{L}{0,10}|poäng|betyg)\\b",
+  ].join("|"),
+  "iu",
+);
 
 /**
  * Every reason a draft may not be published, in plain words. Empty when the draft is fine.

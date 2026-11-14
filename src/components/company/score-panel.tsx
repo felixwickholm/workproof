@@ -11,13 +11,14 @@ import { Field, TextArea } from "../ui/field";
 import { toast } from "../ui/toast";
 import { getReviewer, saveReviewer } from "./company-choice";
 import { companyErrorText } from "./format";
-import { formatTotal, liveTotal, SCORE_RULE, scoredSoFar, scoreLock, scoresFor } from "./hiring-words";
+import { formatTotal } from "../words";
+import { liveTotal, SCORE_RULE, scoredSoFar, scoreLock, scoresFor } from "./hiring-words";
 import { ADD_REVIEWER_FIRST, addReviewerLabel, reviewerStanding } from "./reviewer-step";
 import { ScoreScale } from "./score-scale";
 
 /** What happens after a press, once every rule is met. */
 const READY_LINE = "Your score and your words go to the person. The name stays hidden until they say yes.";
-export const SENT_TOAST = "Saved. The person gets your score and your words.";
+const SENT_TOAST = "Saved. The person gets your score and your words.";
 
 interface Props {
   proof: BlindProof;
@@ -94,7 +95,7 @@ export function ScorePanel({ proof, challenge, company, onScored, className }: P
   }
 
   return (
-    <section data-tour="score" aria-label="Your score" className={cx("rounded-card bg-surface p-5 min-[900px]:p-6", className)}>
+    <section data-tour="score" aria-label="Your score" className={cx("rounded-card border border-separator bg-surface p-5 min-[900px]:p-6", className)}>
       <div className="flex items-end justify-between gap-4">
         <h2 className="text-section text-label">Your score</h2>
         <p aria-live="polite" className="tnum text-[40px] leading-[44px] font-normal text-label">
@@ -176,9 +177,12 @@ export function ScorePanel({ proof, challenge, company, onScored, className }: P
           <LockedButton tone="neutral" locked={!ready} busy={sending === "pass"} reasonId={reasonId} onClick={() => void send("pass")}>
             Not now
           </LockedButton>
-          <LockedButton tone="meet" locked={!ready} busy={sending === "meet"} reasonId={reasonId} onClick={() => void send("meet")}>
-            Invite to the event
-          </LockedButton>
+          {/* The walkthrough's "invite" target on this page; Top work carries it on its own invite button. */}
+          <div data-tour="invite" className="grid rounded-full">
+            <LockedButton tone="meet" locked={!ready} busy={sending === "meet"} reasonId={reasonId} onClick={() => void send("meet")}>
+              Invite to the event
+            </LockedButton>
+          </div>
           <LockedButton tone="neutral" locked={!ready} busy={sending === "hold"} reasonId={reasonId} onClick={() => void send("hold")} className="col-span-2">
             Score only, decide later
           </LockedButton>

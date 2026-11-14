@@ -1,7 +1,7 @@
 import { timeAgo } from "../proof/format";
 
 /** The query a phone carries after it joins: the table's code, so the phone can confirm it really joined. */
-export const JOINED_PARAM = "joined";
+const JOINED_PARAM = "joined";
 
 /** Rows the big screen shows; older proofs fold into one line under them. */
 export const ROWS_SHOWN = 12;

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { ChevronRight, X } from "lucide-react";
 import type { TaskFormat, TaskImpact } from "@/lib/domain/types";
 import { Bar } from "./bars";
-import { formatLabel, formatTotal, taskState } from "./impact";
+import { FORMAT_LABEL, formatTotal } from "../words";
+import { taskState } from "./impact";
 
 interface Props {
   tasks: TaskImpact[];
@@ -26,7 +27,7 @@ const href = (id: string) => `/city/challenges/${encodeURIComponent(id)}`;
 
 function meta(task: TaskImpact, formats: Props["formats"]) {
   const format = formats[task.challengeId];
-  return [task.companies.join(" and "), format ? formatLabel(format) : null].filter(Boolean).join(" · ");
+  return [task.companies.join(" and "), format ? FORMAT_LABEL[format] : null].filter(Boolean).join(" · ");
 }
 
 /** "Scored of took" as a number and a thin bar under it. */

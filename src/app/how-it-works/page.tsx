@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, X } from "lucide-react";
-import { Footer } from "@/components/landing/closing";
-import { loadLandingData } from "@/components/landing/load";
-import { MOTION_CSS } from "@/components/landing/motion-css";
-import { ArrowLink, BAND, FRAME, HEADING, SECTION, reveal } from "@/components/landing/parts";
-import { TopBar } from "@/components/landing/top-bar";
-import { StartActions } from "@/components/landing/tour-button";
+import { Footer } from "./kit/footer";
+import { loadHowItWorksData } from "./kit/load";
+import { MOTION_CSS } from "./kit/motion-css";
+import { ArrowLink, BAND, FRAME, HEADING, SECTION, reveal } from "./kit/parts";
+import { TopBar } from "./kit/top-bar";
+import { StartActions } from "./kit/start-actions";
 import { cx } from "@/components/ui/cx";
 import { AI_DOES, AI_NEVER, COMPARISON, FAIR_QUESTIONS, PRECEDENT, PROMISE, SIDES, STEPS } from "./content";
 import { StepFragment } from "./fragments";
@@ -25,7 +25,7 @@ const SUB = "text-[19px] leading-[28px] text-pretty text-label-2 min-[640px]:tex
 
 /** The six steps, each beside a live fragment of the screen where it happens. */
 async function Steps() {
-  const data = await loadLandingData();
+  const data = await loadHowItWorksData();
   return (
     <ol className="flex flex-col">
       {STEPS.map((step, i) => (

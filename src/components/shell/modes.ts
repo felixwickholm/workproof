@@ -1,11 +1,13 @@
 import { BriefcaseBusiness, House, Inbox, Landmark, Layers, SquarePen, UserRound, WalletCards, type LucideIcon } from "lucide-react";
-import { companyName } from "@/lib/seed/companies";
+import { CITY_PERSON, companyName } from "@/lib/seed/companies";
 import { STORY_COMPANY_ID, STORY_REVIEWER } from "@/lib/seed/story";
 
 /** A demo identity: who the visitor acts as, and where. */
 export interface Account {
   name: string;
   role: string;
+  /** Illustrated picture under /public. Only the visitor's own account or a company person: never a job seeker shown to a company. */
+  avatar?: string;
 }
 
 export type ModeId = "seeker" | "employer" | "city";
@@ -34,23 +36,24 @@ export interface Mode {
 export const MODES: readonly Mode[] = [
   {
     id: "seeker",
-    label: "Looking for work",
-    description: "Do a task, get an answer",
-    account: { name: "Olena Kovalenko", role: "Demo person" },
+    label: "Job seeker",
+    description: "Do a real challenge, get a score",
+    account: { name: "Mikko Lahtinen", role: "Job seeker" },
     Icon: UserRound,
-    home: "/seeker",
+    home: "/",
     nav: [
-      { href: "/seeker", label: "Home", Icon: House },
+      { href: "/", label: "Home", Icon: House },
       { href: "/challenges", label: "Challenges", Icon: Layers },
       { href: "/my-work", label: "My work", Icon: WalletCards },
     ],
-    routes: ["/seeker", "/challenges", "/my-work", "/passport"],
+    // "/seeker" is the same page as "/", kept so older links and the tour still land.
+    routes: ["/", "/seeker", "/challenges", "/my-work", "/passport"],
   },
   {
     id: "employer",
-    label: "Hiring",
-    description: "Read work, not CVs",
-    // The story company and its reviewer: the default Hiring identity before a visitor picks another company.
+    label: "Company",
+    description: "Post a challenge, score the work",
+    // The story company and its reviewer: the default Company identity before a visitor picks another company.
     account: { name: STORY_REVIEWER, role: companyName(STORY_COMPANY_ID) },
     Icon: BriefcaseBusiness,
     home: "/employer",
@@ -64,8 +67,8 @@ export const MODES: readonly Mode[] = [
   {
     id: "city",
     label: "City of Espoo",
-    description: "See what happened",
-    account: { name: "Event organiser", role: "City of Espoo" },
+    description: "See what came of the event",
+    account: { name: CITY_PERSON.name, role: "City of Espoo", avatar: CITY_PERSON.avatar },
     Icon: Landmark,
     home: "/city",
     nav: [{ href: "/city", label: "Overview", Icon: House }],
@@ -78,13 +81,21 @@ function isUnder(path: string, prefix: string) {
   return path === prefix || path.startsWith(`${prefix}/`);
 }
 
-/** Which mode a page belongs to, or null for pages outside the app frame (the landing page, the table view). */
+/** Pages that are another address for a nav page: "/seeker" is the job seeker home at "/". */
+const ALIASES: Readonly<Record<string, string>> = { "/seeker": "/" };
+
+function canonical(path: string) {
+  return ALIASES[path] ?? path;
+}
+
+/** Which mode a page belongs to, or null for pages outside the app frame (/for-judges, /how-it-works, /try, the table view). */
 export function modeForPath(path: string): Mode | null {
   return MODES.find((mode) => mode.routes.some((route) => isUnder(path, route))) ?? null;
 }
 
 /** The nav item a page sits under: the longest matching prefix, so a scoring page lights "Score work", not "New challenge". */
 export function activeNavItem(path: string, nav: readonly NavItem[]): NavItem | null {
+  path = canonical(path);
   let best: NavItem | null = null;
   for (const item of nav) {
     if (isUnder(path, item.href) && (!best || item.href.length > best.href.length)) best = item;
@@ -94,5 +105,6 @@ export function activeNavItem(path: string, nav: readonly NavItem[]): NavItem | 
 
 /** A top-level page of the mode: the phone tab bar shows here and steps aside on pages pushed deeper. */
 export function isNavRoot(path: string, nav: readonly NavItem[]): boolean {
+  path = canonical(path);
   return nav.some((item) => item.href === path);
 }

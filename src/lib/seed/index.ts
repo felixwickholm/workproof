@@ -1,27 +1,33 @@
-import { draftFromNeed } from "@/lib/ai/scripted/compose";
+import { draftFromNeed, roleFor } from "@/lib/ai/scripted/compose";
+import { talentNeed } from "@/lib/guard/check-draft";
+import { SKILLS, toSkill } from "@/lib/skills/vocabulary";
 import { DEFAULT_PLACES } from "@/lib/domain/places";
-import type { Challenge, StoryStage } from "@/lib/domain/types";
+import type { Challenge, ChallengeDraft, StoryStage } from "@/lib/domain/types";
 import { DRAFT_ACTION } from "@/lib/service/ai-work";
 import type { StoreData } from "@/lib/store/types";
 import { omit } from "@/lib/util/object";
 import { ON_BEHALF, SEED_CHALLENGES, type SeedChallengeKey } from "./challenges";
+import { avatarOfName } from "./avatars";
 import { COMPANIES, companyName, REVIEWERS } from "./companies";
-import { olenaHistory } from "./history";
+import type { SeedTask } from "./extra-challenges";
+import { mikkoHistory } from "./history";
 import { PEOPLE, PERSONA } from "./people";
 import { AUTOMATION_PROOFS } from "./proofs/automation";
 import { CHIP_PROOFS } from "./proofs/chip";
 import { DATA_PROOFS } from "./proofs/data";
 import { ENGINEERING_PROOFS } from "./proofs/engineering";
+import { EXTRA_PROOFS } from "./proofs/extra";
 import { FINANCE_PROOFS } from "./proofs/finance";
 import { LEGAL_AND_SALES_PROOFS } from "./proofs/legal-and-sales";
 import { MARKETING_PROOFS } from "./proofs/marketing";
 import { PRODUCT_AND_DESIGN_PROOFS } from "./proofs/product-and-design";
 import { RESEARCH_PROOFS } from "./proofs/research";
+import { SEED_ROLES } from "./roles";
 import { SEED_RECOMMENDATIONS } from "./recommendations";
 import {
-  OLENA_ACCEPTED_HOURS_AGO,
-  OLENA_EARLIER,
-  OLENA_STORY,
+  MIKKO_ACCEPTED_HOURS_AGO,
+  MIKKO_EARLIER,
+  MIKKO_STORY,
   STORY_DECISION,
   STORY_MET_HOURS_AGO,
   STORY_PROOF_ID,
@@ -42,18 +48,43 @@ export const WORLD_PROOFS: readonly SeedProof[] = [
   ...MARKETING_PROOFS,
   ...PRODUCT_AND_DESIGN_PROOFS,
   ...RESEARCH_PROOFS,
+  ...EXTRA_PROOFS,
 ];
 
 /** The proofs that exist at a story stage, oldest first, the way they arrived. */
 export function proofsAt(stage: StoryStage): SeedProof[] {
-  const story = stageReached(stage, "sent") ? [OLENA_STORY] : [];
-  return [...WORLD_PROOFS, ...OLENA_EARLIER, ...story].sort((a, b) => b.hoursAgo - a.hoursAgo);
+  const story = stageReached(stage, "sent") ? [MIKKO_STORY] : [];
+  return [...WORLD_PROOFS, ...MIKKO_EARLIER, ...story].sort((a, b) => b.hoursAgo - a.hoursAgo);
+}
+
+/**
+ * A task the company wrote out in full: its own title, situation and material, with the library role from
+ * `need` kept for the follow-up questions and the reviewer notes. Nothing a company wishes about a person is in it.
+ */
+function withTask(draft: ChallengeDraft, task: SeedTask): ChallengeDraft {
+  const role = roleFor(draft);
+  const skills = [...task.skills];
+  return {
+    ...omit(draft, ["options"]),
+    title: task.title,
+    need: talentNeed(role.title, skills),
+    coreSkills: skills.map((id) => toSkill(id, role.why?.[id])),
+    setAside: [],
+    format: task.format,
+    proofKind: task.proofKind,
+    minutes: task.minutes,
+    brief: task.brief,
+    material: { ...task.material },
+    deliverable: task.deliverable,
+    reviewGuide: skills.map((id) => ({ skillId: id, lookFor: role.lookFor?.[id] ?? SKILLS[id].lookFor })),
+    ...(task.options ? { options: [{ ...task.options[0] }, { ...task.options[1] }] } : {}),
+  };
 }
 
 function publishChallenges(write: ReturnType<typeof seedWriter>, data: StoreData): Map<SeedChallengeKey, Challenge> {
   const byKey = new Map<SeedChallengeKey, Challenge>();
   for (const seed of SEED_CHALLENGES) {
-    const draft = omit(draftFromNeed(seed.need), ["note"]);
+    const draft = "task" in seed ? withTask(omit(draftFromNeed(seed.need), ["note"]), seed.task) : omit(draftFromNeed(seed.need), ["note"]);
     const onBehalf = seed.key === ON_BEHALF.key ? { by: ON_BEHALF.by, adUrl: ON_BEHALF.adUrl } : undefined;
     const approvedBy = onBehalf?.by ?? REVIEWERS[seed.companyIds[0]];
     const hoursAgo = seed.daysBeforeEvent * 24;
@@ -62,8 +93,11 @@ function publishChallenges(write: ReturnType<typeof seedWriter>, data: StoreData
       id: `ch-${seed.key}`,
       places: "places" in seed ? seed.places : DEFAULT_PLACES,
       companyIds: [...seed.companyIds],
+      roles: [...SEED_ROLES[seed.key]],
       approvedBy,
       createdAt: write.at(hoursAgo),
+      publishedAt: write.at(hoursAgo),
+      image: `/challenges/ch-${seed.key}.webp`,
       ...(onBehalf ? { onBehalf } : {}),
     };
     byKey.set(seed.key, challenge);
@@ -90,13 +124,13 @@ function publishChallenges(write: ReturnType<typeof seedWriter>, data: StoreData
 /**
  * A synthetic event, "Espoo Talent Day", built relative to `now` so the demo always looks current.
  * All companies, people and work are invented. Content runs through the same scripted designer,
- * blind layer, scores and decision shape as live data. `stage` sets how far Olena's story has gone.
+ * blind layer, scores and decision shape as live data. `stage` sets how far Mikko's story has gone.
  */
 export function buildSeed(now: Date, stage: StoryStage = "invited"): StoreData {
   const data: StoreData = {
     version: 1,
     event: { name: "Espoo Talent Day", date: now.toISOString().slice(0, 10), responseWindowHours: 48 },
-    companies: COMPANIES.map((c) => ({ ...c, reviewers: [...c.reviewers] })),
+    companies: COMPANIES.map((c) => ({ ...c, reviewers: [...c.reviewers], reviewerAvatars: Object.fromEntries(c.reviewers.map((name) => [name, avatarOfName(name)])) })),
     challenges: [],
     talents: [],
     submissions: [],
@@ -125,12 +159,12 @@ export function buildSeed(now: Date, stage: StoryStage = "invited"): StoreData {
     write.addDecision({ proofId: STORY_PROOF_ID, ...decision, hoursAgo }, STORY_REVIEWER);
   }
   if (stageReached(stage, "met")) {
-    write.acceptMeeting(STORY_PROOF_ID, STORY_DECISION.companyId, OLENA_ACCEPTED_HOURS_AGO);
+    write.acceptMeeting(STORY_PROOF_ID, STORY_DECISION.companyId, MIKKO_ACCEPTED_HOURS_AGO);
     write.confirmMet(STORY_PROOF_ID, STORY_DECISION.companyId, STORY_MET_HOURS_AGO, { followUpAgreed: true });
   }
 
   data.demo.personaTalentId = write.talentId(PERSONA);
-  data.history = olenaHistory(now, data.demo.personaTalentId);
+  data.history = mikkoHistory(now, data.demo.personaTalentId);
   data.audit.sort((a, b) => a.at.localeCompare(b.at));
   return data;
 }

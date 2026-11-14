@@ -1,8 +1,8 @@
-import type { CityInsights, CityTopEntry, ImpactCounts, TaskFormat, TaskImpact } from "@/lib/domain/types";
-import { plural } from "./format";
+import type { CityTopEntry, ImpactCounts, TaskImpact } from "@/lib/domain/types";
+import { plural, totalOutOf, workLabel } from "../words";
 
 /** One step of the impact funnel: its words and its count. */
-export interface FunnelStep {
+interface FunnelStep {
   key: keyof ImpactCounts;
   label: string;
   value: number;
@@ -94,63 +94,7 @@ export function taskState(task: Pick<TaskImpact, "took" | "scored">, oldestHours
   return oldestHours === null ? wait : `${wait} · oldest ${daysInWords(oldestHours)}`;
 }
 
-/** A total out of 10 with one decimal: "9.0". */
-export function formatTotal(total: number): string {
-  return total.toFixed(1);
-}
-
-/** "Work K7 · 9.0 of 10": the label stays, the word "Proof" becomes "Work". */
+/** "Work K7 · 9.0 of 10". */
 export function topEntryLine(entry: Pick<CityTopEntry, "proofLabel" | "total">): string {
-  return `${entry.proofLabel.replace(/^Proof\b/, "Work")} · ${formatTotal(entry.total)} of 10`;
-}
-
-/** "Choose", "Make", "Fix", "Read". */
-export function formatLabel(format: TaskFormat): string {
-  return format.charAt(0).toUpperCase() + format.slice(1);
-}
-
-type Demand = CityInsights["demandBySkill"][number];
-
-/** Skills most asked for, by challenges that ask, then by work handed in, then by name. */
-export function sortDemand(demand: readonly Demand[]): Demand[] {
-  return [...demand].sort((a, b) => b.tasks - a.tasks || b.proofs - a.proofs || a.label.localeCompare(b.label));
-}
-
-/**
- * The one finding over the demand chart: the skill most asked for, and how much work came in for it.
- * "Data analysis is asked for most: 4 challenges, 23 pieces of work." Null when nothing is asked for.
- */
-export function demandFinding(demand: readonly Demand[]): string | null {
-  const top = sortDemand(demand).find((d) => d.tasks > 0);
-  if (!top) return null;
-  const work = top.proofs === 0 ? "no work yet" : plural(top.proofs, "piece of work", "pieces of work");
-  return `${top.label} is asked for most: ${plural(top.tasks, "challenge")}, ${work}.`;
-}
-
-/** A bar's length as a share of the largest value in its chart, from 0 to 1. */
-export function barShare(value: number, max: number): number {
-  if (max <= 0 || value <= 0) return 0;
-  return Math.min(1, value / max);
-}
-
-/** The five steps of the event, in order. */
-export const EVENT_STEPS = [
-  "The challenge opens before the event.",
-  "The company scores the work.",
-  "The top people get invited.",
-  "A first talk happens at the event.",
-  "A follow-up is agreed.",
-] as const;
-
-/**
- * Today's step of the event, 0 to 4. Before the event day the data says how far it got; on the day the
- * talks happen; after it, follow-ups.
- */
-export function todayStep(eventDate: string, now: Date, counts: ImpactCounts): number {
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Helsinki" }).format(now);
-  if (today > eventDate) return 4;
-  if (today === eventDate) return 3;
-  if (counts.invited > 0) return 2;
-  if (counts.scored > 0) return 1;
-  return 0;
+  return `${workLabel(entry.proofLabel)} · ${totalOutOf(entry.total)}`;
 }

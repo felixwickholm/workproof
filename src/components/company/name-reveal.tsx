@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 const EASE = [0.23, 1, 0.32, 1] as const;
 
 /**
- * "Proof K7 is Olena Kovalenko": the hidden name crossfades into the real one, once, when the
+ * "Proof K7 is Mikko Lahtinen": the hidden name crossfades into the real one, once, when the
  * company first sees it after the person accepted. Opacity and a 4px rise only.
  */
 export function NameReveal({ label, name, contact }: { label: string; name: string; contact: string }) {

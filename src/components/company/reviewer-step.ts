@@ -7,7 +7,7 @@ import { isListedReviewer, reviewerNameProblem } from "@/lib/domain/decision-rul
  * - `unregistered`: a person, but not registered for this company; one tap adds them.
  * - `registered`: the name may decide.
  */
-export type ReviewerStanding = { kind: "none" } | { kind: "refused"; reason: string } | { kind: "unregistered" } | { kind: "registered" };
+type ReviewerStanding = { kind: "none" } | { kind: "refused"; reason: string } | { kind: "unregistered" } | { kind: "registered" };
 
 /** The one-tap step for a person who is not yet registered for the company. */
 export function addReviewerLabel(companyName: string): string {

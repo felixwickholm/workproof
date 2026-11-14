@@ -37,7 +37,7 @@ export function PlacesStepper({ value, onChange }: { value: number | undefined; 
         </div>
       </div>
       <p id={noteId} className="text-footnote mt-1 text-pretty text-label-2">
-        Each task takes a limited number of answers, so an employer can read them all.
+        Each challenge takes a limited number of answers, so an employer can read them all.
       </p>
     </div>
   );

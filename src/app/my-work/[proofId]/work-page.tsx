@@ -4,7 +4,7 @@ import { use, useState, type ReactNode } from "react";
 import { AttachmentView, BlindCompare, BlindText } from "@/components/proof";
 import { ScoreView } from "@/components/seeker/score-view";
 import { SharingCard } from "@/components/seeker/sharing-card";
-import { FORMAT_LABEL, FormatIcon } from "@/components/seeker/task-format";
+import { FormatIcon } from "@/components/seeker/task-format";
 import { useSeekerData } from "@/components/seeker/use-seeker-data";
 import { workState } from "@/components/seeker/work-state";
 import { LocalReplay } from "@/components/think-aloud/local-replay";
@@ -14,6 +14,7 @@ import { riseAt } from "@/components/ui/rise";
 import { Screen } from "@/components/ui/screen";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
+import { FORMAT_LABEL } from "@/components/words";
 import { api, ApiError } from "@/lib/client/api";
 import type { Challenge, Company, PassportEntry } from "@/lib/domain/types";
 import { spokenLength } from "@/lib/think-aloud/transcript";
@@ -61,8 +62,8 @@ function WorkBody({ entry, challenge, company, onChanged }: { entry: PassportEnt
             {FORMAT_LABEL[entry.challenge.format]} · {company}
           </span>
         </p>
-        <h1 className="mt-2 text-[34px] leading-[40px] font-semibold tracking-[-0.02em] text-balance text-label">{entry.challenge.title}</h1>
-        <p className="mt-2 text-[20px] leading-[28px] text-label">{workState(entry)}</p>
+        <h1 className="mt-2 text-[32px] leading-[40px] text-balance text-label min-[900px]:text-h1">{entry.challenge.title}</h1>
+        <p className="mt-2 text-lead text-label">{workState(entry)}</p>
       </header>
 
       <div className="grid grid-cols-1 gap-6 min-[900px]:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] min-[900px]:items-start min-[900px]:gap-8">
@@ -70,7 +71,7 @@ function WorkBody({ entry, challenge, company, onChanged }: { entry: PassportEnt
           <CompanyRead entry={entry} />
           {proof.thinkAloud?.transcript ? (
             <div className="mt-8 border-t border-separator pt-6">
-              <h3 className="text-[20px] leading-[26px] font-semibold text-label">What I said while working</h3>
+              <h3 className="text-h4 text-label">What I said while working</h3>
               <p className="text-footnote mt-1 text-label-2">{spokenLength(proof.thinkAloud.seconds)} of thinking aloud, as text.</p>
               <BlindText text={proof.thinkAloud.transcript} bars className="text-body mt-3 text-label" />
             </div>
@@ -95,7 +96,7 @@ function WorkBody({ entry, challenge, company, onChanged }: { entry: PassportEnt
                 {scored.map((r, i) => (
                   <div key={`${r.companyName}-${i}`} className="border-separator not-first:border-t not-first:pt-8">
                     <ScoreView total={r.total!} scores={r.scores!} lookFor={lookFor} />
-                    <blockquote className="mt-6 font-serif text-[22px] leading-[30px] text-pretty text-label">&ldquo;{r.feedback}&rdquo;</blockquote>
+                    <blockquote className="mt-6 font-heading text-h3 text-pretty text-label">&ldquo;{r.feedback}&rdquo;</blockquote>
                     <p className="text-body mt-2 text-label-2">
                       {r.reviewer}, {r.companyName}
                     </p>
@@ -106,7 +107,7 @@ function WorkBody({ entry, challenge, company, onChanged }: { entry: PassportEnt
             ) : entry.responses.length ? (
               entry.responses.map((r, i) => (
                 <div key={i}>
-                  <blockquote className="font-serif text-[22px] leading-[30px] text-pretty text-label">&ldquo;{r.feedback}&rdquo;</blockquote>
+                  <blockquote className="font-heading text-h3 text-pretty text-label">&ldquo;{r.feedback}&rdquo;</blockquote>
                   <p className="text-body mt-2 text-label-2">
                     {r.reviewer}, {r.companyName}
                   </p>
@@ -170,7 +171,7 @@ function CompanyRead({ entry }: { entry: PassportEntry }) {
 function Part({ title, tour, i, children }: { title: string; tour?: string; i: number; children: ReactNode }) {
   return (
     <section data-tour={tour} aria-label={title} className="rise min-w-0 rounded-card bg-surface p-6 min-[900px]:p-8" style={riseAt(i)}>
-      <h2 className="mb-5 text-[24px] leading-[30px] font-semibold text-label">{title}</h2>
+      <h2 className="mb-5 text-h3 text-label">{title}</h2>
       {children}
     </section>
   );

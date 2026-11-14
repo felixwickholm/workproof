@@ -4,7 +4,7 @@ import { formatClock } from "./format";
 const actorLabel: Record<AuditEvent["actor"], string> = { ai: "Software", human: "Person", system: "System" };
 
 /** The log names roles and reviewers only. A person who sent work shows as "Work seeker", never by name. */
-export function actorName(by: string) {
+function actorName(by: string) {
   return by === "Talent" ? "Work seeker" : by;
 }
 

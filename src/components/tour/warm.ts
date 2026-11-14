@@ -1,13 +1,13 @@
 import { api, companyApi } from "@/lib/client/api";
 
 /** What a page asks the server for when it opens, so the tour can ask first. */
-export interface WarmIds {
+interface WarmIds {
   talentId: string;
   companyId: string;
 }
 
 /** One read a tour page makes on arrival, by the client call it uses. */
-export type WarmCall =
+type WarmCall =
   | { call: "seekerHome" | "companies" | "companyHome" | "queue" | "city" }
   | { call: "challenge"; id: string };
 
@@ -21,7 +21,8 @@ export function warmCalls(route: string | undefined): WarmCall[] {
   if (!route) return [];
   const challenge = /^\/challenges\/([^/]+)/.exec(route);
   if (challenge) return [{ call: "challenge", id: decodeURIComponent(challenge[1]) }];
-  if (route.startsWith("/seeker") || route.startsWith("/my-work")) return plain("seekerHome", "companies");
+  // "/" is Mikko's home, the same screen as "/seeker".
+  if (route === "/" || route.startsWith("/seeker") || route.startsWith("/my-work")) return plain("seekerHome", "companies");
   if (route.startsWith("/employer")) return plain("companyHome", "companies");
   if (route.startsWith("/company/review")) return plain("queue", "companies");
   if (route.startsWith("/company")) return plain("companies");

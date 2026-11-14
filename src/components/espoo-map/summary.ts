@@ -1,3 +1,4 @@
+import { plural } from "../words";
 import type { FlowMapCompany, FlowMapFlow, FlowState } from "./types";
 
 /**
@@ -8,6 +9,7 @@ export type FlowStage = "sent" | "scored" | "invited";
 
 export const STAGE_ORDER: readonly FlowStage[] = ["sent", "scored", "invited"];
 
+/** "answered" is a decision recorded without points; on the map it reads the same as a score. */
 const STATE_RANK: Record<FlowState, number> = { sent: 0, answered: 1, scored: 1, invited: 2, met: 3 };
 
 /** The line a state is drawn as. */
@@ -42,10 +44,6 @@ export function countByCompany(companies: readonly FlowMapCompany[], flows: read
   return new Map(companies.map((c) => [c.id, countFlows(flows.filter((f) => f.companyId === c.id))]));
 }
 
-function plural(count: number, one: string, many: string) {
-  return `${count} ${count === 1 ? one : many}`;
-}
-
 /** The map in one paragraph, for screen readers and the image's label. */
 export function summarySentence(flows: readonly FlowMapFlow[]): string {
   const totals = countFlows(flows);
@@ -76,7 +74,7 @@ export function stepOf(count: number, largest: number): Step {
 }
 
 /** Line widths in pixels for the three steps: thin, medium, heavy. */
-export const LINE_WEIGHT: Record<Step, number> = { 0: 1.25, 1: 2.25, 2: 3.5 };
+const LINE_WEIGHT: Record<Step, number> = { 0: 1.25, 1: 2.25, 2: 3.5 };
 
 /** The width in pixels of a line that carries `count` pieces of work. */
 export function lineWeight(count: number, largest: number): number {

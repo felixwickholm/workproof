@@ -1,6 +1,6 @@
 import { ArrowDown, CameraOff, Check, EyeOff, Link2 } from "lucide-react";
 import type { ReactNode } from "react";
-import type { LandingData } from "@/components/landing/data";
+import type { HowItWorksData } from "./kit/data";
 import { BlindText, FeedbackQuote } from "@/components/proof";
 import { cx } from "@/components/ui/cx";
 import type { StepId } from "./content";
@@ -13,7 +13,7 @@ function Card({ children, className }: { children: ReactNode; className?: string
 const PILL = "inline-flex h-8 items-center gap-1.5 rounded-full bg-fill px-3 text-[15px] font-medium text-label";
 
 /** Step 1: the job-ad field, then the challenge drafted from it, with the person who approved it. */
-function AdFragment({ story }: { story: LandingData["story"] }) {
+function AdFragment({ story }: { story: HowItWorksData["story"] }) {
   return (
     <div className="flex flex-col gap-2">
       <Card className="flex items-center gap-3 py-3 min-[640px]:py-3.5">
@@ -43,7 +43,7 @@ function AdFragment({ story }: { story: LandingData["story"] }) {
 }
 
 /** Step 2: the recording bar and the person's own thinking, as the reviewer later reads it. */
-function WorkFragment({ story }: { story: LandingData["story"] }) {
+function WorkFragment({ story }: { story: HowItWorksData["story"] }) {
   return (
     <Card>
       <div className="flex flex-wrap items-center gap-2">
@@ -62,7 +62,7 @@ function WorkFragment({ story }: { story: LandingData["story"] }) {
 }
 
 /** Step 3: the blind proof with the reviewer's points per skill, 1 to 5, and the total out of 10. */
-function ScoreFragment({ story }: { story: LandingData["story"] }) {
+function ScoreFragment({ story }: { story: HowItWorksData["story"] }) {
   const scored = story.skills.some((s) => s.points !== null);
   return (
     <Card>
@@ -103,7 +103,7 @@ function ScoreFragment({ story }: { story: LandingData["story"] }) {
 }
 
 /** Step 4: the invitation as the person gets it, with the reviewer's own words. */
-function InviteFragment({ invitation }: { invitation: LandingData["invitation"] }) {
+function InviteFragment({ invitation }: { invitation: HowItWorksData["invitation"] }) {
   if (!invitation) return null;
   return (
     <Card>
@@ -117,7 +117,7 @@ function InviteFragment({ invitation }: { invitation: LandingData["invitation"] 
 }
 
 /** Step 5: the meeting at the event, then the two things the company marks after it. */
-function TalkFragment({ invitation }: { invitation: LandingData["invitation"] }) {
+function TalkFragment({ invitation }: { invitation: HowItWorksData["invitation"] }) {
   const rows = ["We met at the event", "Follow-up agreed"];
   return (
     <Card>
@@ -138,7 +138,7 @@ function TalkFragment({ invitation }: { invitation: LandingData["invitation"] })
 }
 
 /** Step 6: the event's steps as the city counts them, each proof once. */
-function CityFragment({ impact }: { impact: LandingData["impact"] }) {
+function CityFragment({ impact }: { impact: HowItWorksData["impact"] }) {
   const rows = [
     { label: "Took a challenge", value: impact.took },
     { label: "Scored by a person", value: impact.scored },
@@ -167,7 +167,7 @@ function CityFragment({ impact }: { impact: LandingData["impact"] }) {
 }
 
 /** The live product fragment beside each step, built from the demo event. */
-export function StepFragment({ id, data }: { id: StepId; data: LandingData }) {
+export function StepFragment({ id, data }: { id: StepId; data: HowItWorksData }) {
   switch (id) {
     case "ad":
       return <AdFragment story={data.story} />;

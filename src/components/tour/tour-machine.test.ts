@@ -18,7 +18,7 @@ function settledAt(index: number): TourState {
 
 describe("tourReducer", () => {
   it("starts at the first step, preparing it out of sight", () => {
-    expect(reduce(closedTour, { type: "start" })).toEqual({ open: true, kind: "minute", index: 0, pending: 0, run: 1, spotlight: false, revealed: false });
+    expect(reduce(closedTour, { type: "start" })).toEqual({ open: true, index: 0, pending: 0, run: 1, spotlight: false, revealed: false });
   });
 
   it("draws the layer when the first step arrives, or early when it is slow", () => {
@@ -37,9 +37,9 @@ describe("tourReducer", () => {
     expect(state).toMatchObject({ index: 2, pending: null });
   });
 
-  it("ignores a second start while open", () => {
+  it("ignores a second start for the step already shown", () => {
     const open = settledAt(3);
-    expect(reduce(open, { type: "start" })).toBe(open);
+    expect(reduce(open, { type: "start", at: 3 })).toBe(open);
   });
 
   it("keeps the current step on the card until the next one has arrived", () => {
@@ -87,45 +87,37 @@ describe("tourReducer", () => {
   });
 });
 
-describe("tour kinds", () => {
-  const counts = { minute: 7, seeker: 7, employer: 7, city: 6 };
-  const go = (state: TourState, ...actions: TourAction[]) => actions.reduce((s, a) => tourReducer(s, a, counts), state);
+describe("starting at a chapter", () => {
+  const STORY = 15;
+  const go = (state: TourState, ...actions: TourAction[]) => actions.reduce((s, a) => tourReducer(s, a, STORY), state);
   const arrive = (state: TourState) => go(state, { type: "arrived", run: (state as { run: number }).run, found: true });
-  const walkToEnd = (state: TourState) => {
-    for (let i = 0; i < 10; i++) state = arrive(go(state, { type: "next" }));
-    return state;
-  };
 
-  it("starts the overview by default and a view's demo when asked", () => {
-    expect(go(closedTour, { type: "start" })).toMatchObject({ kind: "minute" });
-    for (const kind of ["seeker", "employer", "city"] as const) expect(go(closedTour, { type: "start", kind })).toMatchObject({ kind, index: 0 });
+  it("starts at the beginning by default and at a chapter when asked", () => {
+    expect(go(closedTour, { type: "start" })).toMatchObject({ index: 0, pending: 0 });
+    expect(go(closedTour, { type: "start", at: 5 })).toMatchObject({ index: 5, pending: 5 });
   });
 
-  it("counts steps per tour and stops on each one's end card", () => {
-    expect(walkToEnd(arrive(go(closedTour, { type: "start" })))).toMatchObject({ index: 6 });
-    expect(walkToEnd(arrive(go(closedTour, { type: "start", kind: "city" })))).toMatchObject({ index: 5 });
+  it("keeps a start inside the story", () => {
+    expect(go(closedTour, { type: "start", at: 99 })).toMatchObject({ index: STORY - 1 });
+    expect(go(closedTour, { type: "start", at: -3 })).toMatchObject({ index: 0 });
   });
 
-  it("switches to another tour asked for while one shows, keeping the card in view", () => {
-    const minute = walkToEnd(arrive(go(closedTour, { type: "start" })));
-    const city = go(minute, { type: "start", kind: "city" });
-    expect(city).toMatchObject({ open: true, kind: "city", index: 0, pending: 0, revealed: true });
-    // The overview's last arrival can no longer land.
-    expect(go(city, { type: "arrived", run: (minute as { run: number }).run, found: true })).toBe(city);
-  });
-
-  it("closes on Skip from any step, also mid-move", () => {
-    const moving = go(arrive(go(closedTour, { type: "start", kind: "employer" })), { type: "next" });
-    expect(go(moving, { type: "close" })).toEqual(closedTour);
+  it("glides to a chapter asked for while the card shows, keeping it in view", () => {
+    const open = arrive(go(closedTour, { type: "start" }));
+    const city = go(open, { type: "start", at: 10 });
+    expect(city).toMatchObject({ open: true, index: 0, pending: 10, revealed: true });
+    // The earlier arrival can no longer land.
+    expect(go(city, { type: "arrived", run: (open as { run: number }).run, found: true })).toBe(city);
+    expect(go(open, { type: "start", at: 0 })).toBe(open);
   });
 });
 
 describe("step text", () => {
   it("counts from one", () => {
-    expect(counterText(2, 7)).toBe("3 of 7");
+    expect(counterText(2, 15)).toBe("3 of 15");
   });
 
   it("announces the step with its title", () => {
-    expect(announcement(2, 7, "Her name is hidden.")).toBe("Step 3 of 7: Her name is hidden.");
+    expect(announcement(2, 15, "He picks a challenge.")).toBe("Step 3 of 15: He picks a challenge.");
   });
 });

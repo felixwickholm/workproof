@@ -5,13 +5,40 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Wordmark } from "@/components/wordmark";
 import { ArchitectureDiagram } from "./architecture";
 import { EVAL_RESULTS, EVAL_TESTS, FIGURES, UNIT_TESTS, VERIFIED_ON } from "./evidence";
-import { AI_DOES, AI_NEVER, BLIND_MISSES, BOOTH, BRIEF_QUOTES, CHECK_PATH, CRITERIA, LIMITS, PAINS, SUMMARY } from "./facts";
+import {
+  AI_DOES,
+  AI_NEVER,
+  ARCHITECTURE_SUMMARY,
+  AUDIENCES,
+  BLIND_MISSES,
+  BOOTH,
+  BRIEF_QUOTES,
+  CHECK_PATH,
+  CRITERIA,
+  ENTRY,
+  GUARDRAILS,
+  LIMITS,
+  PAINS,
+  PRIVACY,
+  SUMMARY,
+  SYNTHETIC,
+  VERIFY_COMMANDS,
+} from "./facts";
+import { repoUrl } from "./site";
 
 export const metadata: Metadata = {
   title: { absolute: "Evidence for judges · WorkProof" },
   description:
-    "How WorkProof meets the City of Espoo criteria: what was built, where to see it, where it is in the code, and the test and eval numbers. Limits included.",
+    "How WorkProof, a Junction 2026 entry for the City of Espoo, meets each judging criterion: what was built, where to see it, where it is in the code, and the measured test and eval numbers. Limits included.",
   alternates: { canonical: "/for-judges" },
+  openGraph: {
+    title: "Evidence for judges · WorkProof",
+    type: "article",
+    siteName: "WorkProof",
+    url: "/for-judges",
+    // A page's own openGraph replaces the file-based image, so it is named here again.
+    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "WorkProof. Hiring that sees the work, not the name. For City of Espoo." }],
+  },
 };
 
 const FRAME = "mx-auto w-full max-w-[1100px] px-4 min-[640px]:px-8";
@@ -68,7 +95,15 @@ export default function ForJudgesPage() {
         <h1 className="font-serif text-[44px] leading-[1] tracking-[-0.02em] text-label min-[640px]:text-[64px]">Evidence for judges</h1>
         <p className="mt-6 max-w-[70ch] text-[19px] leading-[30px] text-label">{SUMMARY}</p>
         <p className="mt-4 text-[15px] leading-[22px] text-label-2">
-          Made for Espoo&apos;s talent events for highly educated professionals, where a degree from abroad too often goes unread. Built for the City of Espoo challenge, Junction 2026. Demo data. All people and companies are invented. Numbers checked on {VERIFIED_ON}.
+          Made for Espoo&apos;s talent events for business and tech people. Built for the {ENTRY.challengeBy} challenge &ldquo;{ENTRY.challenge}&rdquo;, {ENTRY.event}. Demo data. All people and companies are invented. Numbers checked on {VERIFIED_ON}. Source code:{" "}
+          <a href={repoUrl()} className="underline underline-offset-2">
+            {repoUrl().replace(/^https:\/\//, "")}
+          </a>
+          . The same evidence as plain text:{" "}
+          <a href="/llms-full.txt" className="underline underline-offset-2">
+            /llms-full.txt
+          </a>
+          .
         </p>
 
         <p className="mt-6 max-w-[70ch] text-[17px] leading-[27px] text-label">
@@ -91,6 +126,23 @@ export default function ForJudgesPage() {
               </li>
             ))}
           </ol>
+        </section>
+
+        <section aria-labelledby="who">
+          <h2 id="who" className={H2}>
+            Who it is for
+          </h2>
+          <ul className="mt-4 flex max-w-[70ch] list-disc flex-col gap-2 pl-5 text-[17px] leading-[26px] text-label">
+            {AUDIENCES.map((a) => (
+              <li key={a.who}>
+                <span className="font-semibold">{a.who}</span> (
+                <Link href={a.path} className="underline underline-offset-2">
+                  {a.mode}
+                </Link>
+                ): {a.does}
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section aria-labelledby="booth">
@@ -216,6 +268,43 @@ export default function ForJudgesPage() {
           </p>
         </section>
 
+        <section aria-labelledby="guardrails">
+          <h2 id="guardrails" className={H2}>
+            Guardrails
+          </h2>
+          <p className={P}>Rules the code never breaks, where each one is enforced and which test checks it.</p>
+          <div className="mt-6 overflow-x-auto">
+            <table className="w-full min-w-[760px] border-collapse">
+              <thead>
+                <tr>
+                  <th scope="col" className={TH}>
+                    Rule
+                  </th>
+                  <th scope="col" className={TH}>
+                    Enforced in
+                  </th>
+                  <th scope="col" className={TH}>
+                    Checked by
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {GUARDRAILS.map((g) => (
+                  <tr key={g.rule}>
+                    <td className={TD}>{g.rule}</td>
+                    <td className={TD}>
+                      <Paths paths={g.enforced} />
+                    </td>
+                    <td className={TD}>
+                      <Paths paths={g.checked} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
         <section aria-labelledby="evals">
           <h2 id="evals" className={H2}>
             Evals
@@ -259,6 +348,20 @@ export default function ForJudgesPage() {
           </div>
         </section>
 
+        <section aria-labelledby="verify">
+          <h2 id="verify" className={H2}>
+            Check it yourself
+          </h2>
+          <p className={P}>From a fresh clone. No API keys are needed.</p>
+          <ul className="mt-4 flex max-w-[70ch] flex-col gap-2 text-[17px] leading-[26px] text-label">
+            {VERIFY_COMMANDS.map((c) => (
+              <li key={c.command}>
+                <Code>{c.command}</Code> {c.what}
+              </li>
+            ))}
+          </ul>
+        </section>
+
         <section aria-labelledby="try">
           <h2 id="try" className={H2}>
             Try it in 2 minutes
@@ -268,7 +371,7 @@ export default function ForJudgesPage() {
               <Link href="/?tour=1" className="underline underline-offset-2">
                 The guided walkthrough
               </Link>
-              : Olena&apos;s story from task to meeting, in nine steps.
+              : one story across the job seeker, company and city views, from challenge to score to meeting.
             </li>
             <li>
               <Link href="/try" className="underline underline-offset-2">
@@ -277,12 +380,12 @@ export default function ForJudgesPage() {
               : answer one task and see the blind proof a company would read.
             </li>
             <li>
-              <Link href="/seeker" className="underline underline-offset-2">
-                Looking for work
+              <Link href="/" className="underline underline-offset-2">
+                Job seeker
               </Link>
               ,{" "}
               <Link href="/employer" className="underline underline-offset-2">
-                Hiring
+                Company
               </Link>{" "}
               and{" "}
               <Link href="/city" className="underline underline-offset-2">
@@ -297,10 +400,7 @@ export default function ForJudgesPage() {
           <h2 id="architecture" className={H2}>
             Architecture
           </h2>
-          <p className={P}>
-            One Next.js app. Pages and the JSON API call the service rules. The rules pass work through the blind layer before anyone reads it (rules remove known personal details; some can remain), check every AI
-            output with the guard, and keep each visitor&apos;s demo copy in memory.
-          </p>
+          <p className={P}>{ARCHITECTURE_SUMMARY}</p>
           <div className="mt-6">
             <ArchitectureDiagram />
           </div>
@@ -310,33 +410,24 @@ export default function ForJudgesPage() {
           <h2 id="privacy" className={H2}>
             Data and privacy
           </h2>
-          <List
-            items={[
-              "No account and no CV. The person's private key is kept in their own browser.",
-              "Reviewers and AI models read work only after the blind layer: known personal details are removed by rules, and some can remain. Responses to companies and the city carry no talent id.",
-              "Accepting shows the name and contact to that company only. The organiser sees slots and labels, never names.",
-              "Second look is off until the person turns it on, and can be withdrawn.",
-              "Voice is turned into text; WorkProof stores only the text. Pictures are re-encoded in the browser and the server refuses a JPEG that still carries EXIF data.",
-              "Each visitor's demo copy lives in memory and is dropped after 12 hours.",
-            ]}
-          />
+          <List items={PRIVACY} />
         </section>
 
         <section aria-labelledby="synthetic">
           <h2 id="synthetic" className={H2}>
             Synthetic data statement
           </h2>
-          <p className={P}>
-            Every person, company, task, proof and decision in the demo is invented, including Olena Kovalenko and the ten employers of &ldquo;Espoo Talent
-            Day&rdquo;. Email addresses use example.org and phone numbers are placeholders. Any likeness to a real person or company is accidental. The seed is
-            in <Code>src/lib/seed</Code>.
-          </p>
+          <p className={P}>{SYNTHETIC}</p>
           <p className="mt-8 text-[15px] leading-[22px] text-label-2">
-            A plain-text summary for language models is at{" "}
+            Plain-text versions of this page:{" "}
             <a href="/llms.txt" className="underline underline-offset-2">
               /llms.txt
-            </a>
-            .
+            </a>{" "}
+            (short) and{" "}
+            <a href="/llms-full.txt" className="underline underline-offset-2">
+              /llms-full.txt
+            </a>{" "}
+            (full).
           </p>
         </section>
       </main>

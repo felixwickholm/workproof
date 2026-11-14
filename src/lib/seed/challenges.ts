@@ -1,3 +1,5 @@
+import { EXTRA_CHALLENGES } from "./extra-challenges";
+
 /**
  * Synthetic needs, written the way companies tend to write them. Espoo's talent events are for
  * professions that normally need a university or university of applied sciences degree, mostly in
@@ -5,7 +7,7 @@
  * like a need typed on the company page. The ML need carries bias bait on purpose, so the wishes the
  * designer sets aside are visible in the demo. A task without `places` takes the default number of answers.
  */
-export const SEED_CHALLENGES = [
+const FIRST_CHALLENGES = [
   {
     key: "halla-automate",
     companyIds: ["co-halla"],
@@ -86,13 +88,16 @@ export const SEED_CHALLENGES = [
   },
 ] as const;
 
+/** Every seeded challenge: the first twelve, drafted from the companies' words, then the ones companies wrote out in full. */
+export const SEED_CHALLENGES = [...FIRST_CHALLENGES, ...EXTRA_CHALLENGES] as const;
+
 export type SeedChallengeKey = (typeof SEED_CHALLENGES)[number]["key"];
 
 /**
  * The challenge the city made for a company from its job-ad link. The company has not opened it yet, and
  * about twenty people already did it: "We made a challenge for you."
  */
-export const ON_BEHALF = { key: "kide-timing", by: "Laura Mattila", adUrl: "/ads/kide-chip-verification-engineer" } as const satisfies {
+export const ON_BEHALF = { key: "kide-timing", by: "Sanna Mattila", adUrl: "/ads/kide-chip-verification-engineer" } as const satisfies {
   key: SeedChallengeKey;
   by: string;
   adUrl: string;

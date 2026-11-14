@@ -126,7 +126,9 @@ export async function draftFromAd(url: string, ownOrigin: string | undefined, de
 }
 
 /** The city's ready message to the company: what was made, how many people did it, and where to look. */
+/** A new challenge has no work yet, so the message invites the company to look instead of counting nobody. */
 export function readyMessage(title: string, proofs: number, link: string): string {
+  if (proofs === 0) return `We made a challenge for you: ${endSentence(title)} It is live for job seekers now. See it here: ${link}`;
   return `We made a challenge for you: ${endSentence(title)} ${proofs} ${proofs === 1 ? "person" : "people"} already did it. See how they did: ${link}`;
 }
 

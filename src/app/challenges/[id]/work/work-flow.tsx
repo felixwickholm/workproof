@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FORMAT_LABEL, FormatIcon } from "@/components/seeker/task-format";
+import { use, useCallback, useEffect, useRef, useState } from "react";
+import { FormatIcon } from "@/components/seeker/task-format";
 import { usePersonaName } from "@/components/seeker/identity-line";
 import { WorkArea } from "@/components/seeker/work/work-area";
-import { DemoCursor, DEMO_SESSION_EVENT, useDemoSession } from "@/components/think-aloud/demo-session";
+import { DEMO_SESSION_EVENT } from "@/components/think-aloud/demo-session";
 import { RecorderPill } from "@/components/think-aloud/recorder-pill";
 import { ThinkAloudIntro } from "@/components/think-aloud/think-aloud-intro";
 import { TimeRing } from "@/components/think-aloud/time-ring";
@@ -14,18 +14,16 @@ import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { Screen } from "@/components/ui/screen";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api, ApiError, companyApi, errorText } from "@/lib/client/api";
+import { FORMAT_LABEL } from "@/components/words";
+import { api, ApiError, errorText } from "@/lib/client/api";
 import { clearDraft, getIdentity, getSavedIdentity, getTalentId, loadDraft, saveDraft, saveIdentity } from "@/lib/client/local";
 import { backInFlow, useFlowHistory } from "@/lib/client/use-flow-history";
 import { useResource } from "@/lib/client/use-resource";
 import type { Challenge } from "@/lib/domain/types";
 import { composeAnswer, workReady, type WorkParts } from "@/lib/think-aloud/answer";
-import { fixUnits, markedText } from "@/lib/think-aloud/fix-units";
 import { isLive } from "@/lib/think-aloud/machine";
-import { scriptFromProof } from "@/lib/think-aloud/demo-script";
-import type { DemoScript } from "@/lib/think-aloud/timeline";
-import { firstWords } from "@/lib/think-aloud/timeline";
 import { transcriptToSend } from "@/lib/think-aloud/transcript";
+import { DemoRun } from "./demo-run";
 import { SessionView } from "./session-view";
 import { DoneStep, PreviewStep, QuestionsStep, YouStep, type Answers, type Preview, type Sender } from "./send-steps";
 
@@ -248,7 +246,7 @@ function LiveRun({ challenge, company }: { challenge: Challenge; company: string
       <YouStep
         sender={sender}
         onSender={setSender}
-        personaFirst={persona?.first ?? "Olena"}
+        personaFirst={persona?.first ?? "Mikko"}
         personaLine={`${sendName || personaName} · ${sendContact}`}
         company={company}
         busy={busy}
@@ -365,68 +363,5 @@ function TypedThoughts({ value, onChange }: { value: string; onChange: (value: s
         className="w-full resize-none rounded-inner bg-fill px-4 py-3 text-[17px] leading-[24px] text-label caret-accent outline-none placeholder:text-label-2 focus:shadow-[inset_0_0_0_1.5px_var(--color-label-3)]"
       />
     </label>
-  );
-}
-
-/**
- * A sample session for the guided demo, from a seeded piece of work on this challenge: its think-aloud
- * and its answer, played on the same work screen. No microphone needed.
- */
-function DemoRun({ challenge, onExit }: { challenge: Challenge; onExit: () => void }) {
-  const { data: script, loading } = useResource(async () => {
-    const top = await companyApi.top(challenge.companyIds[0], challenge.id);
-    const seeded = [...top.scored.map((s) => s.proof), ...top.waiting].find((p) => p.thinkAloud?.transcript);
-    return seeded ? scriptFromProof(challenge, seeded) : null;
-  }, [challenge]);
-  if (!script) {
-    return (
-      <Screen back={{ onBack: onExit }}>
-        {loading ? <Skeleton className="mt-6 h-8 w-64" /> : <p className="text-body mt-6 text-label">No sample session for this challenge yet. Try it yourself.</p>}
-      </Screen>
-    );
-  }
-  return <DemoPlayer challenge={challenge} script={script} onExit={onExit} />;
-}
-
-function DemoPlayer({ challenge, script, onExit }: { challenge: Challenge; script: DemoScript; onExit: () => void }) {
-  const frame = useDemoSession(script);
-  const units = useMemo(() => (challenge.material ? fixUnits(challenge.material) : []), [challenge.material]);
-  if (!frame) return null;
-  const markUnit = frame.marked === null ? undefined : units[frame.marked];
-  const parts: WorkParts = {
-    choice: frame.picked ?? undefined,
-    marked: markUnit ? markedText(units, markUnit) : undefined,
-    main: script.answer.slice(0, frame.typed),
-  };
-  const heard = firstWords(script.transcript, frame.words);
-  return (
-    <>
-      <SessionView
-        challenge={challenge}
-        sample
-        timer={<TimeRing minutes={challenge.minutes} startedAt={0} at={frame.clock} />}
-        pill={<RecorderPill status={frame.done ? "stopped" : "recording"} seconds={frame.clock} level={0.35 + 0.3 * Math.abs(Math.sin(frame.progress * 60))} heard={heard} sample />}
-        aside={<p className="text-body line-clamp-2 text-pretty text-label">{heard ? `“${heard}”` : "A sample session. The words stream as they were said."}</p>}
-        action={
-          <Button onClick={onExit} variant={frame.done ? "primary" : "secondary"} className="h-14! text-[18px]!">
-            {frame.done ? "Now try it yourself" : "Skip the sample"}
-          </Button>
-        }
-      >
-        <WorkArea
-          challenge={challenge}
-          parts={parts}
-          onParts={() => {}}
-          mark={frame.marked}
-          onMark={() => {}}
-          picture={null}
-          onPicture={() => {}}
-          pictureChecked={false}
-          onPictureChecked={() => {}}
-          locked
-        />
-      </SessionView>
-      <DemoCursor frame={frame} mark={script.mark} />
-    </>
   );
 }

@@ -39,18 +39,18 @@ describe("seed", () => {
   const storyProof = (seed: typeof data) =>
     seed.submissions.find((s) => s.talentId === seed.demo.personaTalentId && s.challengeId === STORY_CHALLENGE_ID);
 
-  it("is synthetic Espoo Talent Day with 10 employers, 12 live tasks and about 60 proofs", () => {
+  it("is synthetic Espoo Talent Day with 18 employers, 30 live tasks and about 75 proofs", () => {
     expect(data.event.name).toBe("Espoo Talent Day");
-    expect(data.companies).toHaveLength(10);
-    expect(data.challenges.filter((c) => c.kind === "event" && c.approvedBy)).toHaveLength(12);
+    expect(data.companies).toHaveLength(18);
+    expect(data.challenges.filter((c) => c.kind === "event" && c.approvedBy)).toHaveLength(30);
     expect(data.challenges.some((c) => c.companyIds.length > 1)).toBe(true);
-    expect(data.proofs.length).toBeGreaterThanOrEqual(56);
+    expect(data.proofs.length).toBeGreaterThanOrEqual(70);
     expect(new Set(data.decisions.map((d) => `${d.companyId}:${d.reviewer}`)).size).toBeGreaterThanOrEqual(3);
     expect(data.companies.every((c) => c.sector && c.district && c.size && c.workLanguage)).toBe(true);
   });
 
-  it("builds the story around Olena, invited by the story company by default", () => {
-    expect(data.demo).toMatchObject({ personaName: "Olena Kovalenko", stage: "invited" });
+  it("builds the story around Mikko, invited by the story company by default", () => {
+    expect(data.demo).toMatchObject({ personaName: "Mikko Lahtinen", stage: "invited" });
     expect(storyProof(data)?.id).toBe(STORY_PROOF_ID);
     const invite = data.meetings.find((m) => m.proofId === STORY_PROOF_ID && m.companyId === STORY_COMPANY_ID);
     expect(invite?.status).toBe("invited");
@@ -65,7 +65,7 @@ describe("seed", () => {
   it("hides the demo persona's name and background from reviewers", () => {
     const proof = data.proofs.find((p) => p.proofId === storyProof(data)?.id);
     expect(proof?.hiddenCount).toBeGreaterThan(0);
-    expect(JSON.stringify(proof)).not.toMatch(/Olena|Kovalenko|Matinkylä|Metropolia|Kotiranta/);
+    expect(JSON.stringify(proof)).not.toMatch(/Mikko|Lahtinen|Matinkylä|Metropolia|Kotiranta/);
   });
 
   it("has feedback owed somewhere", () => {

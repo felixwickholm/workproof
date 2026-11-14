@@ -3,18 +3,17 @@
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ChallengeRow, ChallengeRowSkeleton, challengeHref } from "@/components/company/challenge-row";
+import { ChallengeTable, ChallengeTableSkeleton } from "@/components/company/challenge-table";
 import { useCompanyId, useCompanyKnown } from "@/components/company/company-choice";
 import { CompanyLine } from "@/components/company/company-line";
-import { EventSteps } from "@/components/company/event-steps";
-import { companyErrorText } from "@/components/company/format";
-import { currentEventStep, factsLine, greetingLine } from "@/components/company/hiring-words";
+import { challengeHref, companyErrorText } from "@/components/company/format";
+import { factsLine, greetingLine } from "@/components/company/hiring-words";
 import { useOnDemoReset } from "@/components/company/use-demo-reset";
-import { ShowMeButton } from "@/components/tour/show-me-button";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { riseAt } from "@/components/ui/rise";
+import { ShowMeButton } from "@/components/tour/show-me-button";
 import { Screen } from "@/components/ui/screen";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, companyApi } from "@/lib/client/api";
@@ -37,9 +36,9 @@ async function loadHome(companyId: string): Promise<HomeData> {
 }
 
 /**
- * Hiring mode's home: "My challenges". The greeting says what happened, then one row per challenge
- * with its four steps as numbers and the one action that matters now. A challenge the city made for
- * the company comes first until the company opens it.
+ * The Company view's home: "My challenges". The greeting says what happened, then one table row per
+ * challenge with its numbers and the one action that matters now: scoring, or the top work. A
+ * challenge the city made for the company comes first until the company opens it.
  */
 export function EmployerHomeView() {
   const [companyId, setCompanyId] = useCompanyId();
@@ -65,59 +64,47 @@ export function EmployerHomeView() {
         <ErrorState error={data.error} what="your challenges" onRetry={data.retry} away={{ href: "/", label: "Back to the start" }} />
       ) : (
         <div key={companyId} className="flex min-w-0 flex-col">
-          <div className="rise flex items-center justify-between gap-4" style={riseAt(1)}>
+          <div className="rise mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-1" style={riseAt(1)}>
             <h2 className="text-title font-semibold text-label">My challenges</h2>
             <Button href="/company" size="sm" className="min-[900px]:h-11 min-[900px]:px-5">
               <Plus aria-hidden className="size-5" strokeWidth={1.75} />
               New challenge
             </Button>
+            {d ? <p className="text-subhead w-full text-label-2">{factsLine(d.home.counts.medianHoursToRespond, d.home.counts.feedbackOwed)}</p> : null}
           </div>
 
           {d ? (
-            <div className="rise" style={riseAt(2)}>
+            <div className="rise flex flex-col gap-4" style={riseAt(2)}>
               {d.home.unclaimed.map((u) => (
                 <CityMadeRow key={u.challenge.id} challenge={u.challenge} proofs={u.proofs} companyId={companyId} />
               ))}
               {d.tasks.length === 0 ? (
                 <EmptyState
-                  className="mt-6"
                   action={
                     <Button href="/company" variant="secondary" size="sm">
                       Make your first challenge
                     </Button>
                   }
                 >
-                  You have no challenge yet. Paste your job ad link and we draft one.
+                  You have no challenge yet. Say who you are looking for and the AI drafts one.
                 </EmptyState>
               ) : (
-                <ul className="mt-2 divide-y divide-separator">
-                  {d.tasks.map((t) => (
-                    <ChallengeRow
-                      key={t.challenge.id}
-                      challenge={t.challenge}
-                      counts={t.counts}
-                      waiting={waitingFor(t.challenge.id)}
-                      firstWaiting={d.queue.proofs.find((p) => p.challengeId === t.challenge.id)?.proofId ?? null}
-                    />
-                  ))}
-                </ul>
+                <ChallengeTable
+                  rows={d.tasks.map((t) => ({
+                    challenge: t.challenge,
+                    counts: t.counts,
+                    topTotal: t.topTotal,
+                    waiting: waitingFor(t.challenge.id),
+                    firstWaiting: d.queue.proofs.find((p) => p.challengeId === t.challenge.id)?.proofId ?? null,
+                  }))}
+                />
               )}
-              <p className="text-subhead mt-4 border-t border-separator pt-4 text-label-2">{factsLine(d.home.counts.medianHoursToRespond, d.home.counts.feedbackOwed)}</p>
-              <EventSteps
-                className="mt-16"
-                current={currentEventStep({
-                  took,
-                  scored: d.tasks.reduce((sum, t) => sum + t.counts.scored, 0),
-                  invited: d.tasks.reduce((sum, t) => sum + t.counts.invited, 0),
-                  met: d.home.pipeline.find((p) => p.stage === "Met")?.count ?? 0,
-                })}
-              />
             </div>
           ) : (
-            <ul aria-busy className="mt-2 divide-y divide-separator">
-              <ChallengeRowSkeleton />
-              <ChallengeRowSkeleton />
-            </ul>
+            <div aria-busy>
+              <span className="sr-only">Loading your challenges</span>
+              <ChallengeTableSkeleton />
+            </div>
           )}
         </div>
       )}
@@ -148,7 +135,7 @@ function CityMadeRow({ challenge, proofs, companyId }: { challenge: Challenge; p
   }
 
   return (
-    <div className="mt-4 flex flex-col gap-4 rounded-card bg-tint p-5 min-[900px]:flex-row min-[900px]:items-center min-[900px]:gap-8 min-[900px]:p-6">
+    <div className="flex flex-col gap-4 rounded-card bg-tint p-5 min-[900px]:flex-row min-[900px]:items-center min-[900px]:gap-8 min-[900px]:p-6">
       <div className="min-w-0 flex-1">
         <p className="text-title-3 font-semibold text-pretty text-label">The City of Espoo made a challenge for you: {endSentence(challenge.title)}</p>
         <p className="text-body mt-1 text-label-2">

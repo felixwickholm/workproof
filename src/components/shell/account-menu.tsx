@@ -1,17 +1,18 @@
 "use client";
 
-import { ArrowLeft, ChevronsUpDown, Moon, Play, RotateCcw, Sun, UserRound } from "lucide-react";
+import { BookOpen, ChevronsUpDown, Moon, Play, RotateCcw, Scale, Sun } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useId, useRef, useState, type ReactNode } from "react";
 import type { Theme } from "../theme/theme";
 import { useTheme } from "../theme/use-theme";
+import { Avatar } from "../ui/avatar";
 import { cx } from "../ui/cx";
 import { Popover } from "../ui/popover";
 import { SegmentedControl } from "../ui/segmented-control";
 import { startTour, useResetDemo } from "./demo-actions";
 import { MenuAction, onMenuKey } from "./mode-menu";
 import { modeForPath, type Mode } from "./modes";
-import { useAccount } from "./use-identity";
+import { useAccount } from "./use-account";
 
 const ICON = "size-5";
 const STROKE = 1.75;
@@ -21,14 +22,12 @@ const THEMES = [
   { value: "dark", label: <><Moon aria-hidden className="size-4" strokeWidth={STROKE} />Dark</> },
 ] as const satisfies readonly { value: Theme; label: ReactNode }[];
 
-/** Who the visitor acts as: a neutral person glyph, the name, then the company or role. */
+/** Who the visitor acts as: their picture (or a neutral person shape), the name, then the company or role. */
 export function AccountSummary({ mode, className }: { mode: Mode; className?: string }) {
   const account = useAccount(mode);
   return (
     <span className={cx("flex min-w-0 flex-1 items-center gap-3", className)}>
-      <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-[8px] bg-fill text-label-2">
-        <UserRound className="size-4" strokeWidth={STROKE} />
-      </span>
+      <Avatar src={account.avatar} size="md" />
       <span className="min-w-0 flex-1">
         <span className="text-footnote block truncate font-semibold text-label">{account.name}</span>
         <span className="text-caption block truncate text-label-2">{account.role}</span>
@@ -39,7 +38,7 @@ export function AccountSummary({ mode, className }: { mode: Mode; className?: st
 
 /**
  * The rarely used actions, together in one place: the demo of this view, a reset, the theme and the
- * way out. `onDone` closes whatever holds the menu.
+ * pages around the app (there is no landing page). `onDone` closes whatever holds the menu.
  */
 export function AccountActions({ onDone }: { onDone: () => void }) {
   const router = useRouter();
@@ -71,17 +70,32 @@ export function AccountActions({ onDone }: { onDone: () => void }) {
         <span className="text-subhead flex-1 text-label">Theme</span>
         <SegmentedControl label="Theme" segments={THEMES} value={theme} onChange={setTheme} className="w-[160px]" />
       </div>
+      <div role="separator" className="mx-3 my-2 h-px bg-separator" />
       <MenuAction
         onClick={() => {
           onDone();
-          router.push("/");
+          router.push("/how-it-works");
         }}
-        icon={<ArrowLeft aria-hidden className={ICON} strokeWidth={STROKE} />}
+        icon={<BookOpen aria-hidden className={ICON} strokeWidth={STROKE} />}
       >
-        Back to start page
+        How it works
+      </MenuAction>
+      <MenuAction
+        onClick={() => {
+          onDone();
+          router.push("/for-judges");
+        }}
+        icon={<Scale aria-hidden className={ICON} strokeWidth={STROKE} />}
+      >
+        Evidence for judges
       </MenuAction>
       <div role="separator" className="mx-3 my-2 h-px bg-separator" />
-      <p className="text-caption px-3 pb-1 text-label-2">Demo data. All people and companies are invented.</p>
+      <p className="text-caption px-3 pb-1 text-label-2">
+        Demo data. All people and companies are invented.{" "}
+        <a href="/llms.txt" className="underline underline-offset-2 hover:text-label">
+          llms.txt
+        </a>
+      </p>
     </div>
   );
 }

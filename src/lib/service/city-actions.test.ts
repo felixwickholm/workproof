@@ -58,7 +58,7 @@ describe("owedReminders", () => {
       { title: "Task ch-a", waiting: 2 },
       { title: "Task ch-pool", waiting: 1 },
     ]);
-    expect(JSON.stringify(kaari)).not.toMatch(/Olena|Sam Example|t_/);
+    expect(JSON.stringify(kaari)).not.toMatch(/Mikko|Sam Example|t_/);
   });
 });
 

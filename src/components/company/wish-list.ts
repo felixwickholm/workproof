@@ -1,10 +1,10 @@
 import type { ChallengeDraft, WishOutcome } from "@/lib/domain/types";
 
 /** Where a wish ended up: a core skill, a fact about the job shown to people, or set aside. */
-export type WishPile = "kept" | "fact" | "aside";
+type WishPile = "kept" | "fact" | "aside";
 
 /** One row of the wish sort: a wish the company wrote, or a core skill the designer added to reach three. */
-export interface WishRow {
+interface WishRow {
   key: string;
   /** The wish in the company's words, or the neutral category name of a wish about the person. Empty for an added skill. */
   text: string;

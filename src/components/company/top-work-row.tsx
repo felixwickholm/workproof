@@ -9,7 +9,8 @@ import { Button } from "../ui/button";
 import { cx } from "../ui/cx";
 import { Popover } from "../ui/popover";
 import { proofHref } from "./format";
-import { formatTotal, rowState, workCode, workLabel } from "./hiring-words";
+import { formatTotal, workCode, workLabel } from "../words";
+import { rowState } from "./hiring-words";
 import { SkillMarks } from "./skill-marks";
 
 interface Props {

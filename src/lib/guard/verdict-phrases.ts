@@ -4,6 +4,12 @@ const ANSWER = "(?:diagnosis|review|answer|argument|analysis|reasoning|coverage|
 const QUALITY =
   "(?:accurate|inaccurate|correct|incorrect|thorough|convincing|unconvincing|comprehensive|complete|incomplete|partial|confused|muddled|flawed|sound|rigorous|exceptional|competent)";
 const FIND = "(?:catch|catches|caught|find|finds|found|spot|spots|spotted|miss|misses|missed|hit|hits|nail|nails|nailed|identif\\w{0,8}|overlook\\w{0,4})";
+/**
+ * What a person found, as a report: "Catches the flaw", "they find the flaw". A bare imperative such as
+ * "Catch flaws before it ships" asks the person to do the task and judges nobody.
+ */
+const FOUND =
+  "(?:catches|caught|finds|found|spots|spotted|misses|missed|hits|nails|nailed|identifie[sd]|overlook(?:s|ed)|(?<=\\b(?:they|he|she|person|candidate|applicant|answer|did|didn't|does|doesn't|not|never|cannot|can't)\\s)(?:catch|find|spot|miss|hit|nail|identify|overlook))";
 
 /**
  * Verdicts about a person or their work in everyday words, and scoring scales in review guides.
@@ -21,7 +27,7 @@ export const VERDICT_PHRASES: { kind: JudgementKind; pattern: RegExp }[] = [
   { kind: "verdict", pattern: /(?:^|[.!?;]\s{0,3})misunderst\w{0,8}|\b(?:they|she|he|the\s(?:person|author|applicant|candidate))\smisunderst\w{0,8}/gim },
   // What an answer found, measured against the planted flaws.
   { kind: "score", pattern: /\bplanted\s(?:flaws?|bugs?|issues?|problems?|mistakes?|errors?)\b/gi },
-  { kind: "score", pattern: new RegExp(`\\b${FIND}\\b[^.\\n]{0,30}\\bflaws?\\b|\\b${FIND}\\s(?:all|both|the\\s(?:two|three|four))\\s(?:\\w{1,12}\\s)?bugs\\b`, "gi") },
+  { kind: "score", pattern: new RegExp(`\\b${FOUND}\\b[^.\\n]{0,30}\\bflaws?\\b|\\b${FIND}\\s(?:all|both|the\\s(?:two|three|four))\\s(?:\\w{1,12}\\s)?bugs\\b`, "gi") },
   { kind: "score", pattern: /\b(?:hits|gets|covers|catches|finds|names)\severy\b/gi },
   // Scales and counting in review guides: "Give 1 to 5 points", "score out of 10", "rate each answer".
   { kind: "score", pattern: /\b(?:give|award|assign|add|deduct)\s(?:\d{1,3}|one|two|three|four|five|ten)(?:\s?(?:to|-|–)\s?(?:\d{1,3}|five|ten))?\s(?:points?|stars?|marks?)\b/gi },

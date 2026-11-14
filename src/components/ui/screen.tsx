@@ -10,9 +10,9 @@ type Back = { href: string; label?: string } | { onBack: () => void; label?: str
 interface Props {
   children: ReactNode;
   /**
-   * The page's h1. One rule across the app: a mode home sets it as the greeting (serif, 48px on a
-   * laptop and 30px on a phone, 64px from the top); every other page sets a sans 28px/600 title,
-   * 36px from the top.
+   * The page's h1, at Proven's sizes. A view's home sets it as the greeting (serif, 48px on a laptop
+   * and 36px on a phone); every other page sets a sans 36px/600 title. Both sit 64px from the top
+   * on a laptop.
    */
   title?: ReactNode;
   /** Muted line under the title: the finding or the scope, never instructions. */
@@ -26,32 +26,33 @@ interface Props {
   right?: ReactNode;
   /** Sticky glass bar with the screen's main action. */
   bottom?: ReactNode;
-  /** A mode's top-level page. The app frame places the tab bar itself, so this no longer changes the layout. */
-  tabs?: boolean;
   /** From 900px wide the page grows to two panes; the bottom bar's action sits over the right pane. */
   wide?: boolean;
-  /** From 900px wide the page grows to the full 1100px column for a list beside its detail, or a grid. */
+  /** From 900px wide the page grows to the full 76rem column for a table, a list beside its detail, or a grid. */
   page?: boolean;
   /** The bottom bar holds two stacked buttons. */
   tall?: boolean;
   /** The bottom bar is for phones only; from 900px the page places its actions itself. */
   phoneBar?: boolean;
+  /** "grey": the page sits on the light grey surface, so a white list or card reads as on a job board. */
+  tone?: "grey";
 }
 
 /**
  * A phone screen that grows up on a laptop: from 900px it is a centred 560px column with its
- * action inline after the content, or the full 1100px column for two panes or a grid.
+ * action inline after the content, or Proven's full 76rem column for two panes, a table or a grid.
  * Inside the app frame the frame names the product, so the bar here only appears when the page
  * has something of its own to put in it (a back link, a progress, a timer).
  */
-export function Screen({ children, title, subtitle, greeting, back, center, right, bottom, wide, page, tall, phoneBar }: Props) {
+export function Screen({ children, title, subtitle, greeting, back, center, right, bottom, wide, page, tall, phoneBar, tone }: Props) {
   const column = !wide && !page;
   const ownBar = Boolean(back || center || right);
   return (
     <div
+      data-page-tone={tone}
       className={cx(
         "mx-auto flex min-h-dvh w-full max-w-[440px] flex-col in-shell:min-h-0",
-        (wide || page) && "min-[900px]:max-w-[1148px] min-[900px]:px-6",
+        (wide || page) && "min-[900px]:max-w-(--page-width) min-[900px]:px-8",
         column && "min-[900px]:max-w-[592px] min-[900px]:px-4",
       )}
     >
@@ -67,8 +68,7 @@ export function Screen({ children, title, subtitle, greeting, back, center, righ
         className={cx(
           // Clip sideways so a step sliding in never widens the page on a phone.
           "flex flex-1 flex-col overflow-x-clip px-4 pt-3 min-[900px]:px-0",
-          ownBar ? "min-[900px]:pt-4" : "min-[900px]:pt-9 in-shell:pt-6 min-[900px]:in-shell:pt-9",
-          greeting && "min-[900px]:in-shell:pt-16",
+          ownBar ? "min-[900px]:pt-6" : "min-[900px]:pt-12 in-shell:pt-6 min-[900px]:in-shell:pt-16",
           // Below 360px two-button bars stack, so they need more room.
           bottom
             ? tall
@@ -79,16 +79,16 @@ export function Screen({ children, title, subtitle, greeting, back, center, righ
         )}
       >
         {title ? (
-          <div className={cx("rise", greeting ? "mb-8 min-[900px]:mb-12" : "mb-6 min-[900px]:mb-8")}>
+          <div className={cx("rise", greeting ? "mb-8 min-[900px]:mb-10" : "mb-6 min-[900px]:mb-8")}>
             <h1
               className={cx(
                 "text-balance text-label",
-                greeting ? "text-greeting max-w-[22ch]" : "text-large-title font-semibold",
+                greeting ? "text-greeting max-w-[28ch]" : "text-[32px] leading-[40px] font-normal min-[900px]:text-h1",
               )}
             >
               {title}
             </h1>
-            {subtitle ? <p className="text-body mt-2 max-w-[60ch] text-pretty text-label-2 min-[900px]:text-[17px] min-[900px]:leading-[26px]">{subtitle}</p> : null}
+            {subtitle ? <p className="text-body mt-3 max-w-[60ch] text-pretty text-label-2 min-[900px]:text-lead">{subtitle}</p> : null}
           </div>
         ) : null}
         {children}
@@ -105,23 +105,6 @@ export function Screen({ children, title, subtitle, greeting, back, center, righ
   );
 }
 
-/** Question-style title used inside step flows. */
-export function StepTitle({ children, sub, long }: { children: ReactNode; sub?: ReactNode; long?: boolean }) {
-  return (
-    <div className="mt-2 mb-6">
-      <h1
-        className={cx(
-          long ? "text-title-3 min-[900px]:text-[24px] min-[900px]:leading-[30px]" : "text-large-title",
-          "font-semibold text-pretty",
-        )}
-      >
-        {children}
-      </h1>
-      {sub ? <p className="text-body mt-2 text-pretty text-label-2">{sub}</p> : null}
-    </div>
-  );
-}
-
 /** The screen's main action: a glass bar on a phone; on a laptop column it sits inline after the content. */
 function BottomBar({ children, wide, inline }: { children: ReactNode; wide?: boolean; inline?: boolean }) {
   return (
@@ -129,22 +112,12 @@ function BottomBar({ children, wide, inline }: { children: ReactNode; wide?: boo
       <div
         className={cx(
           "glass mx-auto w-full max-w-[440px] px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] shadow-[inset_0_0.5px_0_var(--color-separator)]",
-          wide && "min-[900px]:max-w-[1148px] min-[900px]:px-6",
+          wide && "min-[900px]:max-w-(--page-width) min-[900px]:px-8",
           inline && "min-[900px]:max-w-none min-[900px]:bg-transparent min-[900px]:px-0 min-[900px]:pt-0 min-[900px]:shadow-none min-[900px]:backdrop-blur-none",
         )}
       >
         {wide ? <div className="min-[900px]:ml-auto min-[900px]:w-[420px]">{children}</div> : children}
       </div>
-    </div>
-  );
-}
-
-/** Two panes from 900px: the task and its material on the left, the answer on the right and in view while scrolling. */
-export function TwoPane({ task, answer }: { task: ReactNode; answer: ReactNode }) {
-  return (
-    <div className="min-[900px]:grid min-[900px]:grid-cols-[minmax(0,1fr)_420px] min-[900px]:items-start min-[900px]:gap-10">
-      <div className="min-w-0">{task}</div>
-      <div className="mt-5 min-[900px]:sticky min-[900px]:top-[72px] min-[900px]:mt-2">{answer}</div>
     </div>
   );
 }

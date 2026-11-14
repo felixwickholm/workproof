@@ -14,7 +14,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/toast";
 import { api, currentTalentId, errorText } from "@/lib/client/api";
-import type { PassportEntry, Portfolio } from "@/lib/domain/types";
+import type { PassportEntry, Portfolio, SeekerHome } from "@/lib/domain/types";
+import { InvitationFocus } from "@/components/seeker/invitation-focus";
+
+/**
+ * The company's invite, at the top of My work: the newest that still needs an answer, else the newest at all.
+ * It moved here from the home, which now leads with the challenges.
+ */
+function inviteOf({ invitations, passport }: SeekerHome) {
+  const invitation = invitations.find((i) => i.status === "invited") ?? invitations[0];
+  if (!invitation) return null;
+  const response = passport.find((e) => e.proof.proofId === invitation.proofId)?.responses.find((r) => r.companyName === invitation.companyName);
+  const confirmedByMe = passport.some((e) => e.responses.some((r) => r.meeting?.id === invitation.meetingId && r.meeting.talentConfirmedMet));
+  return { invitation, response, confirmedByMe };
+}
 
 /** Copies a shared link as a full address. */
 function copyLink(link: string) {
@@ -39,6 +52,7 @@ export function MyWorkList() {
       return {
         portfolio,
         practice: home.passport.filter((e) => e.challenge.kind === "taster"),
+        invite: inviteOf(home),
       };
     },
   );
@@ -92,6 +106,11 @@ export function MyWorkList() {
         </EmptyState>
       ) : data ? (
         <div data-tour="own-work-list">
+          {data.invite ? (
+            <div className="rise mb-10">
+              <InvitationFocus {...data.invite} onChanged={reload} tour="invitation" />
+            </div>
+          ) : null}
           {failure ? (
             <p
               role="alert"
@@ -143,8 +162,8 @@ function ShareAll({
           <p className="text-body font-medium text-label">{LABEL}</p>
           <p className="text-footnote mt-0.5 text-pretty text-label-2">
             {portfolio.link
-              ? "Anyone with the link sees every task here and the written answers. Not your name or contact."
-              : "Off. Each task is private unless you share it."}
+              ? "Anyone with the link sees every challenge here and the written answers. Not your name or contact."
+              : "Off. Each challenge is private unless you share it."}
           </p>
         </div>
         <Switch

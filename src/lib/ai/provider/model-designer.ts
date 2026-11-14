@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import type { ChallengeDraft } from "@/lib/domain/types";
+import type { ChallengeDraft, ChoiceOption } from "@/lib/domain/types";
 import { neutralSetAside, NOT_USED_PREFIX, talentNeed } from "@/lib/guard/check-draft";
 import { SKILLS, toSkill, type SkillId } from "@/lib/skills/vocabulary";
 import { draftFromNeed, tasterFor } from "../scripted/compose";
@@ -26,6 +26,17 @@ function validate<T>(schema: z.ZodType<T>, reply: string, label: string): T {
   throw new Error(`${label} returned JSON in the wrong shape at ${path}`);
 }
 
+/** The two options of a "choose" task as A and B. A "choose" task without exactly two cannot be done, so it fails over. */
+function choiceOptions(task: ModelTask): [ChoiceOption, ChoiceOption] | undefined {
+  if (task.format !== "choose") return undefined;
+  const [a, b] = task.options ?? [];
+  if (!a || !b) throw new Error("A choose task needs exactly two options");
+  return [
+    { id: "a", ...a },
+    { id: "b", ...b },
+  ];
+}
+
 /**
  * Builds a draft from the model's task on top of the scripted draft for the same input.
  * The scripted draft supplies kind, minutes and, when the model leaves it out, the proof kind.
@@ -37,6 +48,7 @@ function toDraft(task: ModelTask, base: ChallengeDraft, need: (skills: SkillId[]
   const skills = ids.map((id) => toSkill(id, task.coreSkills.find((s) => s.id === id)?.why));
   const guide = new Map(task.reviewGuide.map((g) => [g.skillId, g.lookFor]));
   const fixed = (line: string) => line.startsWith(NOT_USED_PREFIX);
+  const options = choiceOptions(task);
   const setAside = base.kind === "taster" ? [] : [...neutralSetAside(task.setAside.filter((line) => !fixed(line))), ...base.setAside.filter(fixed)];
 
   return {
@@ -49,6 +61,7 @@ function toDraft(task: ModelTask, base: ChallengeDraft, need: (skills: SkillId[]
     minutes: base.minutes,
     brief: task.brief,
     material: task.material,
+    ...(options ? { options } : {}),
     deliverable: task.deliverable,
     reviewGuide: ids.map((id) => ({ skillId: id, lookFor: guide.get(id) ?? SKILLS[id].lookFor })),
     aiAllowed: true,

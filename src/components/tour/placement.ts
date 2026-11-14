@@ -7,7 +7,7 @@ export interface Box {
   height: number;
 }
 
-export interface Viewport {
+interface Viewport {
   width: number;
   height: number;
   /** Space at the top taken by a sticky bar. */
@@ -16,7 +16,7 @@ export interface Viewport {
   bottom: number;
 }
 
-export type Side = "right" | "left" | "below" | "above" | "docked" | "center";
+type Side = "right" | "left" | "below" | "above" | "docked" | "center";
 
 /** The caret on the card's edge that points at the spotlight: which edge, and how far along it. */
 export interface Arrow {
@@ -25,7 +25,7 @@ export interface Arrow {
   offset: number;
 }
 
-export interface Placement {
+interface Placement {
   card: { x: number; y: number };
   side: Side;
   /** The spotlight, trimmed so the card never sits on top of it. Null when nothing is lit. */
@@ -35,7 +35,7 @@ export interface Placement {
 }
 
 /** Room around the target inside the spotlight. */
-export const SPOT_PADDING = 8;
+const SPOT_PADDING = 8;
 /** Gap between the spotlight and the card. */
 const GAP = 16;
 /** Distance from the screen edge. */
@@ -43,7 +43,7 @@ const MARGIN = 16;
 /** Below this width the card docks to the bottom of the screen, edge to edge. */
 export const PHONE_MAX = 640;
 /** The card's width on a laptop. */
-export const CARD_WIDTH = 460;
+const CARD_WIDTH = 460;
 /** Where a target too tall for the screen starts: its top this far under the top edge. */
 const TALL_TOP = 24;
 /** How close the caret may come to a corner of the card, so it never sits on the rounded part. */

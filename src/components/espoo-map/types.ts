@@ -1,6 +1,7 @@
+import type { FlowState } from "@/lib/domain/types";
 import type { EspooDistrictName } from "@/lib/geo/espoo";
 
-export type { EspooDistrictName };
+export type { EspooDistrictName, FlowState };
 
 export interface FlowMapCompany {
   id: string;
@@ -8,12 +9,6 @@ export interface FlowMapCompany {
   sector: string;
   district: EspooDistrictName;
 }
-
-/**
- * How far a piece of work got. Each state includes the ones before it: a meeting was also an
- * invitation. "answered" is the older name for "scored" and is drawn the same way.
- */
-export type FlowState = "sent" | "answered" | "scored" | "invited" | "met";
 
 /** One piece of work on its way to a company. Carries a label, never a person. */
 export interface FlowMapFlow {

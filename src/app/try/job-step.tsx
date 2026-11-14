@@ -15,7 +15,7 @@ interface Props {
 }
 
 /** Said when a scanned code leads nowhere, so a visitor is never left wondering where the proof went. */
-export const INACTIVE_TABLE = "This table code is not active. You can still try the task: your proof stays on your phone's own demo.";
+const INACTIVE_TABLE = "This table code is not active. You can still try the task: your proof stays on your phone's own demo.";
 
 /** The first question: one big field with the voice button inside it, and eight jobs to tap. */
 export function JobStep({ job, onJob, onStart, tableInactive }: Props) {

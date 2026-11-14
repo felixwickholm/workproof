@@ -1,6 +1,6 @@
 /**
  * The words of /how-it-works, in one place, so a test can hold them to the plain-language rules
- * and to the v3 truth: people score the work, the AI never does.
+ * and to the rule that people score the work and the AI never does.
  */
 
 /** What WorkProof sells, in one sentence. */
@@ -22,10 +22,10 @@ export type StepId = (typeof STEPS)[number]["id"];
 export const SIDES = [
   {
     id: "seeker",
-    title: "For people looking for work",
-    href: "/seeker",
-    cta: "Open the view for people looking for work",
-    points: ["Show what you can do, not your CV.", "Your name stays hidden until you say yes.", "Every score comes with a written reason."],
+    title: "For job seekers",
+    href: "/",
+    cta: "Open the Job seeker view",
+    points: ["Do a short real challenge from an Espoo company.", "Your name stays hidden until you say yes.", "Every score comes with a written reason."],
   },
   {
     id: "employer",
@@ -76,7 +76,7 @@ export const FAIR_QUESTIONS = [
 
 /** Most recruiting AI against WorkProof, row by row. */
 export const COMPARISON = [
-  ["Reads a CV or a profile", "Reads real work, 5 to 15 minutes long"],
+  ["Reads a profile", "Reads real work, 5 to 15 minutes long"],
   ["An algorithm gives a match score", "A person scores the work and signs it"],
   ["AI interviews or ranks people", "AI only drafts challenges and marks skills"],
   ["Silence after you apply", "Every score comes with a written reason"],

@@ -87,6 +87,20 @@ describe("Eval 4: consent and privacy", () => {
     expect(ok).toBe(true);
   });
 
+  it("no company or city response carries a job seeker's picture before the person says yes", async () => {
+    const data = await getStore().read();
+    const said = new Set(
+      data.meetings.filter((m) => m.status === "accepted" || m.status === "met").map((m) => data.submissions.find((s) => s.id === m.proofId)?.talentId),
+    );
+    const waiting = data.talents.filter((t) => t.avatar && !said.has(t.id));
+    const body = await publicResponses();
+    const found = waiting.filter((t) => body.includes(t.avatar ?? "")).map((t) => t.avatar);
+    const ok = waiting.length >= 30 && found.length === 0;
+    record(EVAL, "seeker pictures in public responses", `${found.length} of ${waiting.length} pictures of people who have not said yes found`, ok);
+    expect(found).toEqual([]);
+    expect(ok).toBe(true);
+  });
+
   it("the private key travels only in a header and never reaches the audit log", async () => {
     const withHeader = await call<PassportEntry[]>(passportRoute, ownKey(TALENT.id));
     const without = await call<{ error: string }>(passportRoute);

@@ -7,6 +7,24 @@
 /** How a challenge is done. Shown to people as Choose, Make, Fix, Read. */
 export type TaskFormat = "choose" | "make" | "fix" | "read";
 
+/**
+ * The kind of job a challenge is for. A job seeker picks one or more to see the challenges for them
+ * first; a company picks one to say who it is looking for. Labels live in `roles.ts`.
+ */
+export type JobRole =
+  | "ai-developer"
+  | "software-engineer"
+  | "data-analyst"
+  | "financial-analyst"
+  | "marketing"
+  | "sales"
+  | "product-manager"
+  | "designer"
+  | "hardware-engineer"
+  | "civil-engineer"
+  | "researcher"
+  | "legal";
+
 /** One of the two options in a "choose" challenge. */
 export interface ChoiceOption {
   id: "a" | "b";
@@ -77,11 +95,19 @@ export interface Company {
   finnishNeeded: boolean;
   permitSupport: boolean;
   relocationHelp: boolean;
+  /** One line on what the company does, for the company card on a challenge page. */
+  about?: string;
+  /** Broad industry for the company card, for example "Energy". `sector` stays the narrower label. */
+  industry?: string;
+  /** Path to the company's logo mark under /public, for example "/companies/co-halla.svg". The name is rendered as text beside it. */
+  logo?: string;
   /**
    * The people registered to decide for this company. A decision must name one of them, so no
    * decision can come from a nameless process. Read it through `companyReviewers`.
    */
   reviewers?: string[];
+  /** Illustrated profile picture per reviewer name, for example { "Laura Niemi": "/people/laura-niemi.svg" }. Reviewers may show theirs. */
+  reviewerAvatars?: Record<string, string>;
 }
 
 export interface Challenge {
@@ -130,6 +156,12 @@ export interface Challenge {
    * questions read it, never the editable title. Unset for a task a model wrote: the generic role answers.
    */
   templateId?: string;
+  /** The kinds of job this challenge is for. Unset on older data: read it through `rolesOf` in `roles.ts`. */
+  roles?: JobRole[];
+  /** A photo of this kind of work, by convention "/challenges/<challengeId>.webp". Never a picture of a candidate. */
+  image?: string;
+  /** When the challenge went public, ISO time, for "Published 13.11.". Seeded challenges set it to `createdAt`. */
+  publishedAt?: string;
 }
 
 /** The designer that wrote a draft: the built-in scripted one or a live model. */
@@ -170,6 +202,11 @@ export interface Talent {
   id: string;
   name: string;
   contact: string;
+  /**
+   * Illustrated profile picture, for example "/people/mikko.svg". Identity, like the name: it reaches a company
+   * only after the person accepts, and never goes into BlindProof or any company or city view.
+   */
+  avatar?: string;
   /** Set by the first event submission with both name and contact. After that, nobody can change them. */
   locked?: boolean;
 }

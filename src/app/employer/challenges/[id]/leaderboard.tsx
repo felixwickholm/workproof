@@ -4,7 +4,7 @@ import Link from "next/link";
 import { use, useEffect, useRef, useState } from "react";
 import { getReviewer, useCompanyId, useCompanyKnown } from "@/components/company/company-choice";
 import { companyErrorText, proofHref } from "@/components/company/format";
-import { challengeShape, workLabel } from "@/components/company/hiring-words";
+import { challengeShape } from "@/components/company/hiring-words";
 import { ShareSheet } from "@/components/company/share-sheet";
 import { TopWorkRow } from "@/components/company/top-work-row";
 import { useOnDemoReset } from "@/components/company/use-demo-reset";
@@ -15,6 +15,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { riseAt } from "@/components/ui/rise";
 import { Screen } from "@/components/ui/screen";
 import { Skeleton } from "@/components/ui/skeleton";
+import { workLabel } from "@/components/words";
 import { companyApi } from "@/lib/client/api";
 import { useResource } from "@/lib/client/use-resource";
 import { placesOf } from "@/lib/domain/places";
@@ -23,7 +24,7 @@ import type { TopProof } from "@/lib/domain/types";
 const POLL_MS = 5000;
 
 /** The rule above the list, so nobody reads the totals as a machine's verdict. */
-export const SCORE_SOURCE_LINE = "People score the work. The AI never does. Names stay hidden until the person says yes.";
+const SCORE_SOURCE_LINE = "People score the work. The AI never does. Names stay hidden until the person says yes.";
 
 /**
  * One challenge: who scored what. Scored work highest total first (ties by arrival), then the work
@@ -97,7 +98,7 @@ export function Leaderboard({ params }: { params: Promise<{ id: string }> }) {
           <h2 id="top-work" className="text-title font-semibold text-label">
             Top work
           </h2>
-          <p className="text-subhead text-label-2">{SCORE_SOURCE_LINE}</p>
+          <p className="text-subhead text-pretty text-label-2">{SCORE_SOURCE_LINE}</p>
         </div>
         {error ? (
           <p role="alert" className="text-subhead mt-3 text-label">
@@ -118,7 +119,7 @@ export function Leaderboard({ params }: { params: Promise<{ id: string }> }) {
             {d.waiting.length > 0 ? "No work has a score yet. Score the first one, and it shows here." : "No one did this challenge yet. Work shows here once it has a score."}
           </EmptyState>
         ) : (
-          <ul data-tour="top-work" className="mt-2 divide-y divide-separator">
+          <ul data-tour="top-work" className="mt-4 divide-y divide-separator rounded-card border border-separator bg-surface px-5 min-[1000px]:px-6">
             {d.scored.map((row, i) => (
               <TopWorkRow
                 key={row.proof.proofId}
@@ -135,11 +136,8 @@ export function Leaderboard({ params }: { params: Promise<{ id: string }> }) {
         )}
       </section>
 
-      <section aria-labelledby="waiting" className="rise mt-10" style={riseAt(2)}>
-        <p aria-hidden className="text-footnote flex items-center gap-3 text-label-2 before:h-px before:w-6 before:bg-separator after:h-px after:flex-1 after:bg-separator">
-          Not scored yet
-        </p>
-        <div className="mt-6 flex items-baseline gap-3">
+      <section aria-labelledby="waiting" className="rise mt-12" style={riseAt(2)}>
+        <div className="flex items-baseline gap-3">
           <h2 id="waiting" className="text-title-3 font-semibold text-label">
             Waiting for a score
           </h2>
@@ -148,7 +146,7 @@ export function Leaderboard({ params }: { params: Promise<{ id: string }> }) {
         {d.waiting.length === 0 ? (
           <p className="text-body mt-3 text-label-2">Nothing waits. All work has a score.</p>
         ) : (
-          <ul className="mt-2 divide-y divide-separator">
+          <ul className="mt-4 divide-y divide-separator rounded-card border border-separator bg-surface px-5 min-[1000px]:px-6">
             {d.waiting.map((p) => (
               <li key={p.proofId} className="flex min-h-16 items-center gap-4 py-3">
                 <Link href={proofHref(p.proofId)} className="text-body min-w-0 flex-1 font-medium text-label underline-offset-4 hover:underline">

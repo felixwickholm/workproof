@@ -8,12 +8,10 @@ import { TOUR_EVENT } from "@/components/shell/demo-actions";
 import { api } from "@/lib/client/api";
 import type { StoryStage } from "@/lib/domain/types";
 import { autoAdvances, isHeld, noHolds, remainingMs, stepDuration, type Holds } from "./autoplay";
-import { offerDemo } from "./demo-offer";
-import { glideCompare } from "./glide";
+import { isOffParam, localStore, markStorySeen, shouldAutoStart, storySeen } from "./first-visit";
 import { resolveRoute } from "./resolve-route";
 import { bringIntoView, runStep, setStage, stagesSettled } from "./run-step";
-import { EXPLORE_STAGE, TOUR_KINDS, tourKindOf, tours, type EndAction, type TourKind, type TourStep } from "./steps";
-import type { Wait } from "./tour-card";
+import { EXPLORE_STAGE, startIndexOf, storySteps, type EndAction, type TourStep } from "./steps";
 import { TourLayer } from "./tour-layer";
 import { announcement, closedTour, tourReducer, type TourAction, type TourState } from "./tour-machine";
 import { STORY_COMPANY } from "./story-ids";
@@ -22,16 +20,15 @@ import { useScrollLock } from "./use-scroll-lock";
 import { findShown, waitUntilStill } from "./wait-for-target";
 import { runWarmCall, usesTalentKey, warmCalls } from "./warm";
 
-const STEP_COUNTS = Object.fromEntries(TOUR_KINDS.map((kind) => [kind, tours[kind].steps.length])) as Record<TourKind, number>;
-const reduceTour = (state: TourState, action: TourAction) => tourReducer(state, action, STEP_COUNTS);
+const steps = storySteps;
+const reduceTour = (state: TourState, action: TourAction) => tourReducer(state, action, steps.length);
 const noop = () => () => {};
 
 /** A first step slower than this shows its card early, so the tap is never ignored. */
 const REVEAL_AFTER_MS = 250;
-/** A move shorter than this shows no spinner: most moves are, and a flash of one reads as lag. */
-export const SPIN_AFTER_MS = 600;
-/** A move longer than this says so in words, so a slow screen never looks like a stall. */
-export const LOADING_LINE_AFTER_MS = 4000;
+
+/** Every page the story opens, each once, so they can all be fetched before the first move. */
+const STORY_PATHS = [...new Set(steps.flatMap((step) => (step.route ? [resolveRoute(step.route)] : [])).filter((path): path is string => path !== null))];
 
 /**
  * Asks for the next step's page and the data it reads while the visitor reads this one, so the move
@@ -56,9 +53,11 @@ async function warmNext(step: TourStep, next: TourStep | undefined, prefetch: (p
 }
 
 /**
- * Runs the tours over the real app: the one-minute overview and the demo of each view. A tour starts
- * on the `workproof:tour` event or a `?tour=` link, drives the story stage and the pages itself, and
- * keeps nothing between visits. The page underneath is inert while it runs.
+ * Runs the guided story over the real app: Job seeker, Company, City of Espoo, then the end goal. It
+ * starts by itself on a first visit to Mikko's home, on the `workproof:tour` event (a Show me button
+ * starts at its view's chapter) or on a `?tour=` link. It drives the story stage and the pages itself;
+ * the card is drawn once, outside the pages, so it stays in place across every page change. The page
+ * underneath is inert while it runs.
  */
 export function TourProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reduceTour, closedTour);
@@ -71,18 +70,36 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const returnFocus = useRef<HTMLElement | null>(null);
   const [target, setTarget] = useState<HTMLElement | null>(null);
 
-  const start = useCallback((kind: TourKind = "minute") => {
-    if (!document.querySelector("[data-tour-kind]")) {
-      returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-      stage.current = null;
-    }
-    dispatch({ type: "start", kind });
-  }, []);
+  const start = useCallback(
+    (at = 0) => {
+      if (!document.querySelector("[data-tour-kind]")) {
+        returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        stage.current = null;
+        // Every page of the story is fetched now, so no move waits for a page to download.
+        for (const path of STORY_PATHS) router.prefetch(path);
+      }
+      dispatch({ type: "start", at });
+    },
+    [router],
+  );
   useEffect(() => {
-    const onStart = (event: Event) => start(tourKindOf((event as CustomEvent<unknown>).detail));
+    const onStart = (event: Event) => start(startIndexOf((event as CustomEvent<unknown>).detail));
     window.addEventListener(TOUR_EVENT, onStart);
     return () => window.removeEventListener(TOUR_EVENT, onStart);
   }, [start]);
+
+  // A first visit to Mikko's home plays the story by itself, once per browser.
+  useEffect(() => {
+    const visit = {
+      path: window.location.pathname,
+      param: new URLSearchParams(window.location.search).get("tour"),
+      seen: storySeen(localStore()),
+      automated: navigator.webdriver === true,
+    };
+    if (shouldAutoStart(visit)) start(0);
+    // Only the page the app opened on counts, so this runs once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const onCardHeight = useCallback((height: number) => {
     cardHeight.current = height;
   }, []);
@@ -92,8 +109,6 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const run = state.open ? state.run : 0;
   const index = state.open ? state.index : 0;
   const revealed = state.open && state.revealed;
-  const kind: TourKind = state.open ? state.kind : "minute";
-  const steps = tours[kind].steps;
   useEffect(() => {
     if (pending === null) return;
     const controller = new AbortController();
@@ -112,7 +127,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       dispatch({ type: "arrived", run, found: el !== null });
     });
     return () => controller.abort();
-  }, [pending, run, index, router, reduce, steps]);
+  }, [pending, run, index, router, reduce]);
 
   // A first step that takes a while still answers the tap quickly.
   const open = state.open;
@@ -122,24 +137,12 @@ export function TourProvider({ children }: { children: ReactNode }) {
     return () => window.clearTimeout(timer);
   }, [open, revealed]);
 
-  // A move says nothing at first, shows a spinner after a moment and a plain line when it is slow.
-  const [wait, setWait] = useState<{ run: number; wait: Wait }>({ run: 0, wait: "none" });
-  useEffect(() => {
-    if (pending === null) return;
-    const timers = [
-      window.setTimeout(() => setWait({ run, wait: "short" }), SPIN_AFTER_MS),
-      window.setTimeout(() => setWait({ run, wait: "long" }), LOADING_LINE_AFTER_MS),
-    ];
-    return () => timers.forEach((t) => window.clearTimeout(t));
-  }, [pending, run]);
-  const moveWait: Wait = pending !== null && wait.run === run ? wait.wait : "none";
-
   // While a step is read, its successor's page and data are asked for.
   const settledIndex = state.open && state.pending === null ? state.index : null;
   useEffect(() => {
     if (settledIndex === null) return;
     void warmNext(steps[settledIndex], steps[settledIndex + 1], (path) => router.prefetch(path));
-  }, [settledIndex, router, steps]);
+  }, [settledIndex, router]);
 
   // A step's time starts only once its target is on screen and has stopped moving.
   const [readyRun, setReadyRun] = useState(0);
@@ -173,14 +176,14 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const ticking = auto && ready && !isHeld(holds);
   useEffect(() => {
     if (!ticking || settledIndex === null) return;
-    const duration = stepDuration(steps[settledIndex], kind);
+    const duration = stepDuration(steps[settledIndex]);
     const controls = animate(progress, 1, {
       duration: remainingMs(duration, progress.get()) / 1000,
       ease: "linear",
       onComplete: () => dispatch({ type: "next" }),
     });
     return () => controls.stop();
-  }, [ticking, settledIndex, run, steps, kind, progress]);
+  }, [ticking, settledIndex, run, progress]);
 
   // A page that is still loading data can push the target down after it was found. Once the step
   // has settled, a target that left the screen is brought back, smoothly.
@@ -190,7 +193,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
       const r = settledTarget.getBoundingClientRect();
       if (r.top < stickyTop() - 1 || r.top > window.innerHeight - 80) bringIntoView(settledTarget, { cardHeight: () => cardHeight.current, reduce, jump: false });
     };
-    const timers = [400, 1000, 2000].map((ms) => window.setTimeout(check, ms));
+    const timers = [250, 600, 1200, 2000, 3000].map((ms) => window.setTimeout(check, ms));
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [settledTarget, reduce]);
 
@@ -198,23 +201,14 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const settledStep = settledIndex !== null ? steps[settledIndex] : null;
   useEffect(() => {
     if (!settledTarget || !settledStep?.target) return;
-    const { target: id, targetText, selector } = settledStep;
+    const id = settledStep.target;
     const timer = window.setInterval(() => {
       if (settledTarget.isConnected) return;
-      const again = findShown(id, window.location.pathname, targetText?.() || undefined, selector);
+      const again = findShown(id, window.location.pathname);
       if (again) setTarget(again);
     }, 300);
     return () => window.clearInterval(timer);
   }, [settledTarget, settledStep]);
-
-  // The compare slider glides once from what she wrote to what the company reads.
-  const glideTarget = settledIndex !== null && steps[settledIndex].glide ? target : null;
-  useEffect(() => {
-    if (!glideTarget || reduce) return;
-    const controller = new AbortController();
-    void glideCompare(glideTarget, controller.signal);
-    return () => controller.abort();
-  }, [glideTarget, reduce]);
 
   // The lit element carries a mark, so a check can tell which of several look-alikes is meant.
   useEffect(() => {
@@ -229,6 +223,8 @@ export function TourProvider({ children }: { children: ReactNode }) {
   const close = useCallback(
     (then?: string) => {
       dispatch({ type: "close" });
+      // Once closed or finished, the story never starts by itself again in this browser.
+      markStorySeen(localStore());
       setTarget(null);
       setHolds(noHolds);
       // The page is inert until this close renders, so focus goes back a frame later.
@@ -242,21 +238,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
     },
     [router],
   );
-  const onEnd = useCallback(
-    (action: EndAction) => {
-      if (action.offer) {
-        let session: Storage | undefined;
-        try {
-          session = window.sessionStorage;
-        } catch {
-          session = undefined;
-        }
-        offerDemo(action.offer, session);
-      }
-      close(action.href);
-    },
-    [close],
-  );
+  const onEnd = useCallback((action: EndAction) => close(action.href), [close]);
 
   const next = useCallback(() => dispatch({ type: "next" }), []);
   const back = useCallback(() => dispatch({ type: "back" }), []);
@@ -286,8 +268,8 @@ export function TourProvider({ children }: { children: ReactNode }) {
 
   const shown = state.open ? steps[state.index] : null;
   const coming = state.open && state.pending !== null && state.pending !== state.index ? steps[state.pending] : null;
-  // The chip says whose screen comes next as soon as the move starts: the hand-over is a caption, not a wait.
-  const comingMode = coming && shown && coming.mode !== shown.mode && coming.mode !== "start" ? coming.mode : null;
+  // The chapter strip moves on as soon as the move starts: the hand-over is a caption, not a wait.
+  const comingMode = coming && shown && coming.mode !== shown.mode ? coming.mode : null;
   const fallback = Boolean(state.open && state.pending === null && shown?.target && !state.spotlight);
   return (
     <>
@@ -307,12 +289,10 @@ export function TourProvider({ children }: { children: ReactNode }) {
                   targetId={state.spotlight ? (shown.target ?? "") : ""}
                   moveKey={state.index}
                   onCardHeight={onCardHeight}
-                  kind={kind}
                   step={shown}
                   index={state.index}
                   stepCount={steps.length}
                   busy={state.pending !== null}
-                  wait={moveWait}
                   comingMode={comingMode}
                   fallback={fallback}
                   reduce={reduce}
@@ -340,25 +320,23 @@ export function TourProvider({ children }: { children: ReactNode }) {
   );
 }
 
-/** The tour a `?tour=` link asks for: `1` (the overview), a tour's own name, or the retired `story`. */
-export function kindFromParam(value: string | null): TourKind | null {
-  if (value === null || value === "") return null;
-  return tourKindOf(value);
-}
-
-/** `?tour=1` (or `?tour=seeker`, `employer`, `city`) on any page opens a tour, so a link or a QR code can start it. */
-function StartFromLink({ onStart }: { onStart: (kind: TourKind) => void }) {
+/**
+ * `?tour=1` on any page starts the story, `?tour=seeker`, `employer` or `city` starts it at that
+ * view's chapter, so a link or a QR code can open it. `?tour=0` opens the app without it.
+ */
+function StartFromLink({ onStart }: { onStart: (at: number) => void }) {
   const params = useSearchParams();
   const path = usePathname();
   const router = useRouter();
-  const asked = kindFromParam(params.get("tour"));
+  const asked = params.get("tour");
   useEffect(() => {
-    if (!asked) return;
+    if (asked === null) return;
     const rest = new URLSearchParams(params);
     rest.delete("tour");
     const query = rest.toString();
     router.replace(query ? `${path}?${query}` : path, { scroll: false });
-    onStart(asked);
+    if (isOffParam(asked)) markStorySeen(localStore());
+    else onStart(startIndexOf(asked));
   }, [asked, params, path, router, onStart]);
   return null;
 }

@@ -3,26 +3,18 @@
 import { ArrowRight, Pause, Play } from "lucide-react";
 import { AnimatePresence, motion, useTransform, type MotionValue } from "motion/react";
 import type { FocusEvent, KeyboardEvent, PointerEvent, Ref, RefObject } from "react";
-import { MODES } from "../shell/modes";
 import { cx } from "../ui/cx";
-import { Spinner } from "../ui/spinner";
-import { modeChip, tours, type EndAction, type TourKind, type TourMode, type TourStep } from "./steps";
+import { CHAPTERS, END_ACTIONS, type EndAction, type TourMode, type TourStep } from "./steps";
 import { counterText } from "./tour-machine";
-
-/** What the card says while the next step is being prepared. */
-export type Wait = "none" | "short" | "long";
 
 interface Props {
   ref: Ref<HTMLDivElement>;
-  kind: TourKind;
   step: TourStep;
   index: number;
   stepCount: number;
-  /** The next step is being prepared: Next waits. */
+  /** The next step is being prepared: Next waits, quietly. */
   busy: boolean;
-  /** How long the move has taken: a spinner after a short wait, a plain line after a long one. */
-  wait: Wait;
-  /** Whose screen comes next while the move runs, else null. The chip says so at once. */
+  /** The chapter the move goes to while it runs, else null. The strip moves on at once. */
   comingMode: TourMode | null;
   /** The step has a target but none showed up, so the card sits on its own. */
   fallback: boolean;
@@ -58,16 +50,29 @@ function Segment({ state, progress, auto }: { state: "done" | "now" | "later"; p
   );
 }
 
-/** Whose screen it is: the mode's own icon and plain words, on a neutral chip. */
-function Chip({ mode, wait }: { mode: TourMode; wait: Wait }) {
-  const label = wait === "long" ? "Loading the next screen" : modeChip(mode);
-  if (!label) return <span />;
-  const Icon = wait === "long" ? null : MODES.find((m) => m.id === mode)?.Icon;
+/**
+ * Where the story is: the three views and the goal, the current one lit. It moves on as soon as a
+ * move to another view starts, so the hand-over reads as a caption, not a wait.
+ */
+function Chapters({ mode }: { mode: TourMode }) {
+  const at = CHAPTERS.findIndex((chapter) => chapter.mode === mode);
   return (
-    <span data-tour-chip role={wait === "long" ? "status" : undefined} className="inline-flex h-8 max-w-full min-w-0 items-center gap-2 rounded-full bg-fill px-3 text-[14px] leading-5 font-medium text-label">
-      {Icon ? <Icon aria-hidden className="size-4 shrink-0 text-label-2" strokeWidth={1.75} /> : null}
-      <span className="truncate">{label}</span>
-    </span>
+    <ol data-tour-chapters aria-label="The story" className="flex min-w-0 items-center gap-1 overflow-hidden">
+      {CHAPTERS.map((chapter, i) => (
+        <li
+          key={chapter.mode}
+          aria-current={i === at ? "step" : undefined}
+          className={cx(
+            "shrink-0 rounded-full px-2.5 py-1 text-[13px] leading-[18px] font-semibold whitespace-nowrap transition-colors duration-200 ease-(--ease-out)",
+            i === at ? "bg-accent text-accent-ink" : i < at ? "text-label" : "text-label-3",
+            // Only the current chapter and its neighbours keep their names, so the strip never runs out of room.
+            Math.abs(i - at) > 1 && "hidden",
+          )}
+        >
+          {chapter.label}
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -97,17 +102,16 @@ const pill = "press inline-flex h-[52px] min-[640px]:h-11 shrink-0 items-center 
 const quiet = "text-label-2 hover:bg-fill hover:text-label";
 
 /**
- * The tour's card: whose screen it is, one headline, one sentence, and the way on. Nothing else:
- * the screen behind it shows the rest. Its content crossfades between steps; the layer moves it.
+ * The tour's card: where the story is, one headline, a sentence or two on why, and the way on.
+ * Nothing else: the screen behind it shows the rest. Its content crossfades between steps; the layer
+ * moves it, and it stays mounted from the first step to the last.
  */
 export function TourCard({
   ref,
-  kind,
   step,
   index,
   stepCount,
   busy,
-  wait,
   comingMode,
   fallback,
   maxHeight,
@@ -137,7 +141,7 @@ export function TourCard({
       aria-modal="true"
       aria-labelledby="tour-title"
       aria-describedby={step.body ? "tour-body" : undefined}
-      data-tour-kind={kind}
+      data-tour-kind="story"
       data-tour-step={step.id}
       data-tour-fallback={fallback || undefined}
       tabIndex={-1}
@@ -151,7 +155,7 @@ export function TourCard({
     >
       <div className="shrink-0 px-6 pt-5 max-[639px]:px-5 max-[639px]:pt-4">
         <div className="flex h-8 items-center justify-between gap-3">
-          <Chip mode={comingMode ?? step.mode} wait={wait} />
+          <Chapters mode={comingMode ?? step.mode} />
           <span data-tour-counter className="shrink-0 text-[14px] leading-5 font-medium text-label-2 tabular-nums">
             {counterText(index, stepCount)}
           </span>
@@ -182,7 +186,7 @@ export function TourCard({
             ) : null}
             {last ? (
               <div className="mt-5 flex flex-col gap-2">
-                {tours[kind].end.map((action, i) => (
+                {END_ACTIONS.map((action, i) => (
                   <button
                     key={action.href}
                     type="button"
@@ -225,10 +229,10 @@ export function TourCard({
               type="button"
               onClick={onNext}
               aria-disabled={busy || undefined}
-              className={cx(pill, "ml-1 bg-accent pr-4 pl-5 text-accent-ink", busy && "cursor-progress")}
+              className={cx(pill, "ml-1 bg-accent pr-4 pl-5 text-accent-ink")}
             >
               Next
-              {busy && wait !== "none" ? <Spinner /> : <ArrowRight aria-hidden className="size-5" strokeWidth={1.75} />}
+              <ArrowRight aria-hidden className="size-5" strokeWidth={1.75} />
             </button>
           )}
         </div>

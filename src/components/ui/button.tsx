@@ -10,7 +10,7 @@ interface Props {
   children: ReactNode;
   /** primary: the screen's one main action, in the accent. secondary: a tonal fill. quiet: text only. */
   variant?: Variant;
-  /** lg: 44px, full width (bottom bars, forms). sm: 38px on a laptop, 44px under a finger. */
+  /** lg: 44px, full width (bottom bars, forms). sm: Proven's 40px pill on a laptop, 44px under a finger. */
   size?: Size;
   href?: string;
   onClick?: () => void;
@@ -24,13 +24,13 @@ interface Props {
 
 const variants: Record<Variant, string> = {
   primary: "bg-accent text-accent-ink disabled:bg-fill disabled:text-label-3",
-  secondary: "bg-fill text-label hover:bg-label/10 disabled:text-label-3",
+  secondary: "bg-raised text-label shadow-[inset_0_0_0_1px_var(--color-control)] hover:shadow-[inset_0_0_0_1px_var(--color-accent)] disabled:text-label-3",
   quiet: "text-label-2 hover:text-label active:text-label disabled:text-label-3",
 };
 
 const sizes: Record<Size, string> = {
-  lg: "h-11 px-6 text-[16px] leading-5 w-full",
-  sm: "h-[38px] px-4 text-[15px] leading-5 pointer-coarse:h-11 pointer-coarse:px-5",
+  lg: "h-11 px-6 text-[15px] leading-5 w-full",
+  sm: "h-10 px-5 text-[14px] leading-5 pointer-coarse:h-11",
 };
 
 export function Button({

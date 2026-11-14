@@ -5,26 +5,18 @@ import { motion, useAnimate, useReducedMotion } from "motion/react";
 import { useEffect } from "react";
 import { startTour } from "../shell/demo-actions";
 import { cx } from "../ui/cx";
-import { takePulse } from "./demo-offer";
+import { localStore, takePulse } from "./first-visit";
 import type { TourView } from "./steps";
 
-const storage = (pick: () => Storage) => {
-  try {
-    return pick();
-  } catch {
-    return undefined;
-  }
-};
-
 /**
- * "Show me": starts the 1-minute demo of the view it sits in. It never starts by itself; the first
- * time a visitor opens the view in this browser it pulses gently twice, so it is found.
+ * "Show me": starts the guided story at the chapter of the view it sits in, and plays on from there.
+ * The first time a visitor opens the view in this browser it pulses gently twice, so it is found.
  */
 export function ShowMeButton({ view, className }: { view: TourView; className?: string }) {
   const [scope, animate] = useAnimate<HTMLButtonElement>();
   const reduce = useReducedMotion();
   useEffect(() => {
-    if (!takePulse(view, storage(() => window.localStorage), storage(() => window.sessionStorage)) || reduce) return;
+    if (!takePulse(view, localStore()) || reduce) return;
     const controls = animate(scope.current, { scale: [1, 1.04, 1], opacity: [1, 0.85, 1] }, { duration: 0.9, delay: 0.6, repeat: 1, ease: [0.23, 1, 0.32, 1] });
     return () => controls.stop();
   }, [view, reduce, animate, scope]);
@@ -47,7 +39,7 @@ export function ShowMeButton({ view, className }: { view: TourView; className?: 
       </span>
       <span className="flex min-w-0 flex-col">
         <span className="text-[17px] leading-6 font-semibold text-label">Show me</span>
-        <span className="text-[15px] leading-5 text-label-2">A 1-minute demo of this view</span>
+        <span className="text-[15px] leading-5 text-label-2">The guided story, from here</span>
       </span>
     </motion.button>
   );

@@ -1,4 +1,5 @@
 import type { PassportEntry } from "@/lib/domain/types";
+import { totalOutOf } from "../words";
 
 type Entry = Pick<PassportEntry, "challenge" | "responses">;
 type Response = PassportEntry["responses"][number];
@@ -35,6 +36,6 @@ export function workState(entry: Entry): string {
   if (meeting === "invited") return "Invited";
   if (meeting === "declined") return "Not now";
   const total = bestTotal(entry.responses);
-  if (total !== null) return `Scored ${total.toFixed(1)} of 10`;
+  if (total !== null) return `Scored ${totalOutOf(total)}`;
   return entry.responses.length ? "Answered" : "Waits for a score";
 }

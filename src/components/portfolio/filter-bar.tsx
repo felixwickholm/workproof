@@ -3,7 +3,8 @@
 import { Search } from "lucide-react";
 import { useState } from "react";
 import type { Portfolio, TaskFormat } from "@/lib/domain/types";
-import { FORMAT_LABEL, TASK_FORMATS } from "../seeker/task-format";
+import { TASK_FORMATS } from "@/lib/domain/kinds";
+import { FORMAT_LABEL } from "../words";
 import { cx } from "../ui/cx";
 import type { PortfolioFilter } from "./filter";
 
@@ -69,9 +70,9 @@ export function FilterBar({
         </div>
       </div>
       <div className="flex flex-col gap-3 min-[900px]:flex-row min-[900px]:items-end">
-        <div role="group" aria-label="Kind of task" className="min-w-0">
+        <div role="group" aria-label="Kind of challenge" className="min-w-0">
           <p className="text-footnote mb-2 font-medium text-label-2">
-            Kind of task
+            Kind of challenge
           </p>
           <div className="flex flex-wrap gap-2">
             {(
@@ -107,7 +108,7 @@ export function FilterBar({
             value={value.text}
             onChange={(e) => onChange({ ...value, text: e.target.value })}
             maxLength={120}
-            placeholder="Find a task, a company or a word"
+            placeholder="Find a challenge, a company or a word"
             className="text-body h-11 w-full rounded-full bg-raised pr-4 pl-10 text-label shadow-[inset_0_0_0_1px_var(--color-control)] outline-none placeholder:text-label-3 focus:shadow-[inset_0_0_0_1.5px_var(--color-link)]"
           />
         </label>

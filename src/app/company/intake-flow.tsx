@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import { fallbackLine } from "@/components/company/ai-designer";
 import { getReviewer, useCompanyId } from "@/components/company/company-choice";
 import { companyErrorText } from "@/components/company/format";
+import { handDraft, roleById, roleNeed } from "@/components/company/roles";
 import { useOnDemoReset } from "@/components/company/use-demo-reset";
 import { StepSlide } from "@/components/step-slide";
 import { cx } from "@/components/ui/cx";
@@ -16,31 +17,35 @@ import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
 import { DraftStep } from "./draft-step";
 import { FlowProgress } from "./flow-progress";
 import { LiveStep } from "./live-step";
-import { NeedStep } from "./need-step";
+import { StartStep } from "./start-step";
 
-type Step = "need" | "draft" | "live";
-const order: Step[] = ["need", "draft", "live"];
+type Step = "start" | "draft" | "live";
+const order: Step[] = ["start", "draft", "live"];
 
 const titles: Record<Step, { title: string; subtitle?: string }> = {
-  need: { title: "New challenge", subtitle: "Paste your job ad. We draft a short challenge. You approve it." },
+  start: { title: "New challenge", subtitle: "Say who you are looking for. The AI drafts a short challenge. You approve it." },
   draft: { title: "Check your challenge", subtitle: "Click any line to change it." },
   live: { title: "Your challenge is live" },
 };
 
-type Source = { kind: "ad"; url: string } | { kind: "need" };
+type Source = { kind: "ad"; url: string } | { kind: "role"; role: string } | { kind: "hand"; role: string };
 
-/** New challenge: a job ad link or one sentence, the draft a person checks and approves, then live. */
+/**
+ * New challenge in three steps: who the company is looking for (or its job ad), the draft a named
+ * person checks and approves, then live.
+ */
 export function IntakeFlow() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("need");
+  const [step, setStep] = useState<Step>("start");
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [busy, setBusy] = useState<"ad" | "need" | "publish" | null>(null);
+  const [busy, setBusy] = useState<"ad" | "role" | "publish" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [roleId, setRoleId] = useState<string | null>(null);
+  const [words, setWords] = useState("");
   const [adUrl, setAdUrl] = useState("");
-  const [need, setNeed] = useState("");
   const [draft, setDraft] = useState<ChallengeDraft | null>(null);
-  const [source, setSource] = useState<Source>({ kind: "need" });
+  const [source, setSource] = useState<Source>({ kind: "hand", role: "" });
   /** Why the built-in designer wrote the draft, from the AI status read just before asking. */
   const [fallback, setFallback] = useState<string | null>(null);
   /** Null until the person types: then the company's own reviewer stands in. */
@@ -60,7 +65,7 @@ export function IntakeFlow() {
   };
 
   /** One request at a time: a double tap never sends twice. */
-  async function run(kind: "ad" | "need" | "publish", action: () => Promise<void>) {
+  async function run(kind: "ad" | "role" | "publish", action: () => Promise<void>) {
     if (busy) return;
     setBusy(kind);
     setError(null);
@@ -84,7 +89,19 @@ export function IntakeFlow() {
   }
 
   const fromAd = (url = adUrl) => run("ad", () => drafted(() => companyApi.fromAd(url.trim()), { kind: "ad", url: url.trim() }));
-  const fromNeed = () => run("need", () => drafted(() => companyApi.draft(need.trim()), { kind: "need" }));
+  const role = roleById(roleId);
+  const fromRole = () => {
+    // The role the company picked travels with the draft, so the challenge reaches people who chose that role.
+    if (role) void run("role", () => drafted(async () => ({ ...(await companyApi.draft(roleNeed(role, words))), roles: [role.id] }), { kind: "role", role: role.label }));
+  };
+  /** No AI: a blank challenge with the role's skills, which the company writes itself. */
+  const byHand = () => {
+    if (!role || busy) return;
+    setDraft(handDraft(role));
+    setSource({ kind: "hand", role: role.label });
+    setFallback(null);
+    go("draft");
+  };
 
   const publish = () =>
     run("publish", async () => {
@@ -95,10 +112,11 @@ export function IntakeFlow() {
 
   const startOver = () => {
     setAdUrl("");
-    setNeed("");
+    setWords("");
+    setRoleId(null);
     setDraft(null);
     setPublished(null);
-    go("need");
+    go("start");
   };
 
   // A reset drops the challenge this flow published; start again on the fresh event.
@@ -114,20 +132,23 @@ export function IntakeFlow() {
   ) : null;
 
   let content: ReactNode = null;
-  if (step === "need") {
+  if (step === "start") {
     content = (
-      <NeedStep
+      <StartStep
+        roleId={roleId}
+        onRole={setRoleId}
+        words={words}
+        onWords={setWords}
         adUrl={adUrl}
         onAdUrl={setAdUrl}
-        need={need}
-        onNeed={setNeed}
         companies={companies.data}
         companyId={company?.id ?? companyId}
         onCompany={setCompanyId}
-        busy={busy === "ad" || busy === "need" ? busy : null}
+        busy={busy === "ad" || busy === "role" ? busy : null}
         errorLine={errorLine}
+        onFromRole={fromRole}
+        onByHand={byHand}
         onFromAd={(url) => void fromAd(url)}
-        onFromNeed={() => void fromNeed()}
       />
     );
   }
@@ -153,10 +174,10 @@ export function IntakeFlow() {
   useFlowHistory(step, (popped) => {
     const next = popped as Step;
     if (published && next !== "live") return router.replace("/employer");
-    if (next === "need" || (next === "draft" && draft)) go(next);
+    if (next === "start" || (next === "draft" && draft)) go(next);
   });
 
-  const back = step === "need" ? { href: "/employer", label: "My challenges" } : step === "draft" ? { onBack: () => backInFlow(() => go("need")), label: "Back" } : undefined;
+  const back = step === "start" ? { href: "/employer", label: "My challenges" } : step === "draft" ? { onBack: () => backInFlow(() => go("start")), label: "Back" } : undefined;
   const { title, subtitle } = titles[step];
 
   return (

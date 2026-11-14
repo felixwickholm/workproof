@@ -1,29 +1,30 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { errorText } from "@/lib/client/api";
-import type { ChallengeDraft, Company } from "@/lib/domain/types";
+import type { Challenge, ChallengeDraft, Company } from "@/lib/domain/types";
+import { SAMPLE_ADS, type SampleAd } from "@/lib/seed/ads";
 import { Button } from "../ui/button";
 import { Card } from "../ui/card";
 import { Sheet } from "../ui/sheet";
+import { FORMAT_LABEL } from "../words";
 import { CopySheet } from "./copy-sheet";
-import { formatLabel } from "./impact";
 import { CITY_ACTOR, citySource } from "./source";
 
-/** A sample job ad on this site, so the demo never depends on a real company's page. */
-export const SAMPLE_AD_PATH = "/ads/financial-analyst";
-
-const control =
-  "text-body h-12 w-full rounded-inner bg-fill px-4 text-label outline-none placeholder:text-label-3 shadow-[inset_0_0_0_1px_transparent] transition-shadow duration-150 focus:shadow-[inset_0_0_0_1.5px_var(--color-label-3)]";
+/** The challenge the city already made from this ad, if any: its stored ad link ends with the ad's path. */
+export function madeFrom(ad: Pick<SampleAd, "slug">, challenges: readonly Challenge[]): Challenge | undefined {
+  return challenges.find((c) => c.onBehalf?.adUrl?.endsWith(`/ads/${ad.slug}`));
+}
 
 /** The draft as a short document: what the person will do, and the skills the company will score. */
 function DraftDocument({ draft }: { draft: ChallengeDraft }) {
   return (
-    <div className="rounded-[16px] bg-surface p-4">
+    <div data-tour="city-draft" className="rounded-[16px] bg-surface p-4">
       <p className="text-headline font-semibold text-label">{draft.title}</p>
       <p className="text-footnote mt-1 text-label-2">
-        {formatLabel(draft.format)} · {draft.minutes} minutes
+        {FORMAT_LABEL[draft.format]} · {draft.minutes} minutes
       </p>
       <p className="text-body mt-3 text-pretty text-label">{draft.brief}</p>
       <p className="text-footnote mt-4 text-label-2">The company scores</p>
@@ -37,42 +38,40 @@ function DraftDocument({ draft }: { draft: ChallengeDraft }) {
 }
 
 /**
- * The zero-effort path for a company: the city pastes the company's job-ad link, gets a draft challenge,
- * publishes it for the company and copies a ready message to send from its own mail.
+ * Companies hiring right now, from their public job ads. The city picks one, WorkProof drafts a challenge
+ * from the ad, the city publishes it for the company and copies a ready invitation to send from its own mail.
+ * The ads here are the five sample ads served under /ads, labelled as such.
  */
-export function MakeChallenge({ companies }: { companies: Company[] }) {
-  const [url, setUrl] = useState("");
-  const [companyId, setCompanyId] = useState("");
-  const [busy, setBusy] = useState<"draft" | "publish" | null>(null);
-  const [problem, setProblem] = useState<string | null>(null);
-  const [draft, setDraft] = useState<ChallengeDraft | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const company = companies.find((c) => c.id === companyId);
+export function HiringNow({ companies, challenges }: { companies: readonly Company[]; challenges: readonly Challenge[] }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [problem, setProblem] = useState<{ slug: string; text: string } | null>(null);
+  const [draft, setDraft] = useState<{ ad: SampleAd; draft: ChallengeDraft } | null>(null);
+  const [invite, setInvite] = useState<{ company: string; message: string } | null>(null);
+  const ads = SAMPLE_ADS.filter((ad) => companies.some((c) => c.id === ad.companyId));
+  // The walkthrough points at the first ad still without a challenge, or the first row once all have one.
+  const target = Math.max(0, firstOpen(ads, challenges));
 
-  const make = async () => {
-    if (!url.trim()) return setProblem("Paste a link to a job ad, or write one sentence about the job.");
-    if (!company) return setProblem("Pick the company.");
+  const make = async (ad: SampleAd) => {
     setProblem(null);
-    setBusy("draft");
+    setBusy(ad.slug);
     try {
-      setDraft(await citySource.draft(url.trim()));
+      setDraft({ ad, draft: await citySource.draft(`${window.location.origin}/ads/${ad.slug}`) });
     } catch (e) {
-      setProblem(e instanceof Error && e.message && !e.message.startsWith("Request failed") ? e.message : errorText(e));
+      setProblem({ slug: ad.slug, text: errorText(e) });
     } finally {
       setBusy(null);
     }
   };
 
   const publish = async () => {
-    if (!draft || !company) return;
+    if (!draft) return;
     setBusy("publish");
     try {
-      const published = await citySource.publishForCompany({ companyId: company.id, draft, by: CITY_ACTOR });
+      const published = await citySource.publishForCompany({ companyId: draft.ad.companyId, draft: draft.draft, by: CITY_ACTOR });
+      setInvite({ company: draft.ad.company, message: published.message });
       setDraft(null);
-      setUrl("");
-      setMessage(published.message);
     } catch (e) {
-      setProblem(errorText(e));
+      setProblem({ slug: draft.ad.slug, text: errorText(e) });
       setDraft(null);
     } finally {
       setBusy(null);
@@ -80,59 +79,67 @@ export function MakeChallenge({ companies }: { companies: Company[] }) {
   };
 
   return (
-    <Card>
-      <h2 className="text-section text-label">Make a challenge for a company</h2>
-      <p className="text-body mt-1 text-label-2">The company does nothing. You paste its job ad.</p>
-      <div className="mt-4 grid grid-cols-1 gap-3 min-[900px]:grid-cols-[minmax(0,1fr)_260px_auto]">
-        <label className="block">
-          <span className="sr-only">Paste the company&apos;s job ad link</span>
-          <input
-            type="text"
-            inputMode="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && void make()}
-            placeholder="Paste the company's job ad link"
-            className={control}
-          />
-        </label>
-        <label className="relative block">
-          <span className="sr-only">Company</span>
-          <select value={companyId} onChange={(e) => setCompanyId(e.target.value)} className={`${control} appearance-none pr-10`}>
-            <option value="">Pick a company</option>
-            {companies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-          <ChevronDown aria-hidden className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-label-2" strokeWidth={1.75} />
-        </label>
-        <Button onClick={make} loading={busy === "draft"} className="h-12 min-[900px]:w-auto">
-          Make the challenge
-        </Button>
-      </div>
-      <div className="mt-2 flex flex-wrap items-center gap-x-4">
-        <button
-          type="button"
-          onClick={() => setUrl(`${window.location.origin}${SAMPLE_AD_PATH}`)}
-          className="text-subhead h-11 font-medium text-label-2 hover:text-label"
-        >
-          Use a sample ad
-        </button>
-        {problem ? (
-          <p role="alert" className="text-subhead text-negative">
-            {problem}
-          </p>
-        ) : null}
+    <Card tour="city-hiring-now" className="min-[900px]:p-8">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-section text-label">Companies hiring right now</h2>
+          <p className="text-subhead mt-1 text-pretty text-label-2">From public job ads. Pick one and WorkProof drafts a challenge from the ad.</p>
+        </div>
+        <span className="text-footnote shrink-0 whitespace-nowrap rounded-full bg-fill px-2.5 py-0.5 text-label-2">Sample ads</span>
       </div>
 
-      <Sheet open={draft !== null} onClose={() => setDraft(null)} title="The draft challenge">
-        {draft ? <DraftDocument draft={draft} /> : null}
-        <p className="text-footnote mt-3 text-label-2">The company can change it when it opens it.</p>
+      <ul className="mt-4">
+        {ads.map((ad, i) => {
+          const made = madeFrom(ad, challenges);
+          return (
+            <li key={ad.slug} className="flex flex-col gap-3 py-3.5 [&+&]:hairline-t min-[560px]:flex-row min-[560px]:items-center min-[560px]:justify-between">
+              <div className="min-w-0">
+                <p className="text-body font-semibold text-label">{ad.company}</p>
+                <p className="text-subhead text-label">{ad.title}</p>
+                <p className="text-footnote mt-0.5 flex flex-wrap items-center gap-x-3 text-label-2">
+                  <span>{ad.facts.split(".")[0]}</span>
+                  <a
+                    href={`/ads/${ad.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex h-8 items-center gap-0.5 font-medium text-link hover:underline"
+                  >
+                    Sample ad
+                    <ArrowUpRight aria-hidden className="size-3.5" strokeWidth={1.75} />
+                  </a>
+                </p>
+                {problem?.slug === ad.slug ? (
+                  <p role="alert" className="text-subhead mt-1 text-negative">
+                    {problem.text}
+                  </p>
+                ) : null}
+              </div>
+              <span data-tour={i === target ? "city-make-challenge" : undefined} className="shrink-0 self-start min-[560px]:self-auto">
+              {made ? (
+                <Link
+                  href={`/city/challenges/${encodeURIComponent(made.id)}`}
+                  className="press text-subhead inline-flex h-11 items-center gap-1 rounded-full bg-fill px-4 font-semibold text-label hover:bg-label/10"
+                >
+                  Challenge made
+                  <ChevronRight aria-hidden className="size-4" strokeWidth={1.75} />
+                </Link>
+              ) : (
+                <Button variant="secondary" onClick={() => void make(ad)} loading={busy === ad.slug} disabled={busy !== null && busy !== ad.slug} size="sm" className="h-11 w-auto px-4">
+                  Make a challenge
+                </Button>
+              )}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+
+      <Sheet open={draft !== null} onClose={() => setDraft(null)} title={`A challenge for ${draft?.ad.company ?? "the company"}`}>
+        {draft ? <DraftDocument draft={draft.draft} /> : null}
+        <p className="text-footnote mt-3 text-label-2">Drafted from the job ad for {draft?.ad.title ?? "the role"}. The company can change it when it opens it.</p>
         <div className="mt-5 flex flex-col gap-2 min-[480px]:flex-row-reverse">
           <Button onClick={publish} loading={busy === "publish"} className="min-[480px]:w-auto min-[480px]:flex-1">
-            Publish for {company?.name ?? "the company"}
+            Publish and invite
           </Button>
           <Button variant="secondary" onClick={() => setDraft(null)} className="min-[480px]:w-auto min-[480px]:flex-1">
             Not now
@@ -140,9 +147,14 @@ export function MakeChallenge({ companies }: { companies: Company[] }) {
         </div>
       </Sheet>
 
-      <CopySheet open={message !== null} title={`Message to ${company?.name ?? "the company"}`} text={message ?? ""} onClose={() => setMessage(null)}>
-        <p className="text-body mb-4 text-label">The challenge is live. Send this message to the company.</p>
+      <CopySheet open={invite !== null} title={`Invite ${invite?.company ?? "the company"}`} text={invite?.message ?? ""} onClose={() => setInvite(null)}>
+        <p className="text-body mb-4 text-label">The challenge is live. Send this invitation to the company.</p>
       </CopySheet>
     </Card>
   );
+}
+
+/** The first ad without a challenge yet: the one the walkthrough points at. */
+function firstOpen(ads: readonly SampleAd[], challenges: readonly Challenge[]): number {
+  return ads.findIndex((ad) => !madeFrom(ad, challenges));
 }

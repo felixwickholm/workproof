@@ -7,7 +7,7 @@ const DAY = 86_400_000;
 const skills = (...ids: SkillId[]) =>
   ids.map((id) => ({ id, label: SKILLS[id].label }));
 
-/** Two earlier Espoo events Olena went to, days before the current one. */
+/** Two earlier Espoo events Mikko went to, days before the current one. */
 const EARLIER_EVENTS = [
   { name: "Espoo Spring Talent Day", daysAgo: 196 },
   { name: "Espoo Tech Talent Evening", daysAgo: 77 },
@@ -19,10 +19,10 @@ type SeedPast = Omit<
 > & { event: 0 | 1; companyId: string; points: SkillScore["points"][] };
 
 /**
- * Olena's finished tasks from the two earlier events: two "Meet", two "Not now", each with the named reviewer's
+ * Mikko's finished tasks from the two earlier events: two "Meet", two "Not now", each with the named reviewer's
  * points per skill (in the order of `skills`) and written answer. Synthetic, and already blind: no name, place or school in the words.
  */
-const OLENA_PAST: SeedPast[] = [
+const MIKKO_PAST: SeedPast[] = [
   {
     event: 0,
     companyId: "co-saarnivo",
@@ -97,14 +97,14 @@ const OLENA_PAST: SeedPast[] = [
   },
 ];
 
-/** Olena's earlier work, dated relative to `now` so the portfolio always looks lived-in. */
-export function olenaHistory(now: Date, talentId: string): PastWork[] {
-  return OLENA_PAST.map(({ event, companyId, points, ...work }, i) => {
+/** Mikko's earlier work, dated relative to `now` so the portfolio always looks lived-in. */
+export function mikkoHistory(now: Date, talentId: string): PastWork[] {
+  return MIKKO_PAST.map(({ event, companyId, points, ...work }, i) => {
     const { name, daysAgo } = EARLIER_EVENTS[event];
     const day = new Date(now.getTime() - daysAgo * DAY);
     return {
       ...work,
-      id: `past_olena_${i + 1}`,
+      id: `past_mikko_${i + 1}`,
       talentId,
       event: { name, date: day.toISOString().slice(0, 10) },
       companyName: companyName(companyId),

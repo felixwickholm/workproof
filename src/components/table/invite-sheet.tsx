@@ -13,7 +13,7 @@ import { Sheet } from "../ui/sheet";
 import { readHostName, saveHostName } from "./host-name";
 
 /** Said plainly: this screen demonstrates consent and the name, not reading the work. */
-export const PUBLIC_SCREEN_NOTE = "On this public screen the work stays hidden. At a real event the employer reads the blind work first, then invites.";
+const PUBLIC_SCREEN_NOTE = "On this public screen the work stays hidden. At a real event the employer reads the blind work first, then invites.";
 
 /** A refusal the host can act on (two sentences, already invited) is shown in the server's own words. */
 function inviteErrorText(error: unknown): string {

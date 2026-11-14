@@ -2,7 +2,7 @@ import { LAPTOP, openVisitor } from "./harness.mjs";
 import { runCity } from "./suites/city.mjs";
 import { runEmployer } from "./suites/employer.mjs";
 import { runGuardrails } from "./suites/guardrails.mjs";
-import { runLanding } from "./suites/landing.mjs";
+import { runEntry } from "./suites/entry.mjs";
 import { runLaptop } from "./suites/laptop.mjs";
 import { runPostTask } from "./suites/post-task.mjs";
 import { runPractice } from "./suites/practice.mjs";
@@ -26,8 +26,8 @@ async function runJourney(browser, phone) {
 
 /** Every other suite opens its own browser context, so its own private demo event. */
 const SUITES = [
-  { key: "landing", run: (browser, phone) => runLanding(browser, phone, "1 Landing phone") },
-  { key: "landing", run: (browser) => runLanding(browser, LAPTOP, "1 Landing laptop") },
+  { key: "entry", run: (browser, phone) => runEntry(browser, phone, "1 Entry phone") },
+  { key: "entry", run: (browser) => runEntry(browser, LAPTOP, "1 Entry laptop") },
   { key: "practice", run: (browser, phone) => runPractice(browser, phone, "2 Practice and table") },
   { key: "journey", run: runJourney },
   { key: "post", run: (browser, phone) => runPostTask(browser, phone, "6 Post a task") },
@@ -37,7 +37,7 @@ const SUITES = [
 
 /**
  * Eval 5, end to end with real clicks and typing at 390 x 844 (phone, touch), the key screens again
- * at 1440 x 900. E2E_ONLY=landing,practice,journey,post,guardrails,laptop,tour runs a subset.
+ * at 1440 x 900. E2E_ONLY=entry,practice,journey,post,guardrails,laptop,tour runs a subset.
  */
 export async function runMainFlow(browser, phone) {
   const only = process.env.E2E_ONLY?.split(",").map((key) => key.trim());

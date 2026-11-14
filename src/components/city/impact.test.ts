@@ -1,17 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { ImpactCounts, TaskImpact } from "@/lib/domain/types";
 import {
-  barShare,
-  demandFinding,
   followUpSentence,
   funnelSteps,
   greeting,
   shareInWords,
-  sortDemand,
   sortTasks,
   taskState,
   tasksFor,
-  todayStep,
   topEntryLine,
 } from "./impact";
 
@@ -26,8 +22,6 @@ const task = (title: string, c: Partial<TaskImpact> = {}): TaskImpact => ({
   ...counts(),
   ...c,
 });
-
-const skill = (label: string, tasks: number, proofs: number) => ({ skillId: label.toLowerCase(), label, tasks, proofs });
 
 describe("shareInWords", () => {
   it("says a part of a whole as a plain fraction", () => {
@@ -92,37 +86,5 @@ describe("taskState", () => {
 describe("topEntryLine", () => {
   it("shows the work's label and its total out of 10, never a name", () => {
     expect(topEntryLine({ proofLabel: "Proof K7", total: 9 })).toBe("Work K7 · 9.0 of 10");
-  });
-});
-
-describe("demand", () => {
-  it("sorts by challenges that ask, then by work, then by name", () => {
-    expect(sortDemand([skill("SQL", 2, 3), skill("Triage", 4, 1), skill("Care", 2, 9)]).map((d) => d.label)).toEqual(["Triage", "Care", "SQL"]);
-  });
-  it("states the skill asked for most in one sentence", () => {
-    expect(demandFinding([skill("Prioritisation", 4, 16), skill("Stakeholder communication", 7, 25)])).toBe(
-      "Stakeholder communication is asked for most: 7 challenges, 25 pieces of work.",
-    );
-    expect(demandFinding([skill("SQL", 1, 0)])).toBe("SQL is asked for most: 1 challenge, no work yet.");
-    expect(demandFinding([])).toBeNull();
-  });
-  it("sizes a bar against the largest value", () => {
-    expect(barShare(2, 4)).toBe(0.5);
-    expect(barShare(0, 4)).toBe(0);
-    expect(barShare(3, 0)).toBe(0);
-  });
-});
-
-describe("todayStep", () => {
-  const day = "2026-11-14";
-  it("follows the calendar on and after the event day", () => {
-    expect(todayStep(day, new Date("2026-11-14T10:00:00Z"), counts())).toBe(3);
-    expect(todayStep(day, new Date("2026-11-15T10:00:00Z"), counts())).toBe(4);
-  });
-  it("follows the data before the event day", () => {
-    const before = new Date("2026-11-10T10:00:00Z");
-    expect(todayStep(day, before, counts())).toBe(0);
-    expect(todayStep(day, before, counts({ scored: 1 }))).toBe(1);
-    expect(todayStep(day, before, counts({ scored: 1, invited: 1 }))).toBe(2);
   });
 });

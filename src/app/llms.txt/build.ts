@@ -11,9 +11,18 @@ export const EVIDENCE_IN_CODE: readonly { path: string; what: string }[] = [
   { path: "evals", what: "The eval suites behind the numbers above" },
 ];
 
+/** Documents in the repository that explain and check the project. Each path exists. */
+export const REPO_DOCS: readonly { path: string; what: string }[] = [
+  { path: "README.md", what: "What it is, the criterion-by-criterion table with routes, files and tests, and the limits" },
+  { path: "AGENTS.md", what: "Commands, folder map and the invariants, each with where it is enforced and checked" },
+  { path: "docs/evals.md", what: "Every eval check and how to read its output" },
+  { path: "docs/architecture.md", what: "How the parts fit together" },
+  { path: "docs/responsible-ai.md", what: "Human oversight, data minimisation and the EU AI Act position" },
+];
+
 /**
  * /llms.txt in the llmstxt.org shape: an H1, the quoted first paragraph, dated numbers with the
- * commands that produce them, then H2 link lists. Built from the same typed facts as /for-judges,
+ * commands that produce them, then H2 link lists, with an Optional list last. Built from the same typed facts as /for-judges,
  * so the two always say the same thing. `origin` is the site's own address; `repo` links code paths
  * when a repository URL is known.
  */
@@ -37,6 +46,7 @@ export function buildLlmsTxt(origin: string, repo?: string): string {
     "",
     "## Start here",
     "",
+    `- [Full text](${site}/llms-full.txt): everything below in one markdown file, with every criterion, guardrail and eval row`,
     ...CHECK_PATH.map((step) => `- [${step.path}](${site}${step.path}): ${step.what}`),
     `- [Evidence for judges](${site}/for-judges): criteria table, evals, limits, architecture, data and privacy`,
     `- [How it works](${site}/how-it-works): the product in six plain steps, what the AI does and never does, fair questions`,
@@ -56,6 +66,11 @@ export function buildLlmsTxt(origin: string, repo?: string): string {
     "## Limits",
     "",
     ...LIMITS.map((limit) => `- ${limit}`),
+    "",
+    "## Optional",
+    "",
+    ...(repo ? [`- [Source code](${repo.replace(/\/$/, "")}): the repository, MIT licence`] : []),
+    ...REPO_DOCS.map((d) => `- [${d.path}](${codeLink(d.path)}): ${d.what}`),
     "",
   ];
   return lines.join("\n");

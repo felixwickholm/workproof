@@ -12,21 +12,21 @@ export function stageReached(stage: StoryStage, at: StoryStage): boolean {
 export const STORY_PROOF_ID = "proof_story_halla_82";
 export const STORY_CHALLENGE_ID = "ch-halla-automate";
 export const STORY_COMPANY_ID = "co-halla";
-/** The finance and AI lead at Halla Supply who scores the story proof and invites Olena. */
-export const STORY_REVIEWER = "Katja Nurmi";
+/** The finance and AI lead at Halla Supply who scores the story proof and invites Mikko. */
+export const STORY_REVIEWER = "Laura Niemi";
 
-/** Olena's earlier feature-list cut, answered "not now" with points and a reason. */
-export const OLENA_EARLIER_ID = "proof_story_product";
+/** Mikko's earlier feature-list cut, answered "not now" with points and a reason. */
+export const MIKKO_EARLIER_ID = "proof_story_product";
 
 /**
- * Olena Kovalenko is an AI developer with two years of freelance automation work. Her CV names no big
- * employer and no famous school, and 40 applications got no interview. Her earlier proofs: a feature-list cut
+ * Mikko Lahtinen is an AI developer with two years of freelance automation work. He has no big employer
+ * and no famous school behind him, and 40 applications got no interview. His earlier proofs: a feature-list cut
  * that got "not now" with points and a reason, and a chart reading that waits for an answer.
  */
-export const OLENA_EARLIER: SeedProof[] = [
+export const MIKKO_EARLIER: SeedProof[] = [
   {
-    id: OLENA_EARLIER_ID,
-    person: "olena",
+    id: MIKKO_EARLIER_ID,
+    person: "mikko",
     challenge: "pooled-product",
     hoursAgo: 88,
     shareWithSimilar: true,
@@ -55,7 +55,7 @@ export const OLENA_EARLIER: SeedProof[] = [
   },
   {
     id: "proof_story_chart",
-    person: "olena",
+    person: "mikko",
     challenge: "saarnivo-chart",
     hoursAgo: 28,
     shareWithSimilar: true,
@@ -76,10 +76,10 @@ export const OLENA_EARLIER: SeedProof[] = [
   },
 ];
 
-/** The story proof: Olena's answer for Halla Supply. The details that identify her are hidden before anyone reads it. */
-export const OLENA_STORY: SeedProof = {
+/** The story proof: Mikko's answer for Halla Supply. The details that identify him are hidden before anyone reads it. */
+export const MIKKO_STORY: SeedProof = {
   id: STORY_PROOF_ID,
-  person: "olena",
+  person: "mikko",
   challenge: "halla-automate",
   hoursAgo: 0.92,
   shareWithSimilar: true,
@@ -90,7 +90,7 @@ export const OLENA_STORY: SeedProof = {
     "Week 1: read 200 old delivery notes with a text reader and match them to the order system. Week 2: the tool drafts the invoices, and a person approves each one.",
     "Risk: a wrong amount or the wrong customer. For the first month a person approves every invoice, and we compare the totals each week.",
     "Last spring I built the same flow for Kotiranta Oy. I live in Matinkylä and studied at Metropolia.",
-    "Olena Kovalenko",
+    "Mikko Lahtinen",
   ].join("\n"),
   thinkAloud: {
     transcript:
@@ -104,7 +104,7 @@ export const OLENA_STORY: SeedProof = {
   spokenFollowUps: true,
 };
 
-/** Katja Nurmi's decision on the story proof, from stage "invited". Her work gets 9 of 10. */
+/** Laura Niemi's decision on the story proof, from stage "invited". His work gets 9 of 10. */
 export const STORY_DECISION: Omit<SeedDecision, "hoursToReply"> & { hoursAgo: number } = {
   companyId: STORY_COMPANY_ID,
   kind: "meet",
@@ -113,6 +113,6 @@ export const STORY_DECISION: Omit<SeedDecision, "hoursToReply"> & { hoursAgo: nu
   hoursAgo: 0.5,
 };
 
-/** At stage "met": hours ago Olena accepted, and hours ago both sides confirmed the talk and agreed a follow-up. */
-export const OLENA_ACCEPTED_HOURS_AGO = 0.3;
+/** At stage "met": hours ago Mikko accepted, and hours ago both sides confirmed the talk and agreed a follow-up. */
+export const MIKKO_ACCEPTED_HOURS_AGO = 0.3;
 export const STORY_MET_HOURS_AGO = 0.1;

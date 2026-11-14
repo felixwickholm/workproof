@@ -6,13 +6,13 @@ Two paths through the live demo (link at the top of the README), or `npm run dev
 
 All people and companies are invented. At the default story stage the event has 10 companies, 12 challenges, 62 pieces of work from 36 people, 34 scored by a person, 12 invitations, 7 accepted, 4 talks held, 3 follow-ups agreed and 2 hires. These are the numbers the city view shows, marked "Demo data".
 
-**The story.** Olena is an AI developer. Her CV got no answer. Halla Supply asks "What should we automate first?" She picks the invoices, not the chatbot, says why, plans two weeks and names the risk. Katja Nurmi at Halla Supply reads the work without the name, scores each skill from 1 to 5 and writes why. The work gets 9 of 10. Halla invites her, and sees her name only after she says yes.
+**The story.** Mikko is an AI developer. 40 applications got no interview. Halla Supply asks "What should we automate first?" He picks the invoices, not the chatbot, says why, plans two weeks and names the risk. Laura Niemi at Halla Supply reads the work without the name, scores each skill from 1 to 5 and writes why. The work gets 9 of 10. Halla invites him, and sees his name only after he says yes.
 
 **The 12 challenges.** Each one is done in one of four ways: Choose (pick one of two options and say why), Make (build a plan, a sketch or a screen), Fix (find what is wrong), Read (read a chart, a table or a report and say what matters).
 
 | Challenge | Format | Company | Minutes |
 |---|---|---|---|
-| What should we automate first? (Olena's story) | Make | Halla Supply | 10 |
+| What should we automate first? (Mikko's story) | Make | Halla Supply | 10 |
 | Read this chart. What must the team know? | Read | Saarnivo Grid | 10 |
 | One number in this budget is wrong. Find it | Fix | Saarnivo Grid | 10 |
 | Find the bug in this model test | Fix | Tuulos Robotics | 10 |
@@ -31,12 +31,12 @@ The City of Espoo made the Kide Silicon challenge from the company's job ad. Kid
 
 | Time | Do this | Look for |
 |---|---|---|
-| 0:00 | Open `/`. | "Show your work. Get the interview." Three doors: "I'm looking for work", "I'm hiring", "I'm the City of Espoo". Below them, Olena's story: "Her CV got no answer. Her work got 9 of 10." |
+| 0:00 | Open `/`. | "Show your work. Get the interview." Three doors: "I'm looking for work", "I'm hiring", "I'm the City of Espoo". Below them, Mikko's story: "His work got 9 of 10." |
 | 0:10 | Press "Watch the 1-minute tour". Each card moves on by itself; Next, Back and Pause work too. | Seven cards over the real screens. The tour opens each page itself and sets the story to the right moment. |
 | 0:15 | Card 1, "A company needs help." | The Hiring screen where a company pastes its job ad. |
-| 0:25 | Card 2 and 3, "Olena does the challenge." and "Her name is hidden." | She thinks aloud as she works; no camera. Then what the company reads, with her name, a past client, where she lives and her school hidden. |
-| 0:45 | Card 4, "The boss scores the work." | Katja's points for each skill and her reason. "A person gives the points, not the AI." |
-| 0:55 | Card 5 and 6, "She says yes." and "The city sees what came of it." | The invitation from Halla Supply. Then the city's count from challenge to talk. |
+| 0:25 | Card 2 and 3, "Mikko does the challenge." and "His name is hidden." | He thinks aloud as he works; no camera. Then what the company reads, with his name, a past client, where he lives and his school hidden. |
+| 0:45 | Card 4, "The boss scores the work." | Laura's points for each skill and her reason. "A person gives the points, not the AI." |
+| 0:55 | Card 5 and 6, "He says yes." and "The city sees what came of it." | The invitation from Halla Supply. Then the city's count from challenge to talk. |
 | 1:10 | On the last card, "Now try it yourself.", press "I'm hiring". | `/employer` opens as Halla Supply. Its "Show me" button pulses once. |
 | 1:15 | In the menu, open "New challenge". Under "Paste your job ad link", press the sample ad "Financial analyst". | The ad becomes a draft challenge: the task, what the person hands in, "Skills you score" (3 to 5), and the wishes set aside. Nothing goes live before a person presses "Approve and publish". |
 | 1:45 | Open "Evidence for judges" in the top bar of `/`, or go to `/for-judges`. | Each judging criterion with a way to check it, and the dated test numbers. |
@@ -48,17 +48,17 @@ Open `/` before you start. Each step says what to press, then what to say.
 **0:00 The start page.** Point at the headline and the three doors.
 Say: "Companies see how well people do the real work before they meet them. A company posts a short challenge. A person does it in 5 to 15 minutes and thinks aloud. Someone at the company scores the work without the name. The city sees what came of it."
 
-**0:30 Looking for work.** Press "I'm looking for work". `/seeker` opens as Olena.
-Say: "This is Olena, an AI developer. Her CV got no answer." Point at "Your invite" from Halla Supply and her score. "Her work got 9 of 10."
+**0:30 Looking for work.** Press "I'm looking for work". `/seeker` opens as Mikko.
+Say: "This is Mikko, an AI developer." Point at "Your invite" from Halla Supply and his score. "His work got 9 of 10."
 
-**0:50 Her work.** In the menu, open "My work", then her Halla Supply work.
-Say: "This is what the company read. Bars cover what the rules removed: her name, a past client, where she lives and her school." Turn on "Show what I wrote" and drag the handle to compare. Point at "My score" and say: "Katja Nurmi gave points for each skill and wrote why. People score the work. The AI never does."
+**0:50 His work.** In the menu, open "My work", then his Halla Supply work.
+Say: "This is what the company read. Bars cover what the rules removed: his name, a past client, where he lives and his school." Turn on "Show what I wrote" and drag the handle to compare. Point at "My score" and say: "Laura Niemi gave points for each skill and wrote why. People score the work. The AI never does."
 
-**1:30 She says yes.** Go back to `/seeker` and press "Say yes".
-Say: "Only now does Halla Supply see her name. If she said no, it never would."
+**1:30 He says yes.** Go back to `/seeker` and press "Say yes".
+Say: "Only now does Halla Supply see his name. If he said no, it never would."
 
 **1:45 Hiring.** Switch the view at the top left to "Hiring". `/employer` opens as Halla Supply. Open the row "What should we automate first?".
-Say: "This is the company's best work first, by its own scores, still without names. Two pieces have 9 of 10. One of them now reads ‘K7 is Olena Kovalenko’. She said yes, so Halla Supply can see her name."
+Say: "This is the company's best work first, by its own scores, still without names. Two pieces have 9 of 10. One of them now reads ‘K7 is Mikko Lahtinen’. He said yes, so Halla Supply can see his name."
 
 **2:15 Score one.** In the menu, open "Score work". Open the first piece of work in the list.
 Say: "Work waits in the order it came. The reviewer gives 1 to 5 points for each skill and says why. Then: invite to the event, not now, or score now and decide later. A person decides every time."

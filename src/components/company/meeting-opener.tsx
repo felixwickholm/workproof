@@ -23,7 +23,7 @@ export function MeetingOpener({ explain, className }: { explain: readonly Explai
       </h3>
       <figure className="mt-4">
         <figcaption className="text-footnote text-pretty text-label-2">{answer.question}</figcaption>
-        <blockquote className="mt-2 font-serif text-[20px] leading-[28px] text-pretty text-label">
+        <blockquote className="mt-2 font-heading text-lead text-pretty text-label">
           <BlindText text={`“${answer.answer}”`} />
         </blockquote>
         {answer.spoken ? <p className="text-footnote mt-2 text-label-2">Said aloud, shown as text.</p> : null}

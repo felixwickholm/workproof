@@ -20,8 +20,8 @@ interface Props {
   draft: ChallengeDraft;
   onDraft: (draft: ChallengeDraft) => void;
   companyName: string;
-  /** Where the draft came from: the job ad link, or the company's sentence. */
-  source: { kind: "ad"; url: string } | { kind: "need" };
+  /** Where the draft came from: the job ad link, the role the company picked, or the company's own hand. */
+  source: { kind: "ad"; url: string } | { kind: "role"; role: string } | { kind: "hand"; role: string };
   /** Why the built-in designer wrote this draft, when a live model is configured. */
   fallback: string | null;
   approvedBy: string;
@@ -32,9 +32,10 @@ interface Props {
 }
 
 /** What still stands between the draft and publishing, in words, or null when it can go live. */
-export function publishWaitsFor(draft: ChallengeDraft, approvedBy: string): string | null {
+function publishWaitsFor(draft: ChallengeDraft, approvedBy: string): string | null {
   if (draft.title.trim().length < 3) return "Give the challenge a title.";
   if (draft.brief.trim().length < 10) return "Say what the person does, in a sentence or two.";
+  if (draft.deliverable.trim().length < 5) return "Say what the person hands in.";
   if (approvedBy.trim().length === 0) return "Add your name to approve it.";
   return null;
 }
@@ -55,20 +56,18 @@ export function DraftStep({ draft, onDraft, companyName, source, fallback, appro
 
   return (
     <div data-tour="draft" className="flex flex-col gap-6">
-      <p className="text-subhead text-pretty text-label-2">
-        {designerLine(draft.draftedBy)} {source.kind === "ad" ? "from your job ad" : "from your sentence"}. You approve it before anyone sees it.
-        {fallback ? ` ${fallback}` : ""}
-      </p>
+      <p className="text-subhead text-pretty text-label-2">{sourceLine(draft, source, fallback)}</p>
       {draft.note ? <p className="text-body rounded-inner bg-surface px-5 py-4 text-pretty text-label">{draft.note}</p> : null}
 
-      <article aria-label="Your challenge" className="rounded-card bg-surface p-5 min-[900px]:p-8">
+      <article aria-label="Your challenge" className="rounded-card border border-separator bg-surface p-5 min-[900px]:p-8">
         <p className="text-subhead text-label-2">For {companyName || "your company"}</p>
         <InlineEdit
           label="Title"
+          placeholder="Name the challenge"
           value={draft.title}
           onChange={(title) => onDraft({ ...draft, title })}
           maxLength={120}
-          className="mt-1 text-[28px] leading-[34px] font-semibold tracking-[-0.02em] text-pretty"
+          className="mt-1 text-h2 text-pretty"
         />
         <div className="mt-4 flex flex-wrap items-center gap-2">
           <FormatSelect value={draft.format} onChange={(format) => onDraft({ ...draft, format })} />
@@ -76,7 +75,7 @@ export function DraftStep({ draft, onDraft, companyName, source, fallback, appro
         </div>
 
         <DocPart label="The task">
-          <InlineEdit label="The task" value={draft.brief} onChange={(brief) => onDraft({ ...draft, brief })} maxLength={LIMITS.brief} multiline className="text-body text-pretty" />
+          <InlineEdit label="The task" placeholder="Write the situation, like a message from your team." value={draft.brief} onChange={(brief) => onDraft({ ...draft, brief })} maxLength={LIMITS.brief} multiline className="text-body text-pretty" />
           {draft.options ? (
             <ul className="mt-3 grid gap-3 min-[700px]:grid-cols-2">
               {draft.options.map((o) => (
@@ -93,7 +92,7 @@ export function DraftStep({ draft, onDraft, companyName, source, fallback, appro
         </DocPart>
 
         <DocPart label="What the person hands in">
-          <InlineEdit label="What the person hands in" value={draft.deliverable} onChange={(deliverable) => onDraft({ ...draft, deliverable })} maxLength={LIMITS.brief} className="text-body text-pretty" />
+          <InlineEdit label="What the person hands in" placeholder="For example: a short plan in five lines" value={draft.deliverable} onChange={(deliverable) => onDraft({ ...draft, deliverable })} maxLength={LIMITS.brief} className="text-body text-pretty" />
         </DocPart>
 
         <DocPart label={`Skills you score (${draft.coreSkills.length})`} note="A person at your company scores each skill from 1 to 5. The AI never scores.">
@@ -138,11 +137,11 @@ export function DraftStep({ draft, onDraft, companyName, source, fallback, appro
         ) : null}
       </article>
 
-      <div className="rounded-card bg-surface p-5 min-[900px]:p-6">
+      <div className="rounded-card border border-separator bg-surface p-5 min-[900px]:p-6">
         <PlacesStepper value={draft.places} onChange={(places) => onDraft({ ...draft, places })} />
       </div>
 
-      <div className="rounded-card bg-surface p-5 min-[900px]:p-6">
+      <div className="rounded-card border border-separator bg-surface p-5 min-[900px]:p-6">
         <Field label="Approved by" value={approvedBy} onChange={onApprovedBy} placeholder="Your name" autoComplete="name" maxLength={LIMITS.approvedBy} onEnter={waitingFor ? undefined : onPublish} />
         <p className="text-footnote mt-2 text-pretty text-label-2">Your name goes on the challenge.</p>
         <div className="mt-5">{errorLine}</div>
@@ -157,6 +156,14 @@ export function DraftStep({ draft, onDraft, companyName, source, fallback, appro
       </div>
     </div>
   );
+}
+
+/** Where the draft came from, in one line, and that nothing is public before a person approves it. */
+function sourceLine(draft: ChallengeDraft, source: Props["source"], fallback: string | null): string {
+  const approve = "You approve it before anyone sees it.";
+  if (source.kind === "hand") return `You write this challenge for the ${source.role} role. The skills come from the shared list. ${approve}`;
+  const from = source.kind === "ad" ? "from your job ad" : `for the ${source.role} role`;
+  return `${designerLine(draft.draftedBy)} ${from}. ${approve}${fallback ? ` ${fallback}` : ""}`;
 }
 
 /** One part of the challenge document, under a quiet label, split from the part above by a hairline. */

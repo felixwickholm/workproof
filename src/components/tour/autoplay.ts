@@ -1,21 +1,21 @@
-import type { TourKind, TourStep } from "./steps";
+import type { TourStep } from "./steps";
 
-/** Time to look at the screen before reading: shorter in the overview, longer in a view's demo. */
-const LOOK_MS: Record<TourKind, number> = { minute: 5000, seeker: 6500, employer: 6500, city: 6500 };
+/** Time to look at the lit part of the screen before and after reading the card. */
+const LOOK_MS = 3500;
 /** A slow reader's pace on short plain words. */
 const MS_PER_WORD = 250;
 /** No step goes faster than a comfortable glance or slower than the tour's budget allows. */
-export const MIN_STEP_MS = 6000;
-export const MAX_STEP_MS = 10_000;
+export const MIN_STEP_MS = 6500;
+export const MAX_STEP_MS = 11_000;
 
-/** The words a card shows: the headline and its one sentence. */
+/** The words a card shows: the headline and its sentences. */
 export function cardWords(step: Pick<TourStep, "title" | "body">): string[] {
   return `${step.title} ${step.body ?? ""}`.split(/\s+/).filter(Boolean);
 }
 
 /** How long a step stays before the tour moves on, from the length of its words. */
-export function stepDuration(step: Pick<TourStep, "title" | "body">, kind: TourKind): number {
-  const ms = LOOK_MS[kind] + cardWords(step).length * MS_PER_WORD;
+export function stepDuration(step: Pick<TourStep, "title" | "body">): number {
+  const ms = LOOK_MS + cardWords(step).length * MS_PER_WORD;
   return Math.round(Math.min(MAX_STEP_MS, Math.max(MIN_STEP_MS, ms)));
 }
 

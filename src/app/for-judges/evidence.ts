@@ -103,7 +103,7 @@ export const PRINTED: Readonly<Record<string, string>> = {
   "5 Flow (API) › v3: both sides confirm the talk": "ok",
   "5 Flow (API) › v3: a follow-up is agreed and a hire recorded by the company": "ok",
   "5 Flow (API) › v3: the city counts every step for the task, with no name": "ok",
-  "6 Demo story (API) › session: persona and stage": "Olena Kovalenko, invited",
+  "6 Demo story (API) › session: persona and stage": "Mikko Lahtinen, invited",
   "6 Demo story (API) › unknown stage refused": "HTTP 400 for an unknown stage",
   "6 Demo story (API) › before and sent": "2 proofs before, 3 after sending; story proof queued: true",
   "6 Demo story (API) › invited: open invitation from the story company": "Halla Supply wants to meet you.",

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Company, Skill } from "@/lib/domain/types";
-import { answeredLine, clipLength, clipSkills, companyFacts, companyLine, decisionWords, hiddenLine, pooledLine, replyTime, taskMeta, timeAgo } from "./format";
+import { answeredLine, clipLength, clipSkills, companyFacts, companyLine, decisionWords, hiddenLine, pooledLine, replyTime, timeAgo } from "./format";
 
 const skill = (id: string): Skill => ({ id, label: id, why: "" });
 const company = (over: Partial<Company> = {}): Company => ({
@@ -17,12 +17,7 @@ const company = (over: Partial<Company> = {}): Company => ({
   ...over,
 });
 
-describe("task meta", () => {
-  it("leads with the time and names the proof kind", () => {
-    expect(taskMeta(20, "plan")).toBe("20 min · Plan");
-    expect(taskMeta(5, "voice")).toBe("5 min · Voice answer");
-  });
-
+describe("task card lines", () => {
   it("writes reply times in plain words", () => {
     expect(replyTime(0.4)).toBe("under an hour");
     expect(replyTime(2.6)).toBe("about 3 h");

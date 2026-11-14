@@ -9,7 +9,7 @@ import { ErrorState } from "../ui/error-state";
 import { Sheet } from "../ui/sheet";
 import { Skeleton } from "../ui/skeleton";
 import { companyErrorText } from "./format";
-import { workLabel } from "./hiring-words";
+import { workLabel } from "../words";
 
 interface Props {
   open: boolean;
@@ -20,8 +20,8 @@ interface Props {
   companyId: string;
 }
 
-export const SHARE_LINE = "Share good candidates. The other company sees the work, not your scores.";
-export const NO_SHARING_LINE = "This person did not allow sharing.";
+const SHARE_LINE = "Share good candidates. The other company sees the work, not your scores.";
+const NO_SHARING_LINE = "This person did not allow sharing.";
 
 /**
  * Tip another company about one good piece of work. Only companies with a challenge that shares at

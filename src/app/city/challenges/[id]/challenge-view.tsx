@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import { CopySheet } from "@/components/city/copy-sheet";
-import { formatLabel, taskState } from "@/components/city/impact";
+import { taskState } from "@/components/city/impact";
 import { ImpactFunnel } from "@/components/city/impact-funnel";
 import { CITY_ACTOR, citySource } from "@/components/city/source";
 import { MatchPicker, TopWorkList } from "@/components/city/top-work";
@@ -14,6 +14,7 @@ import { Screen } from "@/components/ui/screen";
 import { Sheet } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/toast";
+import { FORMAT_LABEL, workLabel } from "@/components/words";
 import { errorText } from "@/lib/client/api";
 import type { CityTaskView } from "@/lib/domain/types";
 
@@ -105,7 +106,7 @@ export function CityChallengeView({ params }: { params: Promise<{ id: string }> 
       page
       back={back}
       title={data.title}
-      subtitle={[data.companies.join(" and "), formatLabel(data.challenge.format), `${data.challenge.minutes} minutes`].join(" · ")}
+      subtitle={[data.companies.join(" and "), FORMAT_LABEL[data.challenge.format], `${data.challenge.minutes} minutes`].join(" · ")}
     >
       <div className="flex flex-col gap-4">
         <Card className="min-[900px]:p-8">
@@ -160,7 +161,7 @@ export function CityChallengeView({ params }: { params: Promise<{ id: string }> 
         <ul className="rounded-[16px] bg-surface px-4 py-2">
           {picked.map((entry) => (
             <li key={entry.proofId} className="text-body tnum py-1.5 text-label">
-              {entry.proofLabel.replace(/^Proof\b/, "Work")}
+              {workLabel(entry.proofLabel)}
             </li>
           ))}
         </ul>

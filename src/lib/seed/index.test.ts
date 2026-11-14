@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { roleFor } from "@/lib/ai/scripted/compose";
@@ -16,7 +16,7 @@ import { buildSeed } from ".";
 import { SAMPLE_AD_PATHS } from "./ads";
 import { COMPANIES } from "./companies";
 import { PEOPLE } from "./people";
-import { OLENA_EARLIER_ID, STORY_CHALLENGE_ID, STORY_COMPANY_ID, STORY_PROOF_ID, STORY_REVIEWER, STORY_STAGES } from "./story";
+import { MIKKO_EARLIER_ID, STORY_CHALLENGE_ID, STORY_COMPANY_ID, STORY_PROOF_ID, STORY_REVIEWER, STORY_STAGES } from "./story";
 
 const NOW = new Date("2026-11-14T12:00:00.000Z");
 const HOUR = 3_600_000;
@@ -30,13 +30,14 @@ describe("seed world", () => {
   const onBehalf = data.challenges.filter((c) => c.onBehalf);
 
   it("has the employers, tasks, people and work the contract describes", () => {
-    expect(data.companies).toHaveLength(10);
-    expect(data.challenges).toHaveLength(12);
+    expect(data.companies).toHaveLength(18);
+    expect(data.challenges).toHaveLength(30);
     expect(data.challenges.filter((c) => c.companyIds.length === 2)).toHaveLength(2);
-    expect(data.proofs.length).toBeGreaterThanOrEqual(56);
-    expect(data.proofs.length).toBeLessThanOrEqual(64);
-    expect(data.talents.length).toBeGreaterThanOrEqual(32);
-    expect(data.talents.length).toBeLessThanOrEqual(38);
+    expect(new Set(data.challenges.flatMap((c) => c.companyIds)).size).toBe(18);
+    expect(data.proofs.length).toBeGreaterThanOrEqual(70);
+    expect(data.proofs.length).toBeLessThanOrEqual(80);
+    expect(data.talents.length).toBeGreaterThanOrEqual(42);
+    expect(data.talents.length).toBeLessThanOrEqual(48);
   });
 
   it("uses a degree-level library role for every task, in every format, with at most two code tasks", () => {
@@ -103,9 +104,9 @@ describe("seed world", () => {
   });
 
   it("scores every decided proof by the company's named reviewer, one point per core skill, with a reason", () => {
-    expect(data.decisions.filter((d) => d.decision === "meet")).toHaveLength(12);
-    expect(data.decisions.filter((d) => d.decision === "pass")).toHaveLength(14);
-    expect(data.decisions.filter((d) => d.decision === "hold")).toHaveLength(8);
+    expect(data.decisions.filter((d) => d.decision === "meet")).toHaveLength(17);
+    expect(data.decisions.filter((d) => d.decision === "pass")).toHaveLength(18);
+    expect(data.decisions.filter((d) => d.decision === "hold")).toHaveLength(11);
     for (const d of data.decisions) {
       const challenge = challengeOf(d.proofId);
       expect(challenge?.companyIds, d.id).toContain(d.companyId);
@@ -131,12 +132,12 @@ describe("seed world", () => {
     }
   });
 
-  it("holds meetings in every state, with follow-ups and two hires recorded after the talk", () => {
+  it("holds meetings in every state, with follow-ups and three hires recorded after the talk", () => {
     const status = (s: string) => data.meetings.filter((m) => m.status === s).length;
-    expect(data.meetings).toHaveLength(12);
-    expect([status("invited"), status("declined"), status("accepted"), status("met")]).toEqual([4, 1, 3, 4]);
-    expect(data.meetings.filter((m) => m.followUpAgreed)).toHaveLength(3);
-    expect(data.meetings.filter((m) => m.hired)).toHaveLength(2);
+    expect(data.meetings).toHaveLength(17);
+    expect([status("invited"), status("declined"), status("accepted"), status("met")]).toEqual([6, 1, 4, 6]);
+    expect(data.meetings.filter((m) => m.followUpAgreed)).toHaveLength(5);
+    expect(data.meetings.filter((m) => m.hired)).toHaveLength(3);
     for (const m of data.meetings.filter((x) => x.followUpAgreed !== undefined || x.hired)) expect(m.status, m.id).toBe("met");
   });
 
@@ -210,6 +211,28 @@ describe("seed world", () => {
     expect(files.filter((file) => !referenced.has(file))).toEqual([]);
   });
 
+  it("gives every company a logo, every person a picture, and every challenge a photo path and a publish date", () => {
+    const exists = (src: string | undefined) => Boolean(src) && existsSync(join(process.cwd(), "public", src ?? ""));
+    for (const c of data.companies) {
+      expect(c.logo, c.id).toBe(`/companies/${c.id}.svg`);
+      expect(exists(c.logo), c.id).toBe(true);
+      expect(c.about && c.industry, c.id).toBeTruthy();
+      for (const name of c.reviewers ?? []) expect(exists(c.reviewerAvatars?.[name]), name).toBe(true);
+    }
+    for (const t of data.talents) {
+      expect(exists(t.avatar), t.name).toBe(true);
+      // The file name is opaque: a picture path must never give the person's name away.
+      for (const part of t.name.toLowerCase().split(/\s+/)) expect(t.avatar?.toLowerCase(), t.name).not.toContain(part);
+    }
+    expect(new Set(data.talents.map((t) => t.avatar)).size).toBe(data.talents.length);
+    const scenes = JSON.parse(readFileSync(join(process.cwd(), "scripts", "challenge-scenes.json"), "utf8")) as Record<string, string>;
+    for (const c of data.challenges) {
+      expect(scenes[c.id], c.id).toBeTruthy();
+      expect(c.image, c.id).toBe(`/challenges/${c.id}.webp`);
+      expect(c.publishedAt, c.id).toBe(c.createdAt);
+    }
+  });
+
   it("uses only reserved contacts", () => {
     for (const { contact } of Object.values(PEOPLE)) expect(contact).toMatch(/@example\.org$|^\+358 \d\d 000 \d{4}$/);
   });
@@ -230,7 +253,7 @@ describe("meeting slots in the seed", () => {
   });
 });
 
-describe("Olena's story", () => {
+describe("Mikko's story", () => {
   const stages = STORY_STAGES.map((stage) => ({ stage, data: build(stage) }));
 
   it("labels the story proof K7 at every stage, and no other proof", () => {
@@ -244,8 +267,8 @@ describe("Olena's story", () => {
   it("builds every stage and fills the demo info", () => {
     for (const { stage, data } of stages) {
       expect(data.demo.stage).toBe(stage);
-      expect(data.demo.personaName).toBe("Olena Kovalenko");
-      expect(data.talents.find((t) => t.id === data.demo.personaTalentId)?.name).toBe("Olena Kovalenko");
+      expect(data.demo.personaName).toBe("Mikko Lahtinen");
+      expect(data.talents.find((t) => t.id === data.demo.personaTalentId)?.name).toBe("Mikko Lahtinen");
       expect(data.challenges.find((c) => c.id === STORY_CHALLENGE_ID)?.companyIds).toEqual([STORY_COMPANY_ID]);
     }
   });
@@ -275,13 +298,13 @@ describe("Olena's story", () => {
     expect(decision?.feedback).toBe("You picked the invoices, not the chatbot, and you said why. Your two-week plan is one we could start on Monday.");
   });
 
-  it("gives Olena two earlier proofs at every stage: one answered not now with points, one waiting", () => {
+  it("gives Mikko two earlier proofs at every stage: one answered not now with points, one waiting", () => {
     const { data } = stages[0];
     const hers = data.submissions.filter((s) => s.talentId === data.demo.personaTalentId);
     expect(hers).toHaveLength(2);
     const answered = data.decisions.filter((d) => hers.some((s) => s.id === d.proofId));
     expect(answered).toHaveLength(1);
-    expect(answered[0]).toMatchObject({ proofId: OLENA_EARLIER_ID, decision: "pass" });
+    expect(answered[0]).toMatchObject({ proofId: MIKKO_EARLIER_ID, decision: "pass" });
     expect(answered[0].scores?.length).toBeGreaterThan(0);
   });
 
@@ -302,7 +325,7 @@ describe("Olena's story", () => {
     expect(proof.hiddenCount).toBe(4);
     expect(blind).not.toHaveProperty("hiddenCount");
     const shown = collectText(blind).join("\n");
-    for (const planted of ["Olena", "Kovalenko", "Matinkylä", "Metropolia", "Kotiranta", "olena.kovalenko"]) expect(shown).not.toContain(planted);
+    for (const planted of ["Mikko", "Lahtinen", "Matinkylä", "Metropolia", "Kotiranta", "mikko.lahtinen"]) expect(shown).not.toContain(planted);
     expect(shown).toContain("invoices");
     expect(blind.thinkAloud?.transcript).toContain("chatbot");
     expect(blind.explain[0].spoken).toBe(true);

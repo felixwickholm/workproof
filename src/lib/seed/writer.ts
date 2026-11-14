@@ -85,7 +85,10 @@ export function seedWriter(now: Date, data: StoreData) {
     });
 
     const id = talentId(seed.person);
-    rememberTalent(data.talents, { id, ...person }, true);
+    rememberTalent(data.talents, { id, name: person.name, contact: person.contact }, true);
+    // The picture is identity, like the name: it stays on Talent and never enters a proof.
+    const talent = data.talents.find((t) => t.id === id);
+    if (talent) talent.avatar = person.avatar;
     data.submissions.push({
       id: seed.id,
       challengeId: challenge.id,

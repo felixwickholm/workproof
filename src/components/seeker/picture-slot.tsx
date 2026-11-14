@@ -18,7 +18,7 @@ interface Props {
 const LABEL = { photo: "Photo of the work, not of you", design: "Picture of your design" } as const;
 
 /** The person's own check before sending. Pixels are not analysed, so this is the rule the server enforces. */
-export const PICTURE_CHECK_LABEL = "I checked this picture. It shows the work only: no face, no name, no badge, no contact details.";
+const PICTURE_CHECK_LABEL = "I checked this picture. It shows the work only: no face, no name, no badge, no contact details.";
 
 /**
  * One labelled slot for a picture of the work. On a phone it opens the camera. The picture is

@@ -4,11 +4,11 @@ import { api } from "@/lib/client/api";
 import type { StoryStage } from "@/lib/domain/types";
 import { CARD_HEIGHT_GUESS, PHONE_MAX, scrollFor, type Box } from "./placement";
 import { resolveRoute } from "./resolve-route";
-import type { TourStep } from "./steps";
+import type { TourAct, TourStep } from "./steps";
 import { stickyTop, visibleSize } from "./use-geometry";
-import { SOON_TIMEOUT_MS, TARGET_TIMEOUT_MS, waitForTarget, waitUntilStill } from "./wait-for-target";
+import { findShown, TARGET_TIMEOUT_MS, waitForTarget, waitUntilStill } from "./wait-for-target";
 
-export interface StepContext {
+interface StepContext {
   /** The stage the sandbox is at, as far as the tour knows. Null before the tour set one. */
   stage: { current: StoryStage | null };
   navigate: (path: string) => void;
@@ -57,6 +57,43 @@ export function bringIntoView(el: HTMLElement, ctx: Pick<StepContext, "cardHeigh
   if (Math.abs(top - window.scrollY) > 1) window.scrollTo({ top, behavior: ctx.reduce || ctx.jump ? "instant" : "smooth" });
 }
 
+/** The role the story company looks for, as its chip on the new challenge screen says it. */
+const STORY_ROLE = /^\s*AI developer\s*$/i;
+
+const nextFrame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+/** The button inside `root` whose words match, if it is there and can be pressed. */
+function buttonSaying(root: HTMLElement, words: RegExp): HTMLButtonElement | null {
+  return [...root.querySelectorAll<HTMLButtonElement>("button")].find((b) => words.test(b.textContent ?? "") && !b.disabled && b.getAttribute("aria-disabled") !== "true") ?? null;
+}
+
+/**
+ * What the tour does on a page, as the person in the story would: Laura picks "AI developer" and asks
+ * for a draft. Each one only presses buttons a person could press; when the page does not have them,
+ * it does nothing and the card shows in the middle.
+ */
+const ACTS: Record<TourAct, (path: string, signal: AbortSignal) => Promise<void>> = {
+  async draftForRole(path, signal) {
+    const box = await waitForTarget("company-looking-for", path, signal);
+    if (!box || signal.aborted) return;
+    const chip = [...box.querySelectorAll<HTMLElement>("button, [role='radio'], [role='checkbox'], label")].find((el) => STORY_ROLE.test(el.textContent ?? ""));
+    if (chip && chip.getAttribute("aria-checked") !== "true" && chip.getAttribute("aria-pressed") !== "true") chip.click();
+    // The draft button unlocks once the role is picked.
+    for (let i = 0; i < 30 && !signal.aborted; i++) {
+      const draft = buttonSaying(box, /draft my challenge/i);
+      if (draft) return draft.click();
+      await nextFrame();
+    }
+  },
+};
+
+/** The visitor is on one of the step's other addresses ("/seeker" for "/"), and its target is there. */
+function onSameScreen(step: TourStep): boolean {
+  const here = window.location.pathname;
+  if (!step.alsoOn?.includes(here)) return false;
+  return !step.target || findShown(step.target, here) !== null;
+}
+
 /**
  * Prepares one step: sets its story stage, opens its page, waits for its target and scrolls to it.
  * Resolves with the target, or null when the step has none or it did not show up in time; the
@@ -70,15 +107,18 @@ export async function runStep(step: TourStep, ctx: StepContext): Promise<HTMLEle
     const changed = step.stageInBackground ? false : await staging;
     if (ctx.signal.aborted) return null;
     if (step.company) setCompanyChoice(step.company);
-    // A step without a route (the end card) stays on the page it is on.
-    const path = step.route ? resolveRoute(step.route) : window.location.pathname;
-    if (ctx.signal.aborted || !path) return null;
-    const moved = path !== window.location.pathname;
-    if (moved) ctx.navigate(path);
+    // A step without a route (the end card) stays on the page it is on, and so does a step whose
+    // screen is already open under another of its addresses.
+    const here = window.location.pathname + window.location.search;
+    const url = step.route && !onSameScreen(step) ? resolveRoute(step.route) : here;
+    if (ctx.signal.aborted || !url) return null;
+    const path = url.split("?")[0];
+    const moved = url !== here;
+    if (moved) ctx.navigate(url);
     else if (changed) ctx.refresh();
-    if (!step.target) return null;
-    const timeout = step.soon ? SOON_TIMEOUT_MS : TARGET_TIMEOUT_MS;
-    const el = await waitForTarget(step.target, path, ctx.signal, step.targetText?.() || undefined, timeout, step.selector);
+    if (step.act) await ACTS[step.act](path, ctx.signal);
+    if (!step.target || ctx.signal.aborted) return null;
+    const el = await waitForTarget(step.target, path, ctx.signal, TARGET_TIMEOUT_MS);
     if (el && !ctx.signal.aborted) {
       bringIntoView(el, { ...ctx, jump: ctx.jump || moved });
       // The card moves only once the page has stopped scrolling, so it never lands twice.

@@ -36,17 +36,26 @@ Rules:
 
 const SKILL_LIST = SKILL_IDS.map((id) => `${id}: ${SKILLS[id].label}`).join("\n");
 
+/** What each format asks of the material and the person. Shown to people as Choose, Make, Fix and Read. */
+const FORMATS = `Formats:
+- "fix": the material is real work, for example a code change, a budget, a contract clause, a plan or an email, with 1 to 3 real problems in it. The person says what they would change and why.
+- "choose": the material gives the facts to decide by, and "options" holds two real options. The person picks one and says why.
+- "make": the material gives the facts and limits. The person makes something short: a plan, an outline, a sketch or a message.
+- "read": the material is data, a log, a table or a short report. The person says what it shows and what they would do next.`;
+
 const TASK_FIELDS = `Fields:
-- title: a short task name.
+- title: the task itself, at most 9 words.
 - format: "choose", "make", "fix" or "read".
 - proofKind: what the person hands in, one of ${PROOF_KINDS.map((k) => `"${k}"`).join(", ")}.
-- brief: under 90 words, written like a message from the team.
+- brief: 2 to 4 plain sentences from the team about the company and the situation, ending with the one question.
 - material: {"kind": "code" or "text", "title", "body"}: the real material to work on.
+- options: for "choose", exactly two {"title", "body"} options. For every other format, an empty list.
 - deliverable: what the person hands in, in one sentence.
 - coreSkills: [{"id", "why"}] with ids from the skill list only. "why" says in one line why the work needs the skill.
-- reviewGuide: one {"skillId", "lookFor"} per core skill. "lookFor" says what good work shows. Never points, counts, scales or numbers.
+- reviewGuide: one {"skillId", "lookFor"} per core skill. "lookFor" is one sentence on what the work does when this skill shows, for example "Explains why the retry hides the outage". People score the work later, so never give points, scores, scales or a pass mark, never say how many things to find, and never praise or judge.
 - setAside: work wishes left out, each with a short reason.
 Never say in any field how many problems the material has, or that they were put there on purpose.
+${FORMATS}
 Skill ids:
 ${SKILL_LIST}`;
 
@@ -54,7 +63,7 @@ export function draftPrompt(input: { need: string; role?: string; skills: string
   return `A company described the work it needs. Their words are between the <need> tags.
 ${asData("need", input.need)}
 ${input.role ? `Closest role: ${input.role}.\n` : ""}Skills the words point to: ${input.skills.join(", ") || "none found"}.
-Draft a short real work task that takes 5 to 15 minutes. The material is 12 to 25 lines of real work, for example an AI-written code change, a plan, a query or an email, with 2 or 3 real problems in it. The person answers: what would you change before this ships, and why?
+Draft a short real work task that takes 5 to 15 minutes. Pick the format that fits this work best. The material is 8 to 25 lines of real work.
 Keep 3 to 5 core skills. Put other work wishes in setAside with a short reason. Drop every wish about the person rather than the work.
 ${TASK_FIELDS}`;
 }
@@ -62,7 +71,7 @@ ${TASK_FIELDS}`;
 export function tasterPrompt(dreamJob: string): string {
   return `Someone named their dream job. Their words are between the <dream_job> tags.
 ${asData("dream_job", dreamJob)}
-Draft a 2-minute task for that job. The material is at most 10 short lines with one real problem in it. The deliverable is one sharp question. Use exactly 3 core skills and an empty setAside.
+Draft a 2-minute practice task for that job. Pick the format that fits best. The material is at most 10 short lines. The deliverable is a short answer to one question. Use exactly 3 core skills and an empty setAside.
 ${TASK_FIELDS}`;
 }
 

@@ -11,7 +11,7 @@ import { STORY_COMPANY_ID } from "@/lib/seed/story";
 
 const COMPANY_KEY = "workproof.companyId";
 const REVIEWER_KEY = "workproof.reviewer";
-/** The demo identity in Hiring mode: the company in the demo story. */
+/** The demo identity in the Company view: the company in the demo story. */
 export const DEFAULT_COMPANY_ID = STORY_COMPANY_ID;
 
 const listeners = new Set<() => void>();
@@ -92,11 +92,6 @@ export function setCompanyChoice(id: string) {
  */
 export function getReviewer(companyId: string): string {
   return read(`${REVIEWER_KEY}.${companyId}`) || REVIEWERS[companyId] || "";
-}
-
-/** The person the demo shows a company through, for "You are Anna Koivisto, who hires here." */
-export function demoReviewer(companyId: string): string | null {
-  return REVIEWERS[companyId] ?? null;
 }
 
 export function saveReviewer(companyId: string, name: string) {

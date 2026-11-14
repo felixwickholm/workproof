@@ -39,7 +39,7 @@ describe("city insights", () => {
   });
 
   it("counts proofs answered and people answered apart: one person with two answered proofs is one person", () => {
-    // Olena's P1 and P2 are both answered, and Sam's P3: three proofs, two people.
+    // Mikko's P1 and P2 are both answered, and Sam's P3: three proofs, two people.
     expect(overview.totals.proofsAnswered).toBe(3);
     expect(overview.totals.peopleAnswered).toBe(2);
   });

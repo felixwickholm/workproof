@@ -58,7 +58,7 @@ flowchart LR
 
 - `resolveProvider` (`src/lib/ai/provider/select.ts`) reads the environment once: `AI_PROVIDER` forces a designer; otherwise Claude if `ANTHROPIC_API_KEY` is set, then Gemini, then the scripted designer.
 - `modelDesigner` (`src/lib/ai/provider/model-designer.ts`) holds the prompts, the JSON schema and the draft building for both APIs. Each adapter (`src/lib/ai/claude/designer.ts`, `src/lib/ai/gemini/designer.ts`) only sends the request.
-- `postJson` (`src/lib/ai/provider/http.ts`) allows 12 seconds per attempt and retries once on 429 or 5xx. Errors carry the service, the status and the API's short reason, never the key or the text.
+- `postJson` (`src/lib/ai/provider/http.ts`) allows 20 seconds per attempt and retries once on 429 or 5xx. Errors carry the service, the status and the API's short reason, never the key or the text.
 - A circuit breaker (`src/lib/ai/provider/breaker.ts`) pauses a failing provider for 5 minutes after an auth, quota, timeout or service failure, so drafts do not wait for the same failure. A reply the guard rejected does not open the pause.
 - On any failure the scripted designer answers (`createDesigner` in `src/lib/ai/index.ts`). `GET /api/ai/status` reports which designer is live, never the key.
 
@@ -74,7 +74,7 @@ flowchart LR
 
 | Stage | State |
 |---|---|
-| `before` | Olena, an AI developer, has two earlier proofs: a feature-list cut that Tuulos Robotics scored and answered "not now" with a reason, and a chart reading for Saarnivo Grid that waits for an answer. Her work from two earlier events shows in My work. The Halla Supply challenge "What should we automate first?" is open. |
+| `before` | Mikko, an AI developer, has two earlier proofs: a feature-list cut that Tuulos Robotics scored and answered "not now" with a reason, and a chart reading for Saarnivo Grid that waits for an answer. His work from two earlier events shows in My work. The Halla Supply challenge "What should we automate first?" is open. |
 | `sent` | Her Halla Supply proof (Proof K7) waits in Halla's queue, with her name, a past client, where she lives and her school hidden. |
-| `invited` | Katja Nurmi at Halla Supply scored each skill (5, 5, 4, 4), so the total is 9 of 10, wrote why and invited her; Olena has an open invitation. The default for free exploring. |
-| `met` | Olena said yes; Halla Supply sees her name. Both sides confirmed the talk, and Halla agreed a follow-up. |
+| `invited` | Laura Niemi at Halla Supply scored each skill (5, 5, 4, 4), so the total is 9 of 10, wrote why and invited him; Mikko has an open invitation. The default for free exploring. |
+| `met` | Mikko said yes; Halla Supply sees his name. Both sides confirmed the talk, and Halla agreed a follow-up. |

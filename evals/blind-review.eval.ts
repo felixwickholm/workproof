@@ -15,7 +15,7 @@ import { call, decide, keysDeep, record, submit, twoFollowUps } from "./helpers"
 const EVAL = "2 Blind review";
 const CHALLENGE = "ch-tuulos-ml";
 const COMPANY = "co-tuulos";
-const FORBIDDEN_KEYS = ["name", "contact", "email", "photo", "talentId", "phone", "redactions"];
+const FORBIDDEN_KEYS = ["name", "contact", "email", "photo", "avatar", "talentId", "phone", "redactions"];
 const TYPED_TOKENS = /\[(?:name|contact|school|place|employer|personal detail)\]/;
 
 describe("Eval 2: blind review", () => {

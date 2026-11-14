@@ -1,4 +1,4 @@
-import { challengeHref } from "@/components/company/challenge-row";
+import { challengeHref } from "@/components/company/format";
 import { TaskCard } from "@/components/proof";
 import { Button } from "@/components/ui/button";
 import { riseAt } from "@/components/ui/rise";

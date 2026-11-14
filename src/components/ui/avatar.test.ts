@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { hueFor, initialsOf } from "./avatar";
-
-describe("hueFor", () => {
-  it("gives the same id the same number every time", () => {
-    expect(hueFor("co-kaari")).toBe(hueFor("co-kaari"));
-  });
-});
+import { initialsOf } from "./avatar";
 
 describe("initialsOf", () => {
   it("takes the first letter, upper case", () => {

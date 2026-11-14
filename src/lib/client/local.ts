@@ -2,12 +2,15 @@
  * Browser-only storage for the demo talent identity and work drafts.
  * Every access is guarded: storage can be blocked in private windows.
  */
-import type { DemoSession } from "@/lib/domain/types";
+import { isJobRole } from "@/lib/domain/roles";
+import type { DemoSession, JobRole } from "@/lib/domain/types";
 
 const TALENT_ID = "workproof.talentId";
 const TALENT_NAME = "workproof.talentName";
 const TALENT_CONTACT = "workproof.talentContact";
 const IDENTITY = "workproof.identity";
+const ROLES = "workproof.roles";
+const SAVED = "workproof.saved";
 
 function read(key: string): string | null {
   try {
@@ -120,4 +123,43 @@ export function saveDraft(challengeId: string, draft: WorkDraft) {
 
 export function clearDraft(challengeId: string) {
   write(draftKey(challengeId), null);
+}
+
+/**
+ * The job roles this visitor picked on the challenge list, or null before they picked any. Unknown
+ * values from an older build are dropped.
+ */
+export function getChosenRoles(): JobRole[] | null {
+  const raw = read(ROLES);
+  if (raw === null) return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter(isJobRole) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveChosenRoles(roles: readonly JobRole[]) {
+  write(ROLES, JSON.stringify(roles));
+}
+
+/** The challenge ids this visitor saved, newest first. Only on this device; nothing is sent. */
+export function getSavedChallenges(): string[] {
+  const raw = read(SAVED);
+  if (!raw) return [];
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Saves or forgets one challenge and returns the new list. */
+export function setChallengeSaved(challengeId: string, saved: boolean): string[] {
+  const rest = getSavedChallenges().filter((id) => id !== challengeId);
+  const next = saved ? [challengeId, ...rest] : rest;
+  write(SAVED, JSON.stringify(next));
+  return next;
 }

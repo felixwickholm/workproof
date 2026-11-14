@@ -82,8 +82,8 @@ export async function decide(page, words, decision, points = 4) {
 const lockedReason = async (page, button) => page.locator(`[id="${await button.getAttribute("aria-describedby")}"]`).textContent();
 
 /**
- * Suite 4: the same browser switches to Hiring as the company whose challenge the visitor did. The home shows each challenge
- * with its numbers; the visitor's work waits under a neutral label with none of their details.
+ * Suite 4: the same browser switches to the Company view as the company whose challenge the visitor did. The home lists
+ * each challenge in one table with its numbers; the visitor's work waits under a neutral label with none of their details.
  * A score needs every skill, two sentences and a registered person: "AI bot" is refused. One work
  * gets "Not now", one "Score only", the visitor's an invitation. The top work list shows the
  * totals, highest first, the held one gets invited from there, and one is shared with consent.
@@ -96,7 +96,7 @@ export async function runEmployer(journey) {
   /** The company whose challenge the visitor did, and its first registered reviewer, read from the data. */
   const company = { id: "", name: "", reviewer: "" };
 
-  await suite.step("switch to Hiring from the top-left switcher", async () => {
+  await suite.step("switch to Company from the top-left switcher", async () => {
     expect(visitor, "needs the work the work seeker suite sent");
     await page.goto(`${BASE_URL}/seeker`);
     await visible(page.getByRole("heading", { level: 1 })).waitFor();
@@ -106,24 +106,24 @@ export async function runEmployer(journey) {
         const challenge = await (await fetch(`/api/challenges/${encodeURIComponent(challengeId)}`)).json();
         const all = await (await fetch("/api/companies")).json();
         const found = all.find((c) => c.id === challenge.companyIds[0]);
-        // The Hiring screens act for the company kept in the browser.
+        // The Company screens act for the company kept in the browser.
         localStorage.setItem("workproof.companyId", found.id);
         return { id: found.id, name: found.name, reviewer: found.reviewers[0] };
       }, visitor.challengeId),
     );
-    await switchMode(page, "Hiring", "/employer");
+    await switchMode(page, "Company", "/employer");
   });
 
-  await suite.step("My challenges: the greeting names the company, each challenge shows its four numbers", async () => {
+  await suite.step("My challenges: the greeting names the company, the table shows who did it, scored, invited and the top score", async () => {
     const heading = visible(page.getByRole("heading", { level: 1 }));
     await eventually(async () => ((await heading.textContent()) ?? "").startsWith(`${company.name}. `), `the greeting never names ${company.name}`, 15_000);
     await visible(page.getByRole("heading", { name: "My challenges" })).waitFor();
-    await waitForText(page, "did it");
-    await waitForText(page, "said yes");
+    for (const column of ["did it", "scored", "invited", "top score"]) await waitForText(page, column);
+    const row = visible(page.getByRole("listitem").filter({ has: page.getByRole("link", { name: visitor.challengeTitle, exact: true }) }));
+    await row.getByRole("link", { name: /^(Score work \(\d+\)|See top work)$/ }).waitFor();
     await visible(page.getByRole("link", { name: "New challenge" })).waitFor();
-    await visible(page.getByRole("region", { name: "How the event works" })).waitFor();
     await waitForText(page, "Answers you still owe:");
-    await assertTextLacks(page, SECRETS, "Hiring home");
+    await assertTextLacks(page, SECRETS, "Company home");
     await checkScreen(page, errors, "/employer");
   });
 

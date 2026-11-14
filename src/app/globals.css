@@ -47,50 +47,75 @@
   --color-negative-wash: #fdecea;
   --color-negative-ink: #7a1d14;
   --color-scrim: rgba(1, 17, 53, 0.28);
+  /* Company logos are drawn for white, so their tile stays white in both themes. */
+  --color-logo-tile: #ffffff;
 
-  --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  /* Business Espoo's faces (businessespoo.fi): Work Sans for text, Lato for headings. */
+  --font-sans: var(--font-work-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-lato), ui-sans-serif, system-ui, sans-serif;
+  /* Kept so older markup that asks for the serif gets the heading face instead. */
+  --font-serif: var(--font-heading);
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   /*
-   * The scale: body 17px, nothing under 14px. Headings, greetings and key numbers are much bigger
-   * than the text around them, so the thing people care about is the first thing they see.
+   * The scale, copied from businessespoo.fi. Headings in Lato: h1 40/48, h2 30/38, h3 25/33 at 400;
+   * h4 20/26 and the small heading 18/23 at 700. Text in Work Sans: body 16/26, lead 19/28, small 15/23.
+   * The older names (large-title, title, section, headline, subhead, footnote) map onto the same steps,
+   * so every screen moves together. Captions stay one step under small text for meta under a row.
    */
-  --text-display: 48px;
-  --text-display--line-height: 52px;
-  --text-display--letter-spacing: -0.025em;
-  --text-large-title: 34px;
-  --text-large-title--line-height: 40px;
-  --text-large-title--letter-spacing: -0.02em;
-  --text-title: 28px;
-  --text-title--line-height: 34px;
-  --text-title--letter-spacing: -0.02em;
-  --text-title-3: 22px;
-  --text-title-3--line-height: 28px;
-  --text-title-3--letter-spacing: -0.015em;
-  --text-headline: 18px;
-  --text-headline--line-height: 24px;
-  --text-body: 17px;
-  --text-body--line-height: 26px;
-  --text-subhead: 16px;
-  --text-subhead--line-height: 23px;
+  --text-h1: 40px;
+  --text-h1--line-height: 48px;
+  --text-h1--font-weight: 400;
+  --text-h2: 30px;
+  --text-h2--line-height: 38px;
+  --text-h2--font-weight: 400;
+  --text-h3: 25px;
+  --text-h3--line-height: 33px;
+  --text-h3--font-weight: 400;
+  --text-h4: 20px;
+  --text-h4--line-height: 26px;
+  --text-h4--font-weight: 700;
+  --text-h5: 18px;
+  --text-h5--line-height: 23px;
+  --text-h5--font-weight: 700;
+  --text-lead: 19px;
+  --text-lead--line-height: 28px;
+  --text-display: 40px;
+  --text-display--line-height: 48px;
+  --text-large-title: 40px;
+  --text-large-title--line-height: 48px;
+  --text-large-title--font-weight: 400;
+  --text-title: 30px;
+  --text-title--line-height: 38px;
+  --text-title--font-weight: 400;
+  --text-title-3: 25px;
+  --text-title-3--line-height: 33px;
+  --text-title-3--font-weight: 400;
   --text-section: 20px;
   --text-section--line-height: 26px;
-  --text-section--font-weight: 600;
+  --text-section--font-weight: 700;
+  --text-headline: 18px;
+  --text-headline--line-height: 23px;
+  --text-headline--font-weight: 700;
+  --text-body: 16px;
+  --text-body--line-height: 26px;
+  --text-subhead: 15px;
+  --text-subhead--line-height: 23px;
   --text-footnote: 15px;
-  --text-footnote--line-height: 21px;
+  --text-footnote--line-height: 23px;
   --text-small: 15px;
-  --text-small--line-height: 21px;
-  --text-caption: 14px;
-  --text-caption--line-height: 19px;
+  --text-small--line-height: 23px;
+  --text-caption: 13px;
+  --text-caption--line-height: 18px;
   /* Kept for older markup; sentence case and no tracking, like every other label. */
-  --text-eyebrow: 14px;
-  --text-eyebrow--line-height: 19px;
-  --text-code: 15px;
-  --text-code--line-height: 22px;
+  --text-eyebrow: 13px;
+  --text-eyebrow--line-height: 18px;
+  --text-code: 14px;
+  --text-code--line-height: 21px;
 
-  --radius-card: 22px;
-  --radius-inner: 14px;
+  /* Proven's soft corner: 20px on cards, 12px on inner blocks and inputs. */
+  --radius-card: 20px;
+  --radius-inner: 12px;
   --radius-sheet: 28px;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
@@ -101,12 +126,20 @@
   color-scheme: light;
   --glass: rgba(255, 255, 255, 0.9);
   --shadow-float: 0 1px 2px rgba(17, 17, 15, 0.06), 0 12px 40px rgba(17, 17, 15, 0.12);
+  /* Proven's card lift: one wide, faint shadow in navy, under a 1px edge. */
+  --shadow-card: 0 8px 40px rgba(1, 17, 53, 0.06);
   /* The walkthrough's dimmed page around the spotlight. */
   --tour-dim: rgba(17, 17, 15, 0.6);
   --sidebar-width: 240px;
+  /* Proven's page frame: a 76rem column with 32px gutters from 900px, 16px on a phone. */
+  --page-width: 1216px;
   --phone-bar: 52px;
-  /* The logo's bar sits on an ink tile, so it takes the warm peach to stay visible. */
-  --logo-dot: #ffc386;
+  /* The W-check logo: navy letters and a blue check; its tile is navy with a white W and a peach check. */
+  --logo-ink: #012169;
+  --logo-check: #0050bb;
+  --mark-tile: #012169;
+  --mark-ink: #ffffff;
+  --mark-check: #ffc386;
   /* Espoo blue: the City of Espoo logo in "for City of Espoo" and nowhere else. */
   --partner: #0050bb;
 }
@@ -151,7 +184,13 @@
   --glass: rgba(1, 17, 53, 0.88);
   /* On navy a shadow alone does not lift a layer, so it gets a hairline edge too. */
   --shadow-float: 0 0 0 1px #1d3266, 0 16px 48px rgba(0, 0, 0, 0.6);
-  --logo-dot: #0050bb;
+  /* On navy the 1px edge does the lifting; the shadow only deepens it. */
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.35);
+  --logo-ink: #ffffff;
+  --logo-check: #ffc386;
+  --mark-tile: #ffffff;
+  --mark-ink: #012169;
+  --mark-check: #0050bb;
   --partner: #ffffff;
 }
 
@@ -164,7 +203,7 @@
   }
 }
 
-/* Inside the app frame (the three modes), as opposed to the landing page. */
+/* Inside the app frame (the three views), as opposed to /for-judges, /how-it-works and /try. */
 @custom-variant in-shell (&:where(.shell-root:has(> [data-shell-on]) *));
 
 html {
@@ -181,7 +220,7 @@ body {
   background: var(--color-ground);
   color: var(--color-label);
   font-family: var(--font-sans);
-  font-size: 17px;
+  font-size: 16px;
   line-height: 26px;
   /* A pasted URL or a long word wraps instead of pushing the page sideways. */
   overflow-wrap: break-word;
@@ -213,16 +252,31 @@ html[data-theme-switching] *::after {
   outline: none;
 }
 
-/* The greeting that opens each mode home: the one serif on the screen. */
+/* Every heading is set in Lato, as on businessespoo.fi; a size class picks the step. In the base layer, so a utility still wins. */
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
+  }
+}
+
+@utility font-heading {
+  font-family: var(--font-heading);
+}
+
+/* The greeting that opens each mode home: Business Espoo's h1, one step smaller on a phone. */
 @utility text-greeting {
-  font-family: var(--font-serif);
-  font-size: 34px;
-  line-height: 38px;
+  font-family: var(--font-heading);
+  font-size: 32px;
+  line-height: 40px;
   font-weight: 400;
-  letter-spacing: -0.01em;
   @media (width >= 900px) {
-    font-size: 56px;
-    line-height: 60px;
+    font-size: 40px;
+    line-height: 48px;
   }
 }
 
@@ -248,9 +302,16 @@ html[data-theme-switching] *::after {
   }
 }
 
-/* Things that float (menus, sheets, toasts) are the only things with a shadow. */
+/* Things that float (menus, sheets, toasts) take the strong shadow. */
 @utility shadow-float {
   box-shadow: var(--shadow-float);
+}
+
+/* A Proven card: a 1px separator edge and one faint wide shadow, so a white card reads on white ground. */
+@utility shadow-card {
+  box-shadow:
+    inset 0 0 0 1px var(--color-separator),
+    var(--shadow-card);
 }
 
 @utility press {
@@ -342,6 +403,12 @@ html[data-theme-switching] *::after {
   .shell-root:has(> [data-shell-on] .shell-tabs) .shell-content:not(:has([data-bottom-bar])) {
     padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
+}
+
+/* A page that asks for the grey tone puts the whole frame on the light grey surface; the sidebar keeps its white. */
+html:has([data-page-tone="grey"]),
+html:has([data-page-tone="grey"]) body {
+  background: var(--color-surface);
 }
 
 /*

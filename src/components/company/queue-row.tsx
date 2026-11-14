@@ -4,7 +4,7 @@ import type { BlindProof } from "@/lib/domain/types";
 import { TimeAgo } from "../proof";
 import { cx } from "../ui/cx";
 import { proofHref } from "./format";
-import { workLabel } from "./hiring-words";
+import { workLabel } from "../words";
 
 interface Props {
   proof: BlindProof;

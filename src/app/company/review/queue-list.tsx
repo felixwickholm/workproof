@@ -4,15 +4,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { type ReactNode } from "react";
-import { challengeHref } from "@/components/company/challenge-row";
+import { challengeHref } from "@/components/company/format";
 import { CompanyLine } from "@/components/company/company-line";
 import { newestFirst } from "@/components/company/decision-words";
-import { formatTotal, rowState } from "@/components/company/hiring-words";
+import { rowState } from "@/components/company/hiring-words";
 import { useOpenedProofs } from "@/components/company/opened-proofs";
+import { sharedRows } from "@/components/company/review-order";
 import { QueueRow, QueueRowSkeleton } from "@/components/company/queue-row";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import { formatTotal } from "@/components/words";
 import { useReview } from "./review-context";
 
 /**
@@ -45,10 +47,7 @@ export function QueueList({ selectedId }: { selectedId: string | null }) {
   if (error && !queue) return <ErrorState error={error} what="the work to score" onRetry={retry} away={{ href: "/employer", label: "Back to my challenges" }} />;
   if (!queue) return null;
 
-  const shared = [
-    ...queue.recommended.map((p) => ({ proof: p, line: `Recommended by ${p.recommendedBy}` })),
-    ...queue.secondLook.map((p) => ({ proof: p, line: "Shared with you. Same skills." })),
-  ];
+  const shared = sharedRows(queue);
 
   return (
     <div key={queue.company.id} className="pb-10">

@@ -4,7 +4,7 @@ import { SECRETS } from "./seeker.mjs";
 /** The funnel's labels, as the city page sets them on `data-total`. */
 const STEPS = ["Took a challenge", "Scored by a company", "Invited", "Said yes", "Talked at the event", "Follow-up agreed", "Hired (if known)"];
 /** Names a city screen must never show: the visitor's details and the demo person's. */
-const NAMES = [...SECRETS, "Olena", "Kovalenko"];
+const NAMES = [...SECRETS, "Mikko", "Lahtinen"];
 /** A reviewer registered for the test company, so every score names a person. */
 const REVIEWER = "Test Reviewer";
 
@@ -89,7 +89,8 @@ async function scoreOne(page, task) {
 }
 
 /**
- * Suite 7: the city. The funnel moves when a company scores work in this browser; the challenge page lists
+ * Suite 7: the city. The page leads with its graphs; the city makes a challenge from a company's sample job
+ * ad and gets the invitation to send. The funnel moves when a company scores work in this browser; the challenge page lists
  * the work by label and score and offers two people to another company; the export and every city screen
  * carry no name. Another browser's event is untouched, and Reset demo restores the start.
  */
@@ -100,15 +101,40 @@ export async function runCity(journey) {
   let task = null;
   let fresh = {};
 
-  await suite.step("the city page answers its three questions", async () => {
+  await suite.step("the city page leads with its graphs and keeps the map", async () => {
     await page.goto(`${BASE_URL}/city`);
     start = await readFunnel(page);
     for (const label of STEPS) expect(Number.isInteger(start[label]), `the funnel shows no number for "${label}"`);
-    await visible(page.getByRole("heading", { name: "Challenge leaderboard" })).waitFor();
-    await visible(page.getByRole("heading", { name: "What companies ask for" })).waitFor();
+    for (const name of ["From challenge to hire", "Scored or waiting", "Challenges and work over time", "Roles in demand", "Companies hiring right now", "Where the work goes"]) {
+      await visible(page.getByRole("heading", { name })).waitFor();
+    }
+    for (const id of ["city-charts", "city-funnel", "city-map", "city-hiring-now", "city-make-challenge"]) {
+      expect((await page.locator(`[data-tour="${id}"]`).count()) === 1, `the walkthrough target "${id}" is not on the page once`);
+    }
     await visible(page.getByText(/follow-up talks? (came out of this event|is agreed yet)/)).waitFor();
     await noNames(page, "/city");
     await checkScreen(page, errors, "/city");
+  });
+
+  await suite.step("the city picks a company hiring now, makes a challenge from its sample ad and gets the invitation", async () => {
+    const hiring = page.locator('[data-tour="city-hiring-now"]');
+    await visible(hiring.getByText("Sample ads")).waitFor();
+    const row = hiring.locator("li").filter({ has: page.getByRole("button", { name: "Make a challenge" }) }).first();
+    const company = (await row.locator("p").first().innerText()).trim();
+    await row.getByRole("button", { name: "Make a challenge" }).click();
+    const draft = page.getByRole("dialog");
+    await visible(draft.getByText("The company scores")).waitFor({ timeout: 30_000 });
+    await draft.getByRole("button", { name: "Publish and invite" }).click();
+    const invite = page.getByRole("dialog").filter({ hasText: `Invite ${company}` });
+    await visible(invite.getByText("The challenge is live. Send this invitation to the company.")).waitFor({ timeout: 15_000 });
+    expect((await invite.locator("textarea").inputValue()).includes("/employer/challenges/"), "the invitation has no link to the challenge");
+    await invite.getByRole("button", { name: "Close" }).click();
+    await eventually(
+      async () => (await hiring.locator("li").filter({ hasText: company }).getByRole("link", { name: "Challenge made" }).count()) === 1,
+      () => `the row for ${company} does not say "Challenge made"`,
+      15_000,
+    );
+    await checkScreen(page, errors, "/city after making a challenge");
   });
 
   await suite.step("scoring work raises the funnel in this browser", async () => {

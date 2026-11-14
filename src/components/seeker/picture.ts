@@ -2,9 +2,9 @@ import { stripJpegMetadata } from "@/lib/http/jpeg";
 import { MAX_PICTURE_BYTES } from "@/lib/http/limits";
 
 /** Longest side of a picture after re-encoding. */
-export const MAX_SIDE = 1280;
+const MAX_SIDE = 1280;
 /** Qualities tried in turn until the picture fits under the size limit. */
-export const QUALITIES = [0.8, 0.7, 0.6, 0.5, 0.4] as const;
+const QUALITIES = [0.8, 0.7, 0.6, 0.5, 0.4] as const;
 
 /** Scales a picture down (never up) so its longest side is at most `max`. */
 export function fitWithin(width: number, height: number, max = MAX_SIDE): { width: number; height: number } {

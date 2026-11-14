@@ -36,7 +36,7 @@ export interface Preview {
   transcriptHidden: number;
 }
 
-export const SHARE_LABEL = "Let other companies with the same need see this work. They see the work, not your name.";
+const SHARE_LABEL = "Let other companies with the same need see this work. They see the work, not your name.";
 
 function Title({ children, sub }: { children: ReactNode; sub?: ReactNode }) {
   return (

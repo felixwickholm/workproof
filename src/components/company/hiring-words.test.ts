@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { Meeting, TopProof } from "@/lib/domain/types";
 import {
   challengeShape,
-  currentEventStep,
   factsLine,
-  formatTotal,
-  funnelLine,
   greetingLine,
   liveTotal,
   meetingState,
@@ -14,9 +11,6 @@ import {
   scoreLock,
   scoredSoFar,
   scoresFor,
-  totalOutOf,
-  workCode,
-  workLabel,
 } from "./hiring-words";
 
 const skills = [{ id: "a" }, { id: "b" }, { id: "c" }];
@@ -32,21 +26,7 @@ const meeting = (over: Partial<Meeting>): Meeting => ({
 });
 const decision = (kind: "meet" | "pass" | "hold") => ({ decision: kind }) as TopProof["decision"];
 
-describe("funnelLine", () => {
-  it("reads the four steps in order", () => {
-    expect(funnelLine({ took: 9, scored: 4, invited: 2, agreed: 1 })).toBe("9 did it → 4 scored → 2 invited → 1 said yes");
-  });
-  it("keeps honest zeros", () => {
-    expect(funnelLine({ took: 0, scored: 0, invited: 0, agreed: 0 })).toBe("0 did it → 0 scored → 0 invited → 0 said yes");
-  });
-});
-
-describe("score formatting", () => {
-  it("always shows one decimal", () => {
-    expect(formatTotal(8)).toBe("8.0");
-    expect(formatTotal(7.5)).toBe("7.5");
-    expect(totalOutOf(10)).toBe("10.0 of 10");
-  });
+describe("live score", () => {
   it("shows a total only once every skill has points", () => {
     expect(liveTotal({}, skills)).toBeNull();
     expect(liveTotal({ a: 4, b: 5 }, skills)).toBeNull();
@@ -60,9 +40,7 @@ describe("score formatting", () => {
       { skillId: "c", points: 5 },
     ]);
   });
-  it("names the work plainly", () => {
-    expect(workLabel("Proof K7")).toBe("Work K7");
-    expect(workCode("Proof K7")).toBe("K7");
+  it("names the shape of a challenge", () => {
     expect(challengeShape({ format: "fix", minutes: 12 })).toBe("Fix · 12 min");
   });
 });
@@ -110,11 +88,5 @@ describe("greeting and facts", () => {
     expect(factsLine(2.2, 3)).toBe("Median time to score: 2 h. Answers you still owe: 3.");
     expect(factsLine(null, 0)).toBe("Answers you still owe: 0.");
     expect(factsLine(0.4, 1)).toBe("Median time to score: under 1 h. Answers you still owe: 1.");
-  });
-  it("marks the first event step not done", () => {
-    expect(currentEventStep({ took: 0, scored: 0, invited: 0, met: 0 })).toBe(1);
-    expect(currentEventStep({ took: 3, scored: 0, invited: 0, met: 0 })).toBe(2);
-    expect(currentEventStep({ took: 3, scored: 2, invited: 1, met: 0 })).toBe(4);
-    expect(currentEventStep({ took: 3, scored: 2, invited: 1, met: 1 })).toBe(5);
   });
 });

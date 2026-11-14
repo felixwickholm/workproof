@@ -8,8 +8,8 @@ const DAY = 86_400_000;
 
 describe("seeker home", () => {
   it("greets the person by first name with the open invitation", () => {
-    const home = buildSeekerHome(sampleEvent(), PRIVATE.olena, NOW);
-    expect(home.greeting).toEqual({ firstName: "Olena", fact: "Kaari Home Care wants to meet you." });
+    const home = buildSeekerHome(sampleEvent(), PRIVATE.mikko, NOW);
+    expect(home.greeting).toEqual({ firstName: "Mikko", fact: "Kaari Home Care wants to meet you." });
     expect(home.counts).toEqual({ proofs: 2, readByPeople: 2, writtenAnswers: 2, invitations: 1 });
     expect(home.invitations).toEqual([
       {
@@ -30,7 +30,7 @@ describe("seeker home", () => {
   });
 
   it("names the reviewer on every passport answer, a Not now as much as a Meet, and counts reviewers who answered", () => {
-    const passport = buildSeekerHome(sampleEvent(), PRIVATE.olena, NOW).passport;
+    const passport = buildSeekerHome(sampleEvent(), PRIVATE.mikko, NOW).passport;
     const byProof = new Map(passport.map((e) => [e.proof.proofId, e]));
     expect(byProof.get("p2")?.responses).toMatchObject([{ decision: "pass", reviewer: "Henrik Lund", companyName: "Otso Health" }]);
     expect(byProof.get("p1")?.responses).toMatchObject([{ decision: "meet", reviewer: "Anna Koivisto" }]);
@@ -39,7 +39,7 @@ describe("seeker home", () => {
   });
 
   it("lists every open task newest first, the same order for everyone, and marks only work already sent", () => {
-    const mine = buildSeekerHome(sampleEvent(), PRIVATE.olena, NOW).tasks;
+    const mine = buildSeekerHome(sampleEvent(), PRIVATE.mikko, NOW).tasks;
     const stranger = buildSeekerHome(sampleEvent(), "t_nobody", NOW).tasks;
     expect(mine.map((t) => t.challenge.id)).toEqual(["ch-b", "ch-pool", "ch-a"]);
     expect(stranger.map((t) => t.challenge.id)).toEqual(["ch-b", "ch-pool", "ch-a"]);
@@ -56,19 +56,19 @@ describe("seeker home", () => {
   it("picks the next fact in order: a new answer, then proofs waiting, then the open tasks", () => {
     const data = sampleEvent();
     data.meetings[0].status = "accepted";
-    expect(buildSeekerHome(data, PRIVATE.olena, NOW).greeting.fact).toBe("Otso Health wrote you an answer.");
-    expect(buildSeekerHome(data, PRIVATE.olena, new Date(NOW.getTime() + 3 * DAY)).greeting.fact).toBe("Three tasks are open today.");
+    expect(buildSeekerHome(data, PRIVATE.mikko, NOW).greeting.fact).toBe("Otso Health wrote you an answer.");
+    expect(buildSeekerHome(data, PRIVATE.mikko, new Date(NOW.getTime() + 3 * DAY)).greeting.fact).toBe("Three tasks are open today.");
     expect(buildSeekerHome(data, PRIVATE.sam, new Date(NOW.getTime() + 3 * DAY)).greeting.fact).toBe("Your proof waits for a reader.");
     data.decisions = [];
     data.meetings = [];
-    expect(buildSeekerHome(data, PRIVATE.olena, NOW).greeting.fact).toBe("Your two proofs wait for a reader.");
+    expect(buildSeekerHome(data, PRIVATE.mikko, NOW).greeting.fact).toBe("Your two proofs wait for a reader.");
   });
 
   it("has no name for a visitor who has not handed in anything", () => {
     const home = buildSeekerHome(sampleEvent(), "t_nobody", NOW);
     expect(home.greeting.firstName).toBeNull();
     expect(home.counts).toEqual({ proofs: 0, readByPeople: 0, writtenAnswers: 0, invitations: 0 });
-    expect(JSON.stringify(home)).not.toContain(PRIVATE.olena);
+    expect(JSON.stringify(home)).not.toContain(PRIVATE.mikko);
   });
 
   it("tells every person how many places each task has left", () => {

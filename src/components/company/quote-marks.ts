@@ -1,5 +1,5 @@
 /** A run of text, and whether it is one of the quotes software marked for a skill. */
-export interface MarkedRun {
+interface MarkedRun {
   text: string;
   marked: boolean;
 }

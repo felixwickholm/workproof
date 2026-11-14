@@ -3,14 +3,15 @@
 import { X } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { FORMAT_LABEL, FormatIcon } from "@/components/seeker/task-format";
+import { FormatIcon } from "@/components/seeker/task-format";
+import { FORMAT_LABEL } from "@/components/words";
 import type { Challenge } from "@/lib/domain/types";
 
 interface Props {
   challenge: Challenge;
   /** The calm time ring. */
   timer: ReactNode;
-  /** The recorder pill: in the top bar on a laptop, above the action on a phone. */
+  /** The recorder pill, the tour's `think-aloud`: in the top bar on a laptop, above the action on a phone. */
   pill: ReactNode;
   /** A "Sample session" label while a scripted demo plays. */
   sample?: boolean;
@@ -41,7 +42,9 @@ export function SessionView({ challenge, timer, pill, sample, aside, action, chi
             {sample ? <span className="text-footnote shrink-0 rounded-full bg-fill px-3 py-1 font-medium text-label">Sample session</span> : null}
           </div>
           <div className="shrink-0">{timer}</div>
-          <div className="hidden w-[min(440px,36vw)] shrink-0 min-[900px]:block">{pill}</div>
+          <div data-tour="think-aloud" className="hidden w-[min(440px,36vw)] shrink-0 min-[900px]:block">
+            {pill}
+          </div>
         </div>
       </header>
 
@@ -49,7 +52,9 @@ export function SessionView({ challenge, timer, pill, sample, aside, action, chi
 
       <footer className="glass fixed inset-x-0 bottom-0 z-20 shadow-[inset_0_0.5px_0_var(--color-separator)] min-[900px]:in-shell:left-(--sidebar-width)">
         <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-3 px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] min-[900px]:flex-row min-[900px]:items-center min-[900px]:gap-6 min-[900px]:px-6 min-[900px]:py-4">
-          <div className="min-[900px]:hidden">{pill}</div>
+          <div data-tour="think-aloud" className="min-[900px]:hidden">
+            {pill}
+          </div>
           <div className="min-w-0 flex-1">{aside}</div>
           <div className="shrink-0 min-[900px]:w-[280px]">{action}</div>
         </div>

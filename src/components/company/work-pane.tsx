@@ -8,11 +8,11 @@ import { TimeAgo } from "../proof";
 import { AttachmentView, type PictureReport } from "../proof/attachment-view";
 import { HIDDEN_TOKEN } from "../proof/mark-hidden";
 import { cx } from "../ui/cx";
-import { workLabel } from "./hiring-words";
+import { workLabel } from "../words";
 import { markQuotes } from "./quote-marks";
 
 /** Said once, above the toggle, so nobody reads the marks as a judgement. */
-export const RELATED_LINE = "Software marked where each skill shows up. It gives no score.";
+const RELATED_LINE = "Software marked where each skill shows up. It gives no score.";
 
 interface Props {
   proof: BlindProof;

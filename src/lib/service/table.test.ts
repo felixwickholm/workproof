@@ -68,19 +68,19 @@ describe("the author's side", () => {
 
   it("stores the first name only on accept, and only on the invitation", async () => {
     const { proofId } = await practiceProof();
-    expect(await storedText()).not.toContain("Mikko");
+    expect(await storedText()).not.toContain("Aleksi");
     await inviteFromTable(proofId, { host: "Rami", message: MESSAGE });
-    expect(await storedText()).not.toContain("Mikko");
+    expect(await storedText()).not.toContain("Aleksi");
 
-    await expect(acceptTableInvite(proofId, "t_guess", "Mikko")).rejects.toMatchObject({ status: 403 });
+    await expect(acceptTableInvite(proofId, "t_guess", "Aleksi")).rejects.toMatchObject({ status: 403 });
     await expect(acceptTableInvite(proofId, KEY, " . ")).rejects.toMatchObject({ status: 400 });
-    await expect(acceptTableInvite(proofId, KEY, "Mikko")).resolves.toMatchObject({ invite: { status: "accepted" } });
+    await expect(acceptTableInvite(proofId, KEY, "Aleksi")).resolves.toMatchObject({ invite: { status: "accepted" } });
 
     const data = await getStore().read();
-    expect(data.tableInvites).toEqual([expect.objectContaining({ proofId, status: "accepted", shownName: "Mikko" })]);
+    expect(data.tableInvites).toEqual([expect.objectContaining({ proofId, status: "accepted", shownName: "Aleksi" })]);
     expect(data.talents.some((t) => t.id === KEY)).toBe(false);
-    expect(JSON.stringify(data.audit)).not.toContain("Mikko");
-    expect(buildTableProofs(data).find((p) => p.proofId === proofId)?.invite).toEqual({ status: "accepted", host: "Rami", shownName: "Mikko" });
+    expect(JSON.stringify(data.audit)).not.toContain("Aleksi");
+    expect(buildTableProofs(data).find((p) => p.proofId === proofId)?.invite).toEqual({ status: "accepted", host: "Rami", shownName: "Aleksi" });
   });
 
   it("declines without storing anything about the person, and the answer is final", async () => {
@@ -89,16 +89,16 @@ describe("the author's side", () => {
     await expect(declineTableInvite(proofId, "t_guess")).rejects.toMatchObject({ status: 403 });
     await expect(declineTableInvite(proofId, KEY)).resolves.toMatchObject({ invite: { status: "declined" } });
     await expect(declineTableInvite(proofId, KEY)).resolves.toMatchObject({ invite: { status: "declined" } });
-    await expect(acceptTableInvite(proofId, KEY, "Mikko")).rejects.toMatchObject({ status: 409 });
+    await expect(acceptTableInvite(proofId, KEY, "Aleksi")).rejects.toMatchObject({ status: 409 });
 
     const data = await getStore().read();
     expect(data.tableInvites?.[0].shownName).toBeUndefined();
-    expect(JSON.stringify(data)).not.toContain("Mikko");
+    expect(JSON.stringify(data)).not.toContain("Aleksi");
   });
 
   it("has nothing to answer before an invitation arrives", async () => {
     const { proofId } = await practiceProof();
-    await expect(acceptTableInvite(proofId, KEY, "Mikko")).rejects.toMatchObject({ status: 404 });
+    await expect(acceptTableInvite(proofId, KEY, "Aleksi")).rejects.toMatchObject({ status: 404 });
     await expect(declineTableInvite(proofId, KEY)).rejects.toMatchObject({ status: 404 });
   });
 });
@@ -112,7 +112,7 @@ describe("table rules", () => {
   });
 
   it("takes a first name with a letter, up to 40 characters", () => {
-    expect(shownNameProblem("Mikko")).toBeUndefined();
+    expect(shownNameProblem("Aleksi")).toBeUndefined();
     expect(shownNameProblem("Ana-María")).toBeUndefined();
     expect(shownNameProblem("  ")).toBe("Type your first name to accept.");
     expect(shownNameProblem("42")).toBe("Type your first name to accept.");

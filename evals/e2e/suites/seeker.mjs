@@ -33,7 +33,8 @@ async function challenges(page) {
 const wordsOnly = (c) => c.kind === "event" && c.format === "make" && !["photo", "design", "video"].includes(c.proofKind);
 
 /**
- * Suite 3: a visitor starts as themself, does a Make challenge with the think-aloud typed (no
+ * Suite 3: the home leads with the role tiles and a job-board list (logo, title, skills, Save); a saved
+ * challenge stays on this device. Then a visitor starts as themself, does a Make challenge with the think-aloud typed (no
  * microphone here), puts a name, a city and a university into both the work and the think-aloud,
  * sees the hidden words before sending, sends with sharing left off, and finds the work in My work.
  * One work per person per challenge; a full challenge says so. The sample session plays without a
@@ -44,14 +45,53 @@ export async function runSeeker(journey) {
   const suite = createSuite("3 Work seeker", page);
   let task = null;
 
-  await suite.step("the home: a greeting from the data, then every challenge by format", async () => {
+  await suite.step("the home: the question, the role tiles, one filter row and the challenge list, without the invite card", async () => {
     await page.goto(`${BASE_URL}/seeker`);
-    await visible(page.getByRole("heading", { level: 1, name: /^Good (morning|afternoon|evening)/ })).waitFor({ timeout: 15_000 });
-    await visible(page.getByRole("heading", { name: "Challenges for you" })).waitFor();
-    await waitForText(page, "Newest first. No profile. No match score.");
-    const filter = visible(page.getByRole("radiogroup", { name: "Show challenges by format" }));
-    for (const word of ["All", "Choose", "Make", "Fix", "Read"]) await filter.getByRole("radio", { name: word }).waitFor();
+    await visible(page.getByRole("heading", { level: 1, name: /What work do you want\?$/ })).waitFor({ timeout: 15_000 });
+    for (const id of ["seeker-roles", "challenge-filters", "challenge-table", "challenge-row"]) await visible(page.locator(`[data-tour="${id}"]`)).waitFor();
+    // The demo person is an AI developer: his role is picked, its tile counts its challenges, and they come first.
+    const tile = visible(page.getByRole("button", { name: "AI developer", exact: true }));
+    expect((await tile.getAttribute("aria-pressed")) === "true", "the demo person's role is not picked");
+    expect(/\d+ challenges?/.test(await tile.innerText()), "the role tile shows no challenge count");
+    await visible(page.getByRole("heading", { name: /^AI developer challenges/ })).waitFor();
+    // The invite and its score live in My work; the home only points there.
+    expect((await page.locator('[data-tour="invitation"]').count()) === 0, "the invite card is still on the home");
+    const filters = visible(page.getByRole("group", { name: "Filter challenges" }));
+    for (const pill of ["Company", "Time", "Saved"]) await filters.getByRole("button", { name: new RegExp(`^${pill}`) }).waitFor();
+    expect((await filters.getByRole("button", { name: /^(Format|Role)/ }).count()) === 0, "the format or role filter is still on the front");
+    await filters.getByRole("searchbox", { name: "Search challenges" }).waitFor();
+    // Each row leads with the company's logo and name, the title and the skills; no format band.
+    const row = visible(page.locator('[data-tour="challenge-row"]'));
+    expect((await row.locator("img").count()) >= 1, "the first row shows no company logo");
+    await row.getByRole("list", { name: "Skills scored" }).waitFor();
+    expect(/Published \d{1,2}\.\d{1,2}\./.test(await row.innerText()), "the first row has no published date");
     await checkScreen(page, errors, "/seeker");
+  });
+
+  await suite.step("Save keeps a challenge on this device and the Saved filter shows it", async () => {
+    const row = visible(page.locator('[data-tour="challenge-row"]'));
+    const save = row.getByRole("button", { name: /^Save: / });
+    await save.click();
+    await row.getByRole("button", { name: /^Saved: / }).waitFor();
+    await page.reload();
+    const filters = visible(page.getByRole("group", { name: "Filter challenges" }));
+    await filters.getByRole("button", { name: /^Saved/ }).click();
+    const rows = page.locator('[data-tour="challenge-table"] li[class*="border-t"]');
+    await page.waitForFunction(() => document.querySelectorAll('[data-tour="challenge-table"] [aria-label="Skills scored"]').length === 1, null, { timeout: 15_000 });
+    expect((await rows.count()) === 1, `the Saved filter shows ${await rows.count()} challenges, expected 1`);
+    expect(JSON.parse(await page.evaluate(() => localStorage.getItem("workproof.saved"))).length === 1, "the saved challenge was not stored");
+    await visible(page.locator('[data-tour="challenge-table"]').getByRole("button", { name: /^Saved: / })).click();
+    await filters.getByRole("button", { name: /^Saved/ }).click();
+  });
+
+  await suite.step("the chosen roles are remembered on this device", async () => {
+    await visible(page.getByRole("button", { name: "Designer", exact: true })).click();
+    await page.reload();
+    const designer = visible(page.getByRole("button", { name: "Designer", exact: true }));
+    await designer.waitFor({ timeout: 15_000 });
+    expect((await designer.getAttribute("aria-pressed")) === "true", "the picked role was forgotten after a reload");
+    expect(JSON.parse(await page.evaluate(() => localStorage.getItem("workproof.roles"))).includes("designer"), "the roles were not saved");
+    await designer.click();
   });
 
   await suite.step("Start as yourself", async () => {
@@ -59,16 +99,25 @@ export async function runSeeker(journey) {
     await waitForText(page, "This is your own account on this device.");
   });
 
-  await suite.step("filter by Make and open a challenge: the task, the company, what you hand in, Start", async () => {
+  await suite.step("search, and click the row: back link, logo and title, Save and Start, About the challenge, the company", async () => {
     task = (await challenges(page)).find(wordsOnly);
     expect(task, "no Make challenge answered in words is open");
-    await visible(page.getByRole("radiogroup", { name: "Show challenges by format" }).getByRole("radio", { name: "Make" })).click();
-    await visible(page.getByRole("link", { name: new RegExp(task.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) })).click();
+    const filters = visible(page.getByRole("group", { name: "Filter challenges" }));
+    await type(filters.getByRole("searchbox", { name: "Search challenges" }), task.title.split(" ").slice(0, 3).join(" "));
+    await visible(page.getByRole("link", { name: new RegExp(`^${task.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\.`) })).click();
     await visible(page.getByRole("heading", { level: 1, name: task.title })).waitFor({ timeout: 15_000 });
-    await visible(page.getByRole("heading", { name: "You hand in" })).waitFor();
+    await visible(page.getByRole("link", { name: "Back to challenges" })).waitFor();
+    await visible(page.getByRole("navigation", { name: "Breadcrumb" })).waitFor();
+    await visible(page.getByRole("heading", { name: "About the challenge" })).waitFor();
+    for (const term of ["Format", "Time", "Skills scored", "You hand in"]) await visible(page.getByText(term, { exact: true })).waitFor();
+    await visible(page.getByRole("button", { name: /^Save: / })).waitFor();
+    await waitForText(page, "Illustrative picture");
+    await waitForText(page, /Published \d{1,2}\.\d{1,2}\./);
     await waitForText(page, /\d+ of \d+ places left/);
+    const text = (await page.locator("body").innerText()).toLowerCase();
+    for (const word of ["salary", "€", "per hour"]) expect(!text.includes(word), `the challenge page mentions "${word}"`);
     await checkScreen(page, errors, "challenge page");
-    await visible(page.getByRole("link", { name: /^Start · \d+ min$/ })).click();
+    await visible(page.getByRole("link", { name: "Start challenge" })).click();
     await page.waitForURL(/\/work$/);
   });
 
@@ -83,6 +132,7 @@ export async function runSeeker(journey) {
   });
 
   await suite.step("the workspace: the recorder pill runs, and I'm done waits for the work", async () => {
+    await visible(page.locator('[data-tour="think-aloud"]')).waitFor();
     await visible(page.getByRole("status", { name: /Recording your thinking/ })).waitFor();
     await visible(page.getByRole("timer")).waitFor();
     const done = visible(page.getByRole("button", { name: "I'm done" }));
@@ -197,7 +247,7 @@ export async function runSeeker(journey) {
     expect(refusal?.status === 409, `filling the challenge ended with ${JSON.stringify(refusal)}, expected 409`);
     await page.goto(`${BASE_URL}/challenges/${fill.id}`);
     await waitForText(page, /This challenge has all its \d+ answers, so an employer can read them all\. Pick another challenge\./);
-    expect(await visible(page.getByRole("button", { name: "Start" })).isDisabled(), "Start works on a full challenge");
+    expect(await visible(page.getByRole("button", { name: "Start challenge" })).isDisabled(), "Start works on a full challenge");
     await checkScreen(page, errors, "full challenge");
   });
 

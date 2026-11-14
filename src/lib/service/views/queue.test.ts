@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildQueue, WITHDRAWN_LINE } from "./queue";
 import { NOW, sampleEvent } from "./test-data";
 
-/** Kaari answered Olena's proof P2 (Otso's task) through Second look. */
+/** Kaari answered Mikko's proof P2 (Otso's task) through Second look. */
 function answeredThroughSecondLook() {
   const data = sampleEvent();
   data.proofs.find((p) => p.proofId === "p2")!.work = "Dear patient, your result is normal.";

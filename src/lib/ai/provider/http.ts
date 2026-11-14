@@ -1,6 +1,6 @@
-/** One JSON POST to a model API: a 12-second limit per attempt and one retry when the service is busy. */
+/** One JSON POST to a model API: a 20-second limit per attempt (live drafts take 12 to 15 s) and one retry when the service is busy. */
 
-export const TIMEOUT_MS = 12_000;
+export const TIMEOUT_MS = 20_000;
 const RETRY_DELAY_MS = 1_000;
 const MAX_RETRY_DELAY_MS = 5_000;
 

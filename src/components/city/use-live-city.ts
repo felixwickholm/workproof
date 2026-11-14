@@ -5,7 +5,7 @@ import { useResource } from "@/lib/client/use-resource";
 import { RESET_EVENT } from "../shell/demo-actions";
 
 /** Often enough that the booth screen moves within seconds of a phone sending work. */
-export const CITY_POLL_MS = 5000;
+const CITY_POLL_MS = 5000;
 
 /**
  * City data kept live: polled every 5 s while the tab is visible, reloaded when the tab regains focus

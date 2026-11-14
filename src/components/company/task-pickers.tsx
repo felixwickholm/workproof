@@ -4,7 +4,7 @@ import { ChevronDown } from "lucide-react";
 import type { ChangeEvent, ReactNode } from "react";
 import { TASK_FORMATS } from "@/lib/domain/kinds";
 import type { TaskFormat } from "@/lib/domain/types";
-import { formatWord } from "./hiring-words";
+import { FORMAT_LABEL } from "../words";
 
 /** A choice that reads like the line it sits in, and opens the platform's own picker. */
 function InlineSelect({ label, value, onChange, children }: { label: string; value: string; onChange: (e: ChangeEvent<HTMLSelectElement>) => void; children: ReactNode }) {
@@ -29,7 +29,7 @@ export function FormatSelect({ value, onChange }: { value: TaskFormat; onChange:
     <InlineSelect label="How it is done" value={value} onChange={(e) => onChange(e.target.value as TaskFormat)}>
       {TASK_FORMATS.map((format) => (
         <option key={format} value={format}>
-          {formatWord(format)}
+          {FORMAT_LABEL[format]}
         </option>
       ))}
     </InlineSelect>

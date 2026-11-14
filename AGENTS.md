@@ -27,7 +27,7 @@ Current counts and their meaning: [docs/evals.md](docs/evals.md). The eval summa
 ## Folder map
 
 ```
-src/app                pages per mode, the JSON API in src/app/api, /for-judges, /llms.txt, robots, sitemap
+src/app                pages per mode, the JSON API in src/app/api, /for-judges, /llms.txt, /llms-full.txt, robots, sitemap
 src/proxy.ts           sets the httpOnly sandbox cookie; ?table=<code> redirects to /api/demo/join
 src/components         UI: shell (mode switcher), landing, tour, proof, seeker, company, city, table, voice, controls, ui
 src/lib/domain         types.ts (the domain model), decision-rules.ts, scoring.ts (the 1 to 5 scale and the total), feedback-check.ts, places.ts, guardrails.ts (fixed sentences), kinds.ts
@@ -37,7 +37,7 @@ src/lib/guard          no-judgement guard, protected attributes, draft checks, t
 src/lib/ai             scripted designer (default), Claude and Gemini adapters, provider layer, breaker, guarded wrapper
 src/lib/voice          voice adapters (browser, ElevenLabs, typed) and the server proxy for ElevenLabs
 src/lib/store          in-memory store, per-visitor sandbox registry, cookie helpers
-src/lib/seed           the synthetic Espoo Talent Day and Olena's story stages
+src/lib/seed           the synthetic Espoo Talent Day and Mikko's story stages
 src/lib/http           request limits, zod schemas, JPEG check, rate guard, responses
 src/lib/matching       Second look: compares tasks by shared core skills, never people
 evals                  eval suites, fixtures, and evals/e2e for the browser run
@@ -74,6 +74,8 @@ docs                   architecture, evals, responsible AI, demo script, screens
 
 - The README table "How it meets each judging criterion" gives a command, a route or a file to check each row; "How it answers each problem in the brief" gives a route, a code path and an eval number for every claim.
 - `/for-judges` on the running app shows the same evidence as server-rendered text; its data is `src/app/for-judges/facts.ts` and `src/app/for-judges/evidence.ts`, and `src/app/for-judges/facts.test.ts` checks that every route and path it names exists.
+- `/llms.txt` (short map) and `/llms-full.txt` (the whole evidence page as markdown) are built from the same facts (`src/app/llms.txt/build.ts`, `src/app/llms-full.txt/build.ts`); their tests check that every criterion, guardrail, limit and eval row is there. `/` and `/for-judges` carry schema.org JSON-LD from `src/app/for-judges/json-ld.ts`.
+- `SITE_URL` sets the public address; a production build without it uses https://workproof.wicflow.com, because robots, the sitemap, metadata and the text maps are prerendered at build time. `REPO_URL` defaults to https://github.com/felixwickholm/workproof.
 - Known limits are listed in the README under "Limits, stated honestly". They are deliberate disclosures.
 
 <!-- BEGIN:nextjs-agent-rules -->

@@ -12,7 +12,7 @@ const sideBySide = (left, right) => left && right && left.x + left.width <= righ
 export async function runLaptop(browser, device, name) {
   const { context, page, suite, errors } = await openVisitor(browser, device, name);
 
-  await suite.step("Looking for work: the greeting, the invite and the challenges in one view", async () => {
+  await suite.step("Job seeker: the greeting, the pointer to the invite and the challenges in one view", async () => {
     await page.goto(`${BASE_URL}/seeker`);
     const greeting = visible(page.getByRole("heading", { level: 1 }));
     await greeting.waitFor({ timeout: 15_000 });
@@ -20,7 +20,7 @@ export async function runLaptop(browser, device, name) {
     const first = persona.name.split(" ")[0];
     expect((await greeting.textContent()).includes(first), `the greeting is "${await greeting.textContent()}", not about ${first}`);
     await settled(page);
-    await visible(page.locator('[data-tour="invitation"]')).waitFor();
+    await visible(page.getByRole("link", { name: /wants to meet you\./ })).waitFor();
     await visible(page.locator('[data-tour="challenge-list"]')).waitFor();
     await checkScreen(page, errors, "/seeker at 1440");
   });
@@ -38,7 +38,7 @@ export async function runLaptop(browser, device, name) {
     await checkScreen(page, errors, "Read session at 1440");
   });
 
-  await suite.step("Hiring: a challenge's top work reads one row per work, its reason in one line", async () => {
+  await suite.step("Company: a challenge's top work reads one row per work, its reason in one line", async () => {
     await page.goto(`${BASE_URL}/employer`);
     await visible(page.getByRole("heading", { name: "My challenges" })).waitFor({ timeout: 15_000 });
     await visible(page.locator('a[href^="/employer/challenges/"]')).click();

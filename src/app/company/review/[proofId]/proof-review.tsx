@@ -4,10 +4,8 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { use, useEffect, type ReactNode } from "react";
-import { challengeHref } from "@/components/company/challenge-row";
+import { challengeHref, proofHref } from "@/components/company/format";
 import { getReviewer } from "@/components/company/company-choice";
-import { proofHref } from "@/components/company/format";
-import { workLabel } from "@/components/company/hiring-words";
 import { MeetingOpener } from "@/components/company/meeting-opener";
 import { markOpened } from "@/components/company/opened-proofs";
 import { ScorePanel } from "@/components/company/score-panel";
@@ -16,6 +14,7 @@ import { WorkPane } from "@/components/company/work-pane";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { workLabel } from "@/components/words";
 import { api, companyApi } from "@/lib/client/api";
 import { useResource } from "@/lib/client/use-resource";
 import type { ReviewQueue } from "@/lib/domain/types";
@@ -159,7 +158,7 @@ export function ReviewSkeleton() {
             ))}
           </div>
         </div>
-        <div className="mt-8 flex flex-col gap-6 rounded-card bg-surface p-6 @min-[820px]:mt-0">
+        <div className="mt-8 flex flex-col gap-6 rounded-card border border-separator bg-surface p-6 @min-[820px]:mt-0">
           <div className="flex justify-between">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-10 w-28" />

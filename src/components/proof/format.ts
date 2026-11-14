@@ -1,10 +1,4 @@
-import type { Company, DecisionKind, ProofKind, Skill } from "@/lib/domain/types";
-import { PROOF_KIND_LABEL } from "../ui/proof-kind";
-
-/** "20 min · Plan": time first, because the time is what makes "a task, not a CV" obvious. */
-export function taskMeta(minutes: number, kind: ProofKind): string {
-  return `${minutes} min · ${PROOF_KIND_LABEL[kind]}`;
-}
+import type { Company, DecisionKind, Skill } from "@/lib/domain/types";
 
 /** "about 3 h", "under an hour", "about 2 days". */
 export function replyTime(hours: number): string {
@@ -32,7 +26,7 @@ export function clipSkills(skills: readonly Skill[], max = 3): { shown: Skill[];
   return { shown: skills.slice(0, max), more: Math.max(0, skills.length - max) };
 }
 
-/** "Kaari Home Care · Matinkylä", or "Saarnivo Grid and Kivira Labs" for a pooled task. */
+/** "Halla Supply · Leppävaara", or "Saarnivo Grid and Kivira Labs" for a pooled task. */
 export function companyLine(companies: readonly Company[]): string {
   if (companies.length === 1) return `${companies[0].name} · ${companies[0].district}`;
   return companies.map((c) => c.name).join(" and ");

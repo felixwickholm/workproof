@@ -6,18 +6,18 @@ import { useId, useRef, useState } from "react";
 import { cx } from "../ui/cx";
 import { Popover } from "../ui/popover";
 import { Sheet, useWide } from "../ui/sheet";
-import { LogoMark } from "../wordmark";
 import { AccountActions, AccountSummary } from "./account-menu";
 import { ModeMenu } from "./mode-menu";
 import type { Mode } from "./modes";
 import { PartnerLine } from "./partner-line";
 import { useShell } from "./shell-context";
-import { useAccount } from "./use-identity";
+import { useAccount } from "./use-account";
 
 interface Props {
   mode: Mode;
   /** "sidebar": the desktop sidebar's top row. "bar": the phone top bar. */
   variant: "sidebar" | "bar";
+  className?: string;
 }
 
 /**
@@ -25,7 +25,7 @@ interface Props {
  * a menu of the modes; on a phone, a sheet that also holds the account menu and "for City of Espoo",
  * since a phone has no sidebar foot.
  */
-export function ModeSwitcher({ mode, variant }: Props) {
+export function ModeSwitcher({ mode, variant, className }: Props) {
   const [open, setOpen] = useState(false);
   const wide = useWide();
   const router = useRouter();
@@ -43,7 +43,7 @@ export function ModeSwitcher({ mode, variant }: Props) {
   };
 
   return (
-    <div className={cx("relative", variant === "sidebar" && "w-full")}>
+    <div className={cx("relative", variant === "sidebar" && "w-full", className)}>
       <button
         ref={trigger}
         type="button"
@@ -54,11 +54,13 @@ export function ModeSwitcher({ mode, variant }: Props) {
         onClick={() => setOpen((v) => !v)}
         className={cx(
           "press flex items-center text-left transition-colors duration-150 hover:bg-fill",
-          variant === "sidebar" ? "min-h-12 w-full gap-2 rounded-[14px] py-2 pr-2 pl-2" : "h-11 gap-2 rounded-full pr-3 pl-2",
+          variant === "sidebar" ? "min-h-12 w-full gap-2.5 rounded-[14px] bg-surface py-2 pr-2 pl-2" : "h-10 gap-2 rounded-full bg-surface pr-3 pl-1.5",
           open && "bg-fill",
         )}
       >
-        <LogoMark className="size-8" />
+        <span aria-hidden className={cx("flex shrink-0 items-center justify-center rounded-full bg-accent text-accent-ink", variant === "sidebar" ? "size-8" : "size-7")}>
+          <mode.Icon className="size-4" strokeWidth={2} />
+        </span>
         <span className="text-subhead min-w-0 flex-1 truncate font-semibold text-label">{mode.label}</span>
         {variant === "sidebar" ? (
           <ChevronsUpDown aria-hidden className="size-4 shrink-0 text-label-3" strokeWidth={1.75} />

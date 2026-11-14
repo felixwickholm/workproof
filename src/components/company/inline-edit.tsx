@@ -15,6 +15,7 @@ export function InlineEdit({
   className,
   maxLength,
   multiline,
+  placeholder,
 }: {
   label: string;
   value: string;
@@ -23,6 +24,8 @@ export function InlineEdit({
   maxLength?: number;
   /** Keep line breaks, for a passage such as the task's situation. */
   multiline?: boolean;
+  /** What to write, while the line is empty: a challenge written by hand starts blank. */
+  placeholder?: string;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
@@ -40,9 +43,10 @@ export function InlineEdit({
         rows={1}
         value={value}
         maxLength={maxLength}
+        placeholder={placeholder}
         onChange={(e) => onChange(multiline ? e.target.value : e.target.value.replace(/\n/g, " "))}
         className={cx(
-          "block w-full resize-none overflow-hidden rounded-inner bg-transparent py-2 pr-11 pl-3 text-label caret-accent outline-none transition-colors duration-150 hover:bg-fill/60 focus:bg-fill",
+          "block w-full resize-none overflow-hidden rounded-inner bg-transparent py-2 pr-11 pl-3 text-label caret-accent outline-none placeholder:text-label-3 transition-colors duration-150 hover:bg-fill/60 focus:bg-fill",
           className,
         )}
       />

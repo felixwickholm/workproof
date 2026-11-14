@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { PROOF_KINDS, STORY_STAGES, TASK_FORMATS } from "@/lib/domain/kinds";
 import { DEFAULT_PLACES, MAX_PLACES, MIN_PLACES } from "@/lib/domain/places";
+import { JOB_ROLES } from "@/lib/domain/roles";
 import { pictureProblem } from "./jpeg";
 import { LIMITS } from "./limits";
 
@@ -41,6 +42,8 @@ const challengeDraftSchema = z.object({
   kind: z.enum(["event", "taster"]),
   /** Answers the task takes; the employer chooses when publishing. */
   places: z.number().int().min(MIN_PLACES).max(MAX_PLACES).default(DEFAULT_PLACES),
+  /** Who the company is looking for, picked on the first step; job seekers with these roles see it first. */
+  roles: z.array(z.enum(JOB_ROLES)).max(JOB_ROLES.length).optional(),
   /** The job-ad link the draft was read from; kept only when the city publishes on the company's behalf. */
   adUrl: z.string().url().max(2000).optional(),
   /** The designer's template, kept through publishing so follow-ups never depend on the editable title. */

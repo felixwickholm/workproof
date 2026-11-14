@@ -11,17 +11,30 @@ describe("accountFor", () => {
     expect(accountFor(mode("employer"), { reviewer: STORY_REVIEWER, company: companyName(STORY_COMPANY_ID) })).toEqual(mode("employer").account);
   });
 
-  it("follows the chosen company in Hiring mode", () => {
+  it("follows the chosen company in the Company view", () => {
     expect(accountFor(mode("employer"), { reviewer: "Mira Salo", company: "Saarnivo Grid" })).toEqual({ name: "Mira Salo", role: "Saarnivo Grid" });
   });
 
   it("falls back to the company alone when no reviewer is named", () => {
-    expect(accountFor(mode("employer"), { reviewer: "  ", company: "Otso Health" })).toEqual({ name: "Otso Health", role: "Hiring" });
+    expect(accountFor(mode("employer"), { reviewer: "  ", company: "Otso Health" })).toEqual({ name: "Otso Health", role: "Company" });
   });
 
   it("keeps the fixed account in the other modes", () => {
     const employer = { reviewer: "Mira Salo", company: "Saarnivo Grid" };
-    expect(accountFor(mode("seeker"), employer)).toEqual({ name: "Olena Kovalenko", role: "Demo person" });
-    expect(accountFor(mode("city"), employer)).toEqual({ name: "Event organiser", role: "City of Espoo" });
+    expect(accountFor(mode("seeker"), employer)).toMatchObject({ name: "Mikko Lahtinen", role: "Job seeker" });
+    expect(accountFor(mode("city"), employer)).toEqual(mode("city").account);
+  });
+
+  it("shows the job seeker their own picture on their own account card", () => {
+    expect(accountFor(mode("seeker"), { reviewer: "Mira Salo", company: "Saarnivo Grid" }).avatar).toMatch(/^\/people\/s\d+\.svg$/);
+  });
+
+  it("shows a reviewer's own picture in the Company view", () => {
+    expect(accountFor(mode("employer"), { reviewer: "Mira Salo", company: "Saarnivo Grid", avatar: "/people/mira-salo.svg" })).toEqual({
+      name: "Mira Salo",
+      role: "Saarnivo Grid",
+      avatar: "/people/mira-salo.svg",
+    });
+    expect(accountFor(mode("employer"), { reviewer: " ", company: "Otso Health", avatar: "/people/x.svg" }).avatar).toBeUndefined();
   });
 });

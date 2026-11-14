@@ -5,31 +5,44 @@
   <img src="docs/images/workproof-lockup-light.svg" alt="WorkProof" height="40">
 </picture>
 
-**Hiring that sees the work, not the name.** Made for the City of Espoo challenge, Junction 2026.
+**Companies see real work and score it; the AI never scores.** Our entry for the City of Espoo challenge "Rethinking Recruitment" at Junction 2026.
 
-**WorkProof is for City of Espoo talent events.** A professional does a short real task from an Espoo company instead of sending a CV. A named person at the company reads the work without the name, scores it from 1 to 5 on each of the task's skills, writes a reason, and chooses Meet or Not now. The name appears only after the professional accepts. AI drafts tasks; it never scores or ranks a person. Tested: 0 of 79 planted identity details reached a reviewer.
+**WorkProof is for City of Espoo talent events.** Companies see real work and score it; the AI never scores. A professional does a short real task from an Espoo company. A named person at the company scores the work from 1 to 5 on each of the task's skills, writes a reason, and chooses Meet or Not now. As a safeguard, the name stays hidden until the professional accepts. Tested: 0 of 79 planted identity details reached a reviewer.
 
-Live demo: [https://workprint.31-97-126-112.sslip.io](https://workprint.31-97-126-112.sslip.io) · [2-minute task](https://workprint.31-97-126-112.sslip.io/try) · [Table mode](https://workprint.31-97-126-112.sslip.io/table) · [Evidence for judges](https://workprint.31-97-126-112.sslip.io/for-judges)
+- **Who it is for:** City of Espoo event organisers, the companies that hire at their events, and the professionals who come to find work.
+- **Live demo:** [workproof.wicflow.com](https://workproof.wicflow.com) · [2-minute task](https://workproof.wicflow.com/try) · [Table mode](https://workproof.wicflow.com/table) · [1-minute tour](https://workproof.wicflow.com/?tour=1) · [Evidence for judges](https://workproof.wicflow.com/for-judges)
+- **Code:** [github.com/felixwickholm/workproof](https://github.com/felixwickholm/workproof), MIT. Runs with `npm install && npm run dev`; no keys, no database, no login. All data is synthetic.
 
 ## How it meets each judging criterion
 
-Routes are pages of the running app; commands run in this repository. Demo event counts are for the default story stage: 10 employers, 12 challenges, 62 pieces of work from 36 people.
+Routes are pages of the live demo; files and tests are in this repository. Demo event counts are for the default story stage: 10 employers, 12 challenges, 62 pieces of work from 36 people.
 
-| Criterion | What we built | Check it |
-|---|---|---|
-| **Impact & Relevance (45%)** | Three modes on one event. A job-ad link or one sentence becomes a challenge with 3 to 5 core skills, and a person approves it. Talent answers with work. A named person reads work in arrival order, with known personal details removed by rules, and every recorded decision needs a written reason. The city sees each step from challenge taken to scored, invited, talked, follow-up agreed and hired, and the work still waiting on each challenge. With consent, unanswered work can reach a second employer after 48 hours. | `npm run eval` (flow eval: every step from task to a meeting both sides confirmed, `evals/flow.eval.ts`); `/city` |
-| **Innovation & User Experience (35%)** | A short challenge instead of a CV, in four formats: Choose, Make, Fix, Read. The person thinks aloud while working; no camera. Table mode: a visitor scans a QR code and does a 2-minute task; a host invites the proof with a two-sentence reason; the name appears on the big screen only after the visitor accepts on the phone. A 1-minute guided tour over the real app, and a "Show me" demo in each view. Voice answers. Light and dark themes. | `/table` and `/try` on two screens; `/?tour=1` |
-| **Responsible & Feasible Execution (20%)** | A guard on every AI output. A blind layer of rules before any reviewer or model reads the work; it removes known personal details, and some can remain. WorkProof has no automated decision feature: a decision is recorded with the name of a reviewer registered for the company and written feedback, and a decision without them is refused (HTTP 400). This demo has no sign-in, so the name is not verified. An audit log, counted for automated decisions. Runs with no keys. Request limits, a per-visitor sandbox, a Docker image. | `npm run eval` (`evals/no-automated-decisions.eval.ts`, `evals/blind-review.eval.ts`); `/city/log` |
-| **Volume for employers** | Each task takes 5 to 30 answers (12 unless the company chooses), so an employer can read them all. The company sets the number before it approves the challenge, and each challenge page shows the places left. | `/company`, `/challenges`; `src/lib/domain/places.ts` |
-| **AI-written work** | AI may help with the work, and the task says so. Two follow-up questions ask about the person's own choices, quoting their own words. After an invitation, the review page shows one of the person's own follow-up answers, with the line "Ask the person to explain this answer, then to change one thing." | `/company/review` after an invite; `src/lib/ai/scripted/follow-ups.ts`, `src/components/company/meeting-opener.tsx` |
-| **The city can act** | The organiser makes a challenge for a company from its job ad, drafts a reminder to a company with work waiting (nothing is sent) and exports the list of talks as a CSV file. The organiser sees slots and labels, never names. | `/city`, `/city/challenges/[id]`; `GET /api/city/meetings.csv`; `src/lib/service/city-actions.ts` |
+| Criterion | What we built | See it | Code | Test |
+|---|---|---|---|---|
+| **Impact & Relevance (45%)** | Three modes on one event. A job-ad link or one sentence becomes a challenge with 3 to 5 core skills, and a person approves it. Talent answers with work. A named person reads work in arrival order, with known personal details removed by rules, and every recorded decision needs a written reason. The city sees each step from challenge taken to scored, invited, talked, follow-up agreed and hired, and the work still waiting on each challenge. With consent, unanswered work can reach a second employer after 48 hours. | `/company`, `/employer`, `/city` | `src/lib/service/views/city.ts`, `src/lib/service/decisions.ts`, `src/lib/service/meetings.ts` | `evals/flow.eval.ts`: 28 of 28 steps from task to a meeting both sides confirmed, then follow-up and hire |
+| **Innovation & User Experience (35%)** | A short real challenge that a person scores, in four formats: Choose, Make, Fix, Read. The person thinks aloud while working; no camera. Table mode: a visitor scans a QR code and does a 2-minute task; a host invites the proof with a two-sentence reason; the name appears on the big screen only after the visitor accepts on the phone. A 1-minute guided tour over the real app, and a "Show me" demo in each view. Voice answers. Light and dark themes. | `/try` and `/table` on two screens; `/?tour=1` | `src/lib/service/table.ts`, `src/lib/matching/second-look.ts`, `src/lib/blind` | `evals/table.eval.ts`: 0 of 10 names, emails and numbers typed on phones reach the big screen; `evals/story.eval.ts` |
+| **Responsible & Feasible Execution (20%)** | A guard on every AI output. A blind layer of rules before any reviewer or model reads the work; it removes known personal details, and some can remain. WorkProof has no automated decision feature: a decision is recorded with the name of a reviewer registered for the company, the reviewer's points and written feedback, and a decision without them is refused (HTTP 400). This demo has no sign-in, so the name is not verified. An audit log, counted for automated decisions. Runs with no keys. Request limits, a per-visitor sandbox, a Docker image. | `/city/log`, `/for-judges` | `src/lib/guard/no-judgement.ts`, `src/lib/blind/redact.ts`, `src/lib/service/decisions.ts`, `Dockerfile` | `evals/no-automated-decisions.eval.ts`: 70 of 70 planted judging phrases rejected, 0 automated decisions; `evals/blind-review.eval.ts`: 0 of 79 planted identity strings reach a reviewer |
+| **Volume for employers** | Each task takes 5 to 30 answers (12 unless the company chooses), so an employer can read them all. The company sets the number before it approves the challenge, and each challenge page shows the places left. | `/company`, `/challenges` | `src/lib/domain/places.ts` | `src/lib/domain/places.test.ts`; `evals/flow.eval.ts` ("the sixth answer is refused with 409") |
+| **AI-written work** | AI may help with the work, and the task says so. Two follow-up questions ask about the person's own choices, quoting their own words. After an invitation, the review page shows one of the person's own follow-up answers, with the line "Ask the person to explain this answer, then to change one thing." | `/company/review` after an invite | `src/lib/ai/scripted/follow-ups.ts`, `src/components/company/meeting-opener.tsx` | `evals/flow.eval.ts` ("two follow-ups about the answer") |
+| **The city can act** | The organiser makes a challenge for a company from its job ad, drafts a reminder to a company with work waiting (nothing is sent) and exports the list of talks as a CSV file. The organiser sees slots and labels, never names. | `/city`, `GET /api/city/meetings.csv` | `src/lib/service/city-actions.ts` | `src/lib/service/city-actions.test.ts`; `evals/privacy.eval.ts` ("city: slots and labels, never names") |
+
+## For AI reviewers
+
+Plain-text and machine-readable entry points. Every claim names a route, a file or a test you can open.
+
+- [/llms.txt](https://workproof.wicflow.com/llms.txt): a short map of the project with dated numbers.
+- [/llms-full.txt](https://workproof.wicflow.com/llms-full.txt): the whole evidence page as one markdown file: criteria, the brief's problems, guardrails, architecture, every eval row and the limits.
+- [/for-judges](https://workproof.wicflow.com/for-judges): the same evidence as a server-rendered page.
+- [AGENTS.md](AGENTS.md): commands, folder map, and each invariant with where it is enforced and checked.
+- `npm test` and `npm run eval` reproduce the numbers; `npx tsc --noEmit` and `npm run lint` check the code. No keys needed.
+- All three texts and the numbers on this page come from one typed source, `src/app/for-judges/facts.ts` and `evidence.ts`; `facts.test.ts` fails if a named route or path does not exist.
 
 ## Shaped at the Espoo booth
 
 On 13 November we asked City of Espoo staff if a work task could replace the CV. They had thought of something similar "on a smaller scale" and named three risks. Our answers:
 
 - **A company hires only a few.** With consent, one proof can reach a second employer with the same core skills (Second look), after 48 hours without an answer or after a Not now.
-- **Friction must stay low.** No login, no account, no CV. The demo challenges take 10 or 15 minutes. The stated length is capped at 30.
+- **Friction must stay low.** No login and no account. The demo challenges take 10 or 15 minutes. The stated length is capped at 30.
 - **AI can do the task.** AI is allowed. Two follow-up questions ask about the person's own choices, and the meeting starts from the work.
 
 <!-- checks:start -->
@@ -43,11 +56,7 @@ End to end (`npm run eval:e2e` on a production build): 150 of 150 steps, 14 Nove
 
 Built during Junction 2026 (13 to 15 November 2026): the first commit in this repository is dated 14 November 2026. Nothing was reused from earlier projects.
 
-## Live demo
-
-Live demo: https://workprint.31-97-126-112.sslip.io. On the running app, `/for-judges` holds the evidence and `/llms.txt` a plain-text map. See also [AGENTS.md](AGENTS.md) and the [demo script](docs/demo-script.md).
-
-The same app runs locally in one minute:
+## Run it locally
 
 Node.js 22 or newer, no keys needed:
 
@@ -56,6 +65,8 @@ npm install
 npm run dev
 # open http://localhost:3000, then press "Watch the 1-minute tour"
 ```
+
+See also [AGENTS.md](AGENTS.md) and the [demo script](docs/demo-script.md).
 
 ## What it is
 
@@ -67,9 +78,9 @@ npm run dev
 
 ## Why it is different
 
-1. Show the work, skip the CV: a short challenge from an Espoo company, in one of four formats: choose between two options, make something, fix a mistake, or read material and say what matters.
+1. Companies score real work: a short challenge from an Espoo company, in one of four formats: choose between two options, make something, fix a mistake, or read material and say what matters.
 2. Companies register with a task, not a wish list: 10 wishes become 3 to 5 core skills.
-3. A person reads your work, not your name, scores it and decides. The AI never scores or ranks anyone.
+3. A person at the company scores your work and decides. The AI never scores or ranks anyone. As a safeguard, your name stays hidden until you accept.
 4. One proof, more chances: if you allow it, a second employer with the same skills can read it.
 5. No decision without a reason: every recorded decision carries a written reason, and unanswered work stays visible to the city.
 
@@ -77,18 +88,18 @@ npm run dev
 
 | Problem in the brief | What we built | See it | Code | Evidence |
 |---|---|---|---|---|
-| Needs described late and vaguely | A job-ad link, or one sentence typed or spoken, becomes a challenge with 3 to 5 core skills. Extra wishes are set aside. A person edits and approves it. The city can also make one for a company from its job ad. | `/company`, `/city` | `src/app/company/need-step.tsx`, `src/app/company/draft-step.tsx`, `src/lib/ai/scripted/compose.ts` | Task generator eval: drafts have the right shape; fantasy profiles are cut to 4 skills or fewer. |
+| Needs described late and vaguely | A job-ad link, or one sentence typed or spoken, becomes a challenge with 3 to 5 core skills. Extra wishes are set aside. A person edits and approves it. The city can also make one for a company from its job ad. | `/company`, `/city` | `src/app/company/start-step.tsx`, `src/app/company/draft-step.tsx`, `src/lib/ai/scripted/compose.ts` | Task generator eval: drafts have the right shape; fantasy profiles are cut to 4 skills or fewer. |
 | Organisers cannot see real capability | Proofs are the signal. Per core skill, the city sees how many tasks ask for it and how many proofs were handed in for those tasks, as counts. | `/city` | `src/lib/service/views/insights.ts`, `src/components/city/demand-panel.tsx` | Unit tests in `src/lib/service/views/city.test.ts`. |
 | Companies assume the city has no suitable candidates | The city makes a challenge from a company's job ad, and people do it before the company opens it. In the demo, Kide Silicon's challenge already has 20 pieces of work. The company's home data also counts proofs handed in for tasks that ask for the same skills. Counts only, never a list of people. | `/city`, `/employer` (as Kide Silicon) | `src/lib/service/views/employer.ts`, `src/components/city/make-challenge.tsx` | Unit tests in `src/lib/service/views/employer.test.ts`. |
 | Noise for companies at events | Each proof is work on the company's own task, 10 to 15 minutes in the demo. Each task takes a limited number of answers (5 to 30), so an employer can read them all. The queue holds blind proofs in arrival order; scored work moves to the task's top work, by the reviewers' own totals. | `/company/review`, `/employer` | `src/lib/service/views/queue.ts`, `src/lib/domain/places.ts` | No automated decisions eval: queues in arrival order, yes. Unit tests in `src/lib/domain/places.test.ts`. |
 | People who cannot describe their skills | No self-description: the person does the task, then answers two questions about their own choices. | `/challenges` | `src/lib/ai/scripted/follow-ups.ts`, `src/lib/service/challenges.ts` | Flow eval: two follow-ups about the answer. |
-| AI-written materials on both sides | No CV. AI may help with the work, but the follow-ups ask about the person's own choices and the meeting starts from the work. AI never summarises a person; the "At a glance" line is code that counts points and words. | `/try` | `src/lib/blind/glance.ts`, `src/components/proof/fixed-lines.tsx` | No automated decisions eval: "At a glance" is structure only. |
+| AI-written materials on both sides | The company scores real work on its own task. AI may help with the work, but the follow-ups ask about the person's own choices and the meeting starts from the work. AI never summarises a person; the "At a glance" line is code that counts points and words. | `/try` | `src/lib/blind/glance.ts`, `src/components/proof/fixed-lines.tsx` | No automated decisions eval: "At a glance" is structure only. |
 | Cumbersome matching platforms | No profile and no match score. Second look compares tasks by shared core skills (2 or more), never people. | `/my-work` | `src/lib/matching/second-look.ts` | Flow eval: company B sees the proof through Second look; company C without shared skills cannot. |
 | Login rush at the event start | No login. Challenges open before the event, so work arrives over days. Request rate and size limits. | `/city` ("How the event works") | `src/lib/service/views/insights.ts`, `src/lib/http/limits.ts`, `src/lib/service/capacity.ts` | Privacy eval: the body cap answers HTTP 413 and the rate limit HTTP 429. |
-| International recruitment | Facts the company writes about the job (a work language, a language level, a licence) are kept in fixed forms under "Good to know" on the draft; a wish for a native speaker is set aside with "Ask for a language level, not a native speaker." Each demo company also records its work language, whether Finnish is needed, permit support and relocation help. | `/company` | `src/lib/guard/job-facts.ts`, `src/components/proof/company-facts.tsx`, `src/lib/seed/companies.ts` | Set for all 10 demo employers. |
+| International recruitment | Facts the company writes about the job (a work language, a language level, a licence) are kept in fixed forms under "Good to know" on the draft and on the challenge page; a wish for a native speaker is set aside with "Ask for a language level, not a native speaker." | `/company`, `/challenges` | `src/lib/guard/job-facts.ts`, `src/app/company/draft-step.tsx`, `src/app/challenges/[id]/challenge-detail.tsx` | Task generator eval: 6 of 6 needs carry their facts as requirements only (`evals/task-generator.eval.ts`). |
 | Bias by nationality, language, education or career path | Known personal details are removed by rules before anyone reads the work: names, contacts, places, schools, employers, residence status. Rules can miss some; pictures are checked by the person, not by software. Tasks cannot ask for protected attributes. | `/passport` | `src/lib/blind/redact.ts`, `src/lib/blind/personal.ts`, `src/lib/guard/protected.ts` | Blind review eval: identity forms hidden in both case sets, with 3 known limits. Task generator: no planted string reaches a published card. |
 | No automated decisions about people | WorkProof has no automated decision feature. A Meet or Not now is recorded with the name of a reviewer registered for the company, the reviewer's own points for each core skill, and at least 4 words of feedback; a decision without the points is refused with HTTP 400. This demo has no sign-in, so the name is not verified. A name not on the company's list is refused with HTTP 403 until the person adds themselves in one explicit, logged step; a name that reads as software ("AI bot") is refused with HTTP 400. The guard blocks scores and ranks in AI output. Every decision is in the audit log. | `/city` (audit log) | `src/lib/service/decisions.ts`, `src/lib/service/reviewers.ts`, `src/lib/guard/no-judgement.ts`, `src/components/city/audit-log.tsx` | No automated decisions eval: 0 decisions in the audit log without a registered reviewer name; the count is made over the log, not assumed. |
-| Minimal personal data | No account and no CV. A name and one contact. Accepting shows the name to that company only; the organiser sees slots and labels, never names. The person's private key is never in an address: it travels in a header on reads and table answers, and in the request body on submissions, meeting answers and sharing changes. Photos re-encoded in the browser without metadata, sent only after the person confirms the picture shows only the work; a reviewer can report a picture, and it is then removed for every reader. WorkProof stores only the text of a voice answer. | `/passport` | `src/lib/service/meetings.ts`, `src/lib/http/jpeg.ts`, `src/components/seeker/picture.ts` | Privacy eval: no talent id in public responses; pictures with EXIF refused. |
+| Minimal personal data | No account. A name and one contact. Accepting shows the name to that company only; the organiser sees slots and labels, never names. The person's private key is never in an address: it travels in a header on reads and table answers, and in the request body on submissions, meeting answers and sharing changes. Photos re-encoded in the browser without metadata, sent only after the person confirms the picture shows only the work; a reviewer can report a picture, and it is then removed for every reader. WorkProof stores only the text of a voice answer. | `/passport` | `src/lib/service/meetings.ts`, `src/lib/http/jpeg.ts`, `src/components/seeker/picture.ts` | Privacy eval: no talent id in public responses; pictures with EXIF refused. |
 | EU AI Act | AI drafts tasks and questions only; it does not evaluate people. Human oversight (not identity-checked in this demo), logging and consent are built in. A design position, not legal advice. | `/city` ("How people are kept safe"), `/city/log` | `src/components/city/safeguards.tsx`, `src/components/city/audit-log.tsx` | [docs/responsible-ai.md](docs/responsible-ai.md). |
 | Synthetic data | All companies, people and work are invented. Contacts use `example.org`. | every page | `src/lib/seed/index.ts`, `src/lib/seed/people.ts` | `src/lib/seed/index.test.ts`: "uses only reserved contacts". |
 
@@ -197,7 +208,7 @@ The person thinks aloud while working, with no camera; only the text is kept. A 
 
 | Challenge | Format | Company |
 |---|---|---|
-| What should we automate first? (Olena's story) | Make | Halla Supply |
+| What should we automate first? (Mikko's story) | Make | Halla Supply |
 | Read this chart. What must the team know? | Read | Saarnivo Grid |
 | One number in this budget is wrong. Find it | Fix | Saarnivo Grid |
 | Find the bug in this model test | Fix | Tuulos Robotics |
@@ -214,7 +225,7 @@ Ten take 10 minutes and two take 15. Five sample job ads for these companies are
 
 | | | |
 |---|---|---|
-| <img src="docs/images/seeker.png" alt="Looking for work: Olena's home with Halla Supply's invitation, the reviewer's words and her score of 9.0 of 10 per skill" width="100%"> | <img src="docs/images/employer.png" alt="Hiring: Halla Supply's challenges, each with its scored and waiting work" width="100%"> | <img src="docs/images/city.png" alt="City of Espoo: what came of the event, from challenges taken to scores, invitations, talks, follow-ups and hires" width="100%"> |
+| <img src="docs/images/seeker.png" alt="Looking for work: Mikko's home with Halla Supply's invitation, the reviewer's words and his score of 9.0 of 10 per skill" width="100%"> | <img src="docs/images/employer.png" alt="Hiring: Halla Supply's challenges, each with its scored and waiting work" width="100%"> | <img src="docs/images/city.png" alt="City of Espoo: what came of the event, from challenges taken to scores, invitations, talks, follow-ups and hires" width="100%"> |
 | Looking for work | Hiring | City of Espoo |
 | <img src="docs/images/top-work.png" alt="Top work for one challenge: each piece of work with the reviewer's total and points per skill, names hidden until the person says yes" width="100%"> | <img src="docs/images/review.png" alt="Score work: the answer with personal details hidden, and the reviewer's points per skill, total and written reason" width="100%"> | <img src="docs/images/my-work-phone.png" alt="My work on a phone: each finished challenge with the reviewer's score and words, private until the person shares it" width="60%"> |
 | Top work | Score work | My work on a phone |
@@ -224,7 +235,7 @@ Ten take 10 minutes and two take 15. Five sample job ads for these companies are
 ## Guided tour, voice and table mode
 
 - "Watch the 1-minute tour" (or `/?tour=1`) runs seven cards over the real app. Each step sets the story stage, opens the page and spotlights one element. The cards move on by themselves; Pause, Back, Next, Esc and the arrow keys work.
-- The tour follows Olena from the challenge to Katja Nurmi's score of 9 of 10, her yes and the city view.
+- The tour follows Mikko from the challenge to Laura Niemi's score of 9 of 10, his yes and the city view.
 - Each view has a "Show me" button: a 1-minute demo of that view (`?tour=seeker`, `?tour=employer`, `?tour=city`). It ends with "Now try it yourself."
 - Voice: a person can speak an answer or a need. A spoken answer is shown as text; WorkProof stores only the text. Typing always works.
 - Speech uses ElevenLabs through the server when a key is set, the browser's speech service otherwise.
@@ -244,7 +255,7 @@ All keys are optional. Copy `.env.example` to `.env`.
 | `AI_PROVIDER` | `claude`, `gemini` or `scripted`. Unset: Claude if its key exists, else Gemini, else scripted. |
 | `ELEVENLABS_API_KEY` | Server speech to text and text to speech. `ELEVENLABS_VOICE_ID` picks the voice. |
 | `PROOF_DATA_FILE` | Where the shared default store is saved (default `.data/store.json`); `off` keeps it in memory. Visitor sandboxes are always in memory. |
-| `SITE_URL`, `REPO_URL` | `SITE_URL`: absolute links in the sitemap, `robots.txt`, the start page's structured data and `/llms.txt`. `REPO_URL`: links from `/llms.txt` to each code path. |
+| `SITE_URL`, `REPO_URL` | `SITE_URL`: absolute links in the sitemap, `robots.txt`, metadata, structured data, `/llms.txt` and `/llms-full.txt`; a production build without it uses https://workproof.wicflow.com. `REPO_URL`: the repository those pages link to; default https://github.com/felixwickholm/workproof. |
 
 `npm run check:ai` makes four live designer calls per provider with a key (one task draft, two practice tasks, one set of follow-up questions; a retry can add HTTP requests) and prints the result.
 
@@ -256,7 +267,7 @@ What a city asks before it runs an event on this, answered with what is built to
 
 **Will companies read and answer?** Nothing forces an answer. The city sees, per employer, how many answers are still owed, and an organiser can make answering a condition for a table at the next event. After 48 hours without an answer, the proof can go to another employer, if the person allowed it.
 
-**What about professionals new to Finnish, or with a degree from abroad?** The reviewer reads the work, not the CV. The first review needs no CV and no degree name. Known schools and employers are removed by rules before review. A wish for a native speaker is set aside. A spoken answer works too, and the reviewer reads it as text.
+**What about professionals new to Finnish, or with a degree from abroad?** The reviewer scores the work. The first review needs no degree name. Known schools and employers are removed by rules before review. A wish for a native speaker is set aside. A spoken answer works too, and the reviewer reads it as text.
 
 **Can AI do the task?** AI is allowed, and the task says so. The task asks for judgement, the two follow-up answers are about the person's own choices, and the meeting starts from the work. The product cannot prove who typed the answer.
 

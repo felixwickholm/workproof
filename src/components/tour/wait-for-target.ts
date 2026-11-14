@@ -1,32 +1,15 @@
 /** How long a step waits for its target before it shows the card in the middle instead. */
 export const TARGET_TIMEOUT_MS = 6000;
-/** The wait for a target whose screen is still being built: short, so the tour never seems stuck. */
-export const SOON_TIMEOUT_MS = 2500;
 
 const laidOut = (el: Element) => {
   const box = el.getBoundingClientRect();
   return box.width > 0 && box.height > 0;
 };
 
-/**
- * A target counts once it is on the right page and laid out (Next keeps hidden copies of recent
- * pages). With `text`, the target is the element that says it: the marked one, or else one of its
- * siblings of the same kind (a list marks only its first item, and the story means another).
- */
-export function findShown(id: string, path: string, text?: string, selector?: string): HTMLElement | null {
+/** A target counts once it is on the right page and laid out (Next keeps hidden copies of recent pages). */
+export function findShown(id: string, path: string): HTMLElement | null {
   if (window.location.pathname !== path) return null;
-  let marked = [...document.querySelectorAll<HTMLElement>(`[data-tour="${CSS.escape(id)}"]`)].filter(laidOut);
-  // A page another team owns may not carry the id yet; the step names a stable element instead.
-  if (!marked.length && selector) marked = [...document.querySelectorAll<HTMLElement>(selector)].filter(laidOut);
-  if (!text) return marked[0] ?? null;
-  for (const el of marked) {
-    if (el.textContent?.includes(text)) return el;
-    const sibling = [...(el.parentElement?.children ?? [])].find(
-      (other): other is HTMLElement => other instanceof HTMLElement && other.tagName === el.tagName && laidOut(other) && Boolean(other.textContent?.includes(text)),
-    );
-    if (sibling) return sibling;
-  }
-  return null;
+  return [...document.querySelectorAll<HTMLElement>(`[data-tour="${CSS.escape(id)}"]`)].find(laidOut) ?? null;
 }
 
 /**
@@ -37,9 +20,7 @@ export function waitForTarget(
   id: string,
   path: string,
   signal: AbortSignal,
-  text?: string,
   timeoutMs = TARGET_TIMEOUT_MS,
-  selector?: string,
 ): Promise<HTMLElement | null> {
   return new Promise((resolve) => {
     if (signal.aborted) return resolve(null);
@@ -55,7 +36,7 @@ export function waitForTarget(
     };
     const check = () => {
       frame = 0;
-      const el = findShown(id, path, text, selector);
+      const el = findShown(id, path);
       if (el) finish(el);
     };
     const schedule = () => {
@@ -79,7 +60,7 @@ export function waitForTarget(
 /** Frames in a row a target must keep its place before it counts as settled. */
 const STILL_FRAMES = 4;
 /** The longest the tour waits for a target to stop moving (a slow smooth scroll). */
-export const SETTLE_MAX_MS = 1500;
+const SETTLE_MAX_MS = 1500;
 /** Without a target the card's own travel is all there is to wait for. */
 const CARD_TRAVEL_MS = 400;
 

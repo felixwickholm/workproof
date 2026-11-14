@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BlindProof, ReviewQueue } from "@/lib/domain/types";
-import { firstToOpen } from "./review-order";
+import { firstToOpen, sharedRows } from "./review-order";
 
 const proof = (proofId: string): BlindProof => ({
   proofId,
@@ -38,5 +38,24 @@ describe("firstToOpen", () => {
 
   it("opens nothing in an empty queue", () => {
     expect(firstToOpen(empty)).toBeNull();
+  });
+});
+
+describe("sharedRows", () => {
+  it("shows a work shared twice once, under its first line", () => {
+    const rows = sharedRows({
+      recommended: [
+        { ...proof("p1"), recommendedBy: "Saarnivo" },
+        { ...proof("p1"), recommendedBy: "the City of Espoo" },
+      ],
+      secondLook: [
+        { ...proof("p1"), sharedSkills: ["sql"] },
+        { ...proof("p2"), sharedSkills: ["sql"] },
+      ],
+    });
+    expect(rows.map((r) => [r.proof.proofId, r.line])).toEqual([
+      ["p1", "Recommended by Saarnivo"],
+      ["p2", "Shared with you. Same skills."],
+    ]);
   });
 });

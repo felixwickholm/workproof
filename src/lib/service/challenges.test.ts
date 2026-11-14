@@ -4,6 +4,7 @@ import { scriptedDesigner } from "@/lib/ai/scripted";
 import type { TaskDesigner } from "@/lib/ai/task-designer";
 import { buildSeed } from "@/lib/seed";
 import { SAMPLE_ADS } from "@/lib/seed/ads";
+import { approveRequest } from "@/lib/http/schemas";
 import { getStore } from "@/lib/store";
 
 /** No request scope by default; a test can turn on a request that carries no sandbox cookie. */
@@ -66,6 +67,19 @@ describe("the task template id", () => {
   });
 });
 
+describe("the roles a company picks", () => {
+  it("pass the request schema and are kept on the published challenge, so the right job seekers see it first", async () => {
+    const draft = await draftChallenge(NEED);
+    const body = approveRequest.parse({ draft: { ...draft, roles: ["software-engineer"] }, companyId: "co-kivira", approvedBy: "Anna Koivisto" });
+    const published = await approveChallenge(body);
+    expect(published.roles).toEqual(["software-engineer"]);
+  });
+
+  it("refuses a role that is not on the shared list", () => {
+    expect(approveRequest.safeParse({ draft: { roles: ["astronaut"] }, companyId: "co-kivira", approvedBy: "A" }).success).toBe(false);
+  });
+});
+
 describe("a challenge from a job-ad link, published by the city", () => {
   const AD = "<title>Backend developer</title><h1>Backend developer for our payments API</h1><ul><li>API design</li><li>Error handling and testing</li><li>Contact mikko@example.org</li></ul>";
   const deps = {
@@ -84,13 +98,13 @@ describe("a challenge from a job-ad link, published by the city", () => {
     const draft = await draftFromAd("https://jobs.example.org/backend", undefined, deps);
     const { challenge, message } = await publishOnBehalf({ companyId: "co-kivira", draft, by: "Maija Kaupunki" }, (id) => `https://example.org/employer/challenges/${id}`);
     expect(challenge).toMatchObject({ onBehalf: { by: "Maija Kaupunki", adUrl: "https://jobs.example.org/backend" }, approvedBy: "Maija Kaupunki" });
-    expect(message).toBe(`We made a challenge for you: ${challenge.title}. 0 people already did it. See how they did: https://example.org/employer/challenges/${challenge.id}`);
+    expect(message).toBe(`We made a challenge for you: ${challenge.title}. It is live for job seekers now. See it here: https://example.org/employer/challenges/${challenge.id}`);
     const home = () => getStore().read().then((data) => buildEmployerHome(data, "co-kivira", new Date()));
     expect((await home()).unclaimed.map((u) => u.challenge.id)).toEqual([challenge.id]);
     await expect(claimChallenge(challenge.id, "co-kaari")).rejects.toMatchObject({ status: 403 });
     expect((await claimChallenge(challenge.id, "co-kivira")).claimedAt).toBeTruthy();
     expect((await home()).unclaimed).toEqual([]);
-    expect(await readyMessageFor(challenge.id, "L")).toMatch(/0 people already did it/);
+    expect(await readyMessageFor(challenge.id, "L")).toMatch(/It is live for job seekers now/);
   });
 
   /**

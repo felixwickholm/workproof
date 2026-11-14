@@ -2,7 +2,7 @@ import type { SeedProof } from "../types";
 
 /**
  * Halla Supply's "what should we automate first?" task. Synthetic people and work. The three newest
- * answers arrive just after Olena's, so hers is the oldest one waiting for Halla.
+ * answers arrive just after Mikko's, so his is the oldest one waiting for Halla.
  */
 export const AUTOMATION_PROOFS: SeedProof[] = [
   {

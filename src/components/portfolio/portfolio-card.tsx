@@ -6,7 +6,8 @@ import { useState, type ReactNode } from "react";
 import type { PortfolioCard } from "@/lib/domain/types";
 import { BlindText } from "../proof";
 import { ScoreView } from "../seeker/score-view";
-import { FORMAT_LABEL, FormatIcon } from "../seeker/task-format";
+import { FormatIcon } from "../seeker/task-format";
+import { FORMAT_LABEL } from "../words";
 import { cx } from "../ui/cx";
 import { Switch } from "../ui/switch";
 import { Tag } from "../ui/tag";
@@ -141,10 +142,10 @@ function OwnerControls({
   return (
     <div className="mt-5 flex flex-col gap-1 border-t border-separator pt-3">
       <Row
-        label="Share this task by link"
+        label="Share this challenge by link"
         hint={
           card.link
-            ? "Anyone with the link sees this task and the answers. Not your name."
+            ? "Anyone with the link sees this challenge and the answers. Not your name."
             : "Private. Only you see it."
         }
       >

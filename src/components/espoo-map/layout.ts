@@ -62,7 +62,7 @@ const PIN_GAP = { wide: 14, narrow: 9 } as const;
 const INSET = { wide: { width: 64, margin: 12 }, narrow: { width: 46, margin: 8 } } as const;
 
 /** The height in pixels of the sea the map adds below the coast to hold the headline figures. */
-export const HEADLINE_SIZE = { wide: 124, narrow: 172 } as const;
+const HEADLINE_SIZE = { wide: 124, narrow: 172 } as const;
 
 /** Pixels between a marker and its label. */
 const LABEL_GAP = 5;
@@ -93,7 +93,7 @@ export interface MapNode extends Circle {
 }
 
 /** One line from the venue to a company: all its work at one stage, weighted by how much. */
-export interface MapLine {
+interface MapLine {
   key: string;
   companyId: string;
   stage: FlowStage;
@@ -120,7 +120,7 @@ export interface MapFlow {
   offset: number;
 }
 
-export interface MapRegion {
+interface MapRegion {
   name: EspooDistrictName;
   path: string;
 }

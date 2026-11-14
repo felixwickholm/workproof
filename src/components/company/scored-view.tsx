@@ -8,7 +8,8 @@ import { TimeAgo } from "../proof";
 import { Button } from "../ui/button";
 import { getReviewer } from "./company-choice";
 import { companyErrorText } from "./format";
-import { formatTotal, rowState, workCode } from "./hiring-words";
+import { formatTotal, workCode } from "../words";
+import { rowState } from "./hiring-words";
 import { NameReveal } from "./name-reveal";
 import { SkillMarks } from "./skill-marks";
 
@@ -53,7 +54,7 @@ export function ScoredView({ entry, challenge, companyId, onChanged }: Props) {
   const bothMet = meeting && meeting.companyConfirmedMet && meeting.talentConfirmedMet;
 
   return (
-    <section data-tour="score" aria-label="Your score" className="flex flex-col gap-6 rounded-card bg-surface p-5 min-[900px]:p-6">
+    <section data-tour="score" aria-label="Your score" className="flex flex-col gap-6 rounded-card border border-separator bg-surface p-5 min-[900px]:p-6">
       <div className="flex items-end justify-between gap-4">
         <div>
           <h2 className="text-section text-label">Your score</h2>
@@ -73,7 +74,7 @@ export function ScoredView({ entry, challenge, companyId, onChanged }: Props) {
 
       <figure>
         <figcaption className="text-footnote text-label-2">Your words to the person</figcaption>
-        <blockquote className="mt-1 font-serif text-[20px] leading-[28px] text-pretty text-label">&ldquo;{decision.feedback}&rdquo;</blockquote>
+        <blockquote className="mt-1 font-heading text-lead text-pretty text-label">&ldquo;{decision.feedback}&rdquo;</blockquote>
       </figure>
 
       <div className="border-t border-separator pt-5">

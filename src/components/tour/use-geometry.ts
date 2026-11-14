@@ -5,7 +5,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Box } from "./placement";
 
 /** Spotlight and card travel: about 400 ms, nearly no overshoot. */
-export const TOUR_SPRING = { type: "spring", duration: 0.4, bounce: 0.12 } as const;
+const TOUR_SPRING = { type: "spring", duration: 0.4, bounce: 0.12 } as const;
 
 /** Calls `fn` at most once a frame. */
 function frameThrottle(fn: () => void) {
@@ -66,7 +66,7 @@ export function stickyTop(): number {
 }
 
 /** A box on screen, with where the page's sticky bars end at the moment it was measured. */
-export interface LiveBox extends Box {
+interface LiveBox extends Box {
   barBottom: number;
 }
 

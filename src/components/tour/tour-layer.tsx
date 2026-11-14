@@ -2,7 +2,7 @@
 
 import { animate, motion, useMotionValue, useMotionValueEvent } from "motion/react";
 import { useEffect, useLayoutEffect, useRef, useState, type ComponentProps, type CSSProperties } from "react";
-import { cardWidth, placeCard, type Arrow } from "./placement";
+import { cardWidth, placeCard, type Arrow, type Box } from "./placement";
 import { TourCard } from "./tour-card";
 import { useLiveBox, useSpringBox, useViewportSize } from "./use-geometry";
 
@@ -20,6 +20,15 @@ interface Props extends CardProps {
 }
 
 const MASK_ID = "tour-spotlight";
+const EASE_OUT = [0.23, 1, 0.32, 1] as const;
+/** A second layer of dim over a page being drawn under the card: enough to soften it, not to blank it. */
+const VEIL = 0.8;
+
+/** The cut-out closing between two pages: quick, so it is shut before the new page is drawn. */
+const CLOSE = { duration: 0.22, ease: EASE_OUT };
+
+/** A box shrunk to nothing at its middle: where the cut-out closes to between two pages. */
+const toPoint = (box: Box): Box => ({ x: box.x + box.width / 2, y: box.y + box.height / 2, width: 0, height: 0 });
 /** The caret is a square turned 45°; this is its side, so it stands out 7px from the card. */
 const CARET = 14;
 
@@ -73,16 +82,30 @@ export function TourLayer({ target, targetId, moveKey, onCardHeight, ...card }: 
   const phone = width === view.width;
   const maxHeight = phone ? view.height - Math.max(top, 16) : view.height - safeBottom - 32 - (placement.side === "docked" ? 0 : top);
 
-  // Without a target the cut-out fades where it was, so the next one opens from there.
-  const hole = useSpringBox(placement.spot, moveKey, card.reduce);
-  // While the next page loads, the old target is gone: the card waits where it was, its spotlight fades.
+  // While the next page opens, the old target is gone: the card waits where it was, the cut-out
+  // closes to its own middle and a soft veil covers the page as it is drawn. Once the new target is
+  // found the cut-out opens from there to it, so the eye is led across the page change.
   const waiting = card.busy && !box;
+  const hole = useSpringBox(placement.spot, moveKey, card.reduce);
+  const { x: holeX, y: holeY, width: holeW, height: holeH } = hole;
   const cardPos = useSpringBox(waiting ? null : { ...placement.card, width, height: 0 }, moveKey, card.reduce);
-  const lit = useMotionValue(0);
   useEffect(() => {
-    const controls = animate(lit, placement.spot ? 1 : 0, { duration: 0.2, ease: [0.23, 1, 0.32, 1] });
+    if (!waiting || card.reduce || holeW.get() <= 0) return;
+    const to = toPoint({ x: holeX.get(), y: holeY.get(), width: holeW.get(), height: holeH.get() });
+    const runs = [animate(holeX, to.x, CLOSE), animate(holeY, to.y, CLOSE), animate(holeW, 0, CLOSE), animate(holeH, 0, CLOSE)];
+    return () => runs.forEach((run) => run.stop());
+  }, [waiting, card.reduce, holeX, holeY, holeW, holeH]);
+  const lit = useMotionValue(0);
+  const shown = Boolean(placement.spot || waiting);
+  useEffect(() => {
+    const controls = animate(lit, shown ? 1 : 0, { duration: 0.2, ease: EASE_OUT });
     return () => controls.stop();
-  }, [lit, placement.spot]);
+  }, [lit, shown]);
+  const veil = useMotionValue(0);
+  useEffect(() => {
+    const controls = animate(veil, waiting && !card.reduce ? VEIL : 0, { duration: waiting ? 0.18 : 0.32, ease: EASE_OUT });
+    return () => controls.stop();
+  }, [veil, waiting, card.reduce]);
 
   // The mask and ring are SVG attributes, so they are written directly as the springs move.
   const holeRef = useRef<SVGRectElement>(null);
@@ -112,7 +135,7 @@ export function TourLayer({ target, targetId, moveKey, onCardHeight, ...card }: 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+      transition={{ duration: 0.2, ease: EASE_OUT }}
     >
       <div ref={safeRef} aria-hidden className="pointer-events-none invisible absolute h-[env(safe-area-inset-bottom,0px)] w-px" />
       <svg aria-hidden className="absolute inset-0 size-full">
@@ -123,6 +146,7 @@ export function TourLayer({ target, targetId, moveKey, onCardHeight, ...card }: 
           </mask>
         </defs>
         <rect width="100%" height="100%" mask={`url(#${MASK_ID})`} className="fill-(--tour-dim)" />
+        <motion.rect width="100%" height="100%" className="fill-(--tour-dim)" style={{ opacity: veil }} />
         <rect ref={ringRef} data-tour-ring rx="20" ry="20" fill="none" strokeWidth="2" className="stroke-accent" />
       </svg>
       <motion.div className="absolute top-0 left-0" style={{ x: cardPos.x, y: cardPos.y, width }}>
@@ -130,7 +154,7 @@ export function TourLayer({ target, targetId, moveKey, onCardHeight, ...card }: 
           className="relative"
           initial={{ opacity: 0, scale: card.reduce ? 1 : 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.24, ease: [0.23, 1, 0.32, 1] }}
+          transition={{ duration: 0.24, ease: EASE_OUT }}
         >
           {placement.arrow && !waiting ? (
             <span

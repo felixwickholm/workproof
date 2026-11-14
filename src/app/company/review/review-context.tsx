@@ -55,7 +55,7 @@ export function useReview(): ReviewState {
   return value;
 }
 
-export type QueueItem =
+type QueueItem =
   | { kind: "review"; proof: BlindProof }
   | { kind: "second"; proof: BlindProof & { sharedSkills: string[] } }
   | { kind: "recommended"; proof: BlindProof & { recommendedBy: string } }
