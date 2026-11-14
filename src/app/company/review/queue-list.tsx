@@ -14,7 +14,7 @@ import { QueueRow, QueueRowSkeleton } from "@/components/company/queue-row";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
-import { formatTotal } from "@/components/words";
+import { totalOutOf } from "@/components/words";
 import { useReview } from "./review-context";
 
 /**
@@ -91,7 +91,7 @@ export function QueueList({ selectedId }: { selectedId: string | null }) {
                 key={entry.decision.id}
                 proof={entry.proof}
                 selected={entry.proof.proofId === selectedId}
-                value={typeof entry.decision.total === "number" ? <span className="text-body font-medium">{formatTotal(entry.decision.total)}</span> : undefined}
+                value={typeof entry.decision.total === "number" ? <span className="text-body font-medium">{totalOutOf(entry.decision.total)}</span> : undefined}
                 status={rowState(entry)}
               />
             ))}
