@@ -1,4 +1,20 @@
-import { EXTRA_CHALLENGES } from "./extra-challenges";
+import { webDesigner } from "@/lib/ai/scripted/roles/web-designer";
+import { EXTRA_CHALLENGES, type SeedTask } from "./extra-challenges";
+
+/**
+ * Mikko's story task, the same one Laura's starter in the new-challenge chat drafts, with the four skills
+ * of the web designer role in their order, so Laura's points line up with them.
+ */
+const ORDER_FORM_TASK: SeedTask = {
+  title: webDesigner.challenge.title,
+  format: webDesigner.challenge.format,
+  proofKind: webDesigner.challenge.proofKind,
+  minutes: webDesigner.challenge.minutes,
+  skills: webDesigner.skills,
+  brief: webDesigner.challenge.brief,
+  material: { kind: "text", title: webDesigner.challenge.material.title, body: webDesigner.challenge.material.body },
+  deliverable: webDesigner.challenge.deliverable,
+};
 
 /**
  * Synthetic needs, written the way companies tend to write them. Espoo's talent events are for
@@ -12,7 +28,8 @@ const FIRST_CHALLENGES = [
     key: "halla-order-form",
     companyIds: ["co-halla"],
     daysBeforeEvent: 3,
-    need: "Designer for our order form: finds what confuses people, simple and clear design, explains the choice, thinks of the customer",
+    need: "Designer for our order form",
+    task: ORDER_FORM_TASK,
   },
   {
     key: "saarnivo-chart",

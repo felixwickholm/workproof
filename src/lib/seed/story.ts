@@ -100,8 +100,8 @@ export const MIKKO_STORY: SeedProof = {
     seconds: 540,
   },
   explainAnswers: [
-    "The order number and the delivery date first, because that is what the 40 calls a day ask about.",
-    "Then I would keep the search by pump model and the confirmation, and leave the rest for next month.",
+    "Installers would still click through four steps on a small screen, and many would give up and phone us.",
+    "I would put the pump model search at the top with large buttons, and fill in everything the form already knows.",
   ],
   spokenFollowUps: true,
 };
