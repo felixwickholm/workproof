@@ -2,6 +2,7 @@ import type {
   BlindProof,
   Challenge,
   ChallengeDraft,
+  CityOverview,
   Company,
   Decision,
   DecisionKind,
@@ -62,6 +63,8 @@ export const api = {
       method: "POST",
       body: { side: "talent" },
     }),
+  city: () => request<CityOverview>("/api/city"),
+  resetDemo: () => request<unknown>("/api/demo/reset", { method: "POST" }),
 };
 
 /** Plain words for an error shown to a person. */

@@ -9,7 +9,7 @@ import { AiTag, Tag } from "./ui/tag";
 
 const ease = [0.23, 1, 0.32, 1] as const;
 
-function Monogram({ label }: { label: string }) {
+export function Monogram({ label }: { label: string }) {
   const code = label.replace(/^Proof\s*/i, "").slice(0, 3) || "?";
   return (
     <span aria-hidden className="flex size-11 shrink-0 items-center justify-center rounded-inner bg-raised font-mono text-subhead font-semibold">
@@ -66,11 +66,34 @@ const redactionRows: { key: keyof RedactionReport; label: string }[] = [
   { key: "other", label: "Other personal details" },
 ];
 
+const hiddenCopy = {
+  talent: {
+    label: "Hidden from the reviewer",
+    identity: "Your name and contact",
+    footer: "Removed before any person at the company sees the work.",
+  },
+  reviewer: {
+    label: "Hidden from you",
+    identity: "Name and contact",
+    footer: "Removed before you see the work. The name appears only when they accept a meeting.",
+  },
+};
+
 /**
  * The full blind proof. With `reveal`, the card settles in and the hidden rows tick in
  * one by one; the whole moment stays under 600ms.
  */
-export function BlindProofFull({ proof, reveal = false }: { proof: BlindProof; reveal?: boolean }) {
+export function BlindProofFull({
+  proof,
+  reveal = false,
+  audience = "talent",
+}: {
+  proof: BlindProof;
+  reveal?: boolean;
+  /** Who is reading. Only the wording of the "hidden" list changes. */
+  audience?: "talent" | "reviewer";
+}) {
+  const hidden = hiddenCopy[audience];
   const reduce = useReducedMotion();
   const animate = reveal && !reduce;
 
@@ -114,9 +137,9 @@ export function BlindProofFull({ proof, reveal = false }: { proof: BlindProof; r
         </Card>
       </motion.div>
 
-      <Section label="Hidden from the reviewer" className="mt-8">
-        <Group footer="Removed before any person at the company sees the work.">
-          {[{ key: "identity", label: "Your name and contact", value: "Not shared" }, ...redactionRows.map((r) => ({ ...r, value: proof.redactions[r.key] }))].map((r, i) => (
+      <Section label={hidden.label} className="mt-8">
+        <Group footer={hidden.footer}>
+          {[{ key: "identity", label: hidden.identity, value: "Not shared" }, ...redactionRows.map((r) => ({ ...r, value: proof.redactions[r.key] }))].map((r, i) => (
             <motion.div
               key={r.key}
               className="row relative"
