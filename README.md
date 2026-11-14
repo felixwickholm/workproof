@@ -234,7 +234,7 @@ The person writes how they think while working, with no camera; only text is kep
 | Utu Mobile | Choose how inspection photos sync offline (Choose) |
 | Kenno Apps | Pick the tests before Friday's release (Make) |
 | Rasti Trails | Design the warning for a closed trail (Make) |
-| Laituri Logistics | Explain why picking slowed down in week 44 (Read) |
+| Raide Logistics | Explain why picking slowed down in week 44 (Read) |
 | Ulappa Hotels | Price the rooms for a congress week (Choose) |
 | Perusta Build | Re-plan the week after a late concrete delivery (Make) |
 

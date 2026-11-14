@@ -43,7 +43,7 @@ export const SEED_ROLES: Record<SeedChallengeKey, readonly JobRole[]> = {
   "utu-sync": ["software-engineer"],
   "kenno-release": ["software-engineer"],
   "rasti-trail": ["designer"],
-  "laituri-picking": ["data-analyst"],
+  "raide-picking": ["data-analyst"],
   "ulappa-congress": ["financial-analyst", "sales"],
   "perusta-delay": ["civil-engineer"],
 };

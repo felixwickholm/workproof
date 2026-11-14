@@ -19,5 +19,7 @@ export async function GET(request: Request) {
   const code = normaliseShareCode(url.searchParams.get("code"));
   const sandbox = code ? sandboxes().byCode(code, Date.now()) : undefined;
   if (sandbox) (await cookies()).set(sandboxCookie(sandbox.id, isSecureRequest(request)));
-  return Response.redirect(backTo(url.searchParams.get("to"), request), 303);
+  // A relative location: behind the proxy, request.url names the container's own address, not the public host.
+  const target = backTo(url.searchParams.get("to"), request);
+  return new Response(null, { status: 303, headers: { location: `${target.pathname}${target.search}` } });
 }

@@ -772,8 +772,8 @@ export const EXTRA_CHALLENGES = [
     },
   },
   {
-    key: "laituri-picking",
-    companyIds: ["co-laituri"],
+    key: "raide-picking",
+    companyIds: ["co-raide"],
     daysBeforeEvent: 5,
     need: "Data analyst for warehouse picking",
     task: {

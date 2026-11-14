@@ -11,5 +11,7 @@ export async function GET(request: Request, ctx: RouteContext<"/try/[code]">) {
   const { code } = await ctx.params;
   const origin = new URL(request.url).origin;
   const target = CODE.test(code) ? tableJoinUrl(origin, code.toUpperCase()) : new URL("/try", origin).toString();
-  return Response.redirect(target, 307);
+  // A relative location: behind the proxy, request.url names the container's own address, not the public host.
+  const url = new URL(target);
+  return new Response(null, { status: 307, headers: { location: `${url.pathname}${url.search}` } });
 }
