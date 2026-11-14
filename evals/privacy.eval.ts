@@ -447,7 +447,10 @@ describe("Eval 4: consent and privacy", () => {
       vi.stubGlobal("fetch", fetchMock);
       for (const provider of ["claude", "gemini"]) {
         vi.stubEnv("AI_PROVIDER", provider);
-        vi.stubEnv(provider === "claude" ? "ANTHROPIC_API_KEY" : "GEMINI_API_KEY", "eval-key");
+        // One key at a time, so the chain sends each request to one model only.
+        vi.stubEnv("ANTHROPIC_API_KEY", provider === "claude" ? "eval-key" : "");
+        vi.stubEnv("GEMINI_API_KEY", provider === "gemini" ? "eval-key" : "");
+        vi.stubEnv("GOOGLE_API_KEY", "");
         await call(draftRoute, { body: { need: `Backend developer for our payments API, error handling and testing. Contact ${planted.join(". ")}.` } });
         await call(tasterRoute, { body: { dreamJob: `Nurse. ${planted.join(". ")}` } });
         await call(followUpsRoute, { body: { challengeId: "ch-tuulos-ml", answer: `Split by grasp attempt. ${planted.join(". ")}.` } });
