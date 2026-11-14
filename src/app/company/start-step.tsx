@@ -1,14 +1,11 @@
 import { Link2 } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import { CompanyLine } from "@/components/company/company-line";
-import { RoleChips } from "@/components/company/role-chips";
 import { LockedButton } from "@/components/controls/locked-button";
-import { Button } from "@/components/ui/button";
-import { TextArea } from "@/components/ui/field";
-import { VoiceButton } from "@/components/voice";
 import type { Company } from "@/lib/domain/types";
-import { LIMITS } from "@/lib/http/limits";
+import type { AssistMessage } from "@/lib/client/api";
 import { SAMPLE_ADS } from "@/lib/seed/ads";
+import { AssistChat } from "./assist-chat";
 
 /** True for something that looks like a web link. The server checks the rest. */
 function linkReady(url: string): boolean {
@@ -17,86 +14,41 @@ function linkReady(url: string): boolean {
 
 const AI_LINE = "The AI drafts the challenge. You approve it. Nothing goes live before that.";
 
-/** The room the role's own sentence takes in the need, so the company's words never push it over the limit. */
-const WORDS_MAX = LIMITS.need - 140;
-
 interface Props {
-  roleId: string | null;
-  onRole: (id: string) => void;
-  words: string;
-  onWords: (words: string) => void;
+  messages: AssistMessage[];
+  choices: readonly string[];
+  onSend: (text: string) => void;
   adUrl: string;
   onAdUrl: (url: string) => void;
   companies: Company[] | null;
   companyId: string;
   onCompany: (id: string) => void;
-  busy: "ad" | "role" | null;
+  busy: "ad" | "chat" | null;
   errorLine: ReactNode;
-  onFromRole: () => void;
-  onByHand: () => void;
   onFromAd: (url?: string) => void;
 }
 
 /**
- * Step 1: who the company is looking for. A role chip and, if they like, a sentence about the work;
- * the AI drafts from that, or the company writes the challenge itself. A job ad link is the other way in.
+ * Step 1: who the company is looking for, in a short chat with the assistant, which then drafts.
+ * A job ad link is the other way in.
  */
-export function StartStep({ roleId, onRole, words, onWords, adUrl, onAdUrl, companies, companyId, onCompany, busy, errorLine, onFromRole, onByHand, onFromAd }: Props) {
-  const rolesTitle = useId();
-  const roleRule = useId();
+export function StartStep({ messages, choices, onSend, adUrl, onAdUrl, companies, companyId, onCompany, busy, errorLine, onFromAd }: Props) {
+  const chatTitle = useId();
   const adRule = useId();
   const origin = typeof window === "undefined" ? "" : window.location.origin;
-  const picked = roleId !== null;
 
   return (
     <>
       <CompanyLine companies={companies} value={companyId} onChange={onCompany} label="Posting as" className="-mt-4 min-[900px]:-mt-6" />
 
-      <section data-tour="company-looking-for" aria-labelledby={rolesTitle} className="mt-8 rounded-card border border-separator bg-surface p-5 min-[900px]:p-8">
-        <h2 id={rolesTitle} className="text-title-3 font-semibold text-label">
-          Who are you looking for?
+      <section data-tour="company-looking-for" aria-labelledby={chatTitle} className="mt-8 rounded-card border border-separator bg-surface p-5 min-[900px]:p-8">
+        <h2 id={chatTitle} className="text-title-3 font-semibold text-label">
+          Tell the assistant who you need
         </h2>
-        <p className="text-subhead mt-1 text-pretty text-label-2">Pick one. The same roles job seekers pick, so your challenge reaches the right people.</p>
-        <div className="mt-5">
-          <RoleChips value={roleId} onChange={onRole} labelledBy={rolesTitle} />
+        <p className="text-subhead mt-1 text-pretty text-label-2">Anything works: a role, a sentence, or a messy job ad. It asks at most two short questions, then drafts the challenge and an example job description.</p>
+        <div className="mt-6">
+          <AssistChat messages={messages} choices={choices} busy={busy === "chat"} onSend={onSend} />
         </div>
-
-        <div className="mt-7 border-t border-separator pt-6">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <p className="text-subhead min-w-0 flex-1 font-semibold text-label">
-              What would they do in the first month? <span className="font-normal text-label-2">Optional</span>
-            </p>
-            <VoiceButton
-              label="Say it"
-              title="Say what you need"
-              prompt="What do you need this person to do in their first month?"
-              maxLength={WORDS_MAX}
-              onUse={onWords}
-              className="-my-1 -mr-1 shrink-0 whitespace-nowrap"
-            />
-          </div>
-          <TextArea
-            label="What they would do"
-            hideLabel
-            value={words}
-            onChange={onWords}
-            placeholder="For example: find what we should automate first in our order handling"
-            minRows={2}
-            maxLength={WORDS_MAX}
-          />
-        </div>
-
-        <div className="mt-6 flex flex-col gap-3 min-[900px]:flex-row min-[900px]:items-center min-[900px]:gap-4">
-          <LockedButton locked={!picked} busy={busy === "role"} reasonId={roleRule} onClick={onFromRole} className="w-full min-[900px]:w-auto min-[900px]:px-8">
-            {busy === "role" ? "Drafting" : "Draft my challenge"}
-          </LockedButton>
-          <Button variant="quiet" size="sm" onClick={onByHand} disabled={!picked || busy !== null} className="self-center min-[900px]:self-auto">
-            Write it yourself
-          </Button>
-        </div>
-        <p id={roleRule} className="text-footnote mt-3 text-pretty text-label-2">
-          {picked ? AI_LINE : "Pick who you are looking for first."}
-        </p>
       </section>
 
       <p aria-hidden className="text-footnote my-8 flex items-center gap-3 text-label-2 before:h-px before:flex-1 before:bg-separator after:h-px after:flex-1 after:bg-separator">

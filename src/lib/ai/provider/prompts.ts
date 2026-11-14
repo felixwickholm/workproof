@@ -54,6 +54,7 @@ const TASK_FIELDS = `Fields:
 - coreSkills: [{"id", "why"}] with ids from the skill list only. "why" says in one line why the work needs the skill.
 - reviewGuide: one {"skillId", "lookFor"} per core skill. "lookFor" is one sentence on what the work does when this skill shows, for example "Explains why the retry hides the outage". People score the work later, so never give points, scores, scales or a pass mark, never say how many things to find, and never praise or judge.
 - setAside: work wishes left out, each with a short reason.
+- jobAd: an example job description the company can post, 70 to 130 words in 2 or 3 short paragraphs: what the team does, what the person would do, and the skills the work needs. Only work and skills: no wish about the person, no salary you were not given, no promise you were not given.
 Never say in any field how many problems the material has, or that they were put there on purpose.
 ${FORMATS}
 Skill ids:
@@ -63,7 +64,7 @@ export function draftPrompt(input: { need: string; role?: string; skills: string
   return `A company described the work it needs. Their words are between the <need> tags.
 ${asData("need", input.need)}
 ${input.role ? `Closest role: ${input.role}.\n` : ""}Skills the words point to: ${input.skills.join(", ") || "none found"}.
-Draft a short real work task that takes 5 to 15 minutes. Pick the format that fits this work best. The material is 8 to 25 lines of real work.
+Draft a short real work task that takes 10 to 30 minutes. If the words ask for a bigger event challenge, the task takes about 2 hours: richer material and a fuller deliverable. Pick the format that fits this work best. The material is 8 to 25 lines of real work.
 Keep 3 to 5 core skills. Put other work wishes in setAside with a short reason. Drop every wish about the person rather than the work.
 ${TASK_FIELDS}`;
 }
@@ -71,7 +72,7 @@ ${TASK_FIELDS}`;
 export function tasterPrompt(dreamJob: string): string {
   return `Someone named their dream job. Their words are between the <dream_job> tags.
 ${asData("dream_job", dreamJob)}
-Draft a 2-minute practice task for that job. Pick the format that fits best. The material is at most 10 short lines. The deliverable is a short answer to one question. Use exactly 3 core skills and an empty setAside.
+Draft a 2-minute practice task for that job. Pick the format that fits best. The material is at most 10 short lines. The deliverable is a short answer to one question. Use exactly 3 core skills, an empty setAside and an empty jobAd.
 ${TASK_FIELDS}`;
 }
 

@@ -5,12 +5,11 @@ import { useState, type ReactNode } from "react";
 import { fallbackLine } from "@/components/company/ai-designer";
 import { getReviewer, useCompanyId } from "@/components/company/company-choice";
 import { companyErrorText } from "@/components/company/format";
-import { handDraft, roleById, roleNeed } from "@/components/company/roles";
 import { useOnDemoReset } from "@/components/company/use-demo-reset";
 import { StepSlide } from "@/components/step-slide";
 import { cx } from "@/components/ui/cx";
 import { Screen } from "@/components/ui/screen";
-import { api, companyApi } from "@/lib/client/api";
+import { api, companyApi, type AssistMessage } from "@/lib/client/api";
 import { backInFlow, useFlowHistory } from "@/lib/client/use-flow-history";
 import { useResource } from "@/lib/client/use-resource";
 import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
@@ -23,12 +22,12 @@ type Step = "start" | "draft" | "live";
 const order: Step[] = ["start", "draft", "live"];
 
 const titles: Record<Step, { title: string; subtitle?: string }> = {
-  start: { title: "New challenge", subtitle: "Say who you are looking for. The AI drafts a short challenge. You approve it." },
+  start: { title: "New challenge", subtitle: "Tell the assistant who you are looking for. It drafts a challenge. You edit and approve it." },
   draft: { title: "Check your challenge", subtitle: "Click any line to change it." },
   live: { title: "Your challenge is live" },
 };
 
-type Source = { kind: "ad"; url: string } | { kind: "role"; role: string } | { kind: "hand"; role: string };
+type Source = { kind: "ad"; url: string } | { kind: "chat" };
 
 /**
  * New challenge in three steps: who the company is looking for (or its job ad), the draft a named
@@ -38,14 +37,14 @@ export function IntakeFlow() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("start");
   const [direction, setDirection] = useState<1 | -1>(1);
-  const [busy, setBusy] = useState<"ad" | "role" | "publish" | null>(null);
+  const [busy, setBusy] = useState<"ad" | "chat" | "publish" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [roleId, setRoleId] = useState<string | null>(null);
-  const [words, setWords] = useState("");
+  const [messages, setMessages] = useState<AssistMessage[]>([]);
+  const [choices, setChoices] = useState<readonly string[]>([]);
   const [adUrl, setAdUrl] = useState("");
   const [draft, setDraft] = useState<ChallengeDraft | null>(null);
-  const [source, setSource] = useState<Source>({ kind: "hand", role: "" });
+  const [source, setSource] = useState<Source>({ kind: "chat" });
   /** Why the built-in designer wrote the draft, from the AI status read just before asking. */
   const [fallback, setFallback] = useState<string | null>(null);
   /** Null until the person types: then the company's own reviewer stands in. */
@@ -65,7 +64,7 @@ export function IntakeFlow() {
   };
 
   /** One request at a time: a double tap never sends twice. */
-  async function run(kind: "ad" | "role" | "publish", action: () => Promise<void>) {
+  async function run(kind: "ad" | "chat" | "publish", action: () => Promise<void>) {
     if (busy) return;
     setBusy(kind);
     setError(null);
@@ -89,18 +88,31 @@ export function IntakeFlow() {
   }
 
   const fromAd = (url = adUrl) => run("ad", () => drafted(() => companyApi.fromAd(url.trim()), { kind: "ad", url: url.trim() }));
-  const role = roleById(roleId);
-  const fromRole = () => {
-    // The role the company picked travels with the draft, so the challenge reaches people who chose that role.
-    if (role) void run("role", () => drafted(async () => ({ ...(await companyApi.draft(roleNeed(role, words))), roles: [role.id] }), { kind: "role", role: role.label }));
-  };
-  /** No AI: a blank challenge with the role's skills, which the company writes itself. */
-  const byHand = () => {
-    if (!role || busy) return;
-    setDraft(handDraft(role));
-    setSource({ kind: "hand", role: role.label });
-    setFallback(null);
-    go("draft");
+  /** One chat turn: the company's words go out with the chat so far; a question comes back, or the draft. */
+  const sendChat = (text: string) => {
+    const next: AssistMessage[] = [...messages, { from: "company", text }];
+    setMessages(next);
+    setChoices([]);
+    void run("chat", async () => {
+      try {
+        const before = await api.aiStatus().catch(() => null);
+        const reply = await companyApi.assist(next);
+        if (reply.kind === "question") {
+          setMessages([...next, { from: "assistant", text: reply.text, ask: reply.ask }]);
+          setChoices(reply.choices ?? []);
+          return;
+        }
+        setMessages([...next, { from: "assistant", text: "Here is your draft. Change anything, then approve it." }]);
+        setDraft(reply.draft);
+        setSource({ kind: "chat" });
+        setFallback(fallbackLine(reply.draft.draftedBy, before));
+        go("draft");
+      } catch (e) {
+        // The company's words stay in the box's history; they can send again.
+        setMessages(messages);
+        throw e;
+      }
+    });
   };
 
   const publish = () =>
@@ -112,8 +124,8 @@ export function IntakeFlow() {
 
   const startOver = () => {
     setAdUrl("");
-    setWords("");
-    setRoleId(null);
+    setMessages([]);
+    setChoices([]);
     setDraft(null);
     setPublished(null);
     go("start");
@@ -135,19 +147,16 @@ export function IntakeFlow() {
   if (step === "start") {
     content = (
       <StartStep
-        roleId={roleId}
-        onRole={setRoleId}
-        words={words}
-        onWords={setWords}
+        messages={messages}
+        choices={choices}
+        onSend={sendChat}
         adUrl={adUrl}
         onAdUrl={setAdUrl}
         companies={companies.data}
         companyId={company?.id ?? companyId}
         onCompany={setCompanyId}
-        busy={busy === "ad" || busy === "role" ? busy : null}
+        busy={busy === "ad" || busy === "chat" ? busy : null}
         errorLine={errorLine}
-        onFromRole={fromRole}
-        onByHand={byHand}
         onFromAd={(url) => void fromAd(url)}
       />
     );
