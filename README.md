@@ -35,15 +35,19 @@ Open http://localhost:3000. The app needs no keys. Without `ANTHROPIC_API_KEY` i
 ```bash
 npm test        # unit tests
 npm run eval    # evals: task generator, blind review, no automated decisions, full flow
+npm run eval:e2e  # end to end in a phone-sized browser; needs the app running
 npm run lint
 ```
+
+`npm run eval:e2e` drives the app at 390x844 with real clicks and typing: the 2-minute taster, a challenge with follow-ups and the passport, a company posting a task, blind review with Pass, Second look and Meet, acceptance, a confirmed meeting and the city totals, and the guided story. It fails on any console error or sideways scroll. Set `BASE_URL` to test another server, and `E2E_SHOTS=<folder>` to keep a screenshot of each failure. It fetches Playwright with npx; on a new machine run `npx playwright@1.64.1 install chromium` once.
 
 | Eval | What it proves |
 | --- | --- |
 | Task generator | 20 needs become clear tasks with 3 to 5 skills and no protected attributes |
 | Blind review | Planted identity strings never reach the reviewer payload |
 | No automated decisions | AI output holds no scores or rankings; every decision has a named person |
-| Flow | Draft, approve, submit, pass, second look, meet, accept, confirm |
+| Flow | Draft, approve, submit, pass, Second look, meet, accept, confirm |
+| End to end | The same story through the real interface on a phone-sized screen |
 
 ## Structure
 

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run src",
-    "eval": "vitest run evals"
+    "eval": "vitest run evals",
+    "eval:e2e": "npx -y -p playwright@1.64.1 -c 'PLAYWRIGHT_MODULES=$(dirname $(dirname $(command -v playwright))) node evals/e2e/run.mjs'"
   },
   "dependencies": {
     "lucide-react": "^1.72.0",
