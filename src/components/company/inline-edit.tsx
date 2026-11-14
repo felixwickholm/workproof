@@ -5,8 +5,8 @@ import { useLayoutEffect, useRef } from "react";
 import { cx } from "../ui/cx";
 
 /**
- * Text that reads like the page but edits in place. A pencil marks it as editable;
- * focus gives it the field background.
+ * Text that reads like the page but edits in place. A pencil marks it as editable; hover hints
+ * at the field and focus gives it the field background.
  */
 export function InlineEdit({
   label,
@@ -14,12 +14,15 @@ export function InlineEdit({
   onChange,
   className,
   maxLength,
+  multiline,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   className?: string;
   maxLength?: number;
+  /** Keep line breaks, for a passage such as the task's situation. */
+  multiline?: boolean;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
@@ -37,9 +40,9 @@ export function InlineEdit({
         rows={1}
         value={value}
         maxLength={maxLength}
-        onChange={(e) => onChange(e.target.value.replace(/\n/g, " "))}
+        onChange={(e) => onChange(multiline ? e.target.value : e.target.value.replace(/\n/g, " "))}
         className={cx(
-          "block w-full resize-none overflow-hidden rounded-inner bg-transparent py-2 pr-11 pl-3 text-label caret-white outline-none transition-colors duration-150 focus:bg-surface",
+          "block w-full resize-none overflow-hidden rounded-inner bg-transparent py-2 pr-11 pl-3 text-label caret-accent outline-none transition-colors duration-150 hover:bg-fill/60 focus:bg-fill",
           className,
         )}
       />

@@ -1,67 +1,58 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import type { BlindProof } from "@/lib/domain/types";
-import { Monogram } from "../blind-proof";
+import { TimeAgo } from "../proof";
 import { cx } from "../ui/cx";
-import { firstLine } from "./format";
+import { ProofKindTag } from "../ui/tag";
+import { proofHref } from "./format";
+
+interface Props {
+  proof: BlindProof;
+  selected?: boolean;
+  /** Still waits for a written answer: the label is set heavier and a dot marks it. */
+  unread?: boolean;
+  /** The row's one status mark, under the task: shared skills, or the decision in words. */
+  status?: ReactNode;
+}
 
 /**
- * One proof in the inbox: label, the task, the first line of the work, how long it waited.
- * Nothing about quality: no score, no rank, no badge.
+ * One proof in the review list: the label and the kind of proof, the task, when it arrived and
+ * one status mark. Nothing about quality: no score, no rank, no badge.
  */
-export function QueueRow({
-  proof,
-  href,
-  selected,
-  right,
-  footer,
-}: {
-  proof: BlindProof;
-  href: string;
-  selected?: boolean;
-  /** Top right, for example the time waiting. */
-  right?: ReactNode;
-  footer?: ReactNode;
-}) {
+export function QueueRow({ proof, selected, unread, status }: Props) {
   return (
-    <li className="row relative [--row-inset:72px]">
+    <li>
       <Link
-        href={href}
-        data-story={proof.label}
+        href={proofHref(proof.proofId)}
         aria-current={selected ? "page" : undefined}
         className={cx(
-          "flex gap-3 px-4 py-3.5 transition-colors duration-150 active:bg-raised",
-          selected && "min-[900px]:bg-raised",
+          "relative flex flex-col gap-1 rounded-[12px] px-3 py-3 transition-colors duration-150",
+          selected ? "bg-fill" : "hover:bg-fill/60 active:bg-fill",
         )}
       >
-        <Monogram label={proof.label} />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-3">
-            <p className="text-headline font-semibold">{proof.label}</p>
-            {right ? <span className="text-footnote tnum shrink-0 text-label-2">{right}</span> : null}
-          </div>
-          <p className="text-subhead mt-0.5 truncate">{proof.challengeTitle}</p>
-          <p className="text-subhead mt-0.5 line-clamp-2 text-label-2 text-pretty">{firstLine(proof.work)}</p>
-          {footer}
-        </div>
+        {/* The dot hangs in the left padding, so read and unread labels line up. */}
+        {unread ? <span aria-hidden className="absolute top-5 left-[3px] size-1.5 rounded-full bg-label" /> : null}
+        <span className="flex min-w-0 items-center gap-2">
+          <span className={cx("text-subhead shrink-0 text-label", unread ? "font-semibold" : "font-medium")}>{proof.label}</span>
+          <ProofKindTag kind={proof.proofKind} className="h-[22px] px-2 text-caption" />
+          <TimeAgo at={proof.submittedAt} className="text-footnote tnum ml-auto shrink-0 text-label-2" />
+        </span>
+        <span className="text-footnote block truncate text-label-2">{proof.challengeTitle}</span>
+        {status ? <span className="block">{status}</span> : null}
       </Link>
     </li>
   );
 }
 
-export function QueueGroup({ children }: { children: ReactNode }) {
-  return <ul className="overflow-hidden rounded-card bg-surface">{children}</ul>;
-}
-
 export function QueueRowSkeleton() {
   return (
-    <div className="flex gap-3 px-4 py-3.5">
-      <span className="size-11 shrink-0 rounded-inner bg-raised" />
-      <div className="flex-1">
-        <span className="block h-4 w-24 rounded-full bg-raised" />
-        <span className="mt-2.5 block h-3.5 w-52 rounded-full bg-raised" />
-        <span className="mt-2 block h-3.5 w-40 rounded-full bg-raised" />
-      </div>
+    <div aria-hidden className="flex flex-col gap-2 px-3 py-3.5">
+      <span className="flex items-center gap-2">
+        <span className="h-4 w-20 rounded-full bg-fill" />
+        <span className="h-[22px] w-16 rounded-full bg-fill" />
+        <span className="ml-auto h-3 w-14 rounded-full bg-fill" />
+      </span>
+      <span className="h-3 w-56 rounded-full bg-fill" />
     </div>
   );
 }

@@ -3,8 +3,8 @@
 import { ChevronDown } from "lucide-react";
 import { useId, useState } from "react";
 import type { Challenge } from "@/lib/domain/types";
-import { Card, Eyebrow } from "../ui/card";
-import { CodeBlock } from "../ui/code-block";
+import { TaskMaterialView } from "@/components/proof";
+import { Eyebrow } from "../ui/card";
 import { cx } from "../ui/cx";
 
 /** The task as the person got it, folded away so the work comes first. */
@@ -33,16 +33,7 @@ export function TaskDisclosure({ challenge }: { challenge: Challenge }) {
       {open ? (
         <div id={panelId} className="flex flex-col gap-4 pt-4">
           <p className="text-body whitespace-pre-wrap px-1 text-label-2 text-pretty">{challenge.brief}</p>
-          {challenge.material ? (
-            challenge.material.kind === "code" ? (
-              <CodeBlock title={challenge.material.title} code={challenge.material.body} />
-            ) : (
-              <Card className="p-4">
-                <p className="text-footnote font-medium text-label-2">{challenge.material.title}</p>
-                <p className="text-body mt-2 whitespace-pre-wrap text-pretty">{challenge.material.body}</p>
-              </Card>
-            )
-          ) : null}
+          {challenge.material ? <TaskMaterialView material={challenge.material} /> : null}
           <div className="px-1">
             <Eyebrow>They were asked</Eyebrow>
             <p className="text-headline mt-2 font-semibold text-pretty">{challenge.deliverable}</p>

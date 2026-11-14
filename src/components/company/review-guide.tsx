@@ -1,22 +1,18 @@
 import type { ReviewPrompt, Skill } from "@/lib/domain/types";
+import { cx } from "../ui/cx";
 
 /**
- * What a human reviewer looks for, one prompt per core skill.
- * Numbered, to read against the work; nothing here can be ticked or scored.
+ * What a person at the company looks for, one line per core skill, in words. Nothing here can be
+ * ticked, counted or scored: the reviewer reads the work against it and writes what they saw.
  */
-export function ReviewGuide({ guide, skills }: { guide: ReviewPrompt[]; skills: Skill[] }) {
+export function ReviewGuide({ guide, skills, className }: { guide: ReviewPrompt[]; skills: Skill[]; className?: string }) {
   const label = (id: string) => skills.find((s) => s.id === id)?.label ?? id;
   return (
-    <ul className="overflow-hidden rounded-card bg-surface">
-      {guide.map((g, i) => (
-        <li key={g.skillId} className="row relative flex gap-3 px-5 py-3.5 [--row-inset:48px]">
-          <span aria-hidden className="text-footnote tnum w-4 shrink-0 pt-px font-mono font-semibold text-label-3">
-            {i + 1}
-          </span>
-          <div className="min-w-0">
-            <p className="text-footnote font-medium text-label-2">{label(g.skillId)}</p>
-            <p className="text-body mt-0.5 text-pretty">{g.lookFor}</p>
-          </div>
+    <ul className={cx("flex flex-col gap-4", className)}>
+      {guide.map((g) => (
+        <li key={g.skillId}>
+          <p className="text-footnote font-medium text-label-2">{label(g.skillId)}</p>
+          <p className="text-subhead mt-0.5 text-pretty text-label">{g.lookFor}</p>
         </li>
       ))}
     </ul>

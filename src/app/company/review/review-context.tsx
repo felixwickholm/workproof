@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import { useCompanyId } from "@/components/company/company-choice";
+import { useOnDemoReset } from "@/components/company/use-demo-reset";
 import { api, companyApi } from "@/lib/client/api";
 import { useResource } from "@/lib/client/use-resource";
 import type { BlindProof, Company, ReviewQueue } from "@/lib/domain/types";
@@ -19,8 +20,6 @@ interface ReviewState {
   loading: boolean;
   retry: () => void;
   reload: () => Promise<void>;
-  /** Clock for "time waiting", ticking every 30 seconds. Null until the page runs in the browser. */
-  now: number | null;
 }
 
 const Context = createContext<ReviewState | null>(null);
@@ -29,14 +28,7 @@ export function ReviewProvider({ children }: { children: ReactNode }) {
   const [companyId, setCompanyId] = useCompanyId();
   const companies = useResource(() => api.companies(), []);
   const queue = useResource(() => companyApi.queue(companyId), [companyId], { pollMs: POLL_MS });
-  const [now, setNow] = useState<number | null>(null);
-
-  useEffect(() => {
-    const tick = () => setNow(Date.now());
-    tick();
-    const id = window.setInterval(tick, 30_000);
-    return () => window.clearInterval(id);
-  }, []);
+  useOnDemoReset(() => void queue.reload());
 
   const value: ReviewState = {
     companyId,
@@ -52,7 +44,6 @@ export function ReviewProvider({ children }: { children: ReactNode }) {
       queue.retry();
     },
     reload: queue.reload,
-    now,
   };
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }

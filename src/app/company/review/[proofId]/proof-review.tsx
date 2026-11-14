@@ -1,34 +1,45 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { use, useEffect, useState } from "react";
-import { BlindProofFull } from "@/components/blind-proof";
-import { DecidedDetails, DecisionLine } from "@/components/company/decided-summary";
-import { DecisionSheet } from "@/components/company/decision-sheet";
-import { SECOND_LOOK_LINE, waitingFor } from "@/components/company/format";
-import { LookForRow } from "@/components/company/look-for";
+import Link from "next/link";
+import { ArrowRight, ChevronDown } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { use, useEffect, useId, useState, type ReactNode } from "react";
+import { getReviewer } from "@/components/company/company-choice";
+import { DecidedView } from "@/components/company/decided-view";
+import { DecisionPanel } from "@/components/company/decision-panel";
+import { proofHref, SECOND_LOOK_LINE } from "@/components/company/format";
+import { MeetingOpener } from "@/components/company/meeting-opener";
+import { markOpened } from "@/components/company/opened-proofs";
 import { ReviewGuide } from "@/components/company/review-guide";
 import { TaskDisclosure } from "@/components/company/task-disclosure";
+import { BlindProofView } from "@/components/proof";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { riseAt } from "@/components/ui/rise";
+import { cx } from "@/components/ui/cx";
+import { useWide } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/client/api";
+import { Tag } from "@/components/ui/tag";
+import { api, companyApi } from "@/lib/client/api";
 import { useResource } from "@/lib/client/use-resource";
-import type { DecisionKind } from "@/lib/domain/types";
-import { findInQueue, useReview } from "../review-context";
+import type { Challenge, ReviewQueue } from "@/lib/domain/types";
+import { findInQueue, useReview, type QueueItem } from "../review-context";
 
-/** One blind proof, read against the review guide, then Not now or Meet with written feedback. */
+/**
+ * Beside the work only when the pane fits a full reading measure (about 640px) plus the 300px
+ * guide; narrower, the guide sits under the work, right above the answer.
+ */
+const GUIDE_BESIDE = "@min-[980px]:grid @min-[980px]:grid-cols-[minmax(0,1fr)_300px] @min-[980px]:items-start @min-[980px]:gap-6";
+
+/** One blind proof, read against what the task asked for, then a written answer and Not now or Meet. */
 export function ProofReview({ params }: { params: Promise<{ proofId: string }> }) {
   const proofId = decodeURIComponent(use(params).proofId);
-  const { queue, company, reload, now } = useReview();
-  const router = useRouter();
-  const [sheet, setSheet] = useState<DecisionKind | null>(null);
+  const { queue, company, reload } = useReview();
 
-  // A proof opens at its top, where the context line says why it is here.
+  // A proof opens at its top, where the work starts, and counts as opened in this browser.
   const companyKey = company?.id;
   useEffect(() => {
     window.scrollTo({ top: 0 });
+    markOpened(proofId);
   }, [proofId, companyKey]);
 
   const item = queue ? findInQueue(queue, proofId) : null;
@@ -42,140 +53,210 @@ export function ProofReview({ params }: { params: Promise<{ proofId: string }> }
 
   if (!item) {
     return (
-      <div className="mx-auto max-w-[640px] px-5 pt-6 min-[900px]:px-8">
-        <Card>
-          <p className="text-headline font-semibold">Not in this queue</p>
-          <p className="text-subhead mt-1 text-label-2 text-pretty">
-            This proof is not waiting for {company.name}. It may belong to another company in the switcher.
-          </p>
-          <Button href="/company/review" variant="secondary" size="sm" className="mt-4">
-            Back to the queue
-          </Button>
-        </Card>
-      </div>
+      <Card>
+        <h2 className="text-headline font-semibold">Not in this queue</h2>
+        <p className="text-subhead mt-1 text-pretty text-label-2">This proof is not waiting for {company.name}. It may belong to another company in the switcher.</p>
+        <Button href="/company/review" variant="secondary" size="sm" className="mt-4">
+          Back to the queue
+        </Button>
+      </Card>
     );
   }
 
   const { proof } = item;
-  const guide = challenge ? <ReviewGuide guide={challenge.reviewGuide} skills={challenge.coreSkills} /> : null;
+  const ownTask = Boolean(known);
 
   return (
-    <div className="flex min-h-[calc(100dvh-44px)] flex-col">
-      <div className="mx-auto w-full max-w-[440px] flex-1 px-5 pt-4 pb-8 min-[900px]:max-w-[1040px] min-[900px]:px-8 min-[900px]:pt-6">
-        <div className="rise">
-          <ContextLine item={item} now={now} />
-        </div>
-
-        <div className="min-[1180px]:grid min-[1180px]:grid-cols-[minmax(0,1fr)_300px] min-[1180px]:items-start min-[1180px]:gap-6">
-          <div className="min-w-0">
-            {item.kind === "decided" ? (
-              <Card className="highlight rise mt-4">
-                <DecisionLine entry={item.entry} />
-                <div className="mt-3">
-                  <DecidedDetails entry={item.entry} onChanged={reload} />
-                </div>
-              </Card>
-            ) : null}
-
-            <div className="rise mt-4" style={riseAt(1)}>
-              <BlindProofFull
-                proof={proof}
-                audience="reviewer"
-                beforeWork={
-                  <div className="flex flex-col gap-3">
-                    {challenge ? <TaskDisclosure challenge={challenge} /> : <div className="h-14 rounded-card bg-surface" />}
-                    {guide && challenge ? (
-                      <div className="flex min-[1180px]:hidden">
-                        <LookForRow count={challenge.reviewGuide.length} note={guideNote(Boolean(known))}>
-                          {guide}
-                        </LookForRow>
-                      </div>
-                    ) : null}
-                  </div>
-                }
-              />
-            </div>
+    <div className="@container">
+      <h2 className="sr-only">{proof.label}</h2>
+      <div className={GUIDE_BESIDE}>
+        <div className="flex min-w-0 flex-col gap-4">
+          {item.kind === "second" ? <SecondLookNote skills={item.proof.sharedSkills} /> : null}
+          <BlindProofView
+            proof={proof}
+            variant="full"
+            showHumanWorkLine
+            pictureReport={{
+              defaultReviewer: getReviewer(company.id),
+              onReport: async (reviewer) => {
+                await companyApi.reportPicture(proof.proofId, company.id, reviewer);
+                await reload();
+              },
+            }}
+            className="rise"
+          />
+          {challenge ? <TaskDisclosure challenge={challenge} /> : <div className="h-14 rounded-card bg-surface" />}
+          <div className="@min-[980px]:hidden">
+            <LookFor challenge={challenge} ownTask={ownTask} foldable />
           </div>
-
-          {guide ? (
-            <aside className="hidden min-[1180px]:sticky min-[1180px]:top-[68px] min-[1180px]:mt-4 min-[1180px]:block">
-              <GuideLabel ownTask={Boolean(known)} />
-              {guide}
-            </aside>
-          ) : null}
+          <DecisionSlot key={proof.proofId} item={item} queue={queue} companyName={company.name} reload={reload}>
+            <DecisionPanel proof={proof} company={company} onDecided={reload} tour="decision" />
+          </DecisionSlot>
         </div>
+        <aside aria-label="What to look for" className="hidden @min-[980px]:sticky @min-[980px]:top-6 @min-[980px]:block">
+          <LookFor challenge={challenge} ownTask={ownTask} />
+        </aside>
       </div>
+    </div>
+  );
+}
 
-      {item.kind === "decided" ? null : (
-        <div className="glass highlight pb-safe sticky bottom-0 z-10">
-          <div className="mx-auto grid w-full max-w-[440px] grid-cols-2 gap-3 px-5 pt-3 pb-3 min-[900px]:max-w-[1040px] min-[900px]:px-8">
-            <Button variant="secondary" onClick={() => setSheet("pass")}>
-              Not now
-            </Button>
-            <Button variant="secondary" onClick={() => setSheet("meet")}>
-              Meet
-            </Button>
-          </div>
-        </div>
+/**
+ * Where the answer is written and, once sent, what was sent. The two crossfade in place, so the
+ * reviewer sees the result where they pressed. Keyed by proof, so opening another proof never fades.
+ */
+function DecisionSlot({
+  item,
+  queue,
+  companyName,
+  reload,
+  children,
+}: {
+  item: QueueItem;
+  queue: ReviewQueue;
+  companyName: string;
+  reload: () => Promise<void>;
+  children: ReactNode;
+}) {
+  const reduce = useReducedMotion();
+  const decided = item.kind === "decided";
+  const from = reduce ? { opacity: 0 } : { opacity: 0, transform: "translateY(6px)" };
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={decided ? "decided" : "deciding"}
+        initial={from}
+        animate={{ opacity: 1, transform: "translateY(0px)" }}
+        exit={{ opacity: 0, transition: { duration: 0.12 } }}
+        transition={{ duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+        className="flex flex-col gap-4"
+      >
+        {item.kind === "decided" ? (
+          <>
+            <DecidedView entry={item.entry} companyName={companyName} onChanged={reload} tour="decision" />
+            {item.entry.decision.decision === "meet" ? <MeetingOpener explain={item.proof.explain} /> : null}
+            <NextProof queue={queue} current={item.proof.proofId} />
+          </>
+        ) : (
+          children
+        )}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+/**
+ * The task's review guide, in words, beside or under the work. Under the work on a phone it is
+ * folded, so the answer box is never six skill notes away; on a laptop it starts open.
+ */
+function LookFor({ challenge, ownTask, foldable }: { challenge: Challenge | null | undefined; ownTask: boolean; foldable?: boolean }) {
+  const wide = useWide();
+  const [toggled, setToggled] = useState<boolean | null>(null);
+  const panelId = useId();
+  if (!challenge) return <div className="h-40 rounded-card bg-surface" />;
+
+  const open = !foldable || (toggled ?? wide);
+  const source = `${ownTask ? "From the review guide you approved." : "From the review guide of the original task."} Words, not a scale.`;
+  return (
+    <Card>
+      {foldable ? (
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={panelId}
+          onClick={() => setToggled(!open)}
+          className="-m-2 flex w-[calc(100%+16px)] items-center gap-3 rounded-[14px] p-2 text-left"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="text-section block text-label">What to look for</span>
+            <span className="text-footnote mt-0.5 block text-label-2">
+              {challenge.reviewGuide.length} {challenge.reviewGuide.length === 1 ? "skill" : "skills"} · {source}
+            </span>
+          </span>
+          <ChevronDown aria-hidden className={cx("size-5 shrink-0 text-label-3 transition-transform duration-200 ease-(--ease-out)", open && "rotate-180")} strokeWidth={2.2} />
+        </button>
+      ) : (
+        <>
+          <h2 className="text-section text-label">What to look for</h2>
+          <p className="text-footnote mt-1 text-pretty text-label-2">{source}</p>
+        </>
       )}
-
-      <DecisionSheet
-        key={proof.proofId}
-        kind={sheet}
-        proof={proof}
-        company={company}
-        onClose={() => setSheet(null)}
-        onDecided={reload}
-        onDone={() => {
-          setSheet(null);
-          // On a phone the queue is a separate screen: go back to it, at the top where the company switcher is.
-          if (!window.matchMedia("(min-width: 900px)").matches) router.push("/company/review");
-          window.requestAnimationFrame(() => window.scrollTo({ top: 0 }));
-        }}
-      />
-    </div>
+      {open ? (
+        <div id={panelId}>
+          <ReviewGuide
+            guide={challenge.reviewGuide}
+            skills={challenge.coreSkills}
+            className={cx("mt-4", foldable && "@min-[620px]:grid @min-[620px]:grid-cols-2 @min-[620px]:gap-x-6")}
+          />
+        </div>
+      ) : null}
+    </Card>
   );
 }
 
-function guideNote(ownTask: boolean) {
-  return `${ownTask ? "From the review guide you approved." : "From the review guide of the original task."} Read the work against it.`;
-}
-
-function GuideLabel({ ownTask }: { ownTask: boolean }) {
+function SecondLookNote({ skills }: { skills: string[] }) {
   return (
-    <div className="mb-2 px-5">
-      <p className="text-headline font-semibold">Look for</p>
-      <p className="text-footnote mt-1 text-label-2">{guideNote(ownTask)}</p>
-    </div>
+    <Card>
+      <h2 className="text-section text-label">Second look</h2>
+      <p className="text-subhead mt-1 text-pretty text-label-2">{SECOND_LOOK_LINE}</p>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {skills.map((s) => (
+          <Tag key={s} className="h-6 px-2.5 text-caption">
+            {s}
+          </Tag>
+        ))}
+      </div>
+    </Card>
   );
 }
 
-function ContextLine({ item, now }: { item: NonNullable<ReturnType<typeof findInQueue>>; now: number | null }) {
-  if (item.kind === "second") {
+/** After an answer, the next proof that waits, so the reviewer is never at a dead end. */
+function NextProof({ queue, current }: { queue: ReviewQueue; current: string }) {
+  const next = [...queue.proofs, ...queue.secondLook].find((p) => p.proofId !== current);
+  if (!next) {
     return (
-      <div>
-        <p className="text-headline font-semibold">Second look</p>
-        <p className="text-subhead mt-1 text-label-2 text-pretty">{SECOND_LOOK_LINE}</p>
-        <p className="text-subhead mt-1 text-label text-pretty">Matched on {item.proof.sharedSkills.join(", ")}</p>
-      </div>
+      <Button href="/employer" variant="secondary" size="sm">
+        Nothing else waits. Back to Hiring
+      </Button>
     );
   }
-  if (item.kind === "decided") return <p className="text-headline font-semibold">Decided</p>;
-  const waiting = waitingFor(item.proof.submittedAt, now);
   return (
-    <p className="text-footnote tnum text-label-2">
-      {waiting === "Just now" ? "Just arrived" : waiting ? `Waiting ${waiting}` : "To review"}
-    </p>
+    <Link
+      href={proofHref(next.proofId)}
+      className="press text-subhead flex min-h-[52px] items-center justify-between gap-3 rounded-full bg-fill px-5 font-medium text-label transition-colors duration-150 hover:bg-label/10"
+    >
+      Next to read: {next.label}
+      <ArrowRight aria-hidden className="size-[18px] shrink-0" strokeWidth={1.8} />
+    </Link>
   );
 }
 
+/** The open proof's shape while the queue loads: the work card, the task line, the answer area. */
 export function ReviewSkeleton() {
   return (
-    <div aria-busy className="mx-auto max-w-[440px] px-5 pt-4 min-[900px]:max-w-[1040px] min-[900px]:px-8 min-[900px]:pt-6">
-      <Skeleton className="h-3 w-32" />
-      <div className="mt-4 h-14 rounded-card bg-surface" />
-      <div className="mt-6 h-40 rounded-card bg-surface" />
-      <div className="mt-3 h-64 rounded-card bg-surface" />
+    <div aria-busy className="flex flex-col gap-4">
+      <div className="rounded-card bg-surface p-5 min-[900px]:p-7">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-6 w-16" />
+          <Skeleton className="ml-auto h-3.5 w-16" />
+        </div>
+        <Skeleton className="mt-3 h-3.5 w-64" />
+        <div className="mt-8 flex flex-col gap-3">
+          {[90, 100, 84, 96, 70, 88].map((width) => (
+            <span key={width} aria-hidden className="block h-3.5 rounded-full bg-fill" style={{ width: `${width}%` }} />
+          ))}
+        </div>
+      </div>
+      <div className="h-14 rounded-card bg-surface" />
+      <div className="rounded-card bg-surface p-5 min-[900px]:p-6">
+        <Skeleton className="h-3.5 w-48" />
+        <div className="mt-4 h-[120px] rounded-inner bg-fill" />
+        <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="h-[52px] rounded-full bg-fill" />
+          <div className="h-[52px] rounded-full bg-fill" />
+        </div>
+      </div>
     </div>
   );
 }
