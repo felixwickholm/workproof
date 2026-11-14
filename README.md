@@ -20,7 +20,7 @@ Routes are pages of the live demo; files and tests are in this repository. Demo 
 | Criterion | What we built | See it | Code | Test |
 |---|---|---|---|---|
 | **Impact & Relevance (45%)** | Three views on one event: Job seeker, Company and City of Espoo. A job-ad link or one sentence becomes a challenge with 3 to 5 core skills, and a person approves it. Talent answers with work. A named person reads work in arrival order, with known personal details removed by rules, and every recorded decision needs a written reason. The city sees each step from challenge taken to scored, invited, talked, follow-up agreed and hired, and the work still waiting on each challenge. With consent, unanswered work can reach a second employer after 48 hours. | `/company`, `/employer`, `/city` | `src/lib/service/views/city.ts`, `src/lib/service/decisions.ts`, `src/lib/service/meetings.ts` | `evals/flow.eval.ts`: 28 of 28 steps from task to a meeting both sides confirmed, then follow-up and hire |
-| **Innovation & User Experience (35%)** | A short real challenge that a person scores, in four formats: Choose, Make, Fix, Read. The person thinks aloud while working; no camera. Table mode: a visitor scans a QR code and does a 2-minute task; a host invites the proof with a two-sentence reason; the name appears on the big screen only after the visitor accepts on the phone. A 17-card walkthrough over the real app that starts by itself on the first visit, and a "Show me" button in each view that starts it from that view. Voice answers. Light and dark themes. | `/try` and `/table` on two screens; `/?tour=1` | `src/lib/service/table.ts`, `src/lib/matching/second-look.ts`, `src/lib/blind` | `evals/table.eval.ts`: 0 of 10 names, emails and numbers typed on phones reach the big screen; `evals/story.eval.ts` |
+| **Innovation & User Experience (35%)** | A short real challenge that a person scores, in four formats: Choose, Make, Fix, Read. The person writes how they think while working; no camera. Table mode: a visitor scans a QR code and does a 2-minute task; a host invites the proof with a two-sentence reason; the name appears on the big screen only after the visitor accepts on the phone. A 17-card walkthrough over the real app that starts by itself on the first visit, and a "Show me" button in each view that starts it from that view. Voice answers are planned (the app shows "Voice coming soon"). Light and dark themes. | `/try` and `/table` on two screens; `/?tour=1` | `src/lib/service/table.ts`, `src/lib/matching/second-look.ts`, `src/lib/blind` | `evals/table.eval.ts`: 0 of 10 names, emails and numbers typed on phones reach the big screen; `evals/story.eval.ts` |
 | **Responsible & Feasible Execution (20%)** | A guard on every AI output. A blind layer of rules before any reviewer or model reads the work; it removes known personal details, and some can remain. WorkProof has no automated decision feature: a decision is recorded with the name of a reviewer registered for the company, the reviewer's points and written feedback, and a decision without them is refused (HTTP 400). This demo has no sign-in, so the name is not verified. An audit log, counted for automated decisions. Runs with no keys. Request limits, a per-visitor sandbox, a Docker image. | `/city/log`, `/for-judges` | `src/lib/guard/no-judgement.ts`, `src/lib/blind/redact.ts`, `src/lib/service/decisions.ts`, `Dockerfile` | `evals/no-automated-decisions.eval.ts`: 70 of 70 planted judging phrases rejected, 0 automated decisions; `evals/blind-review.eval.ts`: 0 of 79 planted identity strings reach a reviewer |
 | **Volume for employers** | Each task takes 5 to 30 answers (12 unless the company chooses), so an employer can read them all. The company sets the number before it approves the challenge, and each challenge page shows the places left. | `/company`, `/challenges` | `src/lib/domain/places.ts` | `src/lib/domain/places.test.ts`; `evals/flow.eval.ts` ("the sixth answer is refused with 409") |
 | **AI-written work** | AI may help with the work, and the task says so. Two follow-up questions ask about the person's own choices, quoting their own words. After an invitation, the review page shows one of the person's own follow-up answers, with the line "Ask the person to explain this answer, then to change one thing." | `/company/review` after an invite | `src/lib/ai/scripted/follow-ups.ts`, `src/components/company/meeting-opener.tsx` | `evals/flow.eval.ts` ("two follow-ups about the answer") |
@@ -70,7 +70,7 @@ See also [AGENTS.md](AGENTS.md) and the [demo script](docs/demo-script.md).
 
 ## What it is
 
-- **Job seeker**: picks one or more roles, then a challenge from an Espoo company, does it in 8 to 15 minutes while thinking aloud, checks what the company will read, and answers two follow-up questions. When a person at the company decides, the decision comes with a written reason. The person can accept or decline an invitation; a declined company never sees the name.
+- **Job seeker**: picks one or more roles, then a challenge from an Espoo company, does it in 8 to 15 minutes and writes how they think, checks what the company will read, and answers two follow-up questions. When a person at the company decides, the decision comes with a written reason. The person can accept or decline an invitation; a declined company never sees the name.
 - **Company**: picks who it is looking for (the same role chips) and lets the AI draft from that, pastes a job-ad link, or writes the challenge itself; approves a task with 3 to 5 core skills and a number of places, and reads blind proofs in arrival order. The reviewer scores each core skill from 1 to 5 and writes why; the total shows out of 10, and scored work moves to the task's top work, highest total first. A decision names one of the company's registered reviewers (not verified without sign-in).
 - **City of Espoo**: sees outcomes, not sign-ups, as graphs: from challenge taken to scored, invited, said yes, talked, follow-up agreed and hired. It sees which companies are hiring right now from public job ads, can make a challenge for one from its ad and invite the company to try it, draft a reminder to a company with work waiting, and export the list of talks.
 - **The loop**: task → work → blind proof → a named person scores it, writes feedback and chooses Meet or Not now → the person accepts → only then is the name shown → both sides confirm they met.
@@ -88,7 +88,7 @@ See also [AGENTS.md](AGENTS.md) and the [demo script](docs/demo-script.md).
 
 | Problem in the brief | What we built | See it | Code | Evidence |
 |---|---|---|---|---|
-| Needs described late and vaguely | A job-ad link, or one sentence typed or spoken, becomes a challenge with 3 to 5 core skills. Extra wishes are set aside. A person edits and approves it. The city can also make one for a company from its job ad. | `/company`, `/city` | `src/app/company/start-step.tsx`, `src/app/company/draft-step.tsx`, `src/lib/ai/scripted/compose.ts` | Task generator eval: drafts have the right shape; fantasy profiles are cut to 4 skills or fewer. |
+| Needs described late and vaguely | A job-ad link, or one typed sentence, becomes a challenge with 3 to 5 core skills. Extra wishes are set aside. A person edits and approves it. The city can also make one for a company from its job ad. | `/company`, `/city` | `src/app/company/start-step.tsx`, `src/app/company/draft-step.tsx`, `src/lib/ai/scripted/compose.ts` | Task generator eval: drafts have the right shape; fantasy profiles are cut to 4 skills or fewer. |
 | Organisers cannot see real capability | Proofs are the signal. Per core skill, the city sees how many tasks ask for it and how many proofs were handed in for those tasks, as counts. | `/city` | `src/lib/service/views/insights.ts`, `src/components/city/demand-panel.tsx` | Unit tests in `src/lib/service/views/city.test.ts`. |
 | Companies assume the city has no suitable candidates | The city makes a challenge from a company's job ad, and people do it before the company opens it. In the demo, Kide Silicon's challenge already has 20 pieces of work. The company's home data also counts proofs handed in for tasks that ask for the same skills. Counts only, never a list of people. | `/city`, `/employer` (as Kide Silicon) | `src/lib/service/views/employer.ts`, `src/components/city/make-challenge.tsx` | Unit tests in `src/lib/service/views/employer.test.ts`. |
 | Noise for companies at events | Each proof is work on the company's own task, 8 to 15 minutes in the demo. Each task takes a limited number of answers (5 to 30), so an employer can read them all. The queue holds blind proofs in arrival order; scored work moves to the task's top work, by the reviewers' own totals. | `/company/review`, `/employer` | `src/lib/service/views/queue.ts`, `src/lib/domain/places.ts` | No automated decisions eval: queues in arrival order, yes. Unit tests in `src/lib/domain/places.test.ts`. |
@@ -120,7 +120,7 @@ The blind layer and the "At a glance" line are fixed rules in code, not AI.
 
 ```mermaid
 flowchart LR
-  B[Browser: three views, walkthrough, voice sheet] --> P[src/proxy.ts: sandbox cookie, table code]
+  B[Browser: three views, walkthrough] --> P[src/proxy.ts: sandbox cookie, table code]
   P --> R[Next.js routes: src/app pages and src/app/api]
   R --> S[Service rules: src/lib/service]
   S --> BL[Blind layer: src/lib/blind]
@@ -131,7 +131,7 @@ flowchart LR
   AI --> GE[Gemini adapter]
   CL --> G
   GE --> G
-  R --> V[Voice: src/lib/voice, ElevenLabs or browser]
+  R --> V[Voice, planned: src/lib/voice, no UI calls it]
   S --> ST[Per-visitor sandbox store: src/lib/store]
 ```
 
@@ -144,7 +144,7 @@ src/lib/service    rules for tasks, submissions, decisions, meetings, sharing; t
 src/lib/blind      redaction, the "At a glance" line, the allow-list reviewer projection
 src/lib/guard      no-judgement guard, protected attributes, draft checks
 src/lib/ai         scripted designer, Claude and Gemini adapters, provider layer with a breaker
-src/lib/voice      Web Speech API, ElevenLabs proxy, typed fallback
+src/lib/voice      planned voice: Web Speech API and ElevenLabs proxy; no UI calls it yet
 src/lib/store      in-memory store, per-visitor sandboxes; src/lib/seed holds the demo event
 ```
 
@@ -204,7 +204,7 @@ A challenge looks like a job listing: the company's logo and name, the title, th
 - **Fix**: find what is wrong and say what it changes.
 - **Read**: a chart, a table or a report; say what matters.
 
-The person thinks aloud while working, with no camera; only the text is kept. A sketch can be sent as a photo. The demo event has 30 challenges from 18 companies, mostly business and tech: 10 Read, 9 Fix, 6 Make and 5 Choose.
+The person writes how they think while working, with no camera; only text is kept. Voice is planned. A sketch can be sent as a photo. The demo event has 30 challenges from 18 companies, mostly business and tech: 10 Read, 9 Fix, 6 Make and 5 Choose.
 
 | Company | Challenges |
 |---|---|
@@ -245,8 +245,7 @@ Eighteen take 10 minutes, eight take 12, three take 15 and one takes 8. Five sam
 - Each card sets the story stage, opens the page and spotlights one element of the real app. The cards move on by themselves; Pause, Back, Next, Esc and the arrow keys work.
 - The story follows Mikko Lahtinen from the role chips to Halla Supply's challenge, Laura Niemi's draft and score of 9 of 10, the city's view of companies hiring now and what came of the event, and ends with Mikko's score and the rules.
 - Each view's home has a "Show me" button that starts the story at that view's chapter (`?tour=seeker`, `?tour=employer`, `?tour=city`). The account menu has the same as "Show me this view".
-- Voice: a person can speak an answer or a need. A spoken answer is shown as text; WorkProof stores only the text. Typing always works.
-- Speech uses ElevenLabs through the server when a key is set, the browser's speech service otherwise.
+- Voice is planned, not live. Every flow works by typing, and the app shows a quiet "Voice coming soon" marker where voice will go. The server code for speech (`src/lib/voice`, `/api/voice/*`) stays for the plan; no screen calls it.
 - Table mode: `/table` shows a QR code and a 6-character code for a big screen. A phone that scans it joins the same sandbox.
 - On the phone, `/try` asks for a dream job, gives a 2-minute task, shows what a company would read before Send, and ends with "This is what a company sees."
 - The table runs a live loop that demonstrates consent and the name reveal: the host does not see the work on the public screen, and invites a proof from the big screen with a two-sentence message, the visitor reads it on the phone and accepts or declines, and only after an accept does the name appear on the big screen. The big screen shows labels, tasks and counts, never the visitor's free text.
@@ -286,8 +285,8 @@ What a city asks before it runs an event on this, answered with what is built to
 - Company and city actions have no sign-in. Any caller can act as any company or as the city in the demo, and a reviewer name is not verified. A pilot needs sign-in for companies and the city, and server-side ownership checks.
 - The blind layer is rules, not a guarantee. It misses a lowercase name with no cue word, a bare name with no introduction, another person's name, another spelling of the author's name, and part of an employer name that is not on the list. It over-hides a one-word capitalised sign-off and a capitalised value after "name:" outside a code block. In the harder second case set it hides 69 of 72 identity forms; the 3 misses are another spelling of the author's own name, an employer on no list, and a third person's name in running text.
 - Language and nationality words such as "Finnish" are hidden as possible identity, even when they describe the work.
-- Video upload is off in the demo. A few seed proofs carry sample screen clips; visitors answer in writing, by voice or with a photo.
-- Browser speech recognition may send audio to the browser vendor's speech service. The voice sheet says so when this engine is used.
+- Video upload is off in the demo. A few seed proofs carry sample screen clips; visitors answer in writing or with a photo.
+- Voice answers are not live. When they come, browser speech recognition may send audio to the browser vendor's speech service, and the app must say so.
 - Live AI runs only with a key. Without one, the scripted task designer answers.
 - Pictures are not analysed. The person confirms that the picture shows only the work, and a reviewer can report one; a reported picture is removed for every reader. Nothing checks what a picture shows automatically.
 - AI-written work is not solved. Our untested assumption: follow-up answers about a person's own choices, and a meeting that starts from the work, make AI-only answers easy to notice. This is not measured yet. The product cannot prove who typed an answer.

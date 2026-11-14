@@ -102,7 +102,7 @@ export const storySteps: readonly TourStep[] = [
   {
     id: "s-do",
     title: "He does the work.",
-    body: "He can type or talk.",
+    body: "He types it. Voice is coming soon.",
     route: workSession,
     stage: "before",
     target: "do-challenge",
@@ -110,8 +110,8 @@ export const storySteps: readonly TourStep[] = [
   },
   {
     id: "s-think",
-    title: "He says out loud how he thinks.",
-    body: "That is hard to fake, even with AI. The audio is not kept.",
+    title: "He writes down how he thinks.",
+    body: "That is hard to fake, even with AI.",
     route: workSession,
     stage: "before",
     target: "think-aloud",

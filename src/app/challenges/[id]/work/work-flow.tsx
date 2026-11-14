@@ -6,14 +6,13 @@ import { FormatIcon } from "@/components/seeker/task-format";
 import { usePersonaName } from "@/components/seeker/identity-line";
 import { WorkArea } from "@/components/seeker/work/work-area";
 import { DEMO_SESSION_EVENT } from "@/components/think-aloud/demo-session";
-import { RecorderPill } from "@/components/think-aloud/recorder-pill";
-import { ThinkAloudIntro } from "@/components/think-aloud/think-aloud-intro";
 import { TimeRing } from "@/components/think-aloud/time-ring";
-import { canCaptureScreen, useThinkAloud } from "@/components/think-aloud/use-think-aloud";
+import { WorkIntro } from "@/components/think-aloud/work-intro";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { Screen } from "@/components/ui/screen";
 import { Skeleton } from "@/components/ui/skeleton";
+import { VoiceSoon } from "@/components/voice";
 import { FORMAT_LABEL } from "@/components/words";
 import { api, ApiError, errorText } from "@/lib/client/api";
 import { clearDraft, getIdentity, getSavedIdentity, getTalentId, loadDraft, saveDraft, saveIdentity } from "@/lib/client/local";
@@ -21,7 +20,6 @@ import { backInFlow, useFlowHistory } from "@/lib/client/use-flow-history";
 import { useResource } from "@/lib/client/use-resource";
 import type { Challenge } from "@/lib/domain/types";
 import { composeAnswer, workReady, type WorkParts } from "@/lib/think-aloud/answer";
-import { isLive } from "@/lib/think-aloud/machine";
 import { transcriptToSend } from "@/lib/think-aloud/transcript";
 import { DemoRun } from "./demo-run";
 import { SessionView } from "./session-view";
@@ -33,8 +31,9 @@ const ORDER: Step[] = ["intro", "work", "questions", "you", "preview", "done"];
 const EMPTY: WorkParts = { main: "" };
 
 /**
- * The challenge as a work session: one screen about what is recorded, the workspace with the recorder
- * running, two follow-up questions, who you are, what the company will read, and Send.
+ * The challenge as a work session, all by typing: one screen about what the company reads, the workspace
+ * with a field for how the person thinks, two follow-up questions, who you are, what the company will read,
+ * and Send. Voice is planned, not live, so nothing here asks for a microphone.
  * `?demo=1` (or the tour's event) plays a scripted sample session on the same screen instead.
  */
 export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
@@ -75,7 +74,7 @@ export function WorkFlow({ params }: { params: Promise<{ id: string }> }) {
 function LiveRun({ challenge, company }: { challenge: Challenge; company: string }) {
   const router = useRouter();
   const persona = usePersonaName();
-  const think = useThinkAloud();
+  const [thoughts, setThoughts] = useState("");
   const [step, setStep] = useState<Step>("intro");
   const [parts, setParts] = useState<WorkParts>(() => ({ ...EMPTY, main: loadDraft(challenge.id)?.answer ?? "" }));
   const [mark, setMark] = useState<number | null>(null);
@@ -138,66 +137,18 @@ function LiveRun({ challenge, company }: { challenge: Challenge; company: string
   if (step === "intro") {
     return (
       <Screen back={{ href: "/seeker" }}>
-        <ThinkAloudIntro
-          heading={<ChallengeHeading challenge={challenge} company={company} />}
-          canScreen={canCaptureScreen()}
-          busy={think.state.status === "asking"}
-          error={think.state.status === "error" ? think.state.reason : undefined}
-          onStart={async (wantScreen) => {
-            await think.start(wantScreen);
-            begin();
-          }}
-          onType={() => {
-            think.typeInstead();
-            begin();
-          }}
-        />
+        <WorkIntro heading={<ChallengeHeading challenge={challenge} company={company} />} onStart={begin} />
       </Screen>
     );
   }
 
   if (step === "work") {
-    // A refused microphone sends the person back to the intro, which says why and offers typing.
-    if (think.state.status === "error" || think.state.status === "idle") {
-      return (
-        <Screen back={{ href: "/seeker" }}>
-          <ThinkAloudIntro
-            heading={<ChallengeHeading challenge={challenge} company={company} />}
-            canScreen={canCaptureScreen()}
-            busy={false}
-            error={think.state.status === "error" ? think.state.reason : undefined}
-            onStart={(wantScreen) => void think.start(wantScreen)}
-            onType={think.typeInstead}
-          />
-        </Screen>
-      );
-    }
     const ready = workReady(challenge.format, parts) || (Boolean(picture) && pictureChecked);
-    const typing = think.state.status !== "asking" && (!think.listening || ("capture" in think.state && think.state.capture === "typed"));
-    const status = think.state.status === "stopped" ? "stopped" : think.state.status === "paused" ? "paused" : "recording";
     return (
       <SessionView
         challenge={challenge}
         timer={<TimeRing minutes={challenge.minutes} startedAt={startedAt} />}
-        pill={
-          <RecorderPill
-            status={status}
-            seconds={think.seconds}
-            level={think.level}
-            heard={think.transcript}
-            typed={"capture" in think.state && think.state.capture === "typed"}
-            onPause={think.pause}
-            onResume={think.resume}
-            onStop={() => void think.stop()}
-          />
-        }
-        aside={
-          typing ? (
-            <TypedThoughts value={think.typed} onChange={think.setTyped} />
-          ) : (
-            <p className="text-body text-pretty text-label-2">{think.screenNote ? `${think.screenNote} ` : ""}The recording stays on this device. The company gets the words as text.</p>
-          )
-        }
+        aside={<TypedThoughts value={thoughts} onChange={setThoughts} />}
         action={
           <div className="flex flex-col gap-1.5">
             <Button
@@ -206,7 +157,6 @@ function LiveRun({ challenge, company }: { challenge: Challenge; company: string
               className="h-14! text-[18px]!"
               onClick={() =>
                 run(async () => {
-                  if (isLive(think.state)) await think.stop();
                   const known = sender.as === "me" && sender.name.trim() ? { name: sender.name.trim(), contact: sender.contact.trim() } : undefined;
                   const issued = await api.followups(challenge.id, answer, known);
                   setAnswers({ questions: issued.questions, given: issued.questions.map(() => ({ answer: "", spoken: false })) });
@@ -255,8 +205,8 @@ function LiveRun({ challenge, company }: { challenge: Challenge; company: string
         onNext={() =>
           run(async () => {
             const explain = answers.questions.map((question, i) => ({ question, answer: answers.given[i]?.answer.trim() ?? "" }));
-            const transcript = transcriptToSend(think.transcript);
-            // The think-aloud runs through the same blind layer as the answer, as its own text.
+            const transcript = transcriptToSend(thoughts);
+            // The thinking notes run through the same blind layer as the answer, as its own text.
             const [work, said] = await Promise.all([
               api.preview({ answer, explain, name: sendName, contact: sendContact }),
               transcript ? api.preview({ answer: transcript, explain: [], name: sendName, contact: sendContact }) : Promise.resolve(null),
@@ -281,7 +231,8 @@ function LiveRun({ challenge, company }: { challenge: Challenge; company: string
           run(async () => {
             const talentId = sender.as === "persona" ? (await api.demoSession()).persona.talentId : getTalentId();
             if (sender.as === "me") saveIdentity(sendName, sendContact);
-            const transcript = transcriptToSend(think.transcript);
+            const transcript = transcriptToSend(thoughts);
+            const seconds = startedAt ? Math.min(3600, Math.round((Date.now() - startedAt) / 1000)) : 0;
             const input = {
               challengeId: challenge.id,
               talent: { id: talentId, name: sendName, contact: sendContact },
@@ -292,10 +243,9 @@ function LiveRun({ challenge, company }: { challenge: Challenge; company: string
                 : {}),
               shareWithSimilar: sender.share,
               ...(parts.choice ? { choice: parts.choice } : {}),
-              ...(transcript ? { thinkAloud: { transcript, seconds: Math.round(think.seconds) } } : {}),
+              ...(transcript ? { thinkAloud: { transcript, seconds } } : {}),
             };
             const res = await api.submit(input);
-            think.keepFor(res.proof.proofId);
             clearDraft(challenge.id);
             setSent({ proofId: res.proof.proofId });
             go("done");
@@ -305,7 +255,7 @@ function LiveRun({ challenge, company }: { challenge: Challenge; company: string
     );
   }
 
-  if (step === "done" && sent) return <DoneStep company={company} proofId={sent.proofId} replay={think.replay} />;
+  if (step === "done" && sent) return <DoneStep company={company} proofId={sent.proofId} />;
   return null;
 }
 
@@ -348,20 +298,23 @@ function ChallengeHeading({ challenge, company }: { challenge: Challenge; compan
   );
 }
 
-/** Where the person types what they would say, when the browser cannot listen or they chose to type. */
+/** Where the person writes how they think while they work. Optional; voice for this is planned. */
 function TypedThoughts({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
-    <label className="block">
-      <span className="sr-only">Type what you would say</span>
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={2}
-        maxLength={6000}
-        placeholder="Type what you would say while you work"
-        data-tour="typed-thoughts"
-        className="w-full resize-none rounded-inner bg-fill px-4 py-3 text-[17px] leading-[24px] text-label caret-accent outline-none placeholder:text-label-2 focus:shadow-[inset_0_0_0_1.5px_var(--color-label-3)]"
-      />
-    </label>
+    <div className="flex flex-col gap-1.5">
+      <label className="block">
+        <span className="sr-only">How you think (optional)</span>
+        <textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          rows={2}
+          maxLength={6000}
+          placeholder="How you think, in a few lines (optional)"
+          data-tour="typed-thoughts"
+          className="w-full resize-none rounded-inner bg-fill px-4 py-3 text-[17px] leading-[24px] text-label caret-accent outline-none placeholder:text-label-2 focus:shadow-[inset_0_0_0_1.5px_var(--color-label-3)]"
+        />
+      </label>
+      <VoiceSoon className="self-end" />
+    </div>
   );
 }

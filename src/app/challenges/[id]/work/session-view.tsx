@@ -11,19 +11,19 @@ interface Props {
   challenge: Challenge;
   /** The calm time ring. */
   timer: ReactNode;
-  /** The recorder pill, the tour's `think-aloud`: in the top bar on a laptop, above the action on a phone. */
-  pill: ReactNode;
+  /** The sample session's pill, the tour's `think-aloud`: in the top bar on a laptop, above the action on a phone. */
+  pill?: ReactNode;
   /** A "Sample session" label while a scripted demo plays. */
   sample?: boolean;
-  /** Left of the main action: the typed think-aloud, or the one line about the recording. */
+  /** Left of the main action: the field for how the person thinks, or the sample's words. */
   aside: ReactNode;
   action: ReactNode;
   children: ReactNode;
 }
 
 /**
- * The work session as one full-height workspace: a slim top bar (leave, the challenge, the time, the
- * recorder), the work area, and a bottom bar with the one action. Nothing here scrolls away.
+ * The work session as one full-height workspace: a slim top bar (leave, the challenge, the time, and the
+ * sample's pill when one plays), the work area, and a bottom bar with the one action. Nothing here scrolls away.
  */
 export function SessionView({ challenge, timer, pill, sample, aside, action, children }: Props) {
   return (
@@ -42,9 +42,11 @@ export function SessionView({ challenge, timer, pill, sample, aside, action, chi
             {sample ? <span className="text-footnote shrink-0 rounded-full bg-fill px-3 py-1 font-medium text-label">Sample session</span> : null}
           </div>
           <div className="shrink-0">{timer}</div>
-          <div data-tour="think-aloud" className="hidden w-[min(440px,36vw)] shrink-0 min-[900px]:block">
-            {pill}
-          </div>
+          {pill ? (
+            <div data-tour="think-aloud" className="hidden w-[min(440px,36vw)] shrink-0 min-[900px]:block">
+              {pill}
+            </div>
+          ) : null}
         </div>
       </header>
 
@@ -52,9 +54,11 @@ export function SessionView({ challenge, timer, pill, sample, aside, action, chi
 
       <footer className="glass fixed inset-x-0 bottom-0 z-20 shadow-[inset_0_0.5px_0_var(--color-separator)] min-[900px]:in-shell:left-(--sidebar-width)">
         <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-3 px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] min-[900px]:flex-row min-[900px]:items-center min-[900px]:gap-6 min-[900px]:px-6 min-[900px]:py-4">
-          <div data-tour="think-aloud" className="min-[900px]:hidden">
-            {pill}
-          </div>
+          {pill ? (
+            <div data-tour="think-aloud" className="min-[900px]:hidden">
+              {pill}
+            </div>
+          ) : null}
           <div className="min-w-0 flex-1">{aside}</div>
           <div className="shrink-0 min-[900px]:w-[280px]">{action}</div>
         </div>

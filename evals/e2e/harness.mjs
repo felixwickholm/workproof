@@ -150,7 +150,7 @@ export async function readCityTotals(page) {
 /**
  * One visitor: a fresh browser context (so a private demo event of its own), one page and a suite.
  * `theme` stores a theme before the first paint; `speech: false` takes speech recognition away,
- * as on a browser that cannot listen, so the voice sheet falls back to typing.
+ * as on a browser that cannot listen. Voice is not live, so every flow is typed either way.
  */
 export async function openVisitor(browser, device, suiteName, { theme, speech = true } = {}) {
   const context = await browser.newContext(device);

@@ -9,7 +9,7 @@ export const PROMISE = "Companies see how well people do the real work before th
 /** The product in six steps. Each: a 4 to 8 word headline and one sentence of at most 16 words. */
 export const STEPS = [
   { id: "ad", headline: "A company shares its job ad.", sentence: "The AI drafts a short challenge from it, and a person approves it." },
-  { id: "work", headline: "A person does the challenge.", sentence: "They think aloud for 5 to 15 minutes, with screen and voice but no camera." },
+  { id: "work", headline: "A person does the challenge.", sentence: "They work for 5 to 15 minutes and write how they think. No camera." },
   { id: "score", headline: "The company scores the work, not the name.", sentence: "A person scores it against 3 to 5 skills and writes why." },
   { id: "invite", headline: "The top people get invited.", sentence: "The name shows only after the person says yes." },
   { id: "talk", headline: "They meet face to face at the event.", sentence: "After the first talk, they agree a follow-up, or not." },
@@ -62,7 +62,7 @@ export const FAIR_QUESTIONS = [
   },
   {
     question: "Can AI do the task?",
-    answer: "People think aloud while they work, so the reviewer reads how they think. WorkProof cannot prove who did the work.",
+    answer: "People write how they think while they work, so the reviewer reads it. WorkProof cannot prove who did the work.",
   },
   {
     question: "How does it fit our event tools?",

@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowUp, Mic } from "lucide-react";
+import { ArrowUp } from "lucide-react";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { cx } from "@/components/ui/cx";
 import { Spinner } from "@/components/ui/spinner";
+import { VoiceSoon } from "@/components/voice";
 import type { AssistMessage, AssistReply } from "@/lib/client/api";
 import { LIMITS } from "@/lib/http/limits";
 
@@ -135,10 +136,7 @@ export function AssistChat({ messages, choices, busy, onSend }: Props) {
         </div>
         <div className="mt-2 flex flex-col gap-1 px-1 min-[600px]:flex-row min-[600px]:items-center min-[600px]:justify-between min-[600px]:gap-3">
           <p className="text-footnote text-pretty text-label-2">The AI drafts. You edit and approve. Nothing goes live before that.</p>
-          <p className="text-footnote inline-flex shrink-0 items-center gap-1 text-label-3">
-            <Mic aria-hidden className="size-3.5" strokeWidth={1.75} />
-            Voice coming soon
-          </p>
+          <VoiceSoon className="shrink-0" />
         </div>
       </form>
     </div>

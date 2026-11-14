@@ -75,7 +75,7 @@ export const CODE_MAP: readonly CodePath[] = [
   { path: "src/lib/guard", what: "The no-judgement guard: rejects scores, ranks and protected attributes in AI output" },
   { path: "src/lib/ai", what: "Scripted task designer (default) and Claude and Gemini adapters, all behind the guard" },
   { path: "src/lib/matching/second-look.ts", what: "Second look: compares tasks by shared core skills, never people" },
-  { path: "src/lib/voice", what: "Voice input: Web Speech API, ElevenLabs or typed; WorkProof stores only the transcript" },
+  { path: "src/lib/voice", what: "Planned voice input (Web Speech API or ElevenLabs), not live in the demo: every flow is typed; WorkProof would store only the transcript" },
   { path: "src/lib/store", what: "In-memory store and a private demo copy (sandbox) per visitor" },
   { path: "src/lib/seed", what: "The synthetic event: 18 employers, 30 challenges, 76 pieces of work from 46 people, the scores and decisions" },
   { path: "evals", what: "Eval suites: task generator, blind review, no automated decisions, privacy, flow, story" },
@@ -96,7 +96,7 @@ export const CRITERIA: readonly CriterionRow[] = [
     criterion: "Impact & Relevance",
     weight: "45%",
     built:
-      "Companies register with a short real challenge in one of four formats (Choose, Make, Fix, Read); people answer with work and think aloud while working; a person reviews with known personal details removed and every recorded decision carries a written reason; the city sees each step from challenge taken to scored, invited, talked, follow-up agreed and hired, and the work still waiting on each challenge.",
+      "Companies register with a short real challenge in one of four formats (Choose, Make, Fix, Read); people answer with work and write how they think while working; a person reviews with known personal details removed and every recorded decision carries a written reason; the city sees each step from challenge taken to scored, invited, talked, follow-up agreed and hired, and the work still waiting on each challenge.",
     routes: ["/seeker", "/employer", "/city"],
     code: ["src/lib/service/views", "src/lib/service/decisions.ts", "src/lib/service/meetings.ts"],
     evidence: "Flow eval: every step from task to a meeting both sides confirmed passes (evals/flow.eval.ts).",
@@ -195,7 +195,7 @@ export const PAINS: readonly PainRow[] = [
   {
     pain: "Solutions should minimise personal data processing.",
     built:
-      "No account; the person's key stays in the browser; accepting shows the name to that company only, and the organiser sees slots and labels, never names; WorkProof stores only the text of a spoken answer.",
+      "No account; the person's key stays in the browser; accepting shows the name to that company only, and the organiser sees slots and labels, never names; answers are typed, and planned voice answers would be stored as text only.",
     code: ["src/lib/client/local.ts", "src/lib/service/meetings.ts", "src/lib/voice"],
     evidence: `${countOf(printed("4 Consent and privacy", "talent ids in public responses"))} public responses carry a talent id; identity hidden until accepted.`,
   },
@@ -235,7 +235,7 @@ export const LIMITS: readonly string[] = [
   `Reviewing takes employer time. A task takes ${MIN_PLACES} to ${MAX_PLACES} answers, but reading still takes a person's time.`,
   "Nothing forces an employer to answer. Every recorded decision needs a written reason, and unanswered work stays visible to the city.",
   "The blind layer is rules, not a guarantee. It misses a lowercase name with no cue word, a bare name with no introduction, another person's name, another spelling of the author's name, and part of an employer name that is not on the list. It over-hides a one-word capitalised sign-off and a capitalised value after \"name:\" outside a code block.",
-  "Video upload is off in the demo; seed proofs carry sample clips, visitors answer in writing, by voice or with a photo.",
+  "Video upload is off in the demo; seed proofs carry sample clips, visitors answer in writing or with a photo. Voice is planned, not live.",
   "No ESCO skill ids yet; skills come from the project's own vocabulary.",
   "No Tavata or Brella integration. The meeting list exports as a CSV file; nothing connects to an event tool directly.",
   "The demo store is in memory, one private copy per visitor, reset after 12 hours.",
@@ -252,7 +252,7 @@ export const AI_NEVER: readonly string[] = [
   "Scores, ranks, rates or recommends a person.",
   `Receives a person's name or contact field. ${MODEL_INPUT_LINE} Rules can miss some details in free text.`,
   "Decides Meet or Not now. WorkProof has no automated decision feature; a decision carries a registered reviewer's name and written feedback.",
-  "Analyses a voice or a face. A spoken answer becomes text in the browser or once on the server, and WorkProof stores only the text.",
+  "Analyses a voice or a face. Voice answers are planned, not live; when they come, WorkProof will store only the text.",
 ];
 
 /** Short quotes from the City of Espoo brief. */
@@ -279,7 +279,7 @@ export const AUDIENCES: readonly { who: string; mode: string; path: string; does
     who: "Professionals looking for work",
     mode: "Job seeker",
     path: "/",
-    does: "Pick a challenge from an Espoo company, do it in 8 to 15 minutes while thinking aloud, see what the company will read, answer two follow-up questions, then accept or decline an invitation. A declined company never sees the name.",
+    does: "Pick a challenge from an Espoo company, do it in 8 to 15 minutes and write how they think, see what the company will read, answer two follow-up questions, then accept or decline an invitation. A declined company never sees the name.",
   },
   {
     who: "Companies hiring at the event",
@@ -334,7 +334,7 @@ export const GUARDRAILS: readonly Guardrail[] = [
     checked: ["src/lib/domain/places.test.ts", "evals/flow.eval.ts"],
   },
   {
-    rule: "Audio is never stored. Only the transcript is sent with a submission.",
+    rule: "Audio is never stored. Only text is sent with a submission.",
     enforced: ["src/lib/http/schemas.ts", "src/lib/voice/server/elevenlabs.ts"],
     checked: ["src/lib/voice/server/elevenlabs.test.ts"],
   },
@@ -366,7 +366,7 @@ export const PRIVACY: readonly string[] = [
   "Reviewers and AI models read work only after the blind layer: known personal details are removed by rules, and some can remain. Responses to companies and the city carry no talent id.",
   "Accepting shows the name and contact to that company only. The organiser sees slots and labels, never names.",
   "Second look is off until the person turns it on, and can be withdrawn.",
-  "Voice is turned into text; WorkProof stores only the text. Pictures are re-encoded in the browser and the server refuses a JPEG that still carries EXIF data.",
+  "Answers are typed; voice is planned and would be stored as text only. Pictures are re-encoded in the browser and the server refuses a JPEG that still carries EXIF data.",
   "Each visitor's demo copy lives in memory and is dropped after 12 hours.",
 ];
 

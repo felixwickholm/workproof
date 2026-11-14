@@ -72,7 +72,7 @@ export function WorkArea(props: Props) {
         <ChooseCards options={challenge.options} picked={parts.choice} onPick={(choice) => onParts({ choice })} locked={locked} />
         {parts.choice ? (
           <div className="rise flex flex-col gap-4 min-[900px]:max-w-[720px]">
-            <p className="text-[24px] leading-[30px] font-semibold text-label">Now say why, out loud.</p>
+            <p className="text-[24px] leading-[30px] font-semibold text-label">Now say why, in a line or two.</p>
             <Writing label="A short note (optional)" value={parts.main} onChange={(main) => onParts({ main })} placeholder="One or two lines, if you like" rows={2} maxLength={LIMITS.answer} locked={locked} demo="editor" />
           </div>
         ) : null}
@@ -170,7 +170,7 @@ export function WorkArea(props: Props) {
             </>
           ) : null}
           <Writing
-            label={pictureKind ? "Say what your picture shows, or write the work" : "Your work"}
+            label={pictureKind ? "Write what your picture shows, or write the work" : "Your work"}
             value={parts.main}
             onChange={(main) => onParts({ main })}
             placeholder="Write here"

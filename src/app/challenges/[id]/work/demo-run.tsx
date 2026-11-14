@@ -19,7 +19,7 @@ import { SessionView } from "./session-view";
 
 /**
  * A sample session for the guided demo, from a seeded piece of work on this challenge: its think-aloud
- * and its answer, played on the same work screen. No microphone needed.
+ * and its answer, played on the same work screen. Nothing is recorded; the words are the seeded text.
  */
 export function DemoRun({ challenge, onExit }: { challenge: Challenge; onExit: () => void }) {
   const { data: script, loading } = useResource(async () => {
@@ -65,8 +65,8 @@ function DemoPlayer({ challenge, script, onExit }: { challenge: Challenge; scrip
         challenge={challenge}
         sample
         timer={<TimeRing minutes={challenge.minutes} startedAt={0} at={frame.clock} />}
-        pill={<RecorderPill status={frame.done ? "stopped" : "recording"} seconds={frame.clock} level={0.35 + 0.3 * Math.abs(Math.sin(frame.progress * 60))} heard={heard} sample />}
-        aside={<p className="text-body line-clamp-2 text-pretty text-label">{heard ? `“${heard}”` : "A sample session. The words stream as they were said."}</p>}
+        pill={<RecorderPill status={frame.done ? "stopped" : "recording"} seconds={frame.clock} level={0} heard={heard} typed sample />}
+        aside={<p className="text-body line-clamp-2 text-pretty text-label">{heard ? `“${heard}”` : "A sample session. The thinking shows as text, the way the company reads it."}</p>}
         action={
           <Button onClick={onExit} variant={frame.done ? "primary" : "secondary"} className="h-14! text-[18px]!">
             {frame.done ? "Now try it yourself" : "Skip the sample"}

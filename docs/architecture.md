@@ -64,9 +64,9 @@ flowchart LR
 
 ## Voice
 
-- `src/lib/voice/resolve.ts` picks an adapter: ElevenLabs through the server when a key is set, the browser's Web Speech API otherwise, typing as the floor.
-- `POST /api/voice/transcribe` passes the audio once to ElevenLabs and returns text (`src/lib/voice/server/elevenlabs.ts`). Nothing is written to the store.
-- The voice sheet tells the person where the voice goes (`privacyLine` in `src/lib/voice/copy.ts`).
+- Voice is planned, not live. Every flow is typed; the interface shows a quiet "Voice coming soon" marker (`src/components/voice/voice-soon.tsx`) and asks for no microphone.
+- The planned pieces stay in the code, unused by any screen: `src/lib/voice/resolve.ts` would pick ElevenLabs through the server when a key is set, the browser's Web Speech API otherwise.
+- `POST /api/voice/transcribe` passes the audio once to ElevenLabs and returns text (`src/lib/voice/server/elevenlabs.ts`). Nothing is written to the store. No screen calls it.
 
 ## The story stages
 

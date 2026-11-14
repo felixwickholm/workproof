@@ -1,9 +1,9 @@
 "use client";
 
 import { cx } from "@/components/ui/cx";
-import { VoiceButton } from "@/components/voice";
+import { VoiceSoon } from "@/components/voice";
 import { LIMITS } from "@/lib/http/limits";
-import { cleanSpokenJob, matchSuggestion, SUGGESTIONS } from "./try-copy";
+import { matchSuggestion, SUGGESTIONS } from "./try-copy";
 
 interface Props {
   job: string;
@@ -17,7 +17,7 @@ interface Props {
 /** Said when a scanned code leads nowhere, so a visitor is never left wondering where the proof went. */
 const INACTIVE_TABLE = "This table code is not active. You can still try the task: your proof stays on your phone's own demo.";
 
-/** The first question: one big field with the voice button inside it, and eight jobs to tap. */
+/** The first question: one big field to type in, and eight jobs to tap. */
 export function JobStep({ job, onJob, onStart, tableInactive }: Props) {
   const chosen = matchSuggestion(job);
   return (
@@ -30,7 +30,7 @@ export function JobStep({ job, onJob, onStart, tableInactive }: Props) {
       <h1 className="text-greeting mt-2 text-balance text-label min-[900px]:text-[44px] min-[900px]:leading-[48px]">What&apos;s your dream job?</h1>
       <p className="text-body mt-2 text-pretty text-label-2">Get a 2-minute task from that job. Then see your work the way a company would.</p>
 
-      <div className="mt-6 flex h-16 items-center rounded-inner bg-fill pr-2 shadow-[inset_0_0_0_1px_transparent] transition-shadow duration-150 focus-within:shadow-[inset_0_0_0_1.5px_var(--color-label-3)]">
+      <div className="mt-6 flex h-16 items-center rounded-inner bg-fill pr-5 shadow-[inset_0_0_0_1px_transparent] transition-shadow duration-150 focus-within:shadow-[inset_0_0_0_1.5px_var(--color-label-3)]">
         <label className="min-w-0 flex-1">
           <span className="sr-only">Dream job</span>
           <input
@@ -51,16 +51,8 @@ export function JobStep({ job, onJob, onStart, tableInactive }: Props) {
             className="h-16 w-full bg-transparent pl-5 text-[22px] leading-7 font-medium text-label caret-accent outline-none placeholder:font-normal placeholder:text-label-3"
           />
         </label>
-        <VoiceButton
-          label="Say it"
-          title="Say your dream job"
-          prompt="What's your dream job?"
-          maxSeconds={15}
-          maxLength={LIMITS.dreamJob}
-          onUse={(text) => onJob(cleanSpokenJob(text))}
-          className="shrink-0 gap-2 pr-3"
-        />
       </div>
+      <VoiceSoon className="mt-2" />
 
       <ul aria-label="Or tap a job" className="mt-4 flex flex-wrap gap-2">
         {SUGGESTIONS.map((s) => (

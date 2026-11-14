@@ -1,4 +1,4 @@
-import { ArrowDown, CameraOff, Check, EyeOff, Link2 } from "lucide-react";
+import { ArrowDown, CameraOff, Check, EyeOff, Link2, PenLine } from "lucide-react";
 import type { ReactNode } from "react";
 import type { HowItWorksData } from "./kit/data";
 import { BlindText, FeedbackQuote } from "@/components/proof";
@@ -42,14 +42,14 @@ function AdFragment({ story }: { story: HowItWorksData["story"] }) {
   );
 }
 
-/** Step 2: the recording bar and the person's own thinking, as the reviewer later reads it. */
+/** Step 2: how the work is done and the person's own thinking, as the reviewer later reads it. */
 function WorkFragment({ story }: { story: HowItWorksData["story"] }) {
   return (
     <Card>
       <div className="flex flex-wrap items-center gap-2">
         <span className={PILL}>
-          <span aria-hidden className="size-2.5 rounded-full bg-negative" />
-          Recording screen and voice
+          <PenLine aria-hidden className="size-4" strokeWidth={1.75} />
+          Typed, voice coming soon
         </span>
         <span className={PILL}>
           <CameraOff aria-hidden className="size-4" strokeWidth={1.75} />
