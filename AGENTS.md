@@ -27,9 +27,9 @@ Current counts and their meaning: [docs/evals.md](docs/evals.md). The eval summa
 ## Folder map
 
 ```
-src/app                pages per mode, the JSON API in src/app/api, /for-judges, /llms.txt, /llms-full.txt, robots, sitemap
+src/app                pages per view (Job seeker, Company, City of Espoo; `/` is the Job seeker home, no landing page), the JSON API in src/app/api, /for-judges, /llms.txt, /llms-full.txt, robots, sitemap
 src/proxy.ts           sets the httpOnly sandbox cookie; ?table=<code> redirects to /api/demo/join
-src/components         UI: shell (mode switcher), landing, tour, proof, seeker, company, city, table, voice, controls, ui
+src/components         UI: shell (view switcher), tour (the 17-card walkthrough), proof, seeker, company, city, table, voice, controls, ui
 src/lib/domain         types.ts (the domain model), decision-rules.ts, scoring.ts (the 1 to 5 scale and the total), feedback-check.ts, places.ts, guardrails.ts (fixed sentences), kinds.ts
 src/lib/service        rules: challenges, submissions, decisions, meetings, sharing, demo; views/ builds each mode's JSON
 src/lib/blind          redaction rules, "At a glance" line, allow-list projection to BlindProof

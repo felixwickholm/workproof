@@ -15,9 +15,9 @@ export const NAME = "WorkProof";
 export const SUMMARY = `WorkProof is for City of Espoo talent events. Companies see real work and score it; the AI never scores. A professional does a short real task from an Espoo company. A named person at the company scores the work from 1 to 5 on each of the task's skills, writes a reason, and chooses Meet or Not now. As a safeguard, the name stays hidden until the professional accepts. Tested: ${FIGURES.plantedReached} planted identity details reached a reviewer.`;
 
 /** The demo event at its default story stage, as the seed builds it (src/lib/seed). */
-export const DEMO_EVENT = { employers: 10, tasks: 12, proofs: 62 } as const;
+export const DEMO_EVENT = { employers: 18, tasks: 30, proofs: 76 } as const;
 
-export const ONE_LINE = "Show your work. Get the interview. A person at the company scores your real work; the AI never scores.";
+export const ONE_LINE = "Do a real challenge. A person at the company scores your work; the AI never scores.";
 
 export const KEY_FACTS: readonly string[] = [
   'Built during Junction 2026 (13 to 15 November 2026) for the City of Espoo challenge "Rethinking Recruitment".',
@@ -105,7 +105,7 @@ export const CRITERIA: readonly CriterionRow[] = [
     criterion: "Innovation & User Experience",
     weight: "35%",
     built:
-      "A short real task to score; the blind proof with a slider between what was written and what the company reads; the name shown only after the person accepts; Second look shares a proof with a second employer with the same skills, with consent; a 1-minute guided tour and a Show me demo in each view; a 2-minute task on a phone.",
+      "A short real task to score; the blind proof with a slider between what was written and what the company reads; the name shown only after the person accepts; Second look shares a proof with a second employer with the same skills, with consent; a 17-card walkthrough that starts by itself on the first visit and a Show me button in each view; a 2-minute task on a phone.",
     routes: ["/", "/try", "/my-work"],
     code: ["src/lib/blind", "src/lib/matching/second-look.ts", "src/components/proof/blind-compare.tsx"],
     evidence: "Story eval: every story stage rebuilds the visitor's own demo event (evals/story.eval.ts); end-to-end run on a 390x844 screen (evals/e2e).",
@@ -211,10 +211,10 @@ export const BLIND_MISSES: readonly string[] = [
 /** What the City of Espoo staff said at the booth on 13 November, and how the product answers each risk. */
 export const BOOTH = {
   intro:
-    'On 13 November we asked City of Espoo staff if a work task could replace the CV. They had thought of something similar "on a smaller scale" and named three risks. Our answers:',
+    'On 13 November we asked City of Espoo staff if companies could judge people on a short work task. They had thought of something similar "on a smaller scale" and named three risks. Our answers:',
   answers: [
     { risk: "A company hires only a few.", answer: "With consent, one proof can reach a second employer with the same core skills (Second look), after 48 hours without an answer or after a Not now." },
-    { risk: "Friction must stay low.", answer: "No login and no account. The demo challenges take 10 or 15 minutes. The stated length is capped at 30." },
+    { risk: "Friction must stay low.", answer: "No login and no account. The demo challenges take 8 to 15 minutes. The stated length is capped at 30." },
     { risk: "AI can do the task.", answer: "AI is allowed. Two follow-up questions ask about the person's own choices, and the meeting starts from the work." },
   ],
 } as const;
@@ -279,7 +279,7 @@ export const AUDIENCES: readonly { who: string; mode: string; path: string; does
     who: "Professionals looking for work",
     mode: "Job seeker",
     path: "/",
-    does: "Pick a challenge from an Espoo company, do it in 10 to 15 minutes while thinking aloud, see what the company will read, answer two follow-up questions, then accept or decline an invitation. A declined company never sees the name.",
+    does: "Pick a challenge from an Espoo company, do it in 8 to 15 minutes while thinking aloud, see what the company will read, answer two follow-up questions, then accept or decline an invitation. A declined company never sees the name.",
   },
   {
     who: "Companies hiring at the event",
@@ -304,7 +304,7 @@ interface Guardrail {
 /** The rules the code never breaks, where each is enforced and which test checks it. Every path exists. */
 export const GUARDRAILS: readonly Guardrail[] = [
   {
-    rule: "Software never scores, ranks or rates a person. Only a named reviewer gives points, 1 to 5 per core skill, with a written reason. AI output with a score, rank or verdict is rejected.",
+    rule: "Software never scores, ranks or rates a person. Only a named reviewer gives points, 1 to 5 per core skill, with a written reason. AI output that scores, ranks or judges a person never gets past the guard.",
     enforced: ["src/lib/domain/scoring.ts", "src/lib/service/decisions.ts", "src/lib/guard/no-judgement.ts", "src/lib/ai/guarded.ts"],
     checked: ["evals/no-automated-decisions.eval.ts", "src/lib/domain/scoring.test.ts", "src/lib/guard/no-judgement.test.ts"],
   },
@@ -371,4 +371,4 @@ export const PRIVACY: readonly string[] = [
 ];
 
 export const SYNTHETIC =
-  'Every person, company, task, proof and decision in the demo is invented, including Mikko Lahtinen and the ten employers of "Espoo Talent Day". Email addresses use example.org and phone numbers are placeholders. Any likeness to a real person or company is accidental. The seed is in src/lib/seed.';
+  'Every person, company, task, proof and decision in the demo is invented, including Mikko Lahtinen and the 18 employers of "Espoo Talent Day". Email addresses use example.org and phone numbers are placeholders. Any likeness to a real person or company is accidental. The seed is in src/lib/seed.';

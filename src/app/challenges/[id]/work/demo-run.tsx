@@ -30,7 +30,17 @@ export function DemoRun({ challenge, onExit }: { challenge: Challenge; onExit: (
   if (!script) {
     return (
       <Screen back={{ onBack: onExit }}>
-        {loading ? <Skeleton className="mt-6 h-8 w-64" /> : <p className="text-body mt-6 text-label">No sample session for this challenge yet. Try it yourself.</p>}
+        {loading ? (
+          <Skeleton className="mt-6 h-8 w-64" />
+        ) : (
+          // Not every challenge has seeded work with a think-aloud; then the person goes straight to their own session.
+          <div className="mt-6">
+            <p className="text-body text-label">No sample session for this challenge yet.</p>
+            <Button onClick={onExit} className="mt-4">
+              Try it yourself
+            </Button>
+          </div>
+        )}
       </Screen>
     );
   }

@@ -75,6 +75,6 @@ flowchart LR
 | Stage | State |
 |---|---|
 | `before` | Mikko, an AI developer, has two earlier proofs: a feature-list cut that Tuulos Robotics scored and answered "not now" with a reason, and a chart reading for Saarnivo Grid that waits for an answer. His work from two earlier events shows in My work. The Halla Supply challenge "What should we automate first?" is open. |
-| `sent` | Her Halla Supply proof (Proof K7) waits in Halla's queue, with her name, a past client, where she lives and her school hidden. |
+| `sent` | His Halla Supply work (label K7) waits in Halla's queue, with his name, a past client, where he lives and his school hidden. |
 | `invited` | Laura Niemi at Halla Supply scored each skill (5, 5, 4, 4), so the total is 9 of 10, wrote why and invited him; Mikko has an open invitation. The default for free exploring. |
 | `met` | Mikko said yes; Halla Supply sees his name. Both sides confirmed the talk, and Halla agreed a follow-up. |

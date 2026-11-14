@@ -18,10 +18,10 @@ interface CheckRun {
 export const VERIFIED_ON = "2026-11-14";
 
 /** `npm test`: unit tests next to the code under src/. */
-export const UNIT_TESTS: CheckRun = { command: "npm test", files: 129, tests: 1936, passed: 1936 };
+export const UNIT_TESTS: CheckRun = { command: "npm test", files: 139, tests: 2024, passed: 2024 };
 
 /** `npm run eval`: the eval suites under evals/ (the live-AI suite is skipped without a key). */
-export const EVAL_TESTS: CheckRun = { command: "npm run eval", files: 7, tests: 63, passed: 63 };
+export const EVAL_TESTS: CheckRun = { command: "npm run eval", files: 7, tests: 64, passed: 64 };
 
 /** The Result column of the table `npm run eval` prints, keyed by "eval › check". */
 export const PRINTED: Readonly<Record<string, string>> = {
@@ -41,20 +41,21 @@ export const PRINTED: Readonly<Record<string, string>> = {
   "2 Blind review › visitor inputs from the table": "40 of 40 forms fully hidden; 16 of 16 technical texts unchanged",
   "2 Blind review › technical text left intact": "5 of 5 answers unchanged",
   "2 Blind review › reviewer payload: [hidden] only, no count": "one token, no count, no categories",
-  "2 Blind review › unique proof labels": "261 distinct labels for 261 proofs",
+  "2 Blind review › unique proof labels": "275 distinct labels for 275 proofs",
   "3 No automated decisions › (a) guard: judging rejected": "70 of 70 judging phrases rejected",
   "3 No automated decisions › (a) guard: neutral passed": "33 of 33 neutral phrases passed",
   "3 No automated decisions › (b) designer output passes the guard": "575 of 575 text fields from 32 designer outputs (20 drafts, 12 follow-up sets)",
   "3 No automated decisions › (b2) 'At a glance' is structure only": "12 of 12 lines describe shape only",
-  "3 No automated decisions › (c) queues in arrival order": "every queue of 10 companies",
-  "3 No automated decisions › (d) decisions need reviewer and feedback": "refused: HTTP 400 for a decision without a name, HTTP 400 without feedback; 34 stored decisions all named",
+  "3 No automated decisions › (c) queues in arrival order": "every queue of 18 companies",
+  "3 No automated decisions › (d) decisions need reviewer and feedback": "refused: HTTP 400 for a decision without a name, HTTP 400 without feedback; 46 stored decisions all named",
   "3 No automated decisions › (e) automated decisions": "0 automated decisions; 0 decision audit lines by a non-human",
   "3 No automated decisions › (f) decisions name a registered person": "refused: HTTP 400 for \"AI bot\", HTTP 403 for an unregistered name, HTTP 400 for a bot as reviewer; accepted after the explicit step: HTTP 200",
   "3 No automated decisions › (g) scores only from a registered person": "refused: HTTP 400 without scores, HTTP 400 with a skill missing, HTTP 400 from a software name; accepted: a named reviewer's 6 of 10",
-  "3 No automated decisions › (h) related parts carry no score": "0 numbers and 0 judging phrases in 24 marked sentences from 37 proofs",
+  "3 No automated decisions › (h) related parts carry no score": "0 numbers and 0 judging phrases in 34 marked sentences from 49 proofs",
   "3 No automated decisions › (i) portfolio shows own scores, never a rank": "7 cards newest first, 6 reviewer scores shown to the owner, 0 rank keys, skill bars as task counts; a link shows no name, contact or key, the score and decision only when shown, and stops when ended",
   "4 Consent and privacy › accept and confirm need the right party": "refused: HTTP 400 with no key, HTTP 403 with a wrong key, HTTP 403 for a guessed talent confirm, HTTP 403 for another company's confirm",
-  "4 Consent and privacy › talent ids in public responses": "0 of 37 talent ids found in company and city responses",
+  "4 Consent and privacy › talent ids in public responses": "0 of 47 talent ids found in company and city responses",
+  "4 Consent and privacy › seeker pictures in public responses": "0 of 36 pictures of people who have not said yes found",
   "4 Consent and privacy › private key in a header only": "header read, path form gone, key absent from the audit log",
   "4 Consent and privacy › hidden count shown to the author only": "0 reviewer responses with a count or categories; author sees the count: true",
   "4 Consent and privacy › identity locked after first event proof": "kept",
@@ -75,7 +76,7 @@ export const PRINTED: Readonly<Record<string, string>> = {
   "4 Consent and privacy › identity strings sent to a model": "0 of 48 checks found a planted string in 6 requests (draft, practice task, follow-ups; Claude and Gemini)",
   "4 Consent and privacy › city: slots and labels, never names": "0 names, contacts or keys in city responses, task leaderboards, share matches and the meeting export over 4 story stages, \"met\" included",
   "4 Consent and privacy › top proofs and shared work stay blind": "0 identity strings in the top list and the receiving queue; shared: HTTP 200; scores sent along: false",
-  "5 Flow (API) › seed has 10 companies": "ok",
+  "5 Flow (API) › seed has 18 companies": "ok",
   "5 Flow (API) › taster is a 2-minute task": "ok",
   "5 Flow (API) › AI drafts a Problem Card": "ok",
   "5 Flow (API) › a human approves and it is published": "ok",
@@ -107,7 +108,7 @@ export const PRINTED: Readonly<Record<string, string>> = {
   "6 Demo story (API) › unknown stage refused": "HTTP 400 for an unknown stage",
   "6 Demo story (API) › before and sent": "2 proofs before, 3 after sending; story proof queued: true",
   "6 Demo story (API) › invited: open invitation from the story company": "Halla Supply wants to meet you.",
-  "6 Demo story (API) › met: accepted, name shown, talk and follow-up counted": "proofs met: 4 before, 5 after; follow-ups: 3 before, 4 after",
+  "6 Demo story (API) › met: accepted, name shown, talk and follow-up counted": "proofs met: 6 before, 7 after; follow-ups: 5 before, 6 after",
   "6 Demo story (API) › persona hidden from employer and city": "hidden",
   "7 Table screen › no free text on the public screen": "0 of 10 names, emails and numbers found; extra fields: none",
   "7 Table screen › name only after the person's yes": "second invite HTTP 409; stranger read HTTP 403, accept HTTP 403; name on screen before yes: false, after: Mikko",

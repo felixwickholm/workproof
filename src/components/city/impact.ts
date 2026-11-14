@@ -50,10 +50,10 @@ export function funnelSteps(counts: ImpactCounts): FunnelStep[] {
   }));
 }
 
-/** "Espoo Talent Day. 61 challenges done. 9 talks are agreed." Counts work, so a person with two counts twice. */
+/** "Espoo Talent Day. 61 pieces of work done. 9 talks are agreed." Counts work, so a person with two counts twice. */
 export function greeting(eventName: string, counts: ImpactCounts): string {
-  if (counts.took === 0) return `${eventName}. No challenge is done yet.`;
-  const done = `${plural(counts.took, "challenge")} done.`;
+  if (counts.took === 0) return `${eventName}. No work is done yet.`;
+  const done = `${counts.took} ${counts.took === 1 ? "piece" : "pieces"} of work done.`;
   if (counts.agreed === 0) return `${eventName}. ${done} No talk is agreed yet.`;
   return `${eventName}. ${done} ${plural(counts.agreed, "talk")} ${counts.agreed === 1 ? "is" : "are"} agreed.`;
 }

@@ -49,10 +49,10 @@ describe("funnelSteps", () => {
 
 describe("greeting and followUpSentence", () => {
   it("names the event and today's facts from the data", () => {
-    expect(greeting("Espoo Talent Day", counts({ took: 61, agreed: 9 }))).toBe("Espoo Talent Day. 61 challenges done. 9 talks are agreed.");
-    expect(greeting("Espoo Talent Day", counts({ took: 1, agreed: 1 }))).toBe("Espoo Talent Day. 1 challenge done. 1 talk is agreed.");
-    expect(greeting("Espoo Talent Day", counts({ took: 4 }))).toBe("Espoo Talent Day. 4 challenges done. No talk is agreed yet.");
-    expect(greeting("Espoo Talent Day", counts())).toBe("Espoo Talent Day. No challenge is done yet.");
+    expect(greeting("Espoo Talent Day", counts({ took: 61, agreed: 9 }))).toBe("Espoo Talent Day. 61 pieces of work done. 9 talks are agreed.");
+    expect(greeting("Espoo Talent Day", counts({ took: 1, agreed: 1 }))).toBe("Espoo Talent Day. 1 piece of work done. 1 talk is agreed.");
+    expect(greeting("Espoo Talent Day", counts({ took: 4 }))).toBe("Espoo Talent Day. 4 pieces of work done. No talk is agreed yet.");
+    expect(greeting("Espoo Talent Day", counts())).toBe("Espoo Talent Day. No work is done yet.");
   });
   it("states the follow-up talks, or that none are agreed yet", () => {
     expect(followUpSentence(9)).toBe("9 follow-up talks came out of this event. Companies marked each one.");

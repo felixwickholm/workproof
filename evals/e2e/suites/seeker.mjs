@@ -32,6 +32,29 @@ async function challenges(page) {
 /** A Make challenge a person answers in words alone (no picture, no clip). */
 const wordsOnly = (c) => c.kind === "event" && c.format === "make" && !["photo", "design", "video"].includes(c.proofKind);
 
+/** Reads a company API as this browser's demo event. */
+async function companyJson(page, path) {
+  const response = await page.request.get(`${BASE_URL}/api/companies/${path}`);
+  expect(response.ok(), `GET /api/companies/${path} answered ${response.status()}`);
+  return response.json();
+}
+
+/** Whether a challenge has a seeded work with a think-aloud, so its sample session can play. */
+async function hasSample(page, c) {
+  const top = await companyJson(page, `${encodeURIComponent(c.companyIds[0])}/tasks/${encodeURIComponent(c.id)}/top`);
+  return [...top.scored.map((s) => s.proof), ...top.waiting].some((p) => p.thinkAloud?.transcript);
+}
+
+/**
+ * The employer suite needs other work: one more to say "Not now" to, and a scored one on the same
+ * challenge to rank against. Some challenges have no seeded work yet, so pick one that has both.
+ */
+async function hasOtherWork(page, c) {
+  const company = encodeURIComponent(c.companyIds[0]);
+  const [queue, top] = await Promise.all([companyJson(page, `${company}/queue`), companyJson(page, `${company}/tasks/${encodeURIComponent(c.id)}/top`)]);
+  return queue.proofs.length > 0 && top.scored.length > 0;
+}
+
 /**
  * Suite 3: the home leads with the role tiles and a job-board list (logo, title, skills, Save); a saved
  * challenge stays on this device. Then a visitor starts as themself, does a Make challenge with the think-aloud typed (no
@@ -100,8 +123,10 @@ export async function runSeeker(journey) {
   });
 
   await suite.step("search, and click the row: back link, logo and title, Save and Start, About the challenge, the company", async () => {
-    task = (await challenges(page)).find(wordsOnly);
-    expect(task, "no Make challenge answered in words is open");
+    const words = (await challenges(page)).filter(wordsOnly);
+    const ready = await Promise.all(words.map((c) => hasOtherWork(page, c)));
+    task = words.find((_, i) => ready[i]);
+    expect(task, "no Make challenge answered in words is open with other work to score");
     const filters = visible(page.getByRole("group", { name: "Filter challenges" }));
     await type(filters.getByRole("searchbox", { name: "Search challenges" }), task.title.split(" ").slice(0, 3).join(" "));
     await visible(page.getByRole("link", { name: new RegExp(`^${task.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\.`) })).click();
@@ -252,8 +277,17 @@ export async function runSeeker(journey) {
   });
 
   await suite.step("the sample session plays on the real screen, without a microphone", async () => {
-    const choose = (await challenges(page)).find((c) => c.format === "choose" && c.options);
-    expect(choose, "no Choose challenge is open");
+    // The sample plays a seeded work's think-aloud; a challenge without one offers the person's own session instead.
+    const options = (await challenges(page)).filter((c) => c.format === "choose" && c.options);
+    const samples = await Promise.all(options.map((c) => hasSample(page, c)));
+    const choose = options.find((_, i) => samples[i]);
+    expect(choose, "no Choose challenge has a seeded work with a think-aloud");
+    const bare = options.find((_, i) => !samples[i]);
+    if (bare) {
+      await page.goto(`${BASE_URL}/challenges/${bare.id}/work?demo=1`);
+      await visible(page.getByRole("button", { name: "Try it yourself" })).click();
+      await waitForText(page, "We capture the thinking, not the face.");
+    }
     await page.goto(`${BASE_URL}/challenges/${choose.id}/work?demo=1`);
     await waitForText(page, "Sample session");
     await visible(page.getByRole("button", { name: "Now try it yourself" })).waitFor({ timeout: DEMO_WAIT_MS });

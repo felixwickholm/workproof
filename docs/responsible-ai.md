@@ -43,11 +43,11 @@ The audit log records: AI drafts and follow-up questions, details hidden per pro
 
 ## Data minimisation
 
-- No account, no CV and no profile. The person confirms that a picture shows only the work, not themselves; pictures are not analysed. A reviewer can report a picture as possibly identifying, and it is then removed for every reader.
+- No account and no profile. The person confirms that a picture shows only the work, not themselves; pictures are not analysed. A reviewer can report a picture as possibly identifying, and it is then removed for every reader.
 - Facts about the job (a work language, a language level, a licence) are shown to talent in fixed forms under "Good to know". A wish for a native speaker is set aside with "Ask for a language level, not a native speaker."
 - Before sending, the person sees what the company will read (`POST /api/preview`, nothing stored) and can go back to remove what the rules missed.
 - An event proof needs a name and one contact, so the company can reach the person after they accept. A practice task on `/try` asks for a first name only, and it can be skipped.
-- The person's key stays in their browser (`src/lib/client/local.ts`) and is never in an address: it travels in a header on reads and table answers, and in the request body on submissions, meeting answers and sharing changes (`src/lib/http/talent-key.ts`). No company or city response carries it: 0 of 31 in eval 4.
+- The person's key stays in their browser (`src/lib/client/local.ts`) and is never in an address: it travels in a header on reads and table answers, and in the request body on submissions, meeting answers and sharing changes (`src/lib/http/talent-key.ts`). No company or city response carries it: 0 of 47 in eval 4.
 - The table's big screen shows labels, tasks and counts, never a visitor's free text, and a name only after its person accepted on the phone. A visitor can decline; the name then never shows.
 - Photos are re-encoded in the browser to a JPEG without metadata (`src/components/seeker/picture.ts`); the server refuses a JPEG that still carries an EXIF or XMP segment (`src/lib/http/jpeg.ts`).
 - Voice: WorkProof stores only the transcript. With a server key, audio goes once to the speech service; WorkProof does not save it, and the speech service's own retention is outside this code (`src/lib/voice/server/elevenlabs.ts`). Browser speech recognition may send audio to the browser vendor's service; the voice sheet says so.

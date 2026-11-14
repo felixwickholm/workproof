@@ -14,8 +14,8 @@ Four kinds of checks. All but the end-to-end run need no server, no keys and no 
 <!-- evidence:start -->
 Measured on 2026-11-14 with `npm run evidence`, which runs both commands and copies their totals here:
 
-- `npm test`: 1936 of 1936 unit tests pass, in 129 files.
-- `npm run eval`: 63 of 63 eval tests pass, in 7 files. The live-AI file is skipped without a key.
+- `npm test`: 2024 of 2024 unit tests pass, in 139 files.
+- `npm run eval`: 64 of 64 eval tests pass, in 7 files. The live-AI file is skipped without a key.
 
 The full table `npm run eval` printed in that run:
 
@@ -37,20 +37,21 @@ The full table `npm run eval` printed in that run:
 | 2 Blind review | visitor inputs from the table | 40 of 40 forms fully hidden; 16 of 16 technical texts unchanged |
 | 2 Blind review | technical text left intact | 5 of 5 answers unchanged |
 | 2 Blind review | reviewer payload: [hidden] only, no count | one token, no count, no categories |
-| 2 Blind review | unique proof labels | 261 distinct labels for 261 proofs |
+| 2 Blind review | unique proof labels | 275 distinct labels for 275 proofs |
 | 3 No automated decisions | (a) guard: judging rejected | 70 of 70 judging phrases rejected |
 | 3 No automated decisions | (a) guard: neutral passed | 33 of 33 neutral phrases passed |
 | 3 No automated decisions | (b) designer output passes the guard | 575 of 575 text fields from 32 designer outputs (20 drafts, 12 follow-up sets) |
 | 3 No automated decisions | (b2) 'At a glance' is structure only | 12 of 12 lines describe shape only |
-| 3 No automated decisions | (c) queues in arrival order | every queue of 10 companies |
-| 3 No automated decisions | (d) decisions need reviewer and feedback | refused: HTTP 400 for a decision without a name, HTTP 400 without feedback; 34 stored decisions all named |
+| 3 No automated decisions | (c) queues in arrival order | every queue of 18 companies |
+| 3 No automated decisions | (d) decisions need reviewer and feedback | refused: HTTP 400 for a decision without a name, HTTP 400 without feedback; 46 stored decisions all named |
 | 3 No automated decisions | (e) automated decisions | 0 automated decisions; 0 decision audit lines by a non-human |
 | 3 No automated decisions | (f) decisions name a registered person | refused: HTTP 400 for "AI bot", HTTP 403 for an unregistered name, HTTP 400 for a bot as reviewer; accepted after the explicit step: HTTP 200 |
 | 3 No automated decisions | (g) scores only from a registered person | refused: HTTP 400 without scores, HTTP 400 with a skill missing, HTTP 400 from a software name; accepted: a named reviewer's 6 of 10 |
-| 3 No automated decisions | (h) related parts carry no score | 0 numbers and 0 judging phrases in 24 marked sentences from 37 proofs |
+| 3 No automated decisions | (h) related parts carry no score | 0 numbers and 0 judging phrases in 34 marked sentences from 49 proofs |
 | 3 No automated decisions | (i) portfolio shows own scores, never a rank | 7 cards newest first, 6 reviewer scores shown to the owner, 0 rank keys, skill bars as task counts; a link shows no name, contact or key, the score and decision only when shown, and stops when ended |
 | 4 Consent and privacy | accept and confirm need the right party | refused: HTTP 400 with no key, HTTP 403 with a wrong key, HTTP 403 for a guessed talent confirm, HTTP 403 for another company's confirm |
-| 4 Consent and privacy | talent ids in public responses | 0 of 37 talent ids found in company and city responses |
+| 4 Consent and privacy | talent ids in public responses | 0 of 47 talent ids found in company and city responses |
+| 4 Consent and privacy | seeker pictures in public responses | 0 of 36 pictures of people who have not said yes found |
 | 4 Consent and privacy | private key in a header only | header read, path form gone, key absent from the audit log |
 | 4 Consent and privacy | hidden count shown to the author only | 0 reviewer responses with a count or categories; author sees the count: true |
 | 4 Consent and privacy | identity locked after first event proof | kept |
@@ -71,7 +72,7 @@ The full table `npm run eval` printed in that run:
 | 4 Consent and privacy | identity strings sent to a model | 0 of 48 checks found a planted string in 6 requests (draft, practice task, follow-ups; Claude and Gemini) |
 | 4 Consent and privacy | city: slots and labels, never names | 0 names, contacts or keys in city responses, task leaderboards, share matches and the meeting export over 4 story stages, "met" included |
 | 4 Consent and privacy | top proofs and shared work stay blind | 0 identity strings in the top list and the receiving queue; shared: HTTP 200; scores sent along: false |
-| 5 Flow (API) | seed has 10 companies | ok |
+| 5 Flow (API) | seed has 18 companies | ok |
 | 5 Flow (API) | taster is a 2-minute task | ok |
 | 5 Flow (API) | AI drafts a Problem Card | ok |
 | 5 Flow (API) | a human approves and it is published | ok |
@@ -103,7 +104,7 @@ The full table `npm run eval` printed in that run:
 | 6 Demo story (API) | unknown stage refused | HTTP 400 for an unknown stage |
 | 6 Demo story (API) | before and sent | 2 proofs before, 3 after sending; story proof queued: true |
 | 6 Demo story (API) | invited: open invitation from the story company | Halla Supply wants to meet you. |
-| 6 Demo story (API) | met: accepted, name shown, talk and follow-up counted | proofs met: 4 before, 5 after; follow-ups: 3 before, 4 after |
+| 6 Demo story (API) | met: accepted, name shown, talk and follow-up counted | proofs met: 6 before, 7 after; follow-ups: 5 before, 6 after |
 | 6 Demo story (API) | persona hidden from employer and city | hidden |
 | 7 Table screen | no free text on the public screen | 0 of 10 names, emails and numbers found; extra fields: none |
 | 7 Table screen | name only after the person's yes | second invite HTTP 409; stranger read HTTP 403, accept HTTP 403; name on screen before yes: false, after: Mikko |
@@ -188,7 +189,7 @@ The three known limits in the second case set, also in the README: a third perso
 
 ## Eval 5: flow (`evals/flow.eval.ts`)
 
-Two tests, 21 steps in the measured table. The first walks the whole product through the API in 17 steps: seed, taster, AI draft, human approval, two follow-ups, blind proof, Second look off by default, company A's queue, company A says not now with feedback, company B sees it through Second look, company C without shared skills cannot, company B chooses Meet, identity hidden while invited, the passport shows both answers, the person accepts and identity appears, both sides confirm, city totals change with 0 automated decisions. The second checks places in 4 steps: places outside 5 to 30 are refused, the number is published with the task, five places take work, and the sixth answer is refused with 409.
+Three tests, 28 steps in the measured table. The first walks the whole product through the API in 17 steps: seed, taster, AI draft, human approval, two follow-ups, blind proof, Second look off by default, company A's queue, company A says not now with feedback, company B sees it through Second look, company C without shared skills cannot, company B chooses Meet, identity hidden while invited, the passport shows both answers, the person accepts and identity appears, both sides confirm, city totals change with 0 automated decisions. The second checks places in 4 steps: places outside 5 to 30 are refused, the number is published with the task, five places take work, and the sixth answer is refused with 409. The third follows the scored flow in 7 steps: a named reviewer scores and holds the work, the scored work is on the task's top list without a name, the hold becomes an invitation, the person accepts and only then the company sees the name, both sides confirm the talk, a follow-up and a hire are recorded by the company, and the city counts every step with no name.
 
 ## Eval 6: demo story (`evals/story.eval.ts`)
 
@@ -197,9 +198,9 @@ Two tests, 21 steps in the measured table. The first walks the whole product thr
 | Session returns the persona and stage |
 | Unknown stage refused |
 | `before` then `sent`: 2 then 3 proofs; the story proof is queued |
-| `invited`: open invitation from Kaari Home Care |
-| `met`: accepted, name shown, Second look invitation |
-| Employer and city views never carry the persona's key or name before she accepts |
+| `invited`: open invitation from Halla Supply, the story company |
+| `met`: accepted, name shown, the talk and the follow-up counted by the city |
+| Company and city views never carry the persona's key or name before he accepts |
 
 ## Live AI (`evals/live-ai.eval.ts`)
 
@@ -207,14 +208,14 @@ Runs only from `npm run check:ai`, which loads `.env` and sets `WORKPROOF_LIVE_A
 
 ## Unit tests
 
-The adapters are tested against mocked HTTP (`src/lib/ai/provider/adapters.test.ts`): malformed JSON, the wrong shape, a draft that scores a person, a protected attribute, 401 without retry, 429 with one retry, a timeout, and an injection inside the answer tags. Other groups cover the blind layer (`src/lib/blind/*.test.ts`), the guard (`src/lib/guard/*.test.ts`), the views (`src/lib/service/views/*.test.ts`), the seed and Mikko's story (`src/lib/seed/index.test.ts`), sandboxes (`src/lib/store/sandbox.test.ts`), voice (`src/lib/voice/**/*.test.ts`), the tour machine and placement (`src/components/tour/*.test.ts`) the evidence page (`src/app/for-judges/facts.test.ts`), its structured data (`src/app/for-judges/json-ld.test.ts`), the two text maps (`src/app/llms.txt/build.test.ts`, `src/app/llms-full.txt/build.test.ts`) and robots and the sitemap (`src/app/seo.test.ts`).
+The adapters are tested against mocked HTTP (`src/lib/ai/provider/adapters.test.ts`): malformed JSON, the wrong shape, a draft that scores a person, a protected attribute, 401 without retry, 429 with one retry, a timeout, and an injection inside the answer tags. Other groups cover the blind layer (`src/lib/blind/*.test.ts`), the guard (`src/lib/guard/*.test.ts`), the views (`src/lib/service/views/*.test.ts`), the seed and Mikko's story (`src/lib/seed/index.test.ts`), sandboxes (`src/lib/store/sandbox.test.ts`), voice (`src/lib/voice/**/*.test.ts`), the walkthrough machine, steps and placement (`src/components/tour/*.test.ts`), the evidence page (`src/app/for-judges/facts.test.ts`), its structured data (`src/app/for-judges/json-ld.test.ts`), the two text maps (`src/app/llms.txt/build.test.ts`, `src/app/llms-full.txt/build.test.ts`) and robots and the sitemap (`src/app/seo.test.ts`).
 
 ## End to end (`evals/e2e`)
 
 `npm run eval:e2e` fetches Playwright 1.64.1 with npx and drives the running app in Chromium at 390x844 with touch, real clicks and typing:
 
-- `evals/e2e/main-flow.mjs` runs the suites in `evals/e2e/suites`: the landing page, the 2-minute task and the table loop (invite, accept, decline), a task with follow-ups and the passport, blind review (no count of hidden details on screen; a decision signed "AI bot" refused; a new reviewer added in one step), Not now, Second look and Meet, acceptance, a confirmed meeting and the city totals, a company posting a task (wishes set aside, job facts under "Good to know", places), a guardrail crawl of every route in both themes, and the key screens at 1440x900.
-- `evals/e2e/story.mjs`: the guided tour, step by step.
+- `evals/e2e/main-flow.mjs` runs the suites in `evals/e2e/suites`: the entry (`/` opens the Job seeker home, the three view names, no retired landing or CV copy), the 2-minute task and the table loop (invite, accept, decline), a task with follow-ups and the passport, blind review (no count of hidden details on screen; a decision signed "AI bot" refused; a new reviewer added in one step), Not now, Second look and Meet, acceptance, a confirmed meeting and the city totals, a company posting a task (wishes set aside, job facts under "Good to know", places), a guardrail crawl of every route in both themes, and the key screens at 1440x900.
+- `evals/e2e/story.mjs`: the 17-card walkthrough, step by step.
 
 Every step fails on any browser console error or uncaught page error (`watchErrors` in `evals/e2e/harness.mjs`). After a failed step the rest of its suite is skipped, since each step builds on the one before; `E2E_KEEP_GOING=1` runs them anyway. `BASE_URL` points it at another server; `E2E_SHOTS=<folder>` keeps a screenshot of each failure. On a new machine run `npx playwright@1.64.1 install chromium` once.
 
