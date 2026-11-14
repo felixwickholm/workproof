@@ -72,7 +72,7 @@ export async function decide(input: DecideInput): Promise<{ decision: Decision; 
       actor: "human",
       by: reviewer,
       action: input.decision === "meet" ? "Chose to meet" : "Passed with feedback",
-      detail: `${company.name} on ${proof.label}${viaSecondLook ? " through Second Look" : ""}. Feedback sent to the person.`,
+      detail: `${company.name} on ${proof.label}${viaSecondLook ? " through Second look" : ""}. Feedback sent to the person.`,
     });
 
     let meeting: Meeting | undefined;
@@ -105,7 +105,7 @@ export async function decide(input: DecideInput): Promise<{ decision: Decision; 
       if (opened.length > 0) {
         appendAudit(data, {
           actor: "system",
-          by: "Second Look",
+          by: "Second look",
           action: "Shared a blind proof",
           detail: `${proof.label} is now visible to ${opened.length} other employer${opened.length === 1 ? "" : "s"} with the same core skills.`,
         });

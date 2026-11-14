@@ -42,7 +42,7 @@ describe("seed", () => {
     expect(data.proofs).toHaveLength(8);
   });
 
-  it("leaves the demo proof undecided in the first company's queue, not yet in Second Look", () => {
+  it("leaves the demo proof undecided in the first company's queue, not yet in Second look", () => {
     const tuulos = buildQueue(data, "co-tuulos", now);
     const saarnivo = buildQueue(data, "co-saarnivo", now);
     expect(tuulos.proofs.map((p) => p.label)).toContain("Proof K7");

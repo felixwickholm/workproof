@@ -4,6 +4,7 @@ import { describeWork } from "@/lib/ai/scripted/summarise";
 import { toBlindProof } from "@/lib/blind/project";
 import { addReports, redact } from "@/lib/blind/redact";
 import type { AuditEvent, Challenge, Decision, Meeting } from "@/lib/domain/types";
+import { FOLLOW_UP_ACTION } from "@/lib/service/ai-work";
 import { meetingSlot } from "@/lib/service/decisions";
 import type { StoreData } from "@/lib/store/types";
 import { COMPANIES, SEED_CHALLENGES } from "./companies";
@@ -100,6 +101,12 @@ export function buildSeed(now: Date): StoreData {
       submittedAt,
     });
     data.proofs.push(proof);
+    log(seed.minutesAgo * MINUTE + 2 * MINUTE, {
+      actor: "ai",
+      by: "Follow-up writer",
+      action: FOLLOW_UP_ACTION,
+      detail: `${questions.length} question${questions.length === 1 ? "" : "s"} on "${challenge.title}".`,
+    });
     const hidden = Object.values(report).reduce((sum, n) => sum + n, 0);
     log(seed.minutesAgo * MINUTE, {
       actor: "system",
@@ -168,7 +175,7 @@ export function buildSeed(now: Date): StoreData {
     } else if (decision.kind === "pass" && seed.shareWithSimilar) {
       log(decision.minutesAgo * MINUTE - 1000, {
         actor: "system",
-        by: "Second Look",
+        by: "Second look",
         action: "Shared a blind proof",
         detail: `${proof.label} is now visible to other employers with the same core skills.`,
       });

@@ -32,7 +32,7 @@ const B = "co-saarnivo";
 const C = "co-kivira";
 const TALENT = { id: "flow-talent", name: "Noor Saleh", contact: "noor.saleh@example.org" };
 
-describe("Flow: from need to a confirmed Second Look meeting", () => {
+describe("Flow: from need to a confirmed Second look meeting", () => {
   it("runs the whole story through the route handlers", async () => {
     const steps: string[] = [];
     const step = (name: string, ok: boolean) => {
@@ -89,7 +89,7 @@ describe("Flow: from need to a confirmed Second Look meeting", () => {
 
     const queueB = (await call<ReviewQueue>(queueRoute, { params: { id: B } })).json;
     const look = queueB.secondLook.find((p) => p.proofId === proof.proofId);
-    step("company B sees it through Second Look", Boolean(look && look.sharedSkills.length >= 2));
+    step("company B sees it through Second look", Boolean(look && look.sharedSkills.length >= 2));
 
     const queueC = (await call<ReviewQueue>(queueRoute, { params: { id: C } })).json;
     const blocked = await call(decisionsRoute, {

@@ -39,7 +39,7 @@ export function sharedSkills(a: Challenge, b: Challenge): string[] {
   return a.coreSkills.filter((s) => ids.has(s.id)).map((s) => s.label);
 }
 
-/** Companies that may now see this proof through Second Look, with the skills behind each match. */
+/** Companies that may now see this proof through Second look, with the skills behind each match. */
 export function secondLookMatches(input: SecondLookInput): SecondLookMatch[] {
   const { submission, challenge, decisions, challenges } = input;
   if (!submission.shareWithSimilar || challenge.kind !== "event") return [];

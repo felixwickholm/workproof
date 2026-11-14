@@ -82,7 +82,7 @@ export async function submitWork(input: SubmitInput): Promise<BlindProof> {
     if (input.shareWithSimilar && challenge.kind === "event") {
       appendAudit(data, {
         actor: "system",
-        by: "Second Look",
+        by: "Second look",
         action: "Recorded consent",
         detail: `${proof.label} may be shown to other employers with the same core skills if the first employer passes.`,
       });

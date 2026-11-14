@@ -42,8 +42,26 @@ function toDraft(role: RoleTemplate, task: TaskTemplate, skills: SkillId[], extr
   };
 }
 
+/**
+ * For a need that names no role, the library role whose skills cover most of the skills the
+ * sentence describes. Ties go to the role that has the first described skill, then to library order.
+ */
+function roleForSkills(wished: SkillId[]): RoleTemplate | undefined {
+  let chosen: RoleTemplate | undefined;
+  let best = 0;
+  for (const role of ROLES) {
+    const shared = wished.filter((id) => role.skills.includes(id)).length;
+    const score = shared * 2 + (wished[0] && role.skills.includes(wished[0]) ? 1 : 0);
+    if (shared >= 2 && score > best) {
+      chosen = role;
+      best = score;
+    }
+  }
+  return chosen;
+}
+
 export function draftFromNeed(need: string): ChallengeDraft {
-  const role = matchRole(need) ?? genericRole(need);
+  const role = matchRole(need) ?? roleForSkills(parseNeed(need, []).wishedSkills) ?? genericRole(need);
   const parsed = parseNeed(need, role.keywords);
   const { kept, dropped } = chooseSkills(role, parsed.wishedSkills, parsed.wishes.length);
 

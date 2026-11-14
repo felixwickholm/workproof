@@ -47,3 +47,23 @@ export const NEEDS: NeedFixture[] = [
   },
   { tech: false, need: "We need a beekeeper for the rooftop hives on our office building" },
 ];
+
+/** Needs written as one plain sentence. The skills must come from the sentence, not land in "set aside". */
+export const SENTENCE_NEEDS: { need: string; skills: string[] }[] = [
+  {
+    need: "We need someone to check how our grasp model is tested before it ships, and who can explain the results to the warehouse team",
+    skills: ["ml-evaluation", "testing", "technical-explanation"],
+  },
+  {
+    need: "Looking for a person who can keep our nightly data loads from failing silently and tell us when the numbers look wrong",
+    skills: ["pipeline-reliability", "error-handling", "data-quality"],
+  },
+  {
+    need: "I need a developer who can make our checkout page work with a screen reader and test it on phones",
+    skills: ["accessibility", "testing", "mobile-constraints"],
+  },
+  {
+    need: "Someone who can figure out why our API is slow under load and fix the timeouts",
+    skills: ["api-design", "performance", "error-handling"],
+  },
+];

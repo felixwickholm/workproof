@@ -13,7 +13,7 @@ export interface EventInfo {
   name: string;
   /** ISO date of the event day. */
   date: string;
-  /** Hours an owning company has to respond before a consented proof opens to Second Look. */
+  /** Hours an owning company has to respond before a consented proof opens to Second look. */
   responseWindowHours: number;
 }
 

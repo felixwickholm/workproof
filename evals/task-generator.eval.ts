@@ -5,7 +5,7 @@ import { protectedNames } from "@/lib/ai/scripted/parse-need";
 import type { ChallengeDraft } from "@/lib/domain/types";
 import { collectText, findJudgement } from "@/lib/guard/no-judgement";
 import { omit } from "@/lib/util/object";
-import { NEEDS } from "./fixtures/needs";
+import { NEEDS, SENTENCE_NEEDS } from "./fixtures/needs";
 import { call, record } from "./helpers";
 
 const EVAL = "1 Task generator";
@@ -89,5 +89,20 @@ describe("Eval 1: task generator", () => {
     const hits = drafts.flatMap(({ draft }) => findJudgement(visibleText(draft)));
     record(EVAL, "drafts pass the guard", `${hits.length} hits`, hits.length === 0);
     expect(hits).toEqual([]);
+  });
+
+  it("needs written as a sentence keep their skills", async () => {
+    const misses: string[] = [];
+    for (const { need, skills } of SENTENCE_NEEDS) {
+      const { status, json } = await call<ChallengeDraft>(draftRoute, { body: { need } });
+      const kept = json.coreSkills?.map((s) => s.id) ?? [];
+      const missing = skills.filter((id) => !kept.includes(id));
+      const notCore = (json.setAside ?? []).filter((line) => line.endsWith("not core for this task"));
+      if (status !== 200 || missing.length || notCore.length) {
+        misses.push(`${need.slice(0, 40)}: missing ${missing.join(", ") || "none"}; set aside ${notCore.length}`);
+      }
+    }
+    record(EVAL, "sentence-form needs keep their skills", `${SENTENCE_NEEDS.length - misses.length}/${SENTENCE_NEEDS.length}`, misses.length === 0);
+    expect(misses).toEqual([]);
   });
 });

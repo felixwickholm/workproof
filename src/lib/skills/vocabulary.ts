@@ -2,7 +2,7 @@ import type { Skill } from "@/lib/domain/types";
 
 /**
  * Shared skill vocabulary. Every challenge uses these ids, so two challenges can be
- * compared by the skills they ask for (Second Look). Skills describe work, never people.
+ * compared by the skills they ask for (Second look). Skills describe work, never people.
  */
 export interface SkillDefinition {
   label: string;
@@ -235,7 +235,7 @@ export const SKILLS = {
     label: "Customer discovery",
     why: "A technical sale works when the solution fits the customer's real problem.",
     lookFor: "Asks about the customer's situation before proposing, and is honest about what the product cannot do.",
-    synonyms: ["sales", "pre-sales", "presales", "customer", "solutions", "consulting", "myynti", "asiakas"],
+    synonyms: ["sales", "pre-sales", "presales", "customer discovery", "customer calls", "customer meetings", "solutions", "consulting", "myynti", "asiakas"],
   },
   "writing-clarity": {
     label: "Clear writing",

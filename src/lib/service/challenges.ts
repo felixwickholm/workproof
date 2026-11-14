@@ -2,6 +2,7 @@ import { getTaskDesigner } from "@/lib/ai";
 import type { Challenge, ChallengeDraft } from "@/lib/domain/types";
 import { getStore } from "@/lib/store";
 import { newId } from "@/lib/util/hash";
+import { FOLLOW_UP_ACTION } from "./ai-work";
 import { appendAudit, clock, findOrThrow, ServiceError } from "./support";
 
 export const TASK_DRAFTER = "Task drafter";
@@ -86,7 +87,7 @@ export async function followUpsFor(challengeId: string, answer: string): Promise
     appendAudit(data, {
       actor: "ai",
       by: "Follow-up writer",
-      action: "Asked about the person's own answer",
+      action: FOLLOW_UP_ACTION,
       detail: `${questions.length} question${questions.length === 1 ? "" : "s"} on "${challenge.title}".`,
     });
   });

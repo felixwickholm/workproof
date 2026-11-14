@@ -1,5 +1,6 @@
 import { SKILLS, SKILL_IDS, type SkillId } from "@/lib/skills/vocabulary";
 import { containsTerm, normalise } from "./match-role";
+import { skillsInSentence } from "./sentence-skills";
 
 /**
  * Wishes that describe a person instead of the work. They never become skills
@@ -54,9 +55,11 @@ export function protectedNames(text: string): string[] {
 
 export function skillsIn(text: string): SkillId[] {
   const lower = normalise(text);
-  return SKILL_IDS.filter((id) =>
+  const named = SKILL_IDS.filter((id) =>
     [SKILLS[id].label.toLowerCase(), ...SKILLS[id].synonyms].some((term) => containsTerm(lower, term)),
   );
+  const described = skillsInSentence(lower).filter((id) => !named.includes(id));
+  return [...named, ...described];
 }
 
 function capitalise(text: string): string {
@@ -76,6 +79,12 @@ function reasonFor(wish: string): string {
 
 /** Words that only introduce the role ("we need", "looking for") and carry no wish. */
 const INTRO = /^(?:we|i|our team|the team)?\s*(?:need|needs|are looking for|am looking for|looking for|want|tarvitsemme|etsimme|haemme)\b/i;
+
+/** "who can", "able to" and similar openings left after splitting a sentence. */
+const ABILITY = /^(?:who\s+)?(?:can|could|will|would|is able to|are able to|able to|knows how to|to)\s+/i;
+
+/** A wish that only names a person ("someone", "a developer") and asks for nothing. */
+const ONLY_A_PERSON = /^(?:an?\s+|the\s+)?(?:someone|somebody|person|people|one|developer|engineer|expert|specialist|colleague|teammate|hire)$/i;
 
 /** Closes the gaps left where a wish was removed from the sentence. */
 function tidy(text: string): string {
@@ -98,8 +107,8 @@ export function parseNeed(need: string, roleKeywords: string[]): ParsedNeed {
   let cleanedNeed = need;
 
   for (const raw of splitWishes(need)) {
-    const wish = raw.replace(INTRO, "").replace(/^(?:an?|someone|somebody)\s+/i, "").trim();
-    if (wish.length < 2) continue;
+    const wish = raw.replace(INTRO, "").replace(/^(?:an?|someone|somebody)\s+/i, "").replace(ABILITY, "").trim();
+    if (wish.length < 2 || ONLY_A_PERSON.test(wish)) continue;
     wishes.push(wish);
 
     const blocked = protectedNames(wish);
