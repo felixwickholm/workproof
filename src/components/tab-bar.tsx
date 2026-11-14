@@ -1,57 +1,29 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Layers, WalletCards } from "lucide-react";
+import type { NavItem } from "./shell/modes";
 import { cx } from "./ui/cx";
 
-const tabs = [
-  { href: "/challenges", label: "Tasks", Icon: Layers },
-  { href: "/passport", label: "My proofs", Icon: WalletCards },
-];
-
-export function TabBar({ inline }: { inline?: boolean }) {
-  const pathname = usePathname();
-  if (inline) {
-    return (
-      <nav aria-label="Talent" className="flex gap-1">
-        {tabs.map(({ href, label, Icon }) => {
-          const active = pathname.startsWith(href);
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-current={active ? "page" : undefined}
-              className={cx(
-                "text-subhead flex h-11 items-center gap-2 rounded-full px-4 font-semibold transition-colors duration-150",
-                active ? "bg-surface text-label" : "text-label-2 hover:text-label",
-              )}
-            >
-              <Icon aria-hidden className="size-[18px]" strokeWidth={active ? 2 : 1.6} />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
-    );
-  }
+/** The phone tab bar: the current mode's pages, at most four. The app frame shows it on a mode's top-level pages. */
+export function TabBar({ items, activeHref, label }: { items: readonly NavItem[]; activeHref?: string; label: string }) {
   return (
-    <nav aria-label="Talent" className="fixed inset-x-0 bottom-0 z-20">
-      <div className="glass highlight pb-safe mx-auto grid w-full max-w-[440px] grid-cols-2">
-        {tabs.map(({ href, label, Icon }) => {
-          const active = pathname.startsWith(href);
+    <nav aria-label={label} className="shell-tabs fixed inset-x-0 bottom-0 z-20 min-[900px]:hidden">
+      <div
+        className="glass pb-safe mx-auto grid w-full shadow-[inset_0_0.5px_0_var(--color-separator)]"
+        style={{ gridTemplateColumns: `repeat(${Math.min(items.length, 4)}, minmax(0, 1fr))` }}
+      >
+        {items.slice(0, 4).map(({ href, label: name, Icon }) => {
+          const active = href === activeHref;
           return (
             <Link
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
               className={cx(
-                "flex h-[56px] flex-col items-center justify-center gap-0.5 transition-colors duration-150",
+                "press flex h-14 flex-col items-center justify-center gap-1 transition-colors duration-150",
                 active ? "text-label" : "text-label-3",
               )}
             >
-              <Icon aria-hidden className="size-6" strokeWidth={active ? 2 : 1.6} />
-              <span className="text-[10px] leading-3 font-medium">{label}</span>
+              <Icon aria-hidden className="size-6" strokeWidth={1.75} />
+              <span className="text-[11px] leading-[13px] font-medium">{name}</span>
             </Link>
           );
         })}

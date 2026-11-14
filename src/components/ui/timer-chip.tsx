@@ -32,7 +32,7 @@ export function TimerChip({ minutes, startedAt }: { minutes: number; startedAt: 
       role="timer"
       aria-label={over ? "Time is up. Take the time you need." : `${format(left)} left`}
       className={cx(
-        "inline-flex h-8 items-center rounded-full bg-fill px-3 font-mono text-footnote font-medium tnum",
+        "inline-flex h-8 items-center rounded-full bg-fill px-3 text-footnote font-medium tnum",
         over ? "text-label-2" : "text-label",
       )}
     >

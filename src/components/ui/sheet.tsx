@@ -25,8 +25,8 @@ function subscribeWide(listener: () => void) {
   return () => query.removeEventListener("change", listener);
 }
 
-/** True from 900px wide, where a sheet becomes a centred dialog. */
-function useWide() {
+/** True from 900px wide, where the app shows its sidebar and a sheet becomes a centred dialog. */
+export function useWide() {
   return useSyncExternalStore(subscribeWide, () => window.matchMedia(WIDE).matches, () => false);
 }
 
@@ -80,16 +80,17 @@ export function Sheet({ open, onClose, title, children, size = "auto", hideTitle
     ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 }, transition: { duration: 0.15 } }
     : wide
       ? {
-          initial: { opacity: 0, scale: 0.97 },
-          animate: { opacity: 1, scale: 1 },
-          exit: { opacity: 0, scale: 0.97 },
+          initial: { opacity: 0, transform: "scale(0.97)" },
+          animate: { opacity: 1, transform: "scale(1)" },
+          exit: { opacity: 0, transform: "scale(0.98)", transition: { duration: 0.14 } },
           transition: { duration: 0.2, ease: [0.23, 1, 0.32, 1] as const },
         }
       : {
-          initial: { y: "100%" },
-          animate: { y: 0 },
-          exit: { y: "100%" },
-          transition: { duration: 0.32, ease: [0.32, 0.72, 0, 1] as const },
+          initial: { transform: "translateY(100%)" },
+          animate: { transform: "translateY(0%)" },
+          exit: { transform: "translateY(100%)", transition: { duration: 0.24, ease: [0.32, 0.72, 0, 1] as const } },
+          // A critically damped spring: the sheet lands like a real one, with no bounce.
+          transition: { type: "spring" as const, stiffness: 420, damping: 42, mass: 0.9 },
         };
 
   return createPortal(
@@ -100,7 +101,7 @@ export function Sheet({ open, onClose, title, children, size = "auto", hideTitle
             type="button"
             aria-label="Close"
             tabIndex={-1}
-            className="absolute inset-0 bg-black/70"
+            className="absolute inset-0 bg-scrim"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -114,15 +115,15 @@ export function Sheet({ open, onClose, title, children, size = "auto", hideTitle
             aria-label={title}
             tabIndex={-1}
             className={cx(
-              "highlight relative flex w-full flex-col bg-[#1c1c1e] px-5 outline-none",
+              "shadow-float relative flex w-full flex-col bg-raised px-5 text-label outline-none",
               "rounded-t-sheet pt-2 pb-[calc(16px+env(safe-area-inset-bottom,0px))] max-w-[440px]",
               "min-[900px]:max-w-[480px] min-[900px]:rounded-card min-[900px]:pt-6 min-[900px]:pb-6",
               full && "h-[calc(100dvh-12px-env(safe-area-inset-top,0px))] min-[900px]:h-auto min-[900px]:min-h-[560px]",
             )}
             {...motionProps}
           >
-            <div aria-hidden className="mx-auto mb-4 h-[5px] w-9 shrink-0 rounded-full bg-label-3 min-[900px]:hidden" />
-            {hideTitle ? null : <h2 className="text-title-3 mb-4 font-semibold tracking-[-0.02em]">{title}</h2>}
+            <div aria-hidden className="mx-auto mb-4 h-[5px] w-9 shrink-0 rounded-full bg-fill min-[900px]:hidden" />
+            {hideTitle ? null : <h2 className="text-title-3 mb-4 font-semibold">{title}</h2>}
             <div className={cx(full && "flex min-h-0 flex-1 flex-col")}>{children}</div>
           </motion.div>
         </div>

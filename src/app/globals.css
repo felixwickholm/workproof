@@ -1,70 +1,154 @@
 @import "tailwindcss";
 
-/* Design tokens. Components use only these. */
+/*
+ * Design tokens. Components use only these. The values here are the light theme (the default);
+ * `html[data-theme="dark"]` below swaps them. Every text colour reaches 4.5:1 on ground, surface
+ * and raised in its theme.
+ */
 @theme {
   --color-*: initial;
-  --color-black: #000000;
-  --color-white: #ffffff;
-  --color-ground: #000000;
-  --color-surface: #1c1c1e;
-  --color-raised: #2c2c2e;
-  --color-label: #ffffff;
-  --color-label-2: rgba(235, 235, 245, 0.6);
-  /* 0.55, not the iOS 0.3: tertiary text still meets WCAG AA (4.5:1) on every surface. */
-  --color-label-3: rgba(235, 235, 245, 0.55);
-  --color-separator: rgba(84, 84, 88, 0.65);
-  --color-fill: rgba(118, 118, 128, 0.24);
-  --color-accent: #30d158;
+  --color-ground: #ffffff;
+  --color-surface: #f6f6f4;
+  --color-raised: #ffffff;
+  --color-label: #1f201d;
+  --color-label-2: #636361;
+  --color-label-3: #686865;
+  --color-separator: #eaeaea;
+  /* Borders of inputs and outlined controls: one step stronger than a separator. */
+  --color-control: #d9d9d6;
+  --color-fill: rgba(31, 32, 29, 0.07);
+  /* Deep teal, under 2% of a screen: the primary action and the human "Meet" / "Accept" only. */
+  --color-accent: #1b6e66;
+  --color-accent-ink: #ffffff;
+  /* A 6% accent wash behind a selected or human-decided block. */
+  --color-tint: rgba(27, 110, 102, 0.06);
+  --color-positive: #2e7d32;
+  --color-negative: #b42318;
+  --color-warning: #92400e;
+  /* Pale pill pairs: a wash with dark text of the same hue. */
+  --color-positive-wash: #e3f1e4;
+  --color-positive-ink: #1d5a21;
+  --color-warning-wash: #fbf1e0;
+  --color-warning-ink: #7c3a0c;
+  --color-negative-wash: #fdecea;
+  --color-negative-ink: #7a1d14;
+  --color-scrim: rgba(17, 17, 15, 0.28);
 
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   --text-display: 40px;
   --text-display--line-height: 44px;
   --text-display--letter-spacing: -0.025em;
-  --text-large-title: 34px;
-  --text-large-title--line-height: 41px;
+  --text-large-title: 28px;
+  --text-large-title--line-height: 34px;
   --text-large-title--letter-spacing: -0.02em;
-  --text-title: 28px;
-  --text-title--line-height: 34px;
+  --text-title: 24px;
+  --text-title--line-height: 30px;
   --text-title--letter-spacing: -0.02em;
-  --text-title-3: 22px;
-  --text-title-3--line-height: 28px;
+  --text-title-3: 20px;
+  --text-title-3--line-height: 26px;
   --text-title-3--letter-spacing: -0.015em;
-  --text-headline: 17px;
+  --text-headline: 16px;
   --text-headline--line-height: 22px;
-  --text-headline--letter-spacing: -0.01em;
-  --text-body: 17px;
+  --text-body: 16px;
   --text-body--line-height: 24px;
-  --text-body--letter-spacing: -0.01em;
   --text-subhead: 15px;
-  --text-subhead--line-height: 20px;
+  --text-subhead--line-height: 21px;
+  --text-section: 14px;
+  --text-section--line-height: 20px;
+  --text-section--font-weight: 600;
   --text-footnote: 13px;
   --text-footnote--line-height: 18px;
+  --text-small: 13px;
+  --text-small--line-height: 18px;
   --text-caption: 12px;
   --text-caption--line-height: 16px;
-  --text-eyebrow: 11px;
-  --text-eyebrow--line-height: 14px;
-  --text-eyebrow--letter-spacing: 0.08em;
+  /* Kept for older markup; sentence case and no tracking, like every other label. */
+  --text-eyebrow: 12px;
+  --text-eyebrow--line-height: 16px;
   --text-code: 13px;
   --text-code--line-height: 20px;
 
   --radius-card: 22px;
   --radius-inner: 14px;
-  --radius-sheet: 32px;
+  --radius-sheet: 28px;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+:root {
+  color-scheme: light;
+  --glass: rgba(255, 255, 255, 0.9);
+  --shadow-float: 0 1px 2px rgba(17, 17, 15, 0.06), 0 12px 40px rgba(17, 17, 15, 0.12);
+  /* The walkthrough's dimmed page around the spotlight. */
+  --tour-dim: rgba(17, 17, 15, 0.6);
+  --sidebar-width: 240px;
+  --phone-bar: 52px;
+  /* The logo's bar sits on an ink tile, so it takes the other theme's teal to stay visible. */
+  --logo-dot: #5cc4b8;
+  /* Espoo blue: the City of Espoo logo in "for City of Espoo" and nowhere else. */
+  --partner: #0050bb;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --tour-dim: rgba(0, 0, 0, 0.72);
+  --color-ground: #000000;
+  --color-surface: #151516;
+  --color-raised: #1f1f21;
+  --color-label: #f5f5f2;
+  --color-label-2: #a1a19c;
+  --color-label-3: #8f8f8a;
+  --color-separator: #2a2a2d;
+  --color-control: #3a3a3d;
+  --color-fill: rgba(118, 118, 128, 0.2);
+  /*
+   * One primary logic in both themes: an accent fill with ink that reaches AA. The accent is also
+   * accent text on dark panels, so a fill dark enough for white text would fail as text; this teal
+   * takes dark ink instead (6.3:1) and reads 6.1:1 as text on raised.
+   */
+  --color-accent: #45ada1;
+  --color-accent-ink: #04201d;
+  --color-tint: rgba(69, 173, 161, 0.1);
+  --color-positive: #6fcf7a;
+  --color-negative: #f97066;
+  --color-warning: #f5b544;
+  --color-positive-wash: #142619;
+  --color-positive-ink: #8edb98;
+  --color-warning-wash: #2a1f0e;
+  --color-warning-ink: #f5c26b;
+  --color-negative-wash: #2e1513;
+  --color-negative-ink: #fb9a90;
+  --color-scrim: rgba(0, 0, 0, 0.6);
+  --glass: rgba(10, 10, 11, 0.88);
+  /* On black a shadow alone does not lift a layer, so it gets a hairline edge too. */
+  --shadow-float: 0 0 0 1px #2a2a2d, 0 16px 48px rgba(0, 0, 0, 0.6);
+  --logo-dot: #1b6e66;
+  --partner: #ffffff;
+}
+
+/* Hover only where a real pointer hovers: a tap on a phone never leaves a stuck hover state. */
+@custom-variant hover {
+  @media (hover: hover) and (pointer: fine) {
+    &:hover {
+      @slot;
+    }
+  }
+}
+
+/* Inside the app frame (the three modes), as opposed to the landing page. */
+@custom-variant in-shell (&:where(.shell-root:has(> [data-shell-on]) *));
+
 html {
   --row-inset: 20px;
   background: var(--color-ground);
-  color-scheme: dark;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
   /* A focused field scrolls clear of the sticky header and the bottom action bar. */
-  scroll-padding-top: 56px;
+  scroll-padding-top: 64px;
   scroll-padding-bottom: 136px;
 }
 
@@ -72,16 +156,31 @@ body {
   background: var(--color-ground);
   color: var(--color-label);
   font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 24px;
   /* A pasted URL or a long word wraps instead of pushing the page sideways. */
   overflow-wrap: break-word;
 }
 
 /*
- * Keyboard focus is always visible. Text fields show focus with their raised background;
+ * The theme toggle sets this for 300ms, so colours ease into the new theme. At any other time
+ * nothing transitions its colour by accident.
+ */
+html[data-theme-switching],
+html[data-theme-switching] *,
+html[data-theme-switching] *::before,
+html[data-theme-switching] *::after {
+  transition-property: background-color, color, border-color, fill, stroke, box-shadow;
+  transition-duration: 300ms;
+  transition-timing-function: var(--ease-out);
+}
+
+/*
+ * Keyboard focus is always visible. Text fields show focus with their own border;
  * headings and sheets that only receive focus from code (tabindex -1) get no ring.
  */
-:where(a, button, [role="radio"], [role="switch"], [tabindex]:not([tabindex="-1"])):focus-visible {
-  outline: 2px solid var(--color-white);
+:where(a, button, summary, [role="radio"], [role="switch"], [role="menuitemradio"], [role="menuitem"], [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
@@ -89,23 +188,44 @@ body {
   outline: none;
 }
 
-/*
- * Glass: bars, sheets and floating actions only. The base is nearly opaque, so text behind it
- * never stays readable; the blur only softens what little shows through. Without blur support
- * the surface is fully opaque.
- */
-@utility glass {
-  background: rgba(22, 22, 24, 0.97);
-  -webkit-backdrop-filter: blur(30px) saturate(160%);
-  backdrop-filter: blur(30px) saturate(160%);
-  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    background: rgb(22, 22, 24);
+/* The greeting that opens each mode home: the one serif on the screen. */
+@utility text-greeting {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  line-height: 34px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  @media (width >= 900px) {
+    font-size: 48px;
+    line-height: 52px;
   }
 }
 
-/* The one inset top highlight. */
-@utility highlight {
-  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.1);
+/* Figures: regular weight, tabular, so a counting number never jitters. */
+@utility text-kpi {
+  font-size: 32px;
+  line-height: 36px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Glass: sticky bars only. The base is nearly opaque, so text behind it never stays readable;
+ * the blur only softens what little shows through. Without blur support the bar is opaque.
+ */
+@utility glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    background: var(--color-ground);
+  }
+}
+
+/* Things that float (menus, sheets, toasts) are the only things with a shadow. */
+@utility shadow-float {
+  box-shadow: var(--shadow-float);
 }
 
 @utility press {
@@ -135,11 +255,11 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* Page content fades and rises 8px, staggered 40ms by --i. */
+/* Page content fades and rises 6px, staggered 40ms by --i. */
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
 }
 
@@ -165,9 +285,9 @@ body {
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: rgba(22, 22, 24, 0.97);
-  -webkit-backdrop-filter: blur(30px) saturate(160%);
-  backdrop-filter: blur(30px) saturate(160%);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
   box-shadow: inset 0 -0.5px 0 var(--color-separator);
   opacity: 0;
   transition: opacity 200ms var(--ease-out);
@@ -177,43 +297,34 @@ body {
   opacity: 1;
 }
 
-/* The guided story marks the one thing to tap next with a calm ring. */
-[data-story-on] {
-  position: relative;
+/*
+ * The app frame. The phone tab bar steps aside while a page shows its own bottom action bar,
+ * and the content keeps clear of the tab bar otherwise.
+ */
+.shell-content {
+  transition: opacity 240ms var(--ease-out);
 }
 
-/* The ring follows the target's own shape: its radius plus the 4px gap (set by the story as --story-r). */
-[data-story-on]::after {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: var(--story-r, 12px);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
-  pointer-events: none;
-  animation: story-ring 1.6s var(--ease-out) 3;
+.shell-content[data-switching] {
+  opacity: 0;
+  transition-duration: 120ms;
 }
 
-/* A row sits in a clipped group, so its own ring goes inside. */
-.row[data-story-on]::after {
-  inset: 0;
-  border-radius: 0;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.9);
+@media (width < 900px) {
+  .shell-root:has([data-bottom-bar]) .shell-tabs {
+    display: none;
+  }
+  .shell-root:has(> [data-shell-on] .shell-tabs) .shell-content:not(:has([data-bottom-bar])) {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /*
- * One white button on screen: while the story guide carries the next action,
- * the page's own main button steps back to an outline.
+ * Older callers still pass a hue (--h). Identity carries no colour, so every tint is the same
+ * neutral tone step: colour is kept for data and the one accent.
  */
-html[data-story-lead] [data-primary]:not(:disabled) {
-  background: transparent;
-  color: var(--color-label);
-  box-shadow: inset 0 0 0 1px var(--color-label-3);
-}
-
-@keyframes story-ring {
-  50% {
-    opacity: 0.35;
-  }
+.mark-tint {
+  background: var(--color-fill);
 }
 
 /* A detail removed from someone's work before a reviewer reads it. */
@@ -224,7 +335,7 @@ html[data-story-lead] [data-primary]:not(:disabled) {
   height: 20px;
   padding: 0 6px;
   border-radius: 6px;
-  background: var(--color-raised);
+  background: var(--color-fill);
   color: var(--color-label-2);
   font-size: 12px;
   font-weight: 500;
@@ -246,16 +357,4 @@ html[data-story-lead] [data-primary]:not(:disabled) {
   .press:active:not(:disabled) {
     transform: none;
   }
-  [data-story-on]::after {
-    animation: none;
-  }
-}
-
-/* A sheet is one surface step up, so its fields step up once more. */
-[aria-modal="true"] :is(input, textarea) {
-  background-color: var(--color-raised);
-}
-
-[aria-modal="true"] :is(input, textarea):focus {
-  background-color: #3a3a3c;
 }

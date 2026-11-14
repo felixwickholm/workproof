@@ -3,6 +3,18 @@
 import { useLayoutEffect, useRef } from "react";
 import { cx } from "./cx";
 
+/**
+ * A tonal field that reads on the ground, on a panel and inside a sheet alike. Focus draws a
+ * control-strength border rather than a glow.
+ */
+function fieldClass(shape: string) {
+  return cx(
+    "text-body w-full rounded-inner bg-fill text-label caret-accent outline-none placeholder:text-label-3",
+    "shadow-[inset_0_0_0_1px_transparent] transition-shadow duration-150 focus:shadow-[inset_0_0_0_1.5px_var(--color-label-3)]",
+    shape,
+  );
+}
+
 interface FieldProps {
   label: string;
   value: string;
@@ -16,14 +28,12 @@ interface FieldProps {
   onEnter?: () => void;
   /** Match the API limit, so a long paste is cut here instead of failing on send. */
   maxLength?: number;
-  /** Which sample the guided story may type here. */
-  fill?: string;
 }
 
-export function Field({ label, value, onChange, placeholder, autoFocus, type = "text", autoComplete, hideLabel, onEnter, maxLength, fill }: FieldProps) {
+export function Field({ label, value, onChange, placeholder, autoFocus, type = "text", autoComplete, hideLabel, onEnter, maxLength }: FieldProps) {
   return (
     <label className="block">
-      <span className={cx("text-footnote mb-2 block px-4 text-label-2", hideLabel && "sr-only")}>{label}</span>
+      <span className={cx("text-footnote mb-2 block font-medium text-label-2", hideLabel && "sr-only")}>{label}</span>
       <input
         type={type}
         value={value}
@@ -31,7 +41,6 @@ export function Field({ label, value, onChange, placeholder, autoFocus, type = "
         autoComplete={autoComplete}
         placeholder={placeholder}
         maxLength={maxLength}
-        data-fill={fill}
         enterKeyHint="next"
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
@@ -40,7 +49,7 @@ export function Field({ label, value, onChange, placeholder, autoFocus, type = "
             onEnter();
           }
         }}
-        className="text-body h-[52px] w-full rounded-inner bg-surface px-4 text-label caret-white outline-none placeholder:text-label-3 focus:bg-raised"
+        className={fieldClass("h-12 px-4")}
       />
     </label>
   );
@@ -55,12 +64,10 @@ interface TextAreaProps {
   minRows?: number;
   hideLabel?: boolean;
   maxLength?: number;
-  /** Which sample the guided story may type here. */
-  fill?: string;
 }
 
 /** A text area that grows with its content. */
-export function TextArea({ label, value, onChange, placeholder, autoFocus, minRows = 4, hideLabel, maxLength, fill }: TextAreaProps) {
+export function TextArea({ label, value, onChange, placeholder, autoFocus, minRows = 4, hideLabel, maxLength }: TextAreaProps) {
   const ref = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
     const el = ref.current;
@@ -71,7 +78,7 @@ export function TextArea({ label, value, onChange, placeholder, autoFocus, minRo
 
   return (
     <label className="block">
-      <span className={cx("text-footnote mb-2 block px-4 text-label-2", hideLabel && "sr-only")}>{label}</span>
+      <span className={cx("text-footnote mb-2 block font-medium text-label-2", hideLabel && "sr-only")}>{label}</span>
       <textarea
         ref={ref}
         value={value}
@@ -79,9 +86,8 @@ export function TextArea({ label, value, onChange, placeholder, autoFocus, minRo
         autoFocus={autoFocus}
         placeholder={placeholder}
         maxLength={maxLength}
-        data-fill={fill}
         onChange={(e) => onChange(e.target.value)}
-        className="text-body block w-full resize-none overflow-hidden rounded-inner bg-surface px-4 py-3.5 text-label caret-white outline-none placeholder:text-label-3 focus:bg-raised"
+        className={fieldClass("block resize-none overflow-hidden px-4 py-3")}
       />
     </label>
   );
