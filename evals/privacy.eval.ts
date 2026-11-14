@@ -3,10 +3,12 @@ import { GET as challengeRoute } from "@/app/api/challenges/[id]/route";
 import { POST as draftRoute } from "@/app/api/challenges/draft/route";
 import { GET as listChallengesRoute, POST as approveRoute } from "@/app/api/challenges/route";
 import { GET as cityRoute } from "@/app/api/city/route";
+import { GET as employerHomeRoute } from "@/app/api/companies/[id]/home/route";
 import { GET as queueRoute } from "@/app/api/companies/[id]/queue/route";
 import { GET as companiesRoute } from "@/app/api/companies/route";
 import { POST as decisionsRoute } from "@/app/api/decisions/route";
 import { POST as resetRoute } from "@/app/api/demo/reset/route";
+import { POST as storyRoute } from "@/app/api/demo/story/route";
 import { POST as followUpsRoute } from "@/app/api/followups/route";
 import { POST as acceptRoute } from "@/app/api/meetings/[id]/accept/route";
 import { POST as confirmRoute } from "@/app/api/meetings/[id]/confirm/route";
@@ -14,8 +16,9 @@ import { GET as passportRoute } from "@/app/api/passport/[talentId]/route";
 import { POST as sharingRoute } from "@/app/api/proofs/[proofId]/sharing/route";
 import { POST as submissionsRoute } from "@/app/api/submissions/route";
 import type { BlindProof, Challenge, ChallengeDraft, Company, Decision, Meeting, PassportEntry, ReviewQueue } from "@/lib/domain/types";
-import { MAX_BODY_BYTES, POSTS_PER_MINUTE } from "@/lib/http/limits";
+import { MAX_BODY_BYTES, MAX_PICTURE_BYTES, MAX_SUBMISSION_BODY_BYTES, POSTS_PER_MINUTE } from "@/lib/http/limits";
 import { getStore } from "@/lib/store";
+import { CLEAN_JPEG, EXIF_JPEG, jpegOfSize } from "./fixtures/pictures";
 import { call, record } from "./helpers";
 
 const EVAL = "4 Consent and privacy";
@@ -29,6 +32,7 @@ async function publicResponses(): Promise<string> {
   const challenges = (await call<Challenge[]>(listChallengesRoute)).json;
   const parts: unknown[] = [companies, challenges, (await call(cityRoute)).json];
   for (const c of companies) parts.push((await call(queueRoute, { params: { id: c.id } })).json);
+  for (const c of companies) parts.push((await call(employerHomeRoute, { params: { id: c.id } })).json);
   for (const c of challenges) parts.push((await call(challengeRoute, { params: { id: c.id } })).json);
   return JSON.stringify(parts);
 }
@@ -158,9 +162,10 @@ describe("Eval 4: consent and privacy", () => {
   });
 
   it("requests are bounded: body size and, for remote callers, rate", async () => {
-    const big = await submissionsRoute(
-      new Request("http://localhost/api", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ junk: "x".repeat(MAX_BODY_BYTES) }) }),
-    );
+    const junk = (bytes: number) =>
+      new Request("http://localhost/api", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ junk: "x".repeat(bytes) }) });
+    const bigText = await followUpsRoute(junk(MAX_BODY_BYTES));
+    const bigSubmission = await submissionsRoute(junk(MAX_SUBMISSION_BODY_BYTES));
     const remote = () =>
       followUpsRoute(
         new Request("http://localhost/api", {
@@ -171,8 +176,43 @@ describe("Eval 4: consent and privacy", () => {
       );
     let last = 200;
     for (let i = 0; i <= POSTS_PER_MINUTE; i++) last = (await remote()).status;
-    const ok = big.status === 413 && last === 429;
-    record(EVAL, "body cap and rate limit", `${big.status} / ${last}`, ok);
+    // The walkthrough's story steps have their own count, so they still work for this caller.
+    const story = await storyRoute(
+      new Request("http://localhost/api", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.9" },
+        body: JSON.stringify({ stage: "invited" }),
+      }),
+    );
+    const ok = bigText.status === 413 && bigSubmission.status === 413 && last === 429 && story.status === 200;
+    record(EVAL, "body cap and rate limit", `${bigText.status}/${bigSubmission.status} / ${last}, story ${story.status}`, ok);
+    expect(ok).toBe(true);
+  });
+
+  it("a picture is accepted only as a clean JPEG made in the browser, and its description is blind", async () => {
+    const challengeId = (await call<Challenge[]>(listChallengesRoute)).json[0].id;
+    const person = { id: "t_eval_picture_5a1c", name: "Ilona Koski", contact: "ilona.koski@example.org" };
+    const send = (attachment: unknown) =>
+      call<{ proof: BlindProof }>(submissionsRoute, {
+        body: { challengeId, talent: person, answer: "Plated on a separate board, sauce on the side.", explain: [], attachment },
+      });
+    const alt = "Ilona Koski's plate on the counter, photo by ilona.koski@example.org";
+    const refused = [
+      await send({ kind: "photo", src: EXIF_JPEG, alt: "A plate" }),
+      await send({ kind: "photo", src: "/demo/sample-plate.jpg", alt: "A plate" }),
+      await send({ kind: "photo", src: "data:image/png;base64,iVBORw0KGgo=", alt: "A plate" }),
+      await send({ kind: "video", src: CLEAN_JPEG, alt: "A plate" }),
+      await send({ kind: "photo", src: jpegOfSize(MAX_PICTURE_BYTES + 1), alt: "A plate" }),
+    ].map((r) => r.status);
+    const largest = await send({ kind: "photo", src: jpegOfSize(MAX_PICTURE_BYTES), alt: "A plate" });
+    const clean = await send({ kind: "photo", src: CLEAN_JPEG, alt });
+    const owner = (await call<Challenge>(challengeRoute, { params: { id: challengeId } })).json.companyIds[0];
+    const queue = (await call<ReviewQueue>(queueRoute, { params: { id: owner } })).json;
+    const shown = JSON.stringify(queue.proofs.find((p) => p.proofId === clean.json.proof.proofId) ?? null);
+    const ok =
+      refused.every((s) => s === 400) && largest.status === 200 && clean.status === 200 &&
+      clean.json.proof.attachment?.src === CLEAN_JPEG && !/Ilona|Koski|example\.org/.test(shown) && shown.includes(CLEAN_JPEG);
+    record(EVAL, "pictures: clean JPEG only, description blind", `refused ${refused.join("/")}, accepted ${largest.status}/${clean.status}`, ok);
     expect(ok).toBe(true);
   });
 });

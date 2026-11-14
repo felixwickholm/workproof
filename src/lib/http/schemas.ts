@@ -1,9 +1,26 @@
 import { z } from "zod";
+import { PROOF_KINDS, STORY_STAGES } from "@/lib/domain/kinds";
+import { pictureProblem } from "./jpeg";
 import { LIMITS } from "./limits";
 
 const text = (max: number) => z.string().max(max);
 
 const skill = z.object({ id: z.string().min(1).max(60), label: text(80), why: text(300) });
+
+/**
+ * A visitor's own picture of the work. Only a re-encoded JPEG data URL: paths under /demo belong
+ * to the seed, and a request can never point at one. No video from a request.
+ */
+const uploadedPicture = z
+  .object({
+    kind: z.enum(["photo", "design"]),
+    src: z.string().superRefine((src, ctx) => {
+      const problem = pictureProblem(src);
+      if (problem) ctx.addIssue({ code: "custom", message: problem });
+    }),
+    alt: z.string().trim().min(1).max(LIMITS.attachmentAlt),
+  })
+  .strict();
 
 const challengeDraftSchema = z.object({
   title: z.string().min(3).max(120),
@@ -11,6 +28,7 @@ const challengeDraftSchema = z.object({
   coreSkills: z.array(skill).min(3).max(5),
   setAside: z.array(text(300)).max(30),
   format: z.enum(["review", "plan", "write", "build", "explain"]),
+  proofKind: z.enum(PROOF_KINDS),
   minutes: z.number().int().min(2).max(30),
   brief: z.string().min(10).max(LIMITS.brief),
   material: z.object({ kind: z.enum(["code", "text"]), title: text(120), body: text(6000) }).optional(),
@@ -41,7 +59,13 @@ export const submissionRequest = z.object({
   challengeId: z.string().min(1),
   talent: z.object({ id: z.string().min(1).max(100), name: text(LIMITS.name), contact: text(LIMITS.contact) }),
   answer: z.string().min(1).max(LIMITS.answer),
-  explain: z.array(z.object({ question: text(600), answer: text(LIMITS.explain) })).max(4).default([]),
+  explain: z
+    .array(z.object({ question: text(600), answer: text(LIMITS.explain), spoken: z.boolean().optional() }))
+    .max(4)
+    .default([]),
+  attachment: uploadedPicture.optional(),
+  /** The answer was spoken; only its transcript is sent. */
+  spoken: z.boolean().optional(),
   /** Opt-in. Missing means no. */
   shareWithSimilar: z.boolean().default(false),
 });
@@ -62,3 +86,5 @@ export const confirmRequest = z.discriminatedUnion("side", [
   z.object({ side: z.literal("talent"), talentId: z.string().min(1).max(100) }),
   z.object({ side: z.literal("company"), companyId: z.string().min(1).max(100) }),
 ]);
+
+export const storyRequest = z.object({ stage: z.enum(STORY_STAGES) });

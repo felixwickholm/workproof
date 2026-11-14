@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildSeed } from "@/lib/seed";
-import { makeRoom, MAX_PROOFS } from "./capacity";
+import { checkPictureRoom, makeRoom, MAX_PROOFS, MAX_UPLOADED_PICTURES } from "./capacity";
 import { ServiceError } from "./support";
 
 function fill(kind: "event" | "taster") {
@@ -27,5 +27,17 @@ describe("demo capacity", () => {
   it("refuses with 429 when only event proofs remain", () => {
     const data = fill("event");
     expect(() => makeRoom(data)).toThrow(ServiceError);
+  });
+
+  it("refuses a visitor picture once the store holds the maximum, but not seed pictures", () => {
+    const data = buildSeed(new Date("2026-11-14T12:00:00Z"));
+    const picture = (src: string) => ({ kind: "photo" as const, src, alt: "A plate" });
+    const add = (id: string, src: string) =>
+      data.submissions.push({ id, challengeId: "c", talentId: "t", answer: "a", explain: [], attachment: picture(src), shareWithSimilar: false, submittedAt: "2026-11-14T10:00:00Z" });
+    for (let i = 0; i < 20; i++) add(`seed_${i}`, "/demo/plate.jpg");
+    for (let i = 0; i < MAX_UPLOADED_PICTURES - 1; i++) add(`own_${i}`, "data:image/jpeg;base64,/9j/");
+    expect(() => checkPictureRoom(data)).not.toThrow();
+    add("own_last", "data:image/jpeg;base64,/9j/");
+    expect(() => checkPictureRoom(data)).toThrow(ServiceError);
   });
 });

@@ -63,7 +63,7 @@ describe("redact", () => {
 describe("blind projections", () => {
   const own = toOwnProof({
     proofId: "p1",
-    challenge: { id: "c1", title: "Task", coreSkills: [{ id: "sql", label: "SQL", why: "x" }] },
+    challenge: { id: "c1", title: "Task", coreSkills: [{ id: "sql", label: "SQL", why: "x" }], proofKind: "writing" },
     work: "w",
     explain: [{ question: "q", answer: "a", extra: "secret" } as never],
     aiSummary: "s",

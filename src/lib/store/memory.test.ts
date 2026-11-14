@@ -34,33 +34,39 @@ describe("memory store", () => {
 
 describe("seed", () => {
   const data = buildSeed(now);
+  // Each build gives the persona a new private key, so look it up in the same build.
+  const storyProof = (seed: typeof data) =>
+    seed.submissions.find((s) => s.talentId === seed.demo.personaTalentId && s.challengeId === "ch-kaari-visits");
 
-  it("is synthetic Espoo Talent Day with 3 companies, 5 challenges and 10 proofs", () => {
+  it("is synthetic Espoo Talent Day with 10 employers, 14 live tasks and about 46 proofs", () => {
     expect(data.event.name).toBe("Espoo Talent Day");
-    expect(data.companies).toHaveLength(3);
-    expect(data.challenges).toHaveLength(5);
-    expect(data.challenges.some((c) => c.title === "Review an AI-drafted project plan")).toBe(true);
+    expect(data.companies).toHaveLength(10);
+    expect(data.challenges.filter((c) => c.kind === "event" && c.approvedBy)).toHaveLength(14);
     expect(data.challenges.some((c) => c.companyIds.length > 1)).toBe(true);
-    expect(data.proofs).toHaveLength(10);
-    expect(new Set(data.decisions.map((d) => `${d.companyId}:${d.reviewer}`)).size).toBe(3);
+    expect(data.proofs.length).toBeGreaterThanOrEqual(44);
+    expect(new Set(data.decisions.map((d) => `${d.companyId}:${d.reviewer}`)).size).toBeGreaterThanOrEqual(3);
+    expect(data.companies.every((c) => c.sector && c.district && c.size && c.workLanguage)).toBe(true);
   });
 
-  it("leaves the demo proof undecided in the first company's queue, not yet in Second look", () => {
-    const tuulos = buildQueue(data, "co-tuulos", now);
-    const saarnivo = buildQueue(data, "co-saarnivo", now);
-    expect(tuulos.proofs.map((p) => p.label)).toContain("Proof K7");
-    expect(saarnivo.secondLook.map((p) => p.label)).not.toContain("Proof K7");
-    expect(tuulos.secondLook.length).toBeGreaterThan(0);
+  it("builds the story around Olena, invited by Kaari Home Care by default", () => {
+    expect(data.demo).toMatchObject({ personaName: "Olena Kovalenko", stage: "invited" });
+    const invite = data.meetings.find((m) => m.proofId === storyProof(data)?.id && m.companyId === "co-kaari");
+    expect(invite?.status).toBe("invited");
   });
 
-  it("hides the demo persona's name and school from reviewers", () => {
-    const proof = data.proofs.find((p) => p.label === "Proof K7");
-    expect(JSON.stringify(proof)).not.toMatch(/Leila|Haddad|Aalto/);
+  it("puts the story proof undecided in Kaari's queue at the sent stage", () => {
+    const sent = buildSeed(now, "sent");
+    const kaari = buildQueue(sent, "co-kaari", now);
+    expect(kaari.proofs.map((p) => p.proofId)).toContain(storyProof(sent)?.id);
   });
 
-  it("has one invited meeting and feedback owed", () => {
-    expect(data.meetings.filter((m) => m.status === "invited")).toHaveLength(1);
-    const kivira = buildQueue(data, "co-kivira", now);
-    expect(kivira.proofs.length).toBeGreaterThan(0);
+  it("hides the demo persona's name and background from reviewers", () => {
+    const proof = data.proofs.find((p) => p.proofId === storyProof(data)?.id);
+    expect(proof?.hiddenCount).toBeGreaterThan(0);
+    expect(JSON.stringify(proof)).not.toMatch(/Olena|Kovalenko|Kyiv/);
+  });
+
+  it("has feedback owed somewhere", () => {
+    expect(data.companies.some((c) => buildQueue(data, c.id, now).proofs.length > 0)).toBe(true);
   });
 });

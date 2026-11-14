@@ -25,10 +25,10 @@ export async function handle(run: () => Promise<unknown>): Promise<Response> {
   }
 }
 
-/** Rate-limits the caller, caps the body size and parses it with the schema. */
-export async function readBody<T extends z.ZodType>(request: Request, schema: T): Promise<z.infer<T>> {
+/** Rate-limits the caller, caps the body size (128 kB unless a route allows more) and parses it with the schema. */
+export async function readBody<T extends z.ZodType>(request: Request, schema: T, maxBytes?: number): Promise<z.infer<T>> {
   limitRate(request);
-  return schema.parse(JSON.parse(await readLimitedText(request)));
+  return schema.parse(JSON.parse(await readLimitedText(request, maxBytes)));
 }
 
 /**

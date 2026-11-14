@@ -20,7 +20,8 @@ export function createMemoryStore(initial: () => StoreData, file?: string): Proo
     if (file && existsSync(file)) {
       try {
         const parsed = JSON.parse(readFileSync(file, "utf8")) as StoreData;
-        if (parsed.version === 1) return parsed;
+        // A file saved before the demo stages existed has no `demo`; it is rebuilt from the seed.
+        if (parsed.version === 1 && parsed.demo) return parsed;
       } catch {
         console.warn(`Tryout: ${file} could not be read; starting from the demo data.`);
       }

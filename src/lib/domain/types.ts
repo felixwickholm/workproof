@@ -19,10 +19,49 @@ export interface ReviewPrompt {
   lookFor: string;
 }
 
+/** What the person hands in. Shown as "Writing", "Plan", "Photo", "Short video", "Voice answer", "Design", "Code". */
+export type ProofKind = "writing" | "plan" | "photo" | "video" | "voice" | "design" | "code";
+
+/** A picture or clip of the work, never of the person. */
+export interface Attachment {
+  kind: "photo" | "video" | "design";
+  /** A path under /demo for sample data, or a data URL for a visitor's own picture (re-encoded in the browser, no metadata). */
+  src: string;
+  /** What the picture shows, in words. Runs through the blind layer like any text. */
+  alt: string;
+  /** Video only. */
+  seconds?: number;
+  poster?: string;
+}
+
+export type EspooDistrict =
+  | "Otaniemi"
+  | "Tapiola"
+  | "Leppävaara"
+  | "Matinkylä"
+  | "Espoon keskus"
+  | "Espoonlahti"
+  | "Kera"
+  | "Keilaniemi";
+
+/** Where the demo story stands. The server rebuilds a sandbox deterministically at each stage. */
+export type StoryStage = "before" | "sent" | "invited" | "met";
+
 export interface Company {
   id: string;
   name: string;
   blurb: string;
+  /** For example "Home care". */
+  sector: string;
+  /** The company carries the place; a task never does. */
+  district: EspooDistrict;
+  /** For example "120 people". */
+  size: string;
+  /** Facts about the employer, never about a person. For example "English" or "Finnish and English". */
+  workLanguage: string;
+  finnishNeeded: boolean;
+  permitSupport: boolean;
+  relocationHelp: boolean;
 }
 
 export interface Challenge {
@@ -36,6 +75,8 @@ export interface Challenge {
   /** Requirements the draft set aside so the role keeps 3-5 core skills. */
   setAside: string[];
   format: TaskFormat;
+  /** What the person hands in. Every task also accepts a written or spoken answer instead. */
+  proofKind: ProofKind;
   minutes: number;
   /** The situation, written like a message from the team. */
   brief: string;
@@ -72,6 +113,8 @@ export interface Talent {
 export interface ExplainAnswer {
   question: string;
   answer: string;
+  /** Given by voice. Only the transcript is stored; audio never leaves the browser. */
+  spoken?: boolean;
 }
 
 export interface Submission {
@@ -80,6 +123,9 @@ export interface Submission {
   talentId: string;
   answer: string;
   explain: ExplainAnswer[];
+  attachment?: Attachment;
+  /** The answer was given by voice and is stored only as text. */
+  spoken?: boolean;
   /** Opt-in: other employers with matching tasks may see the blind proof. The person can withdraw it. */
   shareWithSimilar: boolean;
   submittedAt: string;
@@ -102,8 +148,13 @@ export interface BlindProof {
   challengeId: string;
   challengeTitle: string;
   skills: Skill[];
+  proofKind: ProofKind;
   work: string;
   explain: ExplainAnswer[];
+  /** Picture or clip of the work; its `alt` text has been through the blind layer. */
+  attachment?: Attachment;
+  /** The answer was spoken and is shown as text. The voice is not shared. */
+  spoken?: boolean;
   /**
    * "At a glance": the shape of the work (points, length, code, opening words), built by code.
    * Not written by AI and never about quality. The name is kept for API compatibility.
@@ -211,4 +262,116 @@ export interface CityOverview {
   };
   employers: EmployerRecord[];
   audit: AuditEvent[];
+  insights: CityInsights;
+}
+
+/** Where one proof stands, for the city's flow picture. A proof label and a company, never a person. */
+export type FlowState = "sent" | "answered" | "invited" | "met";
+
+/** What the city learns from the event. Counts of tasks, proofs and human decisions; nothing about a person. */
+export interface CityInsights {
+  /** Core skills asked for most, top 8 by tasks, then by label. */
+  demandBySkill: { skillId: string; label: string; tasks: number; proofs: number }[];
+  /** Only kinds that at least one task asks for, in PROOF_KINDS order. */
+  byProofKind: { kind: ProofKind; tasks: number; proofs: number }[];
+  /** Tasks shared by more than one employer: one piece of work, several readers. */
+  pooled: { challengeId: string; title: string; companies: string[]; proofs: number }[];
+  funnel: { proofs: number; answered: number; invited: number; accepted: number; met: number };
+  fairness: {
+    automatedDecisions: 0;
+    /** Personal details the blind layer hid, over all event proofs. */
+    detailsHidden: number;
+    decisionsWithNamedHuman: number;
+    decisionsWithFeedback: number;
+    secondLookConsents: number;
+    /** Names shown to an employer, each only after the person accepted. */
+    namesShownAfterAccept: number;
+    /** Company wishes the task drafter set aside to keep 3-5 core skills. */
+    wishesSetAside: number;
+  };
+  /** Tasks published at least three days before the event day. */
+  readiness: { tasks: number; liveThreeDaysBefore: number };
+  /** Event proofs, oldest first, at the furthest step any employer took. */
+  flows: { proofLabel: string; companyId: string; state: FlowState }[];
+  /** Event proofs per day for the 8 days up to the event day (ISO dates), zero-filled. */
+  arrivalsByDay: { day: string; proofs: number }[];
+  companies: Company[];
+}
+
+/** One employer's invitation, as the invited person sees it. */
+export interface SeekerInvitation {
+  meetingId: string;
+  proofId: string;
+  proofLabel: string;
+  companyName: string;
+  sector: string;
+  district: EspooDistrict;
+  /** The human who chose to meet. */
+  reviewer: string;
+  feedback: string;
+  slot: string;
+  status: MeetingStatus;
+  viaSecondLook: boolean;
+}
+
+/** An open task in the seeker feed. */
+export interface SeekerTask {
+  /** As talent sees it: no set-aside wishes. */
+  challenge: Challenge;
+  companies: Company[];
+  proofsSent: number;
+  /** Median hours from a proof to its first answer on this task, or null before any answer. */
+  medianReplyHours: number | null;
+  /** The person has handed in work for this task. */
+  mine: boolean;
+}
+
+/** The work seeker's home. Built for the person themselves, from their private key. */
+export interface SeekerHome {
+  /** `firstName` is null until the person has given a name. `fact` is one plain sentence from the data. */
+  greeting: { firstName: string | null; fact: string };
+  counts: { proofs: number; readByPeople: number; writtenAnswers: number; invitations: number };
+  /** Newest first. */
+  invitations: SeekerInvitation[];
+  /** Newest first, the same for everyone: not personalised and not ranked by fit. */
+  tasks: SeekerTask[];
+  passport: PassportEntry[];
+}
+
+export type PipelineStage = "To read" | "Answered" | "Invited" | "Accepted" | "Met";
+
+/** An employer's home. Blind proofs and counts only; no talent id, name or contact. */
+export interface EmployerHome {
+  company: Company;
+  greeting: { fact: string };
+  counts: {
+    /** Blind proofs this company can read now: its own queue plus Second look. */
+    waiting: number;
+    /** Proofs sent to this company's own tasks that have no answer yet. */
+    feedbackOwed: number;
+    medianHoursToRespond: number | null;
+    /** Invitations this company sent, whatever their status. */
+    meetings: number;
+  };
+  /** This company's live tasks, newest first. */
+  tasks: { challenge: Challenge; proofsReceived: number; waiting: number; daysLive: number }[];
+  /** The oldest five waiting proofs, in arrival order. */
+  queuePreview: BlindProof[];
+  secondLookWaiting: number;
+  pipeline: { stage: PipelineStage; count: number }[];
+  /** Hours from this company's first task going live to its first Meet decision, or null. */
+  hoursToFirstMeeting: number | null;
+  /** For each core skill this company asks for: event proofs handed in for any task with that skill. Counts only. */
+  pool: { skillId: string; label: string; proofs: number }[];
+  /** The whole event, the same numbers as the city totals. */
+  event: { proofs: number; proofsAnswered: number; medianHoursToFirstAnswer: number | null };
+}
+
+/** The caller's demo sandbox. Returned only to the visitor who owns it. */
+export interface DemoSession {
+  /** Share code of the caller's sandbox, for `?table=<code>`. Null outside a sandbox (the shared default store). */
+  code: string | null;
+  /** The demo person's private key in this sandbox, and her name. */
+  persona: { talentId: string; name: string };
+  stage: StoryStage;
 }

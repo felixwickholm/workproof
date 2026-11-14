@@ -5,9 +5,18 @@ import type {
   Decision,
   Meeting,
   OwnProof,
+  StoryStage,
   Submission,
   Talent,
 } from "@/lib/domain/types";
+
+/** The demo person this copy of the event is built around. */
+export interface DemoInfo {
+  /** The persona's private key inside this sandbox only. */
+  personaTalentId: string;
+  personaName: string;
+  stage: StoryStage;
+}
 
 interface EventInfo {
   name: string;
@@ -30,6 +39,7 @@ export interface StoreData {
   decisions: Decision[];
   meetings: Meeting[];
   audit: AuditEvent[];
+  demo: DemoInfo;
 }
 
 /**

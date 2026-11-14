@@ -1,4 +1,4 @@
-import type { BlindProof, Challenge, ExplainAnswer, OwnProof, RedactionReport } from "@/lib/domain/types";
+import type { Attachment, BlindProof, Challenge, ExplainAnswer, OwnProof, RedactionReport } from "@/lib/domain/types";
 import { hash } from "@/lib/util/hash";
 
 // No I or O, so labels never read as 1 or 0.
@@ -23,13 +23,39 @@ function hiddenTotal(report: RedactionReport): number {
   return Object.values(report).reduce((sum, n) => sum + n, 0);
 }
 
+/** Copies only the named answer fields. `spoken` is kept only when true. */
+function copyExplain(explain: ExplainAnswer[]): ExplainAnswer[] {
+  return explain.map(({ question, answer, spoken }) => ({ question, answer, ...(spoken === true ? { spoken } : {}) }));
+}
+
+/** Copies only the named picture fields, so nothing else stored with a picture can ride along. */
+function copyAttachment(attachment: Attachment | undefined): { attachment?: Attachment } {
+  if (!attachment) return {};
+  const { kind, src, alt, seconds, poster } = attachment;
+  return {
+    attachment: {
+      kind,
+      src,
+      alt,
+      ...(typeof seconds === "number" ? { seconds } : {}),
+      ...(typeof poster === "string" ? { poster } : {}),
+    },
+  };
+}
+
+const spokenFlag = (spoken: boolean | undefined) => (spoken === true ? { spoken } : {});
+
 export interface BlindProofInput {
   proofId: string;
-  challenge: Pick<Challenge, "id" | "title" | "coreSkills">;
+  challenge: Pick<Challenge, "id" | "title" | "coreSkills" | "proofKind">;
   /** Already redacted. */
   work: string;
   /** Already redacted. */
   explain: ExplainAnswer[];
+  /** Its `alt` text already redacted. */
+  attachment?: Attachment;
+  /** The answer was given by voice. */
+  spoken?: boolean;
   aiSummary: string;
   redactions: RedactionReport;
   submittedAt: string;
@@ -45,8 +71,11 @@ export function toOwnProof(input: BlindProofInput): OwnProof {
     challengeId: input.challenge.id,
     challengeTitle: input.challenge.title,
     skills: input.challenge.coreSkills.map(({ id, label, why }) => ({ id, label, why })),
+    proofKind: input.challenge.proofKind,
     work: input.work,
-    explain: input.explain.map(({ question, answer }) => ({ question, answer })),
+    explain: copyExplain(input.explain),
+    ...copyAttachment(input.attachment),
+    ...spokenFlag(input.spoken),
     aiSummary: input.aiSummary,
     hiddenCount: hiddenTotal(input.redactions),
     redactions: { ...input.redactions },
@@ -62,8 +91,11 @@ export function toBlindProof(proof: OwnProof): BlindProof {
     challengeId: proof.challengeId,
     challengeTitle: proof.challengeTitle,
     skills: proof.skills.map(({ id, label, why }) => ({ id, label, why })),
+    proofKind: proof.proofKind,
     work: proof.work,
-    explain: proof.explain.map(({ question, answer }) => ({ question, answer })),
+    explain: copyExplain(proof.explain),
+    ...copyAttachment(proof.attachment),
+    ...spokenFlag(proof.spoken),
     aiSummary: proof.aiSummary,
     hiddenCount: hiddenTotal(proof.redactions),
     submittedAt: proof.submittedAt,

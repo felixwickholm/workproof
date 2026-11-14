@@ -20,3 +20,16 @@ export function makeRoom(data: StoreData): void {
   data.submissions = data.submissions.filter((s) => s.id !== oldest.id);
   data.proofs = data.proofs.filter((p) => p.proofId !== oldest.id);
 }
+
+/**
+ * A visitor's own pictures per store. Each can be 300 kB, and every visitor has a sandbox,
+ * so this keeps the memory of one sandbox small. A written or spoken answer is always accepted.
+ */
+export const MAX_UPLOADED_PICTURES = 8;
+
+export function checkPictureRoom(data: StoreData): void {
+  const uploaded = data.submissions.filter((s) => s.attachment?.src.startsWith("data:")).length;
+  if (uploaded >= MAX_UPLOADED_PICTURES) {
+    throw new ServiceError(429, "This demo holds enough photos. Send a written or spoken answer, or reset the demo.");
+  }
+}

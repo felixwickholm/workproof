@@ -7,6 +7,7 @@ import { getStore } from "@/lib/store";
 import { newId } from "@/lib/util/hash";
 import { omit } from "@/lib/util/object";
 import { DRAFT_ACTION, FOLLOW_UP_ACTION } from "./ai-work";
+import { forTalent } from "./for-talent";
 import { appendAudit, clock, findOrThrow, ServiceError } from "./support";
 
 const TASK_DRAFTER = "Task drafter";
@@ -54,11 +55,6 @@ export async function approveChallenge(input: { draft: ChallengeDraft; companyId
     });
     return challenge;
   });
-}
-
-/** What talent may read of a challenge. The set-aside list holds the company's own wishes, so it stays company-side. */
-function forTalent(challenge: Challenge): Challenge {
-  return { ...challenge, setAside: [] };
 }
 
 /** Approved event challenges, oldest first, as talent sees them. */

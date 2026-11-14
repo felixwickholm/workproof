@@ -6,7 +6,7 @@ const skill = (id: string) => ({ id, label: id, why: "" });
 
 function challenge(id: string, companyIds: string[], skills: string[]): Challenge {
   return {
-    id, companyIds, title: id, need: "", coreSkills: skills.map(skill), setAside: [], format: "review",
+    id, companyIds, title: id, need: "", coreSkills: skills.map(skill), setAside: [], format: "review", proofKind: "code",
     minutes: 20, brief: "", deliverable: "", reviewGuide: [], aiAllowed: true, kind: "event",
     approvedBy: "Someone", createdAt: "2026-01-01T00:00:00.000Z",
   };

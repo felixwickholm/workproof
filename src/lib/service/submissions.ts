@@ -1,11 +1,11 @@
 import { blindWork } from "@/lib/blind/blind-work";
 import { atAGlance } from "@/lib/blind/glance";
 import { toOwnProof } from "@/lib/blind/project";
-import type { ExplainAnswer, OwnProof, Submission, Talent } from "@/lib/domain/types";
+import type { Attachment, ExplainAnswer, OwnProof, Submission, Talent } from "@/lib/domain/types";
 import { getStore } from "@/lib/store";
 import { newId } from "@/lib/util/hash";
 import { HIDE_ACTION, SHAPE_ACTION } from "./ai-work";
-import { makeRoom } from "./capacity";
+import { checkPictureRoom, makeRoom } from "./capacity";
 import { appendAudit, clock, findOrThrow, ServiceError } from "./support";
 import { rememberTalent } from "./talent";
 
@@ -14,6 +14,10 @@ export interface SubmitInput {
   talent: Talent;
   answer: string;
   explain: ExplainAnswer[];
+  /** Checked by the request schema: a clean JPEG data URL only. */
+  attachment?: Attachment;
+  /** The answer was given by voice; only the transcript arrives. */
+  spoken?: boolean;
   shareWithSimilar: boolean;
 }
 
@@ -28,7 +32,7 @@ export async function submitWork(input: SubmitInput): Promise<OwnProof> {
   }
 
   const companies = snapshot.companies.map((c) => c.name);
-  const blind = blindWork(input.answer, input.explain, { name: input.talent.name, contact: input.talent.contact, companies });
+  const blind = blindWork(input.answer, input.explain, { name: input.talent.name, contact: input.talent.contact, companies }, input.attachment);
   // Code, not AI: the shape of the blind text, the same for right and wrong answers.
   const glance = atAGlance(blind.work, blind.explain);
 
@@ -39,17 +43,22 @@ export async function submitWork(input: SubmitInput): Promise<OwnProof> {
     talentId: input.talent.id,
     answer: input.answer,
     explain: input.explain,
+    ...(input.attachment ? { attachment: input.attachment } : {}),
+    ...(input.spoken ? { spoken: true } : {}),
     shareWithSimilar: input.shareWithSimilar,
     submittedAt,
   };
 
   return store.update((data) => {
     makeRoom(data);
+    if (input.attachment) checkPictureRoom(data);
     const proof = toOwnProof({
       proofId: submission.id,
       challenge,
       work: blind.work,
       explain: blind.explain,
+      attachment: blind.attachment,
+      spoken: input.spoken,
       aiSummary: glance,
       redactions: blind.report,
       submittedAt,
