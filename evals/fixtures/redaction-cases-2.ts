@@ -87,7 +87,7 @@ export const REDACTION_CASES_2: RedactionCase2[] = [
   { title: "first name only", answer: BASE + "Thanks! -Sanna", leaks: ["Sanna"] },
   { title: "nickname", answer: BASE + "Friends call me Sanni.", leaks: ["Sanni"] },
   { title: "nationality phrase", answer: BASE + "As a Nigerian-Finnish engineer I care about this.", leaks: ["Nigerian"] },
-  { title: "third party name", answer: BASE + "My mentor Pekka Halonen showed me grouped splits.", leaks: ["Pekka Halonen"], knownLimit: "a third person's name in running text" },
+  { title: "third party name", answer: BASE + "My mentor Onni Rautavaara showed me grouped splits.", leaks: ["Onni Rautavaara"], knownLimit: "a third person's name in running text" },
   { title: "explain-only leak", answer: BASE, explain: [{"question": "Why?", "answer": "Sanna here: I learned it at Nokia."}], leaks: ["Sanna", "Virtanen"] },
   { title: "question field leak", answer: BASE, explain: [{"question": "Asked of Sanna Virtanen (sanna.virtanen@example.org)", "answer": "Because of leakage."}], leaks: ["Virtanen"] },
 ];
