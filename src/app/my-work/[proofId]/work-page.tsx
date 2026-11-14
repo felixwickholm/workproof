@@ -7,8 +7,6 @@ import { SharingCard } from "@/components/seeker/sharing-card";
 import { FormatIcon } from "@/components/seeker/task-format";
 import { useSeekerData } from "@/components/seeker/use-seeker-data";
 import { workState } from "@/components/seeker/work-state";
-import { LocalReplay } from "@/components/think-aloud/local-replay";
-import { replayFor } from "@/components/think-aloud/replays";
 import { ErrorState } from "@/components/ui/error-state";
 import { riseAt } from "@/components/ui/rise";
 import { Screen } from "@/components/ui/screen";
@@ -49,7 +47,6 @@ export function WorkPage({ params }: { params: Promise<{ proofId: string }> }) {
 
 function WorkBody({ entry, challenge, company, onChanged }: { entry: PassportEntry; challenge: Challenge | null; company: string; onChanged: () => Promise<void> }) {
   const { proof, original } = entry;
-  const replay = replayFor(proof.proofId);
   const lookFor = Object.fromEntries((challenge?.reviewGuide ?? []).map((g) => [g.skillId, g.lookFor]));
   const scored = entry.responses.filter((r) => r.scores?.length && r.total !== undefined);
 
@@ -71,12 +68,11 @@ function WorkBody({ entry, challenge, company, onChanged }: { entry: PassportEnt
           <CompanyRead entry={entry} />
           {proof.thinkAloud?.transcript ? (
             <div className="mt-8 border-t border-separator pt-6">
-              <h3 className="text-h4 text-label">What I said while working</h3>
-              <p className="text-footnote mt-1 text-label-2">{spokenLength(proof.thinkAloud.seconds)} of thinking aloud, as text.</p>
+              <h3 className="text-h4 text-label">How I thought while working</h3>
+              <p className="text-footnote mt-1 text-label-2">{spokenLength(proof.thinkAloud.seconds)} of work, as text.</p>
               <BlindText text={proof.thinkAloud.transcript} bars className="text-body mt-3 text-label" />
             </div>
           ) : null}
-          {replay ? <LocalReplay replay={replay} className="mt-6" /> : null}
           {original.explain.length ? (
             <ol className="mt-8 flex flex-col gap-5 border-t border-separator pt-6">
               {proof.explain.map((e, i) => (

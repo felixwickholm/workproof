@@ -5,20 +5,18 @@ import { ChooseCards } from "@/components/seeker/work/choose-cards";
 import { AnswerQuote } from "./answer-quote";
 import { TaskMaterial } from "./task-material";
 import { TextArea } from "@/components/ui/field";
-import { SpokenBadge, VoiceButton } from "@/components/voice";
+import { VoiceSoon } from "@/components/voice";
 import type { Challenge } from "@/lib/domain/types";
 import { LIMITS } from "@/lib/http/limits";
 import type { BlindPreview } from "@/lib/service/preview";
 import { clipForDisplay, compareTexts, inSentence } from "./try-copy";
 import type { Answer } from "./try-state";
 
-/** Typing keeps the spoken mark while the words came from the voice; clearing the field drops it. */
-const typed = (current: Answer, text: string): Answer => ({ text, spoken: current.spoken && text.trim().length > 0 });
+/** Answers are typed; voice is planned, so nothing here is marked as spoken. */
+const typed = (text: string): Answer => ({ text, spoken: false });
 
-function AnswerInput({ label, prompt, voiceLabel, value, onChange, max, autoFocus }: {
+function AnswerInput({ label, value, onChange, max, autoFocus }: {
   label: string;
-  prompt: string;
-  voiceLabel: string;
   value: Answer;
   onChange: (answer: Answer) => void;
   max: number;
@@ -26,11 +24,8 @@ function AnswerInput({ label, prompt, voiceLabel, value, onChange, max, autoFocu
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <TextArea label={label} hideLabel value={value.text} onChange={(text) => onChange(typed(value, text))} placeholder="Two or three sentences is enough" minRows={4} maxLength={max} autoFocus={autoFocus} />
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <VoiceButton label={voiceLabel} title={voiceLabel} prompt={prompt} maxLength={max} onUse={(text) => onChange({ text, spoken: true })} />
-        {value.spoken ? <SpokenBadge /> : null}
-      </div>
+      <TextArea label={label} hideLabel value={value.text} onChange={(text) => onChange(typed(text))} placeholder="Two or three sentences is enough" minRows={4} maxLength={max} autoFocus={autoFocus} />
+      <VoiceSoon />
     </div>
   );
 }
@@ -64,7 +59,7 @@ export function TaskStep({ challenge, job, generic, answer, onAnswer, choice, on
         </div>
       ) : null}
       <div className="mt-6">
-        <AnswerInput label="Your answer" prompt={challenge.deliverable} voiceLabel="Say your answer" value={answer} onChange={onAnswer} max={LIMITS.answer} />
+        <AnswerInput label="Your answer" value={answer} onChange={onAnswer} max={LIMITS.answer} />
         {challenge.aiAllowed ? <p className="text-footnote mt-3 text-label-2">AI allowed. Use it the way you would at work.</p> : null}
       </div>
     </>
@@ -78,7 +73,7 @@ export function ExplainStep({ question, answer, explain, onExplain }: { question
       <p className="text-footnote text-label-2">One question about your answer</p>
       <h1 className="text-title-3 mt-1 mb-5 font-semibold text-pretty text-label">{question}</h1>
       <AnswerQuote text={answer} />
-      <AnswerInput label="Your explanation" prompt={question} voiceLabel="Say it instead" value={explain} onChange={onExplain} max={LIMITS.explain} autoFocus />
+      <AnswerInput label="Your explanation" value={explain} onChange={onExplain} max={LIMITS.explain} autoFocus />
     </>
   );
 }

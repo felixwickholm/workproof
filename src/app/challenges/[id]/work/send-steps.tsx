@@ -4,12 +4,10 @@ import { CircleCheck } from "lucide-react";
 import type { ReactNode } from "react";
 import { BlindCompare, BlindText } from "@/components/proof";
 import { BigButton, GatedAction } from "@/components/seeker/gated-action";
-import { LocalReplay } from "@/components/think-aloud/local-replay";
-import type { Replay } from "@/components/think-aloud/replays";
 import { Field, TextArea } from "@/components/ui/field";
 import { Screen } from "@/components/ui/screen";
 import { Switch } from "@/components/ui/switch";
-import { SpokenBadge, VoiceButton } from "@/components/voice";
+import { VoiceSoon } from "@/components/voice";
 import { LIMITS } from "@/lib/http/limits";
 
 export interface Answers {
@@ -55,24 +53,21 @@ function ErrorLine({ error }: { error: string | null }) {
   ) : null;
 }
 
-/** Two short questions about the person's own choices, from the server. Write or say each answer. */
+/** Two short questions about the person's own choices, from the server. The person writes each answer. */
 export function QuestionsStep({ answers, onAnswers, onBack, onNext }: { answers: Answers; onAnswers: (a: Answers) => void; onBack: () => void; onNext: () => void }) {
   const set = (i: number, value: { answer: string; spoken: boolean }) => onAnswers({ ...answers, given: answers.given.map((g, j) => (j === i ? value : g)) });
   return (
     <Screen back={{ onBack }} bottom={<GatedAction onClick={onNext} locked={answers.given.some((g) => !g.answer.trim())} reason="Answer both questions to go on.">Continue</GatedAction>}>
-      <Title sub="About your own choices. Write a few lines, or say it.">Two questions</Title>
+      <Title sub="About your own choices. Write a few lines.">Two questions</Title>
       <div className="flex flex-col gap-8">
         {answers.questions.map((question, i) => (
           <section key={question}>
             <h2 className="mb-3 text-[20px] leading-[28px] font-semibold text-pretty text-label">{question}</h2>
-            <TextArea label={`Answer ${i + 1}`} hideLabel value={answers.given[i]?.answer ?? ""} onChange={(answer) => set(i, { answer, spoken: answer.trim() ? (answers.given[i]?.spoken ?? false) : false })} placeholder="A few lines is enough" minRows={3} maxLength={LIMITS.explain} />
-            <div className="mt-2 flex flex-wrap items-center gap-3">
-              <VoiceButton label="Say it" title="Your answer" prompt={question} onUse={(answer) => set(i, { answer, spoken: true })} />
-              {answers.given[i]?.spoken ? <SpokenBadge /> : null}
-            </div>
+            <TextArea label={`Answer ${i + 1}`} hideLabel value={answers.given[i]?.answer ?? ""} onChange={(answer) => set(i, { answer, spoken: false })} placeholder="A few lines is enough" minRows={3} maxLength={LIMITS.explain} />
           </section>
         ))}
       </div>
+      <VoiceSoon className="mt-4" />
     </Screen>
   );
 }
@@ -160,8 +155,8 @@ export function PreviewStep({ preview, busy, error, onBack, onEdit, onSend }: Pr
         <BlindCompare original={preview.original} blind={preview.work} hiddenCount={preview.hiddenCount} labels={["What you wrote", "What the company reads"]} initialSide="blind" />
         {preview.transcript ? (
           <section className="mt-8">
-            <h2 className="mb-3 text-[20px] leading-[28px] font-semibold text-label">What you said while working</h2>
-            <BlindCompare original={preview.originalTranscript} blind={preview.transcript} hiddenCount={preview.transcriptHidden} labels={["What you said", "What the company reads"]} initialSide="blind" />
+            <h2 className="mb-3 text-[20px] leading-[28px] font-semibold text-label">How you thought while working</h2>
+            <BlindCompare original={preview.originalTranscript} blind={preview.transcript} hiddenCount={preview.transcriptHidden} labels={["What you wrote", "What the company reads"]} initialSide="blind" />
           </section>
         ) : null}
         {preview.explain.length ? (
@@ -185,8 +180,8 @@ export function PreviewStep({ preview, busy, error, onBack, onEdit, onSend }: Pr
   );
 }
 
-/** After Send: who scores it, the recording to replay on this device, and the way to the work. */
-export function DoneStep({ company, proofId, replay }: { company: string; proofId: string; replay: Replay | null }) {
+/** After Send: who scores it, and the way to the work. */
+export function DoneStep({ company, proofId }: { company: string; proofId: string }) {
   return (
     <Screen
       bottom={
@@ -206,7 +201,6 @@ export function DoneStep({ company, proofId, replay }: { company: string; proofI
         <h1 className="mt-6 font-serif text-[40px] leading-[44px] text-balance text-label">Done. A person at {company} will score it.</h1>
         <p className="text-body mt-3 text-pretty text-label-2">You will see the score and the reason in My work.</p>
       </div>
-      {replay ? <LocalReplay replay={replay} className="mt-8" /> : null}
     </Screen>
   );
 }
