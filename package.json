@@ -1,5 +1,5 @@
 {
-  "name": "tryout",
+  "name": "workprint",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,12 +10,14 @@
     "test": "vitest run src",
     "eval": "vitest run evals",
     "check:ai": "node scripts/check-ai.mjs",
+    "evidence": "node scripts/refresh-evidence.mjs",
     "eval:e2e": "npx -y -p playwright@1.64.1 -c 'PLAYWRIGHT_MODULES=$(dirname $(dirname $(command -v playwright))) node evals/e2e/run.mjs'"
   },
   "dependencies": {
     "lucide-react": "^1.72.0",
     "motion": "^14.14.0",
     "next": "16.4.6",
+    "qrcode-generator": "2.0.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "zod": "^4.6.7"

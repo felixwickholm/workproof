@@ -17,7 +17,7 @@ if (!KEYS.some((name) => process.env[name]?.trim())) {
   process.exit(0);
 }
 
-const env = { TRYOUT_LIVE_AI: "1" };
+const env = { WORKPRINT_LIVE_AI: "1" };
 for (const name of [...KEYS, "ANTHROPIC_MODEL", "GEMINI_MODEL"]) env[name] = process.env[name] ?? "";
 
 let failed = 0;
