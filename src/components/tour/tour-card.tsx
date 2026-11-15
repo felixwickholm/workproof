@@ -151,7 +151,7 @@ export function TourCard({
       onPointerEnter={(event) => mouse(event) && onHover(true)}
       onPointerLeave={(event) => mouse(event) && onHover(false)}
       style={{ maxHeight }}
-      className="flex flex-col rounded-card bg-raised shadow-float outline-none max-[639px]:rounded-b-none"
+      className="flex flex-col rounded-card bg-raised shadow-float ring-2 ring-accent outline-none max-[639px]:rounded-b-none max-[639px]:ring-0"
     >
       <div className="shrink-0 px-6 pt-5 max-[639px]:px-5 max-[639px]:pt-4">
         <div className="flex h-8 items-center justify-between gap-3">
@@ -181,11 +181,11 @@ export function TourCard({
                 {step.view}
               </p>
             ) : null}
-            <h2 id="tour-title" className={cx(step.view ? "mt-2" : "mt-4", "text-[26px] leading-8 font-semibold tracking-[-0.015em] text-balance text-label min-[640px]:text-[28px] min-[640px]:leading-[34px]")}>
+            <h2 id="tour-title" className={cx(step.view ? "mt-2" : "mt-4", "text-[26px] leading-8 font-semibold tracking-[-0.015em] text-balance text-label min-[640px]:text-[34px] min-[640px]:leading-[40px]")}>
               {step.title}
             </h2>
             {step.body ? (
-              <p id="tour-body" className="mt-2 text-[19px] leading-7 text-pretty text-label-2 min-[640px]:text-[20px]">
+              <p id="tour-body" className="mt-2 text-[19px] leading-7 text-pretty text-label-2 min-[640px]:text-[23px] min-[640px]:leading-[32px]">
                 {step.body}
               </p>
             ) : null}

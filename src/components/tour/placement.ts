@@ -43,9 +43,7 @@ const MARGIN = 16;
 /** Below this width the card docks to the bottom of the screen, edge to edge. */
 export const PHONE_MAX = 640;
 /** The card's width on a laptop. */
-const CARD_WIDTH = 460;
-/** Where a target too tall for the screen starts: its top this far under the top edge. */
-const TALL_TOP = 24;
+const CARD_WIDTH = 600;
 /** How close the caret may come to a corner of the card, so it never sits on the rounded part. */
 const ARROW_INSET = 28;
 /** The card's height before it is measured: about a title, three lines and the buttons. */
@@ -77,9 +75,17 @@ function above(spot: Box, limit: number): Box | null {
   return bottom - spot.y < 24 ? null : { ...spot, height: bottom - spot.y };
 }
 
+/** Cuts the spotlight to the part below `limit`, the card's bottom edge. Null when nothing is left. */
+function below(spot: Box, limit: number): Box | null {
+  const top = Math.max(spot.y, limit + GAP / 2);
+  const bottom = spot.y + spot.height;
+  return bottom - top < 24 ? null : { ...spot, y: top, height: bottom - top };
+}
+
 /**
- * Beside the target when there is room, else below or above it. When none fits (a tall target
- * on a laptop), the card docks at the bottom and the spotlight ends above it. On a phone the card
+ * On a laptop the card sits above the target when there is room, so the story reads top to bottom:
+ * the card first, then what it shows. Else below it, else beside it. When none fits (a tall target),
+ * the card docks at the top of the screen and the spotlight starts under it. On a phone the card
  * always docks at the bottom edge, full width, with no caret: the accent ring alone marks the target.
  */
 export function placeCard(view: Viewport, target: Box | null, card: { width: number; height: number }): Placement {
@@ -95,32 +101,30 @@ export function placeCard(view: Viewport, target: Box | null, card: { width: num
   if (!target) return none;
   const spot = onScreen(inflate(target), view);
   if (!spot) return none;
-  const docked = { x: (view.width - card.width) / 2, y: view.height - view.bottom - MARGIN - card.height };
-
   const right = view.width - MARGIN;
   const bottom = view.height - view.bottom - MARGIN;
   const midY = clamp(spot.y + spot.height / 2 - card.height / 2, view.top + MARGIN, bottom - card.height);
   const midX = clamp(spot.x + spot.width / 2 - card.width / 2, MARGIN, right - card.width);
   const fitsTall = card.height <= bottom - view.top - MARGIN;
 
+  if (spot.y - GAP - card.height >= view.top + MARGIN) {
+    return withArrow({ x: midX, y: spot.y - GAP - card.height }, "above", spot, card);
+  }
+  if (spot.y + spot.height + GAP + card.height <= bottom) {
+    return withArrow({ x: midX, y: spot.y + spot.height + GAP }, "below", spot, card);
+  }
   if (fitsTall && spot.x + spot.width + GAP + card.width <= right) {
     return withArrow({ x: spot.x + spot.width + GAP, y: midY }, "right", spot, card);
   }
   if (fitsTall && spot.x - GAP - card.width >= MARGIN) {
     return withArrow({ x: spot.x - GAP - card.width, y: midY }, "left", spot, card);
   }
-  if (spot.y + spot.height + GAP + card.height <= bottom) {
-    return withArrow({ x: midX, y: spot.y + spot.height + GAP }, "below", spot, card);
-  }
-  if (spot.y - GAP - card.height >= view.top + MARGIN) {
-    return withArrow({ x: midX, y: spot.y - GAP - card.height }, "above", spot, card);
-  }
-  const low = { x: midX, y: docked.y };
-  return withArrow(low, "docked", above(spot, low.y), card);
+  const high = { x: midX, y: view.top + MARGIN };
+  return withArrow(high, "docked", below(spot, high.y + card.height), card);
 }
 
 /** The card's edge that faces the spotlight, for each side the card can take. */
-const EDGE: Record<Exclude<Side, "center">, Arrow["edge"]> = { right: "left", left: "right", below: "top", above: "bottom", docked: "top" };
+const EDGE: Record<Exclude<Side, "center">, Arrow["edge"]> = { right: "left", left: "right", below: "top", above: "bottom", docked: "bottom" };
 
 /** Completes a placement with the caret, aimed at the middle of the spotlight along the facing edge. */
 function withArrow(at: { x: number; y: number }, side: Exclude<Side, "center">, spot: Box | null, card: { width: number; height: number }): Placement {
@@ -136,8 +140,8 @@ function withArrow(at: { x: number; y: number }, side: Exclude<Side, "center">, 
 
 /**
  * Where the page should scroll so the target and the card both fit. On a phone the target goes
- * to the top third, above the docked card. On a laptop the target and a card below it are centred
- * together; a target too tall for that starts 24px under the top edge.
+ * to the top third, above the docked card. On a laptop a card and the target below it are centred
+ * together; a target too tall for that starts under the card docked at the top.
  * `target.y` is in page coordinates; returns a page scroll offset within [0, maxScroll].
  */
 export function scrollFor(view: Viewport, target: Box, cardHeight: number, maxScroll: number): number {
@@ -148,11 +152,12 @@ export function scrollFor(view: Viewport, target: Box, cardHeight: number, maxSc
   if (phone) {
     topOnScreen = view.top + MARGIN;
   } else if (spot.height + GAP + cardHeight <= free - 2 * MARGIN) {
-    topOnScreen = view.top + (free - (spot.height + GAP + cardHeight)) / 2;
+    // The card above, the target under it, the pair centred.
+    topOnScreen = view.top + (free - (spot.height + GAP + cardHeight)) / 2 + cardHeight + GAP;
   } else if (spot.height <= free - 2 * MARGIN) {
     topOnScreen = view.top + (free - spot.height) / 2;
   } else {
-    topOnScreen = view.top + TALL_TOP - SPOT_PADDING;
+    topOnScreen = view.top + MARGIN + cardHeight + GAP;
   }
   return clamp(Math.round(spot.y - topOnScreen), 0, maxScroll);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { BookOpen, ChevronsUpDown, Moon, Play, RotateCcw, Scale, Sun } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useId, useRef, useState, type ReactNode } from "react";
 import type { Theme } from "../theme/theme";
 import { useTheme } from "../theme/use-theme";
@@ -11,7 +11,7 @@ import { Popover } from "../ui/popover";
 import { SegmentedControl } from "../ui/segmented-control";
 import { startTour, useResetDemo } from "./demo-actions";
 import { MenuAction, onMenuKey } from "./mode-menu";
-import { modeForPath, type Mode } from "./modes";
+import { type Mode } from "./modes";
 import { useAccount } from "./use-account";
 
 const ICON = "size-5";
@@ -37,12 +37,11 @@ export function AccountSummary({ mode, className }: { mode: Mode; className?: st
 }
 
 /**
- * The rarely used actions, together in one place: the demo of this view, a reset, the theme and the
+ * The rarely used actions, together in one place: the guided story from the start, a reset, the theme and the
  * pages around the app (there is no landing page). `onDone` closes whatever holds the menu.
  */
 export function AccountActions({ onDone }: { onDone: () => void }) {
   const router = useRouter();
-  const view = modeForPath(usePathname())?.id;
   const { reset, busy } = useResetDemo();
   const { theme, setTheme } = useTheme();
   return (
@@ -50,11 +49,11 @@ export function AccountActions({ onDone }: { onDone: () => void }) {
       <MenuAction
         onClick={() => {
           onDone();
-          startTour(view);
+          startTour();
         }}
         icon={<Play aria-hidden className={ICON} strokeWidth={STROKE} />}
       >
-        {view ? "Show me this view" : "Watch the 1-minute tour"}
+        Show me, from the start
       </MenuAction>
       <MenuAction
         disabled={busy}

@@ -9,8 +9,8 @@ const overlaps = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width 
 const cardBox = (p: { card: { x: number; y: number } }, size = card): Box => ({ ...p.card, ...size });
 
 describe("cardWidth", () => {
-  it("is 460 on a laptop and the whole screen on a phone", () => {
-    expect(cardWidth(1440)).toBe(460);
+  it("is 600 on a laptop and the whole screen on a phone", () => {
+    expect(cardWidth(1440)).toBe(600);
     expect(cardWidth(390)).toBe(390);
     expect(cardWidth(320)).toBe(320);
   });
@@ -21,8 +21,15 @@ describe("placeCard", () => {
     expect(placeCard(laptop, null, card)).toEqual({ card: { x: 490, y: 320 }, side: "center", spot: null, arrow: null });
   });
 
-  it("puts the card beside a narrow target", () => {
-    const target = { x: 300, y: 200, width: 400, height: 300 };
+  it("puts the card above a target when there is room", () => {
+    const target = { x: 300, y: 400, width: 400, height: 300 };
+    const placed = placeCard(laptop, target, card);
+    expect(placed.side).toBe("above");
+    expect(overlaps(cardBox(placed), placed.spot!)).toBe(false);
+  });
+
+  it("puts the card beside a target with no room above or below", () => {
+    const target = { x: 300, y: 200, width: 400, height: 500 };
     const placed = placeCard(laptop, target, card);
     expect(placed.side).toBe("right");
     expect(overlaps(cardBox(placed), placed.spot!)).toBe(false);
@@ -80,8 +87,8 @@ describe("placeCard", () => {
   });
 
   it("points the caret from the card's near edge at the middle of the target", () => {
-    const beside = placeCard(laptop, { x: 300, y: 200, width: 400, height: 300 }, card);
-    expect(beside.arrow).toEqual({ edge: "left", offset: 200 + 150 - beside.card.y });
+    const beside = placeCard(laptop, { x: 300, y: 200, width: 400, height: 500 }, card);
+    expect(beside.arrow).toEqual({ edge: "left", offset: 200 + 250 - beside.card.y });
     const below = placeCard(laptop, { x: 300, y: 100, width: 1100, height: 300 }, card);
     expect(below.arrow).toEqual({ edge: "top", offset: 300 + 550 - below.card.x });
   });
@@ -128,14 +135,14 @@ describe("scrollFor", () => {
     expect(scrollFor(phone, { x: 16, y: 1200, width: 358, height: 200 }, 300, 5000)).toBe(1200 - 8 - 76);
   });
 
-  it("centres a laptop target together with the card below it", () => {
+  it("centres a laptop target together with the card above it", () => {
     const top = scrollFor(laptop, { x: 300, y: 1000, width: 1100, height: 300 }, 260, 5000);
     const onScreen = 1000 - 8 - top;
-    expect(onScreen).toBe((900 - (316 + 16 + 260)) / 2);
+    expect(onScreen).toBe((900 - (316 + 16 + 260)) / 2 + 260 + 16);
   });
 
-  it("puts the top of a target taller than the screen 24px under the top edge", () => {
-    expect(scrollFor(laptop, { x: 300, y: 1000, width: 600, height: 1400 }, 260, 5000)).toBe(1000 - 24);
+  it("puts the top of a target taller than the screen under the card docked at the top", () => {
+    expect(scrollFor(laptop, { x: 300, y: 1000, width: 600, height: 1400 }, 260, 5000)).toBe(1000 - 8 - (16 + 260 + 16));
   });
 
   it("stays within the page", () => {

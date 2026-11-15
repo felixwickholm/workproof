@@ -5,7 +5,6 @@ const CARDS = 17;
 const END_TITLE = "People get jobs for the work they can do.";
 const END_LABELS = ["Try it as Mikko", "Try it as Laura", "See the city view"];
 /** Where each view's Show me button starts the story: its chapter's first card. */
-const CHAPTER = { seeker: 1, employer: 6, city: 11 };
 /** The whole story must reach its end card within this, with no tap. */
 const STORY_BUDGET_MS = 220_000;
 /** The longest a step may take to give way to the next one: its own time plus a slow screen. */
@@ -239,7 +238,7 @@ async function showMe(browser, device, name, notes) {
     ["employer", "/employer"],
     ["city", "/city"],
   ]) {
-    await suite.step(`s-${view} Show me on ${home} starts at card ${CHAPTER[view]}, and Skip closes it`, async () => {
+    await suite.step(`s-${view} Show me on ${home} starts at card 1, and Skip closes it`, async () => {
       await page.goto(`${BASE_URL}${home}`);
       const button = page.locator(`[data-show-me="${view}"]`).filter({ visible: true }).first();
       if (await button.waitFor({ timeout: 10_000 }).then(() => true, () => false)) {
@@ -249,7 +248,7 @@ async function showMe(browser, device, name, notes) {
         await page.goto(`${BASE_URL}${home}?tour=${view}`);
       }
       await away(page);
-      await at(CHAPTER[view]).waitFor({ timeout: 15_000 });
+      await at(1).waitFor({ timeout: 15_000 });
       await settled(page);
       await checkCard(page, errors, `${name} ${view}`);
       await dialog.locator("[data-tour-skip]").click();

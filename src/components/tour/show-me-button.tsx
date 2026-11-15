@@ -9,7 +9,7 @@ import { localStore, takePulse } from "./first-visit";
 import type { TourView } from "./steps";
 
 /**
- * "Show me": starts the guided story at the chapter of the view it sits in, and plays on from there.
+ * "Show me": starts the guided story from its first card, whichever view it sits in, so it is always clear.
  * The first time a visitor opens the view in this browser it pulses gently twice, so it is found.
  */
 export function ShowMeButton({ view, className }: { view: TourView; className?: string }) {
@@ -25,7 +25,7 @@ export function ShowMeButton({ view, className }: { view: TourView; className?: 
     <motion.button
       ref={scope}
       type="button"
-      onClick={() => startTour(view)}
+      onClick={() => startTour()}
       // Motion owns this button's transform (the pulse), so the press is Motion's too.
       whileTap={reduce ? undefined : { scale: 0.97 }}
       data-show-me={view}
@@ -39,7 +39,7 @@ export function ShowMeButton({ view, className }: { view: TourView; className?: 
       </span>
       <span className="flex min-w-0 flex-col">
         <span className="text-[17px] leading-6 font-semibold text-label">Show me</span>
-        <span className="text-[15px] leading-5 text-label-2">The guided story, from here</span>
+        <span className="text-[15px] leading-5 text-label-2">The guided story, from the start</span>
       </span>
     </motion.button>
   );
