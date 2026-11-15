@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WorkProof: the brief and the build</title>
+<meta name="description" content="Do a real challenge. A person at the company scores your work; the AI never scores. A Junction 2026 entry for the City of Espoo challenge &quot;Rethinking Recruitment&quot;: the brief, the build, the three views, the AI and its limits, and the measured evidence.">
+<meta name="author" content="WorkProof team">
+<link rel="canonical" href="https://workproof.wicflow.com/brief">
+<link rel="alternate" type="application/pdf" href="/brief.pdf" title="WorkProof: the brief and the build (PDF)">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="WorkProof">
+<meta property="og:title" content="WorkProof: the brief and the build">
+<meta property="og:description" content="Do a real challenge. A person at the company scores your work; the AI never scores. A Junction 2026 entry for the City of Espoo challenge &quot;Rethinking Recruitment&quot;: the brief, the build, the three views, the AI and its limits, and the measured evidence.">
+<meta property="og:url" content="https://workproof.wicflow.com/brief">
+<meta property="og:image" content="https://workproof.wicflow.com/opengraph-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="WorkProof: the brief and the build">
+<meta name="twitter:description" content="Do a real challenge. A person at the company scores your work; the AI never scores. A Junction 2026 entry for the City of Espoo challenge &quot;Rethinking Recruitment&quot;: the brief, the build, the three views, the AI and its limits, and the measured evidence.">
+<style>
+/*
+ * WorkProof: the brief and the build. One stylesheet for the web page at /brief and the A4 PDF at
+ * /brief.pdf. White ground, one accent (Business Espoo navy, the app's --color-accent), system sans.
+ */
+:root {
+  --ink: #0b1530;
+  --muted: #4a5468;
+  --line: #dfe3ea;
+  --wash: #f3f5f9;
+  --accent: #012169;
+  --accent-wash: #eef2fa;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: var(--ink);
+  font-family: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  /* No ligatures: copied or extracted text keeps plain letters ("wicflow", not a single "fl" glyph). */
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "clig" 0;
+}
+
+main {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 40px 16px 64px;
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--accent);
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: 34px;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 28px 0 10px;
+  padding-top: 14px;
+  border-top: 2px solid var(--accent);
+}
+
+h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 18px 0 6px;
+}
+
+p {
+  margin: 0 0 10px;
+}
+
+ul,
+ol {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+
+li {
+  margin: 0 0 5px;
+}
+
+code {
+  font-family: "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.88em;
+  background: var(--wash);
+  border-radius: 4px;
+  padding: 1px 4px;
+  overflow-wrap: anywhere;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.lede {
+  font-size: 17px;
+  line-height: 1.45;
+  margin: 12px 0 14px;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+.criteria li strong {
+  color: var(--accent);
+}
+
+.facts {
+  margin: 16px 0 0;
+  padding: 14px 16px 10px;
+  background: var(--accent-wash);
+  border-radius: 10px;
+  break-inside: avoid;
+}
+
+.facts h2 {
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  font-size: 16px;
+}
+
+.facts dl {
+  display: grid;
+  grid-template-columns: 9.5em 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.facts dt {
+  font-weight: 700;
+}
+
+.facts dd {
+  margin: 0;
+}
+
+blockquote {
+  margin: 0 0 10px;
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+
+figure {
+  margin: 10px 0 14px;
+  break-inside: avoid;
+}
+
+figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+figcaption {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+.view {
+  break-inside: avoid;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  line-height: 1.35;
+  margin: 6px 0 12px;
+}
+
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 8px 5px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+th {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+tr {
+  break-inside: avoid;
+}
+
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 24px;
+}
+
+.small {
+  font-size: 13px;
+}
+
+.note {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+h2,
+h3 {
+  break-after: avoid;
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: 28px;
+  }
+  .two {
+    grid-template-columns: 1fr;
+  }
+  .facts dl {
+    grid-template-columns: 1fr;
+  }
+  .facts dd {
+    margin-bottom: 6px;
+  }
+  table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+@page {
+  size: A4;
+  margin: 14mm 15mm 16mm;
+}
+
+@media print {
+  body {
+    font-size: 10.5pt;
+    line-height: 1.42;
+  }
+  main {
+    max-width: none;
+    padding: 0;
+  }
+  h1 {
+    font-size: 25pt;
+  }
+  h2 {
+    font-size: 15pt;
+    margin-top: 16pt;
+  }
+  .lede {
+    font-size: 12pt;
+  }
+  .page {
+    break-before: page;
+  }
+  .page > h2:first-child {
+    margin-top: 0;
+  }
+  figure img {
+    max-height: 88mm;
+    object-fit: cover;
+    object-position: top left;
+  }
+  a {
+    text-decoration: none;
+  }
+  header + section h2 {
+    margin-top: 10pt;
+  }
+  .criteria li {
+    font-size: 9.5pt;
+    margin-bottom: 3pt;
+  }
+  .facts {
+    padding: 9pt 11pt 7pt;
+    margin-top: 8pt;
+  }
+  .facts dl {
+    font-size: 8.8pt;
+    gap: 2pt 10pt;
+    line-height: 1.32;
+  }
+  .small,
+  .small li {
+    font-size: 9.3pt;
+  }
+  table.evidence {
+    font-size: 8.3pt;
+    margin-bottom: 6pt;
+  }
+  table.evidence td {
+    padding: 2.5pt 6pt 2.5pt 0;
+  }
+  .commands {
+    columns: 2;
+    column-gap: 18pt;
+    font-size: 9pt;
+  }
+  .commands li {
+    break-inside: avoid;
+  }
+}
+
+</style>
+</head>
+<body>
+<main>
+
+<header>
+<p class="eyebrow">Junction 2026 · City of Espoo · Rethinking Recruitment</p>
+<h1>WorkProof: the brief and the build</h1>
+<p class="lede">WorkProof is for City of Espoo talent events. Companies see real work and score it; the AI never scores. A professional does a short real task from an Espoo company. A named person at the company scores the work from 1 to 5 on each of the task's skills, writes a reason, and chooses Meet or Not now. As a safeguard, the name stays hidden until the professional accepts. Tested: 0 of 79 planted identity details reached a reviewer.</p>
+<p class="links"><span>Live demo: <a href="https://workproof.wicflow.com">workproof.wicflow.com</a></span><span>Code: <a href="https://github.com/felixwickholm/workproof">github.com/felixwickholm/workproof</a></span><span>This brief as PDF: <a href="https://workproof.wicflow.com/brief.pdf">workproof.wicflow.com/brief.pdf</a></span></p>
+</header>
+
+<section aria-labelledby="summary">
+<h2 id="summary">One-page summary</h2>
+<p><strong>What it is.</strong> Do a real challenge. A person at the company scores your work; the AI never scores. WorkProof turns a recruitment event into short real work: a company posts a challenge, a person does it, and a named person at the company reads the work without the name.</p>
+<p><strong>For whom.</strong> Professionals looking for work (Job seeker view); Companies hiring at the event (Company view); City of Espoo event organisers (City of Espoo view).</p>
+<h3>How each judging criterion is met</h3>
+<ul class="criteria"><li><strong>Impact &amp; Relevance (45%).</strong> Companies register with a short real challenge in one of four formats (Choose, Make, Fix, Read). Evidence: Flow eval: every step from task to a meeting both sides confirmed passes (evals/flow.eval.ts).</li><li><strong>Innovation &amp; User Experience (35%).</strong> A short real task to score. Evidence: Story eval: every story stage rebuilds the visitor's own demo event (evals/story.eval.ts); end-to-end run on a 390x844 screen (evals/e2e).</li><li><strong>Responsible &amp; Feasible Execution (20%).</strong> AI never scores or ranks people: a guard checks every AI output. Evidence: Guard: 70 of 70 planted judging phrases rejected; 575 of 575 text fields of drafted tasks and follow-up questions pass; blind layer: 0 of 79 planted identity strings reach a reviewer; 0 automated decisions.</li></ul>
+<div class="facts" role="region" aria-labelledby="key-facts">
+<h2 id="key-facts">Key facts</h2>
+<dl>
+<dt>Name</dt><dd>WorkProof</dd>
+<dt>Challenge</dt><dd>"Rethinking Recruitment" by the City of Espoo, Junction 2026 (13 to 15 November 2026)</dd>
+<dt>Views</dt><dd>Job seeker, Company, City of Espoo, in one app</dd>
+<dt>AI role</dt><dd>Drafts a task from a company's one-sentence need, with 3 to 5 core skills. Writes two follow-up questions about the person's own choices in their answer. A person approves every company task.</dd>
+<dt>AI never</dt><dd>Scores, ranks, rates or recommends a person. Receives a person's name or contact field. Decides Meet or Not now. Analyses a voice or a face.</dd>
+<dt>Who decides</dt><dd>A named reviewer gives 1 to 5 points per core skill and writes a reason. The name of the person stays hidden until they accept.</dd>
+<dt>Evidence</dt><dd>2054 of 2054 unit tests and 64 of 64 eval tests pass (checked 2026-11-15). 0 of 79 planted identity details reached a reviewer. 70 of 70 planted judging phrases rejected. 0 automated decisions.</dd>
+<dt>Demo data</dt><dd>28 companies, 40 challenges, 80 pieces of work. All synthetic. No sign-in, no keys.</dd>
+<dt>Links</dt><dd><a href="https://workproof.wicflow.com">https://workproof.wicflow.com</a> · <a href="https://github.com/felixwickholm/workproof">https://github.com/felixwickholm/workproof</a> · <a href="https://workproof.wicflow.com/for-judges">https://workproof.wicflow.com/for-judges</a></dd>
+</dl>
+</div>
+</section>
+
+<section class="page" aria-labelledby="brief">
+<h2 id="brief">The brief</h2>
+<p>The City of Espoo runs recruitment and matchmaking events for companies and international talent. CVs and messages are now written and read with AI, so companies get more noise and less signal. The brief asks how the events can help companies and talent find each other on real grounds, with less noise from registration to the event, and without automated profiling or automated decisions about people.</p>
+<blockquote>How can recruitment and matchmaking events organized by City of Espoo help companies and talent relevantly find and connect with each other, despite AI-generated job search materials and AI-assisted recruitment processes are becoming common?</blockquote>
+<blockquote>…solutions that help create stronger signal and less noise throughout the process of registering and attending an event…</blockquote>
+<blockquote>…automated profiling or automated decision-making about individuals without human involvement should not be a part of the solution.</blockquote>
+
+<h2 id="solution">The solution</h2>
+<p>WorkProof replaces the CV with a short piece of real work. A company describes its need in one sentence or pastes a job-ad link. The AI drafts a challenge with 3 to 5 core skills, and a person at the company approves it. A professional does the challenge in 8 to 30 minutes and answers two follow-up questions about their own choices. Rules remove known personal details before anyone reads the work.</p>
+<p>A named reviewer at the company reads the work, gives 1 to 5 points on each core skill, writes a reason and chooses Meet or Not now. The person sees the scores and the words. The company sees the name only after the person accepts. The city sees every step from challenge taken to hire, and the work still waiting.</p>
+<p>The demo story follows one loop: Mikko Lahtinen, a designer, does Halla Supply's challenge "Make our order form easier to use". Laura Niemi at Halla Supply scores it and invites him. Mikko accepts, and only then does Halla Supply see his name.</p>
+<h3>How it is built</h3>
+<p>One Next.js app. Pages and the JSON API call the service rules. The rules pass work through the blind layer before anyone reads it (rules remove known personal details; some can remain), check every AI output with the guard, and keep each visitor's demo copy in memory.</p>
+<h3>What City of Espoo staff told us</h3>
+<p>On 13 November we asked City of Espoo staff if companies could judge people on a short work task. They had thought of something similar &quot;on a smaller scale&quot; and named three risks. Our answers:</p>
+<ul><li><strong>A company hires only a few.</strong> With consent, one proof can reach a second employer with the same core skills (Second look), after 48 hours without an answer or after a Not now.</li><li><strong>Friction must stay low.</strong> No login and no account. The demo challenges take 8 to 30 minutes. The stated length is capped at 30.</li><li><strong>AI can do the task.</strong> AI is allowed. Two follow-up questions ask about the person's own choices, and the meeting starts from the work.</li></ul>
+</section>
+
+<section class="page" aria-labelledby="views">
+<h2 id="views">The three views</h2>
+<div class="view">
+<h3>Job seeker view, for professionals looking for work</h3>
+<p>Pick a challenge from an Espoo company, do it in 8 to 30 minutes and write how they think, see what the company will read, answer two follow-up questions, then accept or decline an invitation. A declined company never sees the name. Open it: <a href="https://workproof.wicflow.com">workproof.wicflow.com</a>.</p>
+
+<figure><img src="brief-assets/seeker.png" alt="Job seeker view: Halla Supply's challenge Make our order form easier to use, with the company logo, an illustrative picture, the company facts and a See my work button, since Mikko did it." width="1440" height="900"><figcaption>Job seeker: a challenge from Halla Supply that Mikko has done.</figcaption></figure>
+</div>
+<div class="view">
+<h3>Company view, for companies hiring at the event</h3>
+<p>Paste a job-ad link or say the need in one sentence, approve a challenge with 3 to 5 core skills and a number of places, read the work without names in arrival order, score each core skill from 1 to 5 with a written reason, and invite the people to meet. Open it: <a href="https://workproof.wicflow.com/employer">workproof.wicflow.com/employer</a>.</p>
+
+<figure><img src="brief-assets/top-work.png" alt="Company view: top work for Make our order form easier to use. Each piece of work shows Laura Niemi's total out of 10 and her points per skill. Work K7 is invited and its name stays hidden until the person says yes." width="1440" height="900"><figcaption>Company: top work by the reviewer's own totals. Names stay hidden until the person says yes.</figcaption></figure>
+</div>
+</section>
+
+<section class="page" aria-labelledby="city-view">
+<div class="view">
+<h3 id="city-view">City of Espoo view, for City of Espoo event organisers</h3>
+<p>See outcomes, not sign-ups: challenges taken, scored, invited, talked, follow-ups agreed and hires. Make a challenge for a company from its job ad, draft a reminder to a company with work waiting, and export the list of talks. Slots and labels, never names. Open it: <a href="https://workproof.wicflow.com/city">workproof.wicflow.com/city</a>.</p>
+
+<figure><img src="brief-assets/city.png" alt="City of Espoo view: the graph from challenge to hire (80 took a challenge, 48 scored, 17 invited, 10 said yes, 6 talked, 5 follow-ups agreed, 3 hired) and the work scored or waiting per company." width="1440" height="900"><figcaption>City of Espoo: outcomes, not sign-ups. Demo data.</figcaption></figure>
+</div>
+
+<h2 id="ai">The AI and its limits</h2>
+<div class="two">
+<div>
+<h3>What the AI does</h3>
+<ul><li>Drafts a task from a company's one-sentence need, with 3 to 5 core skills. A person approves every company task. Practice tasks are generated without approval and go to no company.</li><li>Writes two follow-up questions about the person's own choices in their answer.</li><li>Every AI output passes the no-judgement guard; on any failure the scripted designer is used.</li></ul>
+</div>
+<div>
+<h3>What the AI never does</h3>
+<ul><li>Scores, ranks, rates or recommends a person.</li><li>Receives a person's name or contact field. Text is redacted by the same rules before it reaches a model. The built-in designer runs without any model. Rules can miss some details in free text.</li><li>Decides Meet or Not now. WorkProof has no automated decision feature; a decision carries a registered reviewer's name and written feedback.</li><li>Analyses a voice or a face. Voice answers are planned, not live; when they come, WorkProof will store only the text.</li></ul>
+</div>
+</div>
+</section>
+
+<section aria-labelledby="responsible">
+<h2 id="responsible">Responsible AI</h2>
+<p><strong>EU AI Act.</strong> Regulation (EU) 2024/1689 lists AI systems for the recruitment or selection of people as high-risk (Annex III, point 4). That covers systems that filter applications or evaluate candidates. So WorkProof keeps AI out of scoring, ranking and deciding. The AI drafts a task and asks two questions. A named person reads the work, scores it and decides, with a written reason. The duties that match high-risk systems are built anyway: human oversight (Article 14), logs (Article 12) and telling people where AI was involved.</p>
+<p><strong>GDPR Article 22.</strong> A person has the right not to be subject to a decision based solely on automated processing. WorkProof has no automated decision feature. Every Meet or Not now carries the name of a reviewer registered for the company and a written reason. The city view counts decisions without a registered name: 0.</p>
+<p><strong>Privacy.</strong> Review is blind: rules remove known personal details before a reviewer or a model reads the work. The name stays hidden until the person accepts. All data in the demo is synthetic, and the demo has no sign-in.</p>
+<ul class="small"><li>No account. The person's private key is kept in their own browser.</li><li>Reviewers and AI models read work only after the blind layer: known personal details are removed by rules, and some can remain. Responses to companies and the city carry no talent id.</li><li>Accepting shows the name and contact to that company only. The organiser sees slots and labels, never names.</li><li>Second look is off until the person turns it on, and can be withdrawn.</li><li>Answers are typed; voice is planned and would be stored as text only. Pictures are re-encoded in the browser and the server refuses a JPEG that still carries EXIF data.</li><li>Each visitor's demo copy lives in memory and is dropped after 12 hours.</li></ul>
+<p class="small">Every person, company, task, proof and decision in the demo is invented, including Mikko Lahtinen and the 28 employers of &quot;Espoo Talent Day&quot;. Email addresses use example.org and phone numbers are placeholders. Any likeness to a real person or company is accidental. The seed is in src/lib/seed.</p>
+<p class="note">This is a design position, not legal advice. A pilot needs its own legal review, a data protection impact assessment, sign-in and retention rules. Full text: docs/responsible-ai.md in the repository.</p>
+
+<h3>Limits, said plainly</h3>
+<ul class="small"><li>Company and city actions have no sign-in. Any caller can act as any company or as the city in the demo; a pilot needs sign-in and ownership checks.</li><li>Pictures are not analysed. The person confirms that the picture shows only the work, and a reviewer can report one; a reported picture is removed for every reader. Nothing checks what a picture shows automatically.</li><li>AI-written work is not solved. Our untested assumption: follow-up answers about a person's own choices, and a meeting that starts from the work, make AI-only answers easy to notice. This is not measured yet. The product cannot prove who typed an answer.</li><li>Impact is not measured yet. Every outcome in the demo is invented data; the first real test is a pilot event.</li><li>Reviewing takes employer time. A task takes 5 to 30 answers, but reading still takes a person's time.</li><li>Nothing forces an employer to answer. Every recorded decision needs a written reason, and unanswered work stays visible to the city.</li><li>The blind layer is rules, not a guarantee. It misses a lowercase name with no cue word, a bare name with no introduction, another person's name, another spelling of the author's name, and part of an employer name that is not on the list. It over-hides a one-word capitalised sign-off and a capitalised value after &quot;name:&quot; outside a code block.</li></ul>
+</section>
+
+<section aria-labelledby="evidence">
+<h2 id="evidence">Evidence</h2>
+<p class="small">All numbers come from real runs of the project's own checks, last on 2026-11-15. <code>npm test</code>: 2054 of 2054 unit tests pass in 141 files. <code>npm run eval</code>: 64 of 64 eval tests pass in 7 files.</p>
+<table class="evidence">
+<thead><tr><th scope="col">Suite</th><th scope="col">What is checked</th><th scope="col">Result</th></tr></thead>
+<tbody><tr><td>Task generator</td><td>Drafts with a title, a brief, 3 to 5 core skills, minutes and a review guide</td><td>20 of 20 drafts in shape</td></tr><tr><td>Task generator</td><td>Planted biased wishes set aside (age, native speaker, top university)</td><td>3 of 3 baited drafts set it aside</td></tr><tr><td>Task generator</td><td>Planted identity strings in published task cards</td><td>0 planted strings found in 47 published cards from 47 needs</td></tr><tr><td>Blind review</td><td>Planted identity strings that reached the reviewer payload</td><td>0 of 79 planted strings found</td></tr><tr><td>Blind review</td><td>Identity forms hidden, first case set</td><td>54 of 54 cases fully hidden</td></tr><tr><td>Blind review</td><td>Identity forms hidden, second case set</td><td>69 of 72 cases fully hidden, 3 known limits</td></tr><tr><td>No automated decisions</td><td>Planted judging phrases rejected by the guard</td><td>70 of 70 judging phrases rejected</td></tr><tr><td>No automated decisions</td><td>Neutral task phrases let through by the guard</td><td>33 of 33 neutral phrases passed</td></tr><tr><td>No automated decisions</td><td>Text fields of drafted tasks and follow-up questions that pass the guard</td><td>575 of 575 text fields from 32 designer outputs (20 drafts, 12 follow-up sets)</td></tr><tr><td>No automated decisions</td><td>HTTP status of 2 decisions sent without a reviewer or feedback; stored decisions with a named reviewer</td><td>refused: HTTP 400 for a decision without a name, HTTP 400 without feedback; 48 stored decisions all named</td></tr><tr><td>No automated decisions</td><td>Automated decisions in the city totals and the audit log</td><td>0 automated decisions; 0 decision audit lines by a non-human</td></tr><tr><td>No automated decisions</td><td>Decisions signed by software or by a name the company has not registered</td><td>refused: HTTP 400 for &quot;AI bot&quot;, HTTP 403 for an unregistered name, HTTP 400 for a bot as reviewer; accepted after the explicit step: HTTP 200</td></tr><tr><td>Table screen</td><td>Names, emails and numbers typed on phones that reach the public big screen</td><td>0 of 10 names, emails and numbers found; extra fields: none</td></tr><tr><td>Consent and privacy</td><td>Public responses that carry a talent id</td><td>0 of 47 talent ids found in company and city responses</td></tr><tr><td>Consent and privacy</td><td>HTTP status for 5 bad pictures, then for 2 clean JPEGs; the description runs through the blind layer</td><td>refused: HTTP 400, HTTP 400, HTTP 400, HTTP 400, HTTP 400 for EXIF, a /demo path, PNG, video, 1 byte over 300 kB; accepted: HTTP 200 at 300 kB, HTTP 200 clean</td></tr><tr><td>Flow</td><td>Full API flow from task to a meeting both sides confirmed</td><td>28 of 28 steps</td></tr><tr><td>Demo story</td><td>Story stages rebuild the visitor's own demo event</td><td>6 of 6 steps</td></tr></tbody>
+</table>
+
+<h2 id="try">How to try it</h2>
+<p>The live demo needs no sign-in: <a href="https://workproof.wicflow.com">https://workproof.wicflow.com</a>. The shortest path through the whole loop:</p>
+<ol><li><a href="https://workproof.wicflow.com/try">workproof.wicflow.com/try</a>: Do a 2-minute task on a phone and see the blind proof a company would read.</li><li><a href="https://workproof.wicflow.com/table">workproof.wicflow.com/table</a>: Invite that proof with a two-sentence reason, then accept on the phone: only now the name shows on the big screen.</li><li><a href="https://workproof.wicflow.com/city">workproof.wicflow.com/city</a>: See what came of the event, from challenges taken to scores, invitations and talks, and the work still waiting.</li></ol>
+<p>Other pages: <a href="https://workproof.wicflow.com">Job seeker</a> (/), <a href="https://workproof.wicflow.com/challenges">Challenges</a> (/challenges), <a href="https://workproof.wicflow.com/my-work">My work</a> (/my-work), <a href="https://workproof.wicflow.com/employer">Company</a> (/employer), <a href="https://workproof.wicflow.com/company">New challenge</a> (/company), <a href="https://workproof.wicflow.com/company/review">Score work</a> (/company/review), <a href="https://workproof.wicflow.com/for-judges">Evidence for judges</a> (/for-judges).</p>
+<p>Run it yourself from <a href="https://github.com/felixwickholm/workproof">https://github.com/felixwickholm/workproof</a> with Node.js 22 or newer: <code>npm install &amp;&amp; npm run dev</code>, then open http://localhost:3000. No keys are needed.</p>
+<p>Check the claims the same way, no keys needed: <code>npm test</code> (Unit tests next to the code), <code>npm run eval</code> (The eval suites in evals/), <code>npx tsc --noEmit</code> (Type check), <code>npm run lint</code> (ESLint), <code>npm run eval:e2e</code> (Playwright through the real interface at 390x844).</p>
+</section>
+
+</main>
+</body>
+</html>
