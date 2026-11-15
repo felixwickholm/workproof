@@ -1,5 +1,5 @@
 import { EVAL_RESULTS, EVAL_TESTS, UNIT_TESTS, VERIFIED_ON } from "@/app/for-judges/evidence";
-import { CHECK_PATH, CODE_MAP, KEY_FACTS, LIMITS, NAME, ROUTES, SUMMARY } from "@/app/for-judges/facts";
+import { CHECK_PATH, CODE_MAP, ENTRY, ENTRY_POINTS, KEY_FACTS, LIMITS, NAME, ROUTES, SUMMARY } from "@/app/for-judges/facts";
 
 /** Where the rules that back the main claims live in the code. Each path exists in the repository. */
 export const EVIDENCE_IN_CODE: readonly { path: string; what: string }[] = [
@@ -34,6 +34,8 @@ export function buildLlmsTxt(origin: string, repo?: string): string {
     "",
     `> ${SUMMARY}`,
     "",
+    `${ENTRY.event} entry for the ${ENTRY.challengeBy} challenge "${ENTRY.challenge}". Live demo: ${site}.${repo ? ` Code: ${repo.replace(/\/$/, "")} (MIT).` : ""}`,
+    "",
     "Key facts:",
     "",
     ...KEY_FACTS.map((fact) => `- ${fact}`),
@@ -47,6 +49,7 @@ export function buildLlmsTxt(origin: string, repo?: string): string {
     "## Start here",
     "",
     `- [Full text](${site}/llms-full.txt): everything below in one markdown file, with every criterion, guardrail and eval row`,
+    ...ENTRY_POINTS.filter((e) => !["/llms.txt", "/llms-full.txt", "/for-judges"].includes(e.path)).map((e) => `- [${e.title}](${site}${e.path}): ${e.what}`),
     ...CHECK_PATH.map((step) => `- [${step.path}](${site}${step.path}): ${step.what}`),
     `- [Evidence for judges](${site}/for-judges): criteria table, evals, limits, architecture, data and privacy`,
     `- [How it works](${site}/how-it-works): the product in six plain steps, what the AI does and never does, fair questions`,

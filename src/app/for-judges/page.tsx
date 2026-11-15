@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/app/page-meta";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -16,6 +17,7 @@ import {
   CHECK_PATH,
   CRITERIA,
   ENTRY,
+  ENTRY_POINTS,
   GUARDRAILS,
   LIMITS,
   PAINS,
@@ -26,20 +28,12 @@ import {
 } from "./facts";
 import { repoUrl } from "./site";
 
-export const metadata: Metadata = {
-  title: { absolute: "Evidence for judges · WorkProof" },
+export const metadata: Metadata = pageMeta({
+  title: "Evidence for judges",
   description:
-    "How WorkProof, a Junction 2026 entry for the City of Espoo, meets each judging criterion: what was built, where to see it, where it is in the code, and the measured test and eval numbers. Limits included.",
-  alternates: { canonical: "/for-judges" },
-  openGraph: {
-    title: "Evidence for judges · WorkProof",
-    type: "article",
-    siteName: "WorkProof",
-    url: "/for-judges",
-    // A page's own openGraph replaces the file-based image, so it is named here again.
-    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "WorkProof. Hiring that sees the work, not the name. For City of Espoo." }],
-  },
-};
+    "How WorkProof, a Junction 2026 entry for the City of Espoo challenge Rethinking Recruitment, meets each judging criterion: what was built, where to see it, where it is in the code, and the measured test and eval numbers. Limits included.",
+  path: "/for-judges",
+});
 
 const FRAME = "mx-auto w-full max-w-[1100px] px-4 min-[640px]:px-8";
 const H2 = "mt-16 font-serif text-[32px] leading-[36px] tracking-[-0.01em] text-label min-[640px]:text-[40px] min-[640px]:leading-[44px]";
@@ -105,6 +99,22 @@ export default function ForJudgesPage() {
           </a>
           .
         </p>
+
+        <section aria-labelledby="read" className="mt-6">
+          <h2 id="read" className="text-[15px] leading-[22px] font-semibold text-label">
+            Read it in one pass
+          </h2>
+          <ul className="mt-2 flex max-w-[70ch] flex-col gap-1 text-[15px] leading-[22px] text-label">
+            {ENTRY_POINTS.filter((e) => e.path !== "/for-judges").map((e) => (
+              <li key={e.path}>
+                <a href={e.path} className="font-medium underline underline-offset-2">
+                  {e.path}
+                </a>
+                : {e.what}
+              </li>
+            ))}
+          </ul>
+        </section>
 
         <p className="mt-6 max-w-[70ch] text-[17px] leading-[27px] text-label">
           <span className="font-semibold">{FIGURES.plantedReached}</span> planted identity details reached a reviewer.{" "}

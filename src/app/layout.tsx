@@ -67,7 +67,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <section aria-label="About WorkProof" className="sr-only">
           <p>{SUMMARY}</p>
           <p>
-            Evidence for each judging criterion: <a href="/for-judges">/for-judges</a>. Full text: <a href="/llms-full.txt">/llms-full.txt</a>. Source code:{" "}
+            Evidence for each judging criterion: <a href="/for-judges">/for-judges</a>. Full text: <a href="/llms-full.txt">/llms-full.txt</a>. The entry as data:{" "}
+            <a href="/submission.json">/submission.json</a>. The brief and the build: <a href="/brief">/brief</a> and <a href="/brief.pdf">/brief.pdf</a>. Source code:{" "}
             <a href={repoUrl()}>{repoUrl()}</a>.
           </p>
         </section>
