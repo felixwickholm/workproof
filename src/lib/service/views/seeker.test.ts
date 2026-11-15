@@ -9,17 +9,17 @@ const DAY = 86_400_000;
 describe("seeker home", () => {
   it("greets the person by first name with the open invitation", () => {
     const home = buildSeekerHome(sampleEvent(), PRIVATE.mikko, NOW);
-    expect(home.greeting).toEqual({ firstName: "Mikko", fact: "Kaari Home Care wants to meet you." });
+    expect(home.greeting).toEqual({ firstName: "Mikko", fact: "Halla Supply wants to meet you." });
     expect(home.counts).toEqual({ proofs: 2, readByPeople: 2, writtenAnswers: 2, invitations: 1 });
     expect(home.invitations).toEqual([
       {
         meetingId: "m1",
         proofId: "p1",
         proofLabel: "Proof P1",
-        companyName: "Kaari Home Care",
+        companyName: "Halla Supply",
         sector: "Home care",
         district: "Matinkylä",
-        reviewer: "Anna Koivisto",
+        reviewer: "Laura Niemi",
         feedback: "You saw the blood thinner risk.",
         slot: "Sat 13:00, Table 1",
         status: "invited",
@@ -33,7 +33,7 @@ describe("seeker home", () => {
     const passport = buildSeekerHome(sampleEvent(), PRIVATE.mikko, NOW).passport;
     const byProof = new Map(passport.map((e) => [e.proof.proofId, e]));
     expect(byProof.get("p2")?.responses).toMatchObject([{ decision: "pass", reviewer: "Henrik Lund", companyName: "Otso Health" }]);
-    expect(byProof.get("p1")?.responses).toMatchObject([{ decision: "meet", reviewer: "Anna Koivisto" }]);
+    expect(byProof.get("p1")?.responses).toMatchObject([{ decision: "meet", reviewer: "Laura Niemi" }]);
     for (const entry of passport) expect(entry.reviewersAnswered).toBe(entry.seenByHumans);
     expect(passport.map((e) => e.reviewersAnswered)).toEqual([1, 1]);
   });
@@ -49,7 +49,7 @@ describe("seeker home", () => {
     expect(a.proofsSent).toBe(2);
     expect(a.medianReplyHours).toBe(19);
     expect(a.challenge.setAside).toEqual([]);
-    expect(mine[1].companies.map((c) => c.id)).toEqual(["co-kaari", "co-kivira"]);
+    expect(mine[1].companies.map((c) => c.id)).toEqual(["co-halla", "co-kivira"]);
     expect(mine[1].medianReplyHours).toBeNull();
   });
 

@@ -34,7 +34,7 @@ describe("summarySentence", () => {
   });
 
   it("uses the singular for one", () => {
-    expect(summarySentence([{ proofLabel: "K7", companyId: "co-kaari", state: "met" }])).toBe("1 piece of work went to 1 company. 1 scored by a person. 1 invitation.");
+    expect(summarySentence([{ proofLabel: "K7", companyId: "co-halla", state: "met" }])).toBe("1 piece of work went to 1 company. 1 scored by a person. 1 invitation.");
   });
 
   it("says so when nothing has been handed in", () => {

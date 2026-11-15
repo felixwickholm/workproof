@@ -12,7 +12,7 @@ const PLANNING = skill("planning", "Planning");
 const TALK = skill("communication", "Communication");
 
 /** Each company's registered reviewers, as the seed registers them. */
-const REVIEWERS: Record<string, string[]> = { "co-kaari": ["Anna Koivisto"], "co-otso": ["Henrik Lund"], "co-kivira": ["Tomas Berg"] };
+const REVIEWERS: Record<string, string[]> = { "co-halla": ["Laura Niemi"], "co-otso": ["Henrik Lund"], "co-kivira": ["Tomas Berg"] };
 
 const company = (id: string, name: string, sector: string, district: Company["district"]): Company => ({
   id,
@@ -63,9 +63,9 @@ const proof = (proofId: string, challenge: Challenge, submittedAt: string, hidde
 });
 
 export function sampleEvent(): StoreData {
-  const a = task("ch-a", ["co-kaari"], "plan", [TRIAGE, PLANNING, TALK], "2026-11-09T00:00:00.000Z", ["Driving licence", "Five years"]);
+  const a = task("ch-a", ["co-halla"], "plan", [TRIAGE, PLANNING, TALK], "2026-11-09T00:00:00.000Z", ["Driving licence", "Five years"]);
   const b = task("ch-b", ["co-otso"], "writing", [TRIAGE, TALK, skill("plain-language", "Plain language")], "2026-11-12T00:00:00.000Z");
-  const pool = task("ch-pool", ["co-kaari", "co-kivira"], "code", [PLANNING, skill("sql", "SQL"), skill("testing", "Testing")], "2026-11-10T00:00:00.000Z");
+  const pool = task("ch-pool", ["co-halla", "co-kivira"], "code", [PLANNING, skill("sql", "SQL"), skill("testing", "Testing")], "2026-11-10T00:00:00.000Z");
   const taster: Challenge = { ...task("taster-1", [], "writing", [skill("taste", "Taste")], "2026-11-14T09:00:00.000Z"), kind: "taster", approvedBy: undefined };
   const submission = (id: string, challengeId: string, talentId: string, submittedAt: string, shareWithSimilar: boolean) => ({
     id,
@@ -80,7 +80,7 @@ export function sampleEvent(): StoreData {
     version: 1,
     event: { name: "Espoo Talent Day", date: "2026-11-14", responseWindowHours: 48 },
     companies: [
-      company("co-kaari", "Kaari Home Care", "Home care", "Matinkylä"),
+      company("co-halla", "Halla Supply", "Home care", "Matinkylä"),
       company("co-otso", "Otso Health", "Occupational health", "Tapiola"),
       company("co-kivira", "Kivira Labs", "Payments software", "Keilaniemi"),
     ],
@@ -104,13 +104,13 @@ export function sampleEvent(): StoreData {
       proof("p5", taster, "2026-11-14T09:30:00.000Z", 3),
     ],
     decisions: [
-      { id: "d1", proofId: "p1", companyId: "co-kaari", reviewer: "Anna Koivisto", decision: "meet", feedback: "You saw the blood thinner risk.", decidedAt: "2026-11-14T10:00:00.000Z" },
+      { id: "d1", proofId: "p1", companyId: "co-halla", reviewer: "Laura Niemi", decision: "meet", feedback: "You saw the blood thinner risk.", decidedAt: "2026-11-14T10:00:00.000Z" },
       { id: "d2", proofId: "p2", companyId: "co-otso", reviewer: "Henrik Lund", decision: "pass", feedback: "Clear letter; we hire in spring.", decidedAt: "2026-11-13T06:00:00.000Z" },
-      { id: "d3", proofId: "p3", companyId: "co-kaari", reviewer: "Anna Koivisto", decision: "meet", feedback: "Good plan.", decidedAt: "2026-11-12T00:00:00.000Z" },
+      { id: "d3", proofId: "p3", companyId: "co-halla", reviewer: "Laura Niemi", decision: "meet", feedback: "Good plan.", decidedAt: "2026-11-12T00:00:00.000Z" },
     ],
     meetings: [
-      { id: "m1", proofId: "p1", companyId: "co-kaari", slot: "Sat 13:00, Table 1", status: "invited", talentConfirmedMet: false, companyConfirmedMet: false },
-      { id: "m3", proofId: "p3", companyId: "co-kaari", slot: "Sat 14:00, Table 2", status: "met", talentConfirmedMet: true, companyConfirmedMet: true },
+      { id: "m1", proofId: "p1", companyId: "co-halla", slot: "Sat 13:00, Table 1", status: "invited", talentConfirmedMet: false, companyConfirmedMet: false },
+      { id: "m3", proofId: "p3", companyId: "co-halla", slot: "Sat 14:00, Table 2", status: "met", talentConfirmedMet: true, companyConfirmedMet: true },
     ],
     audit: [],
     demo: { personaTalentId: PRIVATE.mikko, personaName: "Mikko Lahtinen", stage: "invited" },

@@ -5,7 +5,7 @@ import { bestTotal, workState } from "./work-state";
 type Response = PassportEntry["responses"][number];
 const event = { id: "c", title: "t", minutes: 10, format: "make" as const, kind: "event" as const };
 const meeting = (status: Meeting["status"]): Meeting => ({ id: "m", proofId: "p", companyId: "c", slot: "Sat 13:15", status, talentConfirmedMet: false, companyConfirmedMet: false });
-const response = (patch: Partial<Response>): Response => ({ companyName: "Kaari", reviewer: "Anna", decision: "hold", feedback: "Good work.", viaSecondLook: false, ...patch });
+const response = (patch: Partial<Response>): Response => ({ companyName: "Halla Supply", reviewer: "Laura", decision: "hold", feedback: "Good work.", viaSecondLook: false, ...patch });
 
 describe("work state", () => {
   it("waits for a score until a person answers", () => {

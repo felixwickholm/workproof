@@ -4,8 +4,8 @@ import { answeredLine, clipLength, clipSkills, companyFacts, companyLine, decisi
 
 const skill = (id: string): Skill => ({ id, label: id, why: "" });
 const company = (over: Partial<Company> = {}): Company => ({
-  id: "co-kaari",
-  name: "Kaari Home Care",
+  id: "co-halla",
+  name: "Halla Supply",
   blurb: "",
   sector: "Home care",
   district: "Matinkylä",
@@ -51,8 +51,8 @@ describe("clipSkills", () => {
 
 describe("companies", () => {
   it("gives one company its district and joins a pool by name", () => {
-    expect(companyLine([company()])).toBe("Kaari Home Care · Matinkylä");
-    expect(companyLine([company(), company({ name: "Otso Health" })])).toBe("Kaari Home Care and Otso Health");
+    expect(companyLine([company()])).toBe("Halla Supply · Matinkylä");
+    expect(companyLine([company(), company({ name: "Otso Health" })])).toBe("Halla Supply and Otso Health");
   });
 
   it("writes the facts in plain yes and no", () => {

@@ -27,7 +27,7 @@ describe("demo capacity", () => {
   it("takes the evicted proof's table invitation, decisions and meetings with it", () => {
     const data = fill("taster");
     const oldest = data.submissions.find((s) => s.challengeId === "taster_x")?.id ?? "";
-    data.tableInvites = [{ proofId: oldest, host: "Anna Koivisto", message: "Come by. Bring the plan.", status: "invited", invitedAt: "2026-11-14T10:00:00Z" }];
+    data.tableInvites = [{ proofId: oldest, host: "Laura Niemi", message: "Come by. Bring the plan.", status: "invited", invitedAt: "2026-11-14T10:00:00Z" }];
     makeRoom(data);
     expect(data.tableInvites).toEqual([]);
     expect(data.submissions.some((s) => s.id === oldest)).toBe(false);

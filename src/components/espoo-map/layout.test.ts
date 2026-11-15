@@ -5,7 +5,7 @@ import { buildMapLayout, type MapLabel } from "./layout";
 import type { FlowMapCompany, FlowMapFlow } from "./types";
 
 const companies: FlowMapCompany[] = [
-  { id: "co-kaari", name: "Kaari Home Care", sector: "Home care", district: "Matinkylä" },
+  { id: "co-halla", name: "Halla Supply", sector: "Home care", district: "Matinkylä" },
   { id: "co-otso", name: "Otso Health", sector: "Occupational health", district: "Tapiola" },
   { id: "co-merituuli", name: "Merituuli Kitchen", sector: "Restaurants", district: "Tapiola" },
   { id: "co-kuulas", name: "Kuulas Studio", sector: "Design", district: "Otaniemi" },
@@ -13,9 +13,9 @@ const companies: FlowMapCompany[] = [
 ];
 
 const flows: FlowMapFlow[] = [
-  { proofLabel: "K1", companyId: "co-kaari", state: "met" },
-  { proofLabel: "K2", companyId: "co-kaari", state: "sent" },
-  { proofLabel: "K3", companyId: "co-kaari", state: "answered" },
+  { proofLabel: "K1", companyId: "co-halla", state: "met" },
+  { proofLabel: "K2", companyId: "co-halla", state: "sent" },
+  { proofLabel: "K3", companyId: "co-halla", state: "answered" },
   { proofLabel: "O1", companyId: "co-otso", state: "invited" },
   { proofLabel: "L1", companyId: "co-kuulas", state: "sent" },
   { proofLabel: "X1", companyId: "co-unknown", state: "sent" },
@@ -45,22 +45,22 @@ describe("buildMapLayout", () => {
 
   it("draws one line per company and stage, dashed handed-in first and the accent last", () => {
     const { lines } = build(460);
-    expect(lines.map((l) => `${l.companyId}:${l.stage}`)).toEqual(["co-kaari:sent", "co-kuulas:sent", "co-kaari:scored", "co-kaari:invited", "co-otso:invited"]);
+    expect(lines.map((l) => `${l.companyId}:${l.stage}`)).toEqual(["co-halla:sent", "co-kuulas:sent", "co-halla:scored", "co-halla:invited", "co-otso:invited"]);
   });
 
   it("keeps one travelling dot per piece of work, on its stage's line", () => {
     const { flows, lines } = build(460);
     expect(flows).toHaveLength(5);
-    const kaari = flows.filter((f) => f.flow.companyId === "co-kaari");
-    expect(new Set(kaari.map((f) => f.path)).size).toBe(3);
+    const halla = flows.filter((f) => f.flow.companyId === "co-halla");
+    expect(new Set(halla.map((f) => f.path)).size).toBe(3);
     for (const flow of flows) expect(lines.some((l) => l.path === flow.path)).toBe(true);
   });
 
   it("sizes pins by work received and shapes them by family", () => {
     const nodes = Object.fromEntries(build(460).nodes.map((n) => [n.company.id, n]));
-    expect(nodes["co-kaari"].size).toBe(2);
+    expect(nodes["co-halla"].size).toBe(2);
     expect(nodes["co-merituuli"].size).toBe(0);
-    expect(nodes["co-kaari"].family).toBe("people");
+    expect(nodes["co-halla"].family).toBe("people");
     expect(nodes["co-merituuli"].family).toBe("commercial");
     expect(nodes["co-saarnivo"].family).toBe("technical");
   });

@@ -18,8 +18,8 @@ import {
 const HOUR = 3_600_000;
 
 const reminder = (over: Partial<OwedReminder> = {}): OwedReminder => ({
-  companyId: "co-kaari",
-  companyName: "Kaari Home Care",
+  companyId: "co-halla",
+  companyName: "Halla Supply",
   tasks: [{ title: "Plan tomorrow's visits", waiting: 3 }],
   waiting: 3,
   oldestHours: 26.4,
@@ -38,7 +38,7 @@ describe("owedReminders", () => {
   it("lists each employer with proofs on its own tasks that it has not answered", () => {
     const reminders = owedReminders(sampleEvent(), NOW);
     // p4 on the pooled task waits for both of its employers; Otso answered its only proof.
-    expect(reminders.map((r) => r.companyName)).toEqual(["Kaari Home Care", "Kivira Labs"]);
+    expect(reminders.map((r) => r.companyName)).toEqual(["Halla Supply", "Kivira Labs"]);
     expect(reminders[0]).toMatchObject({ waiting: 1, tasks: [{ title: "Task ch-pool", waiting: 1 }], oldestHours: 4 });
   });
 
@@ -52,13 +52,13 @@ describe("owedReminders", () => {
   it("counts every task with waiting work and never names a person", () => {
     const data = sampleEvent();
     data.decisions = [];
-    const kaari = owedReminders(data, NOW).find((r) => r.companyId === "co-kaari")!;
-    expect(kaari.waiting).toBe(3);
-    expect(kaari.tasks).toEqual([
+    const halla = owedReminders(data, NOW).find((r) => r.companyId === "co-halla")!;
+    expect(halla.waiting).toBe(3);
+    expect(halla.tasks).toEqual([
       { title: "Task ch-a", waiting: 2 },
       { title: "Task ch-pool", waiting: 1 },
     ]);
-    expect(JSON.stringify(kaari)).not.toMatch(/Mikko|Sam Example|t_/);
+    expect(JSON.stringify(halla)).not.toMatch(/Mikko|Sam Example|t_/);
   });
 });
 
@@ -66,7 +66,7 @@ describe("reminderText", () => {
   it("says how many people wait, for which task, how long and by when", () => {
     expect(reminderText(reminder())).toBe(
       [
-        "Hello Kaari Home Care,",
+        "Hello Halla Supply,",
         "",
         "3 people handed in work for your task “Plan tomorrow's visits” and wait for a written answer. The oldest has waited 26 hours.",
         "",
@@ -108,9 +108,9 @@ describe("meeting export", () => {
     data.meetings.push({ id: "m4", proofId: "p2", companyId: "co-otso", slot: "Sat 15:00, Table 4", status: "accepted", talentConfirmedMet: false, companyConfirmedMet: false });
     data.meetings.push({ id: "m5", proofId: "p4", companyId: "co-kivira", slot: "Time to be agreed", status: "invited", talentConfirmedMet: false, companyConfirmedMet: false });
     expect(meetingRows(data)).toEqual([
-      { proofLabel: "Proof P3", employer: "Kaari Home Care", time: "Sat 14:00", table: "Table 2", status: "Met, both sides confirmed" },
+      { proofLabel: "Proof P3", employer: "Halla Supply", time: "Sat 14:00", table: "Table 2", status: "Met, both sides confirmed" },
       { proofLabel: "Proof P2", employer: "Otso Health", time: "Sat 15:00", table: "Table 4", status: "Accepted" },
-      { proofLabel: "Proof P1", employer: "Kaari Home Care", time: "Sat 13:00", table: "Table 1", status: "Invited, waiting for the person" },
+      { proofLabel: "Proof P1", employer: "Halla Supply", time: "Sat 13:00", table: "Table 1", status: "Invited, waiting for the person" },
       { proofLabel: "Proof P4", employer: "Kivira Labs", time: "Time to be agreed", table: "", status: "Invited, waiting for the person" },
     ]);
   });
@@ -134,7 +134,7 @@ describe("meeting export", () => {
 
   it("quotes commas, quotes and line breaks", () => {
     expect(csvCell("Sat 13:00, Table 1")).toBe('"Sat 13:00, Table 1"');
-    expect(csvCell('The "Kaari" team')).toBe('"The ""Kaari"" team"');
+    expect(csvCell('The "Halla" team')).toBe('"The ""Halla"" team"');
     expect(csvCell("two\nlines")).toBe('"two\nlines"');
     expect(csvCell("Plain")).toBe("Plain");
   });

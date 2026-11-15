@@ -4,7 +4,7 @@ import { draftFromNeed, flawsFor, roleFor } from "./compose";
 import { genericRole } from "./generic-role";
 import { followUpQuestions, quoteFrom, WHOLE_SENTENCE_CHARS } from "./follow-ups";
 
-const challenge: Challenge = { ...draftFromNeed("Embedded engineer: firmware, safety"), id: "ch-test", companyIds: [], approvedBy: "Anna Koivisto", createdAt: "" };
+const challenge: Challenge = { ...draftFromNeed("Embedded engineer: firmware, safety"), id: "ch-test", companyIds: [], approvedBy: "Laura Niemi", createdAt: "" };
 
 describe("quoteFrom", () => {
   it("quotes a short sentence whole, never cut mid-thought", () => {

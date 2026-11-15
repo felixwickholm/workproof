@@ -21,15 +21,15 @@ describe("checkFeedback", () => {
   const two = "You saw the blood thinner risk. I want to hear how you would brief the evening shift.";
 
   it("is ready with a name and two real sentences", () => {
-    expect(checkFeedback("Anna Koivisto", two).waitingFor).toBeNull();
+    expect(checkFeedback("Laura Niemi", two).waitingFor).toBeNull();
   });
 
   it("asks for the answer before anything else", () => {
-    expect(checkFeedback("Anna Koivisto", "  ").waitingFor).toBe("Write your answer to the person first.");
+    expect(checkFeedback("Laura Niemi", "  ").waitingFor).toBe("Write your answer to the person first.");
   });
 
   it("asks for the missing sentence", () => {
-    expect(checkFeedback("Anna Koivisto", "You saw the blood thinner risk.").waitingFor).toBe("Write 1 more sentence.");
+    expect(checkFeedback("Laura Niemi", "You saw the blood thinner risk.").waitingFor).toBe("Write 1 more sentence.");
   });
 
   it("keeps the shared rule for the reviewer's name", () => {
@@ -37,7 +37,7 @@ describe("checkFeedback", () => {
   });
 
   it("reports the live counts", () => {
-    const check = checkFeedback("Anna", two);
+    const check = checkFeedback("Laura", two);
     expect(check.sentences).toBe(2);
     expect(check.characters).toBe(two.length);
   });

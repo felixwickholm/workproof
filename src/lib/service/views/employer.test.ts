@@ -4,7 +4,7 @@ import { eventTotals } from "./event";
 import { IDENTITY, NOW, sampleEvent } from "./test-data";
 
 describe("employer home", () => {
-  const home = buildEmployerHome(sampleEvent(), "co-kaari", NOW);
+  const home = buildEmployerHome(sampleEvent(), "co-halla", NOW);
 
   it("counts what waits, what is owed and the meetings", () => {
     expect(home.greeting.fact).toBe("Two proofs wait for a reader.");
@@ -66,8 +66,8 @@ describe("employer home", () => {
     const data = sampleEvent();
     data.proofs = data.proofs.filter((p) => p.proofId !== "p4" && p.proofId !== "p2");
     data.meetings[1].status = "accepted";
-    expect(buildEmployerHome(data, "co-kaari", NOW).greeting.fact).toBe("One meeting is booked.");
+    expect(buildEmployerHome(data, "co-halla", NOW).greeting.fact).toBe("One meeting is booked.");
     data.meetings = [];
-    expect(buildEmployerHome(data, "co-kaari", NOW).greeting.fact).toBe("Every proof has an answer.");
+    expect(buildEmployerHome(data, "co-halla", NOW).greeting.fact).toBe("Every proof has an answer.");
   });
 });

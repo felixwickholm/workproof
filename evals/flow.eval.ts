@@ -60,7 +60,7 @@ describe("Flow: from need to a confirmed Second look meeting", () => {
     });
     step("AI drafts a Problem Card", draft.status === 200 && draft.json.setAside.some((s) => s.startsWith("Not used")) && draft.json.draftedBy !== undefined);
 
-    const approved = await call<Challenge>(approveRoute, { body: { draft: draft.json, companyId: A, approvedBy: "Anna Koivisto" } });
+    const approved = await call<Challenge>(approveRoute, { body: { draft: draft.json, companyId: A, approvedBy: "Laura Niemi" } });
     const listed = (await call<Challenge[]>(listChallengesRoute)).json;
     const fetched = await call<Challenge>(challengeRoute, { params: { id: approved.json.id } });
     step(

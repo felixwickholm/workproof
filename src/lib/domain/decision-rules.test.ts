@@ -5,7 +5,7 @@ import { NAMED_PERSON_NEEDED } from "./guardrails";
 const FEEDBACK = "Clear plan for the evening visits. We would like to talk.";
 
 describe("reviewer names", () => {
-  it.each(["Anna Koivisto", "Li", "Jean-Luc Picard", "Åsa Öberg", "Aiko Tanaka", "Botond Kiss", "Automaa Virtanen", "Modeste Diallo"])("accepts the person %s", (name) => {
+  it.each(["Laura Niemi", "Li", "Jean-Luc Picard", "Åsa Öberg", "Aiko Tanaka", "Botond Kiss", "Automaa Virtanen", "Modeste Diallo"])("accepts the person %s", (name) => {
     expect(reviewerNameProblem(name)).toBeUndefined();
     expect(decisionInputProblem(name, FEEDBACK)).toBeUndefined();
   });

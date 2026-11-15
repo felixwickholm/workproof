@@ -20,7 +20,7 @@ describe("city insights", () => {
       { kind: "plan", tasks: 1, proofs: 2 },
       { kind: "code", tasks: 1, proofs: 1 },
     ]);
-    expect(insights.pooled).toEqual([{ challengeId: "ch-pool", title: "Task ch-pool", companies: ["Kaari Home Care", "Kivira Labs"], proofs: 1 }]);
+    expect(insights.pooled).toEqual([{ challengeId: "ch-pool", title: "Task ch-pool", companies: ["Halla Supply", "Kivira Labs"], proofs: 1 }]);
   });
 
   it("keeps the funnel, fairness record and readiness from the data", () => {
@@ -58,10 +58,10 @@ describe("city insights", () => {
 
   it("shows each proof at its furthest step, oldest first", () => {
     expect(insights.flows).toEqual([
-      { proofLabel: "Proof P3", companyId: "co-kaari", state: "met" },
+      { proofLabel: "Proof P3", companyId: "co-halla", state: "met" },
       { proofLabel: "Proof P2", companyId: "co-otso", state: "answered" },
-      { proofLabel: "Proof P1", companyId: "co-kaari", state: "invited" },
-      { proofLabel: "Proof P4", companyId: "co-kaari", state: "sent" },
+      { proofLabel: "Proof P1", companyId: "co-halla", state: "invited" },
+      { proofLabel: "Proof P4", companyId: "co-halla", state: "sent" },
     ]);
   });
 
@@ -85,13 +85,13 @@ describe("city insights", () => {
 
   it("keeps each employer's own-task counts apart from its Second look answers", () => {
     const data = sampleEvent();
-    // Otso answers Kaari's proof P1 through Second look: that never counts as one of Otso's own proofs.
+    // Otso answers Halla's proof P1 through Second look: that never counts as one of Otso's own proofs.
     data.decisions.push({ id: "d4", proofId: "p1", companyId: "co-otso", reviewer: "Henrik Lund", decision: "pass", feedback: "Clear plan; our roles need a nurse licence.", decidedAt: "2026-11-14T11:00:00.000Z" });
     const record = (id: string) => {
       const { company, ...counts } = employerRecord(data, data.companies.find((c) => c.id === id)!);
       return { id: company.id, ...counts };
     };
-    expect(record("co-kaari")).toMatchObject({ proofsReceived: 3, proofsAnswered: 2, proofsOwed: 1, secondLookAnswered: 0, medianHoursToRespond: 19, meetingsHeld: 1 });
+    expect(record("co-halla")).toMatchObject({ proofsReceived: 3, proofsAnswered: 2, proofsOwed: 1, secondLookAnswered: 0, medianHoursToRespond: 19, meetingsHeld: 1 });
     expect(record("co-otso")).toMatchObject({ proofsReceived: 1, proofsAnswered: 1, proofsOwed: 0, secondLookAnswered: 1, medianHoursToRespond: 20 });
     expect(record("co-kivira")).toMatchObject({ proofsReceived: 1, proofsAnswered: 0, proofsOwed: 1, secondLookAnswered: 0, medianHoursToRespond: null });
     for (const r of buildCityOverview(data).employers) {

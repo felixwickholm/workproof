@@ -48,16 +48,16 @@ describe("live score", () => {
 describe("scoreLock", () => {
   const reason = "You kept the insulin visit first and said why. Tell us how you would call the family.";
   it("prints the rule before anything is scored", () => {
-    expect(scoreLock({}, skills, "Anna Koivisto", reason)).toEqual({ locked: true, waitingFor: SCORE_RULE });
+    expect(scoreLock({}, skills, "Laura Niemi", reason)).toEqual({ locked: true, waitingFor: SCORE_RULE });
   });
   it("counts the skills still to score", () => {
-    expect(scoreLock({ a: 3, b: 4 }, skills, "Anna Koivisto", reason).waitingFor).toBe("Score 1 more skill.");
+    expect(scoreLock({ a: 3, b: 4 }, skills, "Laura Niemi", reason).waitingFor).toBe("Score 1 more skill.");
   });
   it("needs two sentences after every skill has points", () => {
-    expect(scoreLock({ a: 3, b: 4, c: 5 }, skills, "Anna Koivisto", "Good work.").locked).toBe(true);
+    expect(scoreLock({ a: 3, b: 4, c: 5 }, skills, "Laura Niemi", "Good work.").locked).toBe(true);
   });
   it("opens with every skill scored and two sentences", () => {
-    expect(scoreLock({ a: 3, b: 4, c: 5 }, skills, "Anna Koivisto", reason)).toEqual({ locked: false, waitingFor: null });
+    expect(scoreLock({ a: 3, b: 4, c: 5 }, skills, "Laura Niemi", reason)).toEqual({ locked: false, waitingFor: null });
   });
   it("refuses software as the reviewer", () => {
     expect(scoreLock({ a: 3, b: 4, c: 5 }, skills, "AI bot", reason).locked).toBe(true);
@@ -79,10 +79,10 @@ describe("row state", () => {
 
 describe("greeting and facts", () => {
   it("says who did the challenge and what waits", () => {
-    expect(greetingLine("Kaari Home Care", 5, 3)).toBe("Kaari Home Care. 5 people did your challenge. 3 wait for a score.");
-    expect(greetingLine("Kaari Home Care", 1, 1)).toBe("Kaari Home Care. 1 person did your challenge. 1 waits for a score.");
-    expect(greetingLine("Kaari Home Care", 4, 0)).toBe("Kaari Home Care. 4 people did your challenge. All work has a score.");
-    expect(greetingLine("Kaari Home Care", 0, 0)).toBe("Kaari Home Care. No one did your challenge yet.");
+    expect(greetingLine("Halla Supply", 5, 3)).toBe("Halla Supply. 5 people did your challenge. 3 wait for a score.");
+    expect(greetingLine("Halla Supply", 1, 1)).toBe("Halla Supply. 1 person did your challenge. 1 waits for a score.");
+    expect(greetingLine("Halla Supply", 4, 0)).toBe("Halla Supply. 4 people did your challenge. All work has a score.");
+    expect(greetingLine("Halla Supply", 0, 0)).toBe("Halla Supply. No one did your challenge yet.");
   });
   it("leaves out an unknown median", () => {
     expect(factsLine(2.2, 3)).toBe("Median time to score: 2 h. Answers you still owe: 3.");

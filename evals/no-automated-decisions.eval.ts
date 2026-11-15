@@ -179,7 +179,7 @@ describe("Eval 3: no automated decisions", () => {
     const proofId = (await call<ReviewQueue>(queueRoute, { params: { id: "co-tuulos" } })).json.proofs[0].proofId;
     const base = { proofId, companyId: "co-tuulos", decision: "pass" };
     const noName = await decide({ body: { ...base, reviewer: " ", feedback: "Thank you, this was a clear answer to read." } });
-    const noFeedback = await decide({ body: { ...base, reviewer: "Anna Koivisto", feedback: "No." } });
+    const noFeedback = await decide({ body: { ...base, reviewer: "Laura Niemi", feedback: "No." } });
     const decisions = (await getStore().read()).decisions;
     const allNamed = decisions.every((d) => d.reviewer.trim() && d.feedback.trim().length >= 20);
     const ok = noName.status === 400 && noFeedback.status === 400 && allNamed;

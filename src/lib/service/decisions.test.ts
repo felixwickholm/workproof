@@ -30,22 +30,22 @@ function invite(data: ReturnType<typeof store>, proofId: string, companyId: stri
 
 describe("pickMeetingSlot", () => {
   it("proposes the first slot of the event day, named by its weekday", () => {
-    expect(pickMeetingSlot(store(), "p1", "co-kaari")).toBe("Sat 13:00, Table 1");
+    expect(pickMeetingSlot(store(), "p1", "co-halla")).toBe("Sat 13:00, Table 1");
     expect(SLOT_TIMES_OF_DAY).toHaveLength(16);
     expect(SLOT_TIMES_OF_DAY.at(-1)).toBe("16:45");
   });
 
   it("never gives one person two meetings at the same time", () => {
     const data = store();
-    const kaari = invite(data, "p1", "co-kaari");
+    const halla = invite(data, "p1", "co-halla");
     const otso = invite(data, "p2", "co-otso");
-    expect(parseSlot(kaari.slot)?.time).not.toBe(parseSlot(otso.slot)?.time);
+    expect(parseSlot(halla.slot)?.time).not.toBe(parseSlot(otso.slot)?.time);
   });
 
   it("never gives one company two meetings at the same time and table, and other companies take the free tables", () => {
     const data = store();
-    const first = invite(data, "p1", "co-kaari");
-    const second = invite(data, "p3", "co-kaari");
+    const first = invite(data, "p1", "co-halla");
+    const second = invite(data, "p3", "co-halla");
     const other = invite(data, "p4", "co-otso");
     expect(first.slot).toBe("Sat 13:00, Table 1");
     expect(second.slot).toBe("Sat 13:15, Table 1");
@@ -54,12 +54,12 @@ describe("pickMeetingSlot", () => {
 
   it("frees the slot of a declined invitation", () => {
     const data = store();
-    invite(data, "p1", "co-kaari", "declined");
-    expect(invite(data, "p3", "co-kaari").slot).toBe("Sat 13:00, Table 1");
+    invite(data, "p1", "co-halla", "declined");
+    expect(invite(data, "p3", "co-halla").slot).toBe("Sat 13:00, Table 1");
   });
 
   it("is the same for the same store", () => {
-    const data = store([{ id: "m", proofId: "p1", companyId: "co-kaari", slot: "Sat 13:00, Table 1", status: "accepted", talentConfirmedMet: false, companyConfirmedMet: false }]);
+    const data = store([{ id: "m", proofId: "p1", companyId: "co-halla", slot: "Sat 13:00, Table 1", status: "accepted", talentConfirmedMet: false, companyConfirmedMet: false }]);
     expect(pickMeetingSlot(data, "p3", "co-otso")).toBe(pickMeetingSlot(data, "p3", "co-otso"));
   });
 

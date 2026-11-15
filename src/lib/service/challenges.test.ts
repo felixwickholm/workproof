@@ -56,13 +56,13 @@ describe("the task template id", () => {
   it("is kept through publishing, so follow-ups never depend on the editable title", async () => {
     const draft = await draftChallenge(NEED);
     expect(draft.templateId).toBe("backend");
-    const published = await approveChallenge({ draft: { ...draft, title: "Our payments review" }, companyId: "co-kivira", approvedBy: "Anna Koivisto" });
+    const published = await approveChallenge({ draft: { ...draft, title: "Our payments review" }, companyId: "co-kivira", approvedBy: "Laura Niemi" });
     expect(published.templateId).toBe("backend");
   });
 
   it("drops an id the designer never sets", async () => {
     const draft = await draftChallenge(NEED);
-    const published = await approveChallenge({ draft: { ...draft, templateId: "made-up" }, companyId: "co-kivira", approvedBy: "Anna Koivisto" });
+    const published = await approveChallenge({ draft: { ...draft, templateId: "made-up" }, companyId: "co-kivira", approvedBy: "Laura Niemi" });
     expect(published.templateId).toBeUndefined();
   });
 });
@@ -70,7 +70,7 @@ describe("the task template id", () => {
 describe("the roles a company picks", () => {
   it("pass the request schema and are kept on the published challenge, so the right job seekers see it first", async () => {
     const draft = await draftChallenge(NEED);
-    const body = approveRequest.parse({ draft: { ...draft, roles: ["software-engineer"] }, companyId: "co-kivira", approvedBy: "Anna Koivisto" });
+    const body = approveRequest.parse({ draft: { ...draft, roles: ["software-engineer"] }, companyId: "co-kivira", approvedBy: "Laura Niemi" });
     const published = await approveChallenge(body);
     expect(published.roles).toEqual(["software-engineer"]);
   });
@@ -101,7 +101,7 @@ describe("a challenge from a job-ad link, published by the city", () => {
     expect(message).toBe(`We made a challenge for you: ${challenge.title}. It is live for job seekers now. See it here: https://example.org/employer/challenges/${challenge.id}`);
     const home = () => getStore().read().then((data) => buildEmployerHome(data, "co-kivira", new Date()));
     expect((await home()).unclaimed.map((u) => u.challenge.id)).toEqual([challenge.id]);
-    await expect(claimChallenge(challenge.id, "co-kaari")).rejects.toMatchObject({ status: 403 });
+    await expect(claimChallenge(challenge.id, "co-halla")).rejects.toMatchObject({ status: 403 });
     expect((await claimChallenge(challenge.id, "co-kivira")).claimedAt).toBeTruthy();
     expect((await home()).unclaimed).toEqual([]);
     expect(await readyMessageFor(challenge.id, "L")).toMatch(/It is live for job seekers now/);

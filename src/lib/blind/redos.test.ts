@@ -22,12 +22,12 @@ const ADVERSARIAL: Record<string, string> = {
   "names with ages": "Abc Def, 34, ".repeat(SIZE / 13),
   "hidden names with ages": "[hidden] here, 34 ".repeat(SIZE / 18),
   "finnish ages": ", 34 v".repeat(SIZE / 6),
-  "company prefixes": "Kaari Home Kaari ".repeat(SIZE / 17),
+  "company prefixes": "Halla Halla ".repeat(SIZE / 12),
   "legal forms": "Nokia Oy Oy ".repeat(SIZE / 12),
   "district stems": "Kontula".repeat(SIZE / 7),
 };
 
-const KNOWN = { name: "Sanna Virtanen", contact: "+358 40 123 4567", companies: ["Kaari Home Care", "Tuulos Robotics"] };
+const KNOWN = { name: "Sanna Virtanen", contact: "+358 40 123 4567", companies: ["Halla Supply", "Tuulos Robotics"] };
 
 describe("long adversarial input", () => {
   // A running server has every pattern compiled already; measure that state, not the first compile.

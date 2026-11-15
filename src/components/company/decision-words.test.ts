@@ -5,8 +5,8 @@ import { newestFirst, type DecidedEntry } from "./decision-words";
 const decision = (kind: Decision["decision"], decidedAt = "2026-11-14T08:00:00.000Z"): Decision => ({
   id: `d-${decidedAt}`,
   proofId: "p1",
-  companyId: "co-kaari",
-  reviewer: "Anna Koivisto",
+  companyId: "co-halla",
+  reviewer: "Laura Niemi",
   decision: kind,
   feedback: "You saw the blood thinner risk. I want to hear more.",
   decidedAt,

@@ -3,8 +3,8 @@ import { initialsOf } from "./avatar";
 
 describe("initialsOf", () => {
   it("takes the first letter, upper case", () => {
-    expect(initialsOf("kaari Home Care")).toBe("K");
-    expect(initialsOf("Kaari Home Care", 2)).toBe("KH");
+    expect(initialsOf("halla Supply")).toBe("H");
+    expect(initialsOf("Halla Supply", 2)).toBe("HS");
   });
 
   it("falls back to a question mark for an empty name", () => {

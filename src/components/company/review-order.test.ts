@@ -17,7 +17,7 @@ const proof = (proofId: string): BlindProof => ({
 
 const answered = (proofId: string, decidedAt: string): ReviewQueue["decided"][number] => ({
   proof: proof(proofId),
-  decision: { id: `d-${proofId}`, proofId, companyId: "co-kaari", reviewer: "Anna Koivisto", decision: "pass", feedback: "Two sentences. Here.", decidedAt },
+  decision: { id: `d-${proofId}`, proofId, companyId: "co-halla", reviewer: "Laura Niemi", decision: "pass", feedback: "Two sentences. Here.", decidedAt },
 });
 
 const empty = { proofs: [], secondLook: [], decided: [] };

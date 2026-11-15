@@ -16,7 +16,7 @@ const counts = (c: Partial<ImpactCounts> = {}): ImpactCounts => ({ took: 0, scor
 const task = (title: string, c: Partial<TaskImpact> = {}): TaskImpact => ({
   challengeId: title.toLowerCase(),
   title,
-  companies: ["Kaari Home Care"],
+  companies: ["Halla Supply"],
   topTotal: null,
   scoredShare: 0,
   ...counts(),
@@ -67,7 +67,7 @@ describe("sortTasks and tasksFor", () => {
     expect(sorted.map((t) => t.title)).toEqual(["D", "C", "A", "B"]);
   });
   it("keeps one company's challenges, including shared ones", () => {
-    const tasks = [task("A"), task("B", { companies: ["Otso Health"] }), task("C", { companies: ["Kaari Home Care", "Otso Health"] })];
+    const tasks = [task("A"), task("B", { companies: ["Otso Health"] }), task("C", { companies: ["Halla Supply", "Otso Health"] })];
     expect(tasksFor(tasks, "Otso Health").map((t) => t.title)).toEqual(["B", "C"]);
     expect(tasksFor(tasks, null)).toHaveLength(3);
   });
