@@ -95,12 +95,13 @@ export function ScorePanel({ proof, challenge, company, onScored, className }: P
   }
 
   return (
-    <section data-tour="score" aria-label="Your score" className={cx("rounded-card bg-surface p-5 min-[900px]:p-7", className)}>
+    <section aria-label="Your score" className={cx("rounded-card bg-surface p-5 min-[900px]:p-7", className)}>
       <h2 className="text-h3 text-label">Your score</h2>
 
       <ol className="mt-6 flex flex-col gap-3">
-        {skills.map((skill) => (
-          <li key={skill.id} className="rounded-[16px] bg-raised p-5 min-[900px]:p-6">
+        {skills.map((skill, i) => (
+          // The walkthrough points at the first skill and its scale, not the whole long panel.
+          <li key={skill.id} data-tour={i === 0 ? "score" : undefined} className="rounded-[16px] bg-raised p-5 min-[900px]:p-6">
             <p className="text-section text-label">{skill.label}</p>
             {lookFor(skill.id) ? <p className="text-subhead mt-1.5 text-pretty text-label-2">{lookFor(skill.id)}</p> : null}
             <ScoreScale label={skill.label} value={points[skill.id]} onChange={(p) => setPoints((prev) => ({ ...prev, [skill.id]: p }))} className="mt-5" />

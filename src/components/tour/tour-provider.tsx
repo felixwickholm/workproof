@@ -6,6 +6,7 @@ import { Suspense, useCallback, useEffect, useReducer, useRef, useState, useSync
 import { createPortal } from "react-dom";
 import { TOUR_EVENT } from "@/components/shell/demo-actions";
 import { api } from "@/lib/client/api";
+import { getIdentity, switchToPersona } from "@/lib/client/local";
 import type { StoryStage } from "@/lib/domain/types";
 import { autoAdvances, isHeld, noHolds, remainingMs, stepDuration, type Holds } from "./autoplay";
 import { isOffParam, localStore, markStorySeen, shouldAutoStart, storySeen } from "./first-visit";
@@ -78,6 +79,8 @@ export function TourProvider({ children }: { children: ReactNode }) {
         // Every page of the story is fetched now, so no move waits for a page to download.
         for (const path of STORY_PATHS) router.prefetch(path);
       }
+      // The story is Mikko's: a visitor on their own account follows it as him, so his pages open.
+      if (getIdentity() === "me") switchToPersona();
       dispatch({ type: "start", at });
     },
     [router],
