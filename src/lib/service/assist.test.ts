@@ -43,6 +43,15 @@ describe("nextAsk", () => {
   });
 });
 
+describe("the company's own words", () => {
+  it("are never set aside as not core: the task is built from them", async () => {
+    const reply = await assist([said("Data analyst"), { from: "assistant", text: "?", ask: "work" }, said("Build a dashboard of our weekly sales that people trust"), { from: "assistant", text: "?", ask: "size" }, said(SHORT_SIZE)]);
+    const draft = reply.kind === "draft" ? reply.draft : undefined;
+    expect(draft?.setAside.join(" ")).not.toMatch(/not core/i);
+    expect((draft?.wishes ?? []).map((w) => w.reason ?? "").join(" ")).not.toMatch(/not core/i);
+  });
+});
+
 describe("exampleJobAd", () => {
   it("uses the company's words about the work, never a wish about the person", async () => {
     const reply = await assist([said("Warehouse worker to pack orders, young and a native Finnish speaker"), { from: "assistant", text: "?", ask: "size" }, said(SHORT_SIZE)]);

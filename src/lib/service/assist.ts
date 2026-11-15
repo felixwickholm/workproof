@@ -95,10 +95,14 @@ export async function assist(messages: readonly AssistMessage[]): Promise<Assist
   const role = matchRole(said)?.title;
   const roles = draft.roles?.length ? draft.roles : rolesOf({ title: draft.title, need: `${said} ${draft.need}` });
   const minutes = big ? EVENT_MINUTES_BIG : Math.min(30, Math.max(10, draft.minutes));
+  // In the chat, every sentence is the company describing the work: the task is built from it, so none is "not core".
+  const notCore = (text: string) => /not core for this task\.?$/i.test(text.trim());
   return {
     kind: "draft",
     draft: {
       ...draft,
+      setAside: draft.setAside.filter((line) => !notCore(line)),
+      ...(draft.wishes ? { wishes: draft.wishes.filter((w) => !(w.outcome === "set-aside" && notCore(w.reason ?? ""))) } : {}),
       yourWords: said,
       minutes,
       ...(roles.length ? { roles } : {}),

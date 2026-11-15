@@ -14,7 +14,7 @@ const back = { href: "/city", label: "City" };
 export function LogView() {
   const { data, error, loading, retry } = useLive(citySource.overview);
   return (
-    <Screen page back={back} title="The log" subtitle="Every action at the event, newest first. No person's name.">
+    <Screen page back={back} title="The log" subtitle="Every action at the event, newest first. No job seeker's name.">
       {data ? (
         <Card>
           <AuditLog events={data.audit} />

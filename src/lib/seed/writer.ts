@@ -116,7 +116,7 @@ export function seedWriter(now: Date, data: StoreData) {
       actor: "system",
       by: "Blind layer",
       action: HIDE_ACTION,
-      detail: `${proof.label}: ${hidden} detail${hidden === 1 ? "" : "s"} hidden from the work and the spoken thinking before any reviewer or AI model read it.`,
+      detail: `${proof.label}: ${hidden} detail${hidden === 1 ? "" : "s"} hidden from the work and the notes on how they thought before any reviewer or AI model read it.`,
     });
     log(seed.hoursAgo - minute / 60, {
       actor: "system",
