@@ -5,13 +5,21 @@
   <img src="docs/images/workproof-lockup-light.svg" alt="WorkProof" height="40">
 </picture>
 
-**Companies see real work and score it; the AI never scores.** Our entry for the City of Espoo challenge "Rethinking Recruitment" at Junction 2026.
+**WorkProof lets companies at City of Espoo talent events see real work and score it, while the AI never scores.** Our entry for the City of Espoo challenge "Rethinking Recruitment" at Junction 2026.
 
 **WorkProof is for City of Espoo talent events.** Companies see real work and score it; the AI never scores. A professional does a short real task from an Espoo company. A named person at the company scores the work from 1 to 5 on each of the task's skills, writes a reason, and chooses Meet or Not now. As a safeguard, the name stays hidden until the professional accepts. Tested: 0 of 79 planted identity details reached a reviewer.
 
-- **Who it is for:** City of Espoo event organisers, the companies that hire at their events, and the professionals who come to find work.
-- **Live demo:** [workproof.wicflow.com](https://workproof.wicflow.com) · [2-minute task](https://workproof.wicflow.com/try) · [Table mode](https://workproof.wicflow.com/table) · [Walkthrough](https://workproof.wicflow.com/?tour=1) · [Evidence for judges](https://workproof.wicflow.com/for-judges)
-- **Code:** [github.com/felixwickholm/workproof](https://github.com/felixwickholm/workproof), MIT. Runs with `npm install && npm run dev`; no keys, no database, no login. All data is synthetic.
+- **Live demo:** [workproof.wicflow.com](https://workproof.wicflow.com). No sign-in, synthetic data. Start with the [2-minute task](https://workproof.wicflow.com/try) or the [walkthrough](https://workproof.wicflow.com/?tour=1).
+- **The brief and the build:** [/brief](https://workproof.wicflow.com/brief) (web page) and [/brief.pdf](https://workproof.wicflow.com/brief.pdf) ("WorkProof: the brief and the build").
+- **For machines:** [/submission.json](https://workproof.wicflow.com/submission.json) (the entry as data), [/llms.txt](https://workproof.wicflow.com/llms.txt), [/llms-full.txt](https://workproof.wicflow.com/llms-full.txt), [/for-judges](https://workproof.wicflow.com/for-judges), [AGENTS.md](AGENTS.md).
+- **Code:** [github.com/felixwickholm/workproof](https://github.com/felixwickholm/workproof), MIT. `npm install && npm run dev`. No keys, no database, no login.
+- **Who it is for:** City of Espoo event organisers, the companies that hire at their events, and the professionals who come to find work. Three views in one app: Job seeker (`/`), Company (`/employer`), City of Espoo (`/city`).
+
+**The judging criteria at a glance.** Each line names a route to open and a test to run (`npm run eval`).
+
+- **Impact & Relevance (45%):** the whole loop from task to hire, seen by all three sides. Open `/employer` and `/city`. Test: `evals/flow.eval.ts`, 28 of 28 steps from task to a confirmed meeting, follow-up and hire.
+- **Innovation & User Experience (35%):** short real work instead of a CV, read blind; the name shows only after the person accepts. Open `/try` and `/table` on two screens. Test: `evals/table.eval.ts`, 0 of 10 typed names, emails and numbers reach the big screen.
+- **Responsible & Feasible Execution (20%):** the AI never scores, never ranks and never decides. A named reviewer gives 1 to 5 points per skill with a written reason, or the decision is refused. Open `/city/log`. Test: `evals/no-automated-decisions.eval.ts`, 70 of 70 planted judging phrases rejected, 0 automated decisions; `evals/blind-review.eval.ts`, 0 of 79 planted identity details reach a reviewer.
 
 ## How it meets each judging criterion
 
@@ -33,16 +41,18 @@ Plain-text and machine-readable entry points. Every claim names a route, a file 
 - [/llms.txt](https://workproof.wicflow.com/llms.txt): a short map of the project with dated numbers.
 - [/llms-full.txt](https://workproof.wicflow.com/llms-full.txt): the whole evidence page as one markdown file: criteria, the brief's problems, guardrails, architecture, every eval row and the limits.
 - [/for-judges](https://workproof.wicflow.com/for-judges): the same evidence as a server-rendered page.
+- [/submission.json](https://workproof.wicflow.com/submission.json): the entry as JSON: problem, solution, the three views, AI use, measured numbers, links and limits. Built from `src/app/for-judges/facts.ts` and `evidence.ts`; `src/app/submission.json/build.test.ts` checks its numbers.
+- [/brief](https://workproof.wicflow.com/brief) and [/brief.pdf](https://workproof.wicflow.com/brief.pdf): "WorkProof: the brief and the build", the explainer for people.
 - [AGENTS.md](AGENTS.md): commands, folder map, and each invariant with where it is enforced and checked.
 - `npm test` and `npm run eval` reproduce the numbers; `npx tsc --noEmit` and `npm run lint` check the code. No keys needed.
-- All three texts and the numbers on this page come from one typed source, `src/app/for-judges/facts.ts` and `evidence.ts`; `facts.test.ts` fails if a named route or path does not exist.
+- The text maps, the JSON and the numbers on this page come from one typed source, `src/app/for-judges/facts.ts` and `evidence.ts`; `facts.test.ts` fails if a named route or path does not exist.
 
 ## Shaped at the Espoo booth
 
 On 13 November we asked City of Espoo staff if companies could judge people on a short work task. They had thought of something similar "on a smaller scale" and named three risks. Our answers:
 
 - **A company hires only a few.** With consent, one proof can reach a second employer with the same core skills (Second look), after 48 hours without an answer or after a Not now.
-- **Friction must stay low.** No login and no account. The demo challenges take 8 to 15 minutes. The stated length is capped at 30.
+- **Friction must stay low.** No login and no account. The demo challenges take 8 to 30 minutes. The stated length is capped at 30.
 - **AI can do the task.** AI is allowed. Two follow-up questions ask about the person's own choices, and the meeting starts from the work.
 
 <!-- checks:start -->
@@ -70,7 +80,7 @@ See also [AGENTS.md](AGENTS.md) and the [demo script](docs/demo-script.md).
 
 ## What it is
 
-- **Job seeker**: picks one or more roles, then a challenge from an Espoo company, does it in 8 to 15 minutes and writes how they think, checks what the company will read, and answers two follow-up questions. When a person at the company decides, the decision comes with a written reason. The person can accept or decline an invitation; a declined company never sees the name.
+- **Job seeker**: picks one or more roles, then a challenge from an Espoo company, does it in 8 to 30 minutes and writes how they think, checks what the company will read, and answers two follow-up questions. When a person at the company decides, the decision comes with a written reason. The person can accept or decline an invitation; a declined company never sees the name.
 - **Company**: picks who it is looking for (the same role chips) and lets the AI draft from that, pastes a job-ad link, or writes the challenge itself; approves a task with 3 to 5 core skills and a number of places, and reads blind proofs in arrival order. The reviewer scores each core skill from 1 to 5 and writes why; the total shows out of 10, and scored work moves to the task's top work, highest total first. A decision names one of the company's registered reviewers (not verified without sign-in).
 - **City of Espoo**: sees outcomes, not sign-ups, as graphs: from challenge taken to scored, invited, said yes, talked, follow-up agreed and hired. It sees which companies are hiring right now from public job ads, can make a challenge for one from its ad and invite the company to try it, draft a reminder to a company with work waiting, and export the list of talks.
 - **The loop**: task → work → blind proof → a named person scores it, writes feedback and chooses Meet or Not now → the person accepts → only then is the name shown → both sides confirm they met.
@@ -91,7 +101,7 @@ See also [AGENTS.md](AGENTS.md) and the [demo script](docs/demo-script.md).
 | Needs described late and vaguely | A job-ad link, or one typed sentence, becomes a challenge with 3 to 5 core skills. Extra wishes are set aside. A person edits and approves it. The city can also make one for a company from its job ad. | `/company`, `/city` | `src/app/company/start-step.tsx`, `src/app/company/draft-step.tsx`, `src/lib/ai/scripted/compose.ts` | Task generator eval: drafts have the right shape; fantasy profiles are cut to 4 skills or fewer. |
 | Organisers cannot see real capability | Proofs are the signal. Per core skill, the city sees how many tasks ask for it and how many proofs were handed in for those tasks, as counts. | `/city` | `src/lib/service/views/insights.ts`, `src/components/city/demand-panel.tsx` | Unit tests in `src/lib/service/views/city.test.ts`. |
 | Companies assume the city has no suitable candidates | The city makes a challenge from a company's job ad, and people do it before the company opens it. In the demo, Kide Silicon's challenge already has 20 pieces of work. The company's home data also counts proofs handed in for tasks that ask for the same skills. Counts only, never a list of people. | `/city`, `/employer` (as Kide Silicon) | `src/lib/service/views/employer.ts`, `src/components/city/make-challenge.tsx` | Unit tests in `src/lib/service/views/employer.test.ts`. |
-| Noise for companies at events | Each proof is work on the company's own task, 8 to 15 minutes in the demo. Each task takes a limited number of answers (5 to 30), so an employer can read them all. The queue holds blind proofs in arrival order; scored work moves to the task's top work, by the reviewers' own totals. | `/company/review`, `/employer` | `src/lib/service/views/queue.ts`, `src/lib/domain/places.ts` | No automated decisions eval: queues in arrival order, yes. Unit tests in `src/lib/domain/places.test.ts`. |
+| Noise for companies at events | Each proof is work on the company's own task, 8 to 30 minutes in the demo. Each task takes a limited number of answers (5 to 30), so an employer can read them all. The queue holds blind proofs in arrival order; scored work moves to the task's top work, by the reviewers' own totals. | `/company/review`, `/employer` | `src/lib/service/views/queue.ts`, `src/lib/domain/places.ts` | No automated decisions eval: queues in arrival order, yes. Unit tests in `src/lib/domain/places.test.ts`. |
 | People who cannot describe their skills | No self-description: the person does the task, then answers two questions about their own choices. | `/challenges` | `src/lib/ai/scripted/follow-ups.ts`, `src/lib/service/challenges.ts` | Flow eval: two follow-ups about the answer. |
 | AI-written materials on both sides | The company scores real work on its own task. AI may help with the work, but the follow-ups ask about the person's own choices and the meeting starts from the work. AI never summarises a person; the "At a glance" line is code that counts points and words. | `/try` | `src/lib/blind/glance.ts`, `src/components/proof/fixed-lines.tsx` | No automated decisions eval: "At a glance" is structure only. |
 | Cumbersome matching platforms | No profile and no match score. Second look compares tasks by shared core skills (2 or more), never people. | `/my-work` | `src/lib/matching/second-look.ts` | Flow eval: company B sees the proof through Second look; company C without shared skills cannot. |
@@ -280,7 +290,7 @@ All keys are optional. Copy `.env.example` to `.env`.
 
 What a city asks before it runs an event on this, answered with what is built today.
 
-**Will people do unpaid tasks?** The demo challenges take 8 to 15 minutes. The stated length is capped at 30. One proof can reach several employers: through a task they share, or through Second look if the person allows it. Every recorded decision carries a written reason. The city should set the rule that tasks stay short and are never real client work.
+**Will people do unpaid tasks?** The demo challenges take 8 to 30 minutes. The stated length is capped at 30. One proof can reach several employers: through a task they share, or through Second look if the person allows it. Every recorded decision carries a written reason. The city should set the rule that tasks stay short and are never real client work.
 
 **Will companies read and answer?** Nothing forces an answer. The city sees, per employer, how many answers are still owed, and an organiser can make answering a condition for a table at the next event. After 48 hours without an answer, the proof can go to another employer, if the person allowed it.
 
