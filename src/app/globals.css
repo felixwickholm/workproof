@@ -450,3 +450,9 @@ html:has([data-page-tone="grey"]) body {
     transform: none;
   }
 }
+
+/* While the walkthrough is open, the pinned score total sits in the flow, so the card can show the skills it talks about. */
+body:has([data-tour-kind]) [data-sticky-bottom] {
+  position: static;
+  box-shadow: none;
+}
