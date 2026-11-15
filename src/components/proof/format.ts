@@ -32,17 +32,6 @@ export function companyLine(companies: readonly Company[]): string {
   return companies.map((c) => c.name).join(" and ");
 }
 
-/** The four plain facts a person asks before applying, in the employer's own terms. */
-export function companyFacts(company: Company): { label: string; value: string }[] {
-  const yesNo = (v: boolean) => (v ? "yes" : "no");
-  return [
-    { label: "Work language", value: company.workLanguage },
-    { label: "Finnish needed", value: yesNo(company.finnishNeeded) },
-    { label: "Helps with work permit", value: yesNo(company.permitSupport) },
-    { label: "Helps with moving", value: yesNo(company.relocationHelp) },
-  ];
-}
-
 /** A decision in words, as the person reads it. Never "rejected" or "passed". */
 export function decisionWords(decision: DecisionKind): string {
   if (decision === "meet") return "wants to meet you";

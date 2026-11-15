@@ -2,7 +2,6 @@ export { AttachmentView } from "./attachment-view";
 export { BlindCompare } from "./blind-compare";
 export { BlindProofView } from "./blind-proof-view";
 export { CHECK_HINT } from "./check-hint";
-export { CompanyFacts } from "./company-facts";
 export { FeedbackQuote } from "./feedback-quote";
 export { markHidden } from "./mark-hidden";
 export { TaskCard } from "./task-card";

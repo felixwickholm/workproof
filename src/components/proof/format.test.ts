@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Company, Skill } from "@/lib/domain/types";
-import { answeredLine, clipLength, clipSkills, companyFacts, companyLine, decisionWords, hiddenLine, pooledLine, replyTime, timeAgo } from "./format";
+import { answeredLine, clipLength, clipSkills, companyLine, decisionWords, hiddenLine, pooledLine, replyTime, timeAgo } from "./format";
 
 const skill = (id: string): Skill => ({ id, label: id, why: "" });
 const company = (over: Partial<Company> = {}): Company => ({
@@ -53,15 +53,6 @@ describe("companies", () => {
   it("gives one company its district and joins a pool by name", () => {
     expect(companyLine([company()])).toBe("Halla Supply · Matinkylä");
     expect(companyLine([company(), company({ name: "Otso Health" })])).toBe("Halla Supply and Otso Health");
-  });
-
-  it("writes the facts in plain yes and no", () => {
-    expect(companyFacts(company()).map((f) => `${f.label}: ${f.value}`)).toEqual([
-      "Work language: Finnish and English",
-      "Finnish needed: no",
-      "Helps with work permit: yes",
-      "Helps with moving: no",
-    ]);
   });
 });
 
