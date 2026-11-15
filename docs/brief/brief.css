@@ -1,0 +1,327 @@
+/*
+ * WorkProof: the brief and the build. One stylesheet for the web page at /brief and the A4 PDF at
+ * /brief.pdf. White ground, one accent (Business Espoo navy, the app's --color-accent), system sans.
+ */
+:root {
+  --ink: #0b1530;
+  --muted: #4a5468;
+  --line: #dfe3ea;
+  --wash: #f3f5f9;
+  --accent: #012169;
+  --accent-wash: #eef2fa;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: var(--ink);
+  font-family: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  /* No ligatures: copied or extracted text keeps plain letters ("wicflow", not a single "fl" glyph). */
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "clig" 0;
+}
+
+main {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 40px 16px 64px;
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--accent);
+  line-height: 1.15;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  font-size: 34px;
+  font-weight: 700;
+}
+
+h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 28px 0 10px;
+  padding-top: 14px;
+  border-top: 2px solid var(--accent);
+}
+
+h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 18px 0 6px;
+}
+
+p {
+  margin: 0 0 10px;
+}
+
+ul,
+ol {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+
+li {
+  margin: 0 0 5px;
+}
+
+code {
+  font-family: "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 0.88em;
+  background: var(--wash);
+  border-radius: 4px;
+  padding: 1px 4px;
+  overflow-wrap: anywhere;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.lede {
+  font-size: 17px;
+  line-height: 1.45;
+  margin: 12px 0 14px;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 14px;
+  margin: 0 0 6px;
+}
+
+.criteria li strong {
+  color: var(--accent);
+}
+
+.facts {
+  margin: 16px 0 0;
+  padding: 14px 16px 10px;
+  background: var(--accent-wash);
+  border-radius: 10px;
+  break-inside: avoid;
+}
+
+.facts h2 {
+  margin: 0 0 8px;
+  padding: 0;
+  border: 0;
+  font-size: 16px;
+}
+
+.facts dl {
+  display: grid;
+  grid-template-columns: 9.5em 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.facts dt {
+  font-weight: 700;
+}
+
+.facts dd {
+  margin: 0;
+}
+
+blockquote {
+  margin: 0 0 10px;
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+
+figure {
+  margin: 10px 0 14px;
+  break-inside: avoid;
+}
+
+figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+figcaption {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+.view {
+  break-inside: avoid;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  line-height: 1.35;
+  margin: 6px 0 12px;
+}
+
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  padding: 5px 8px 5px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+th {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+tr {
+  break-inside: avoid;
+}
+
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 24px;
+}
+
+.small {
+  font-size: 13px;
+}
+
+.note {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+h2,
+h3 {
+  break-after: avoid;
+}
+
+@media (max-width: 640px) {
+  h1 {
+    font-size: 28px;
+  }
+  .two {
+    grid-template-columns: 1fr;
+  }
+  .facts dl {
+    grid-template-columns: 1fr;
+  }
+  .facts dd {
+    margin-bottom: 6px;
+  }
+  table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+@page {
+  size: A4;
+  margin: 14mm 15mm 16mm;
+}
+
+@media print {
+  body {
+    font-size: 10.5pt;
+    line-height: 1.42;
+  }
+  main {
+    max-width: none;
+    padding: 0;
+  }
+  h1 {
+    font-size: 25pt;
+  }
+  h2 {
+    font-size: 15pt;
+    margin-top: 16pt;
+  }
+  .lede {
+    font-size: 12pt;
+  }
+  .page {
+    break-before: page;
+  }
+  .page > h2:first-child {
+    margin-top: 0;
+  }
+  figure img {
+    max-height: 88mm;
+    object-fit: cover;
+    object-position: top left;
+  }
+  a {
+    text-decoration: none;
+  }
+  header + section h2 {
+    margin-top: 10pt;
+  }
+  .criteria li {
+    font-size: 9.5pt;
+    margin-bottom: 3pt;
+  }
+  .facts {
+    padding: 9pt 11pt 7pt;
+    margin-top: 8pt;
+  }
+  .facts dl {
+    font-size: 8.8pt;
+    gap: 2pt 10pt;
+    line-height: 1.32;
+  }
+  .small,
+  .small li {
+    font-size: 9.3pt;
+  }
+  table.evidence {
+    font-size: 8.3pt;
+    margin-bottom: 6pt;
+  }
+  table.evidence td {
+    padding: 2.5pt 6pt 2.5pt 0;
+  }
+  .commands {
+    columns: 2;
+    column-gap: 18pt;
+    font-size: 9pt;
+  }
+  .commands li {
+    break-inside: avoid;
+  }
+}

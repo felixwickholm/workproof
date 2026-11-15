@@ -11,7 +11,8 @@
     "eval": "vitest run evals",
     "check:ai": "node scripts/check-ai.mjs",
     "evidence": "node scripts/refresh-evidence.mjs",
-    "eval:e2e": "npx -y -p playwright@1.64.1 -c 'PLAYWRIGHT_MODULES=$(dirname $(dirname $(command -v playwright))) node evals/e2e/run.mjs'"
+    "eval:e2e": "npx -y -p playwright@1.64.1 -c 'PLAYWRIGHT_MODULES=$(dirname $(dirname $(command -v playwright))) node evals/e2e/run.mjs'",
+    "brief": "npx -y -p playwright@1.64.1 -c 'PLAYWRIGHT_MODULES=$(dirname $(dirname $(command -v playwright))) node scripts/build-brief.mjs'"
   },
   "dependencies": {
     "lucide-react": "^1.72.0",
