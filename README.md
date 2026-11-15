@@ -58,7 +58,7 @@ On 13 November we asked City of Espoo staff if companies could judge people on a
 <!-- checks:start -->
 Checked on 2026-11-15 with `npm run evidence`: 2056 of 2056 unit tests and 64 of 64 eval tests pass; 0 of 79 planted identity details reached a reviewer; 70 of 70 planted judging phrases rejected by the guard.
 <!-- checks:end -->
-End to end (`npm run eval:e2e` against the live site, build 31a2bbe): 143 of 143 steps, 15 November 2026.
+End to end (`npm run eval:e2e` against the live site, build 3e42f50, 15 November 2026): 139 of 143 steps on the first full run. One walkthrough card on a laptop covered its target once, and its 3 dependent steps were skipped. A rerun of the walkthrough suite passed 20 of 20.
 
 <img src="docs/images/hero-light.png" alt="Job seeker home, where the app opens: Hi Mikko. What work do you want?, the role chips with Designer chosen, the company and time filters, and the first Designer challenges as listings with company logos" width="100%">
 
