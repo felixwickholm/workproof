@@ -3,6 +3,7 @@ import { draftProblems, isNeutral } from "@/lib/guard/check-draft";
 import { findJudgement, JudgementError } from "@/lib/guard/no-judgement";
 import { protectedNames } from "@/lib/guard/protected";
 import type { Breaker } from "./provider/breaker";
+import { failureOf } from "./provider/http";
 import type { CallBudget } from "./provider/budget";
 import type { TaskDesigner } from "./task-designer";
 
@@ -55,7 +56,18 @@ export function guarded(primary: TaskDesigner, backup?: Backup): TaskDesigner {
     const release = backup.budget ? backup.budget.take() : () => undefined;
     if (!release) return byBackup();
     try {
-      return { value: await answer(primary, call, check), by: primary.name };
+      try {
+        return { value: await answer(primary, call, check), by: primary.name };
+      } catch (error) {
+        // A reply the guard rejected is tried once more: a model rarely repeats the same wording. A failed service is not.
+        if (failureOf(error)) throw error;
+        try {
+          return { value: await answer(primary, call, check), by: primary.name };
+        } catch {
+          // The first rejection says why; a retry that fails too does not pause the model.
+          throw error;
+        }
+      }
     } catch (error) {
       backup.breaker?.record(error);
       backup.onFallback?.(method, error);

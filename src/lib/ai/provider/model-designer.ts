@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import type { ChallengeDraft, ChoiceOption } from "@/lib/domain/types";
-import { neutralSetAside, NOT_USED_PREFIX, talentNeed } from "@/lib/guard/check-draft";
+import { isNeutral, neutralSetAside, NOT_USED_PREFIX, talentNeed } from "@/lib/guard/check-draft";
 import { SKILLS, toSkill, type SkillId } from "@/lib/skills/vocabulary";
 import { draftFromNeed, tasterFor } from "../scripted/compose";
 import { matchRole } from "../scripted/match-role";
@@ -67,7 +67,8 @@ function toDraft(task: ModelTask, base: ChallengeDraft, need: (skills: SkillId[]
     aiAllowed: true,
     kind: base.kind,
     ...(base.facts ? { facts: base.facts } : {}),
-    ...(base.kind !== "taster" && task.jobAd ? { jobAd: task.jobAd } : {}),
+    // The job description is a courtesy: wording the guard would refuse drops it, and the built-in one is used instead.
+    ...(base.kind !== "taster" && task.jobAd && isNeutral(task.jobAd) ? { jobAd: task.jobAd } : {}),
   };
 }
 

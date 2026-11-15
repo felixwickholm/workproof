@@ -79,7 +79,7 @@ export function exampleJobAd(draft: ChallengeDraft, role: string | undefined, sa
   const work = workLine(said);
   return [
     `${role ?? "Join our team"}, Espoo`,
-    `We are looking for ${role ? `a ${role.toLowerCase()}` : "a new colleague"} to join our team.${work ? ` The work: ${work}` : ""}`,
+    `We are looking for ${role ? `${/^[aeiou]/i.test(role) ? "an" : "a"} ${role.toLowerCase()}` : "a new colleague"} to join our team.${work ? ` The work: ${work}` : ""}`,
     `In your first months you work on tasks like this one: "${draft.title.replace(/\.$/, "")}". The work needs these skills: ${list}.`,
     "Show us how you work: do our short challenge instead of sending a CV first. A person on our team reads every answer we take.",
   ].join("\n\n");

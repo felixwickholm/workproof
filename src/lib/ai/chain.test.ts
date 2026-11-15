@@ -37,3 +37,21 @@ describe("designer chain", () => {
     expect(draft.coreSkills.length).toBeGreaterThanOrEqual(3);
   });
 });
+
+describe("a reply the guard rejects", () => {
+  it("is asked for once more, and the second, clean reply is used", async () => {
+    let calls = 0;
+    const flaky: TaskDesigner = {
+      ...model("gemini", false),
+      draftChallenge: async (need) => {
+        calls += 1;
+        const draft = await scriptedDesigner.draftChallenge(need);
+        return calls === 1 ? { ...draft, brief: `${draft.brief} The best candidate is young.` } : draft;
+      },
+    };
+    const designer = guarded(flaky, { designer: guarded(scriptedDesigner), breaker: createBreaker(), onFallback: vi.fn() });
+    const draft = await designer.draftChallenge(NEED);
+    expect(calls).toBe(2);
+    expect(draft.draftedBy).toBe("gemini");
+  });
+});
