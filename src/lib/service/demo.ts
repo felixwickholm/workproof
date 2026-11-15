@@ -30,9 +30,10 @@ export async function setStoryStage(stage: StoryStage): Promise<DemoSessionReply
 }
 
 /**
- * Carries the visitor's own work into a rebuilt event, so the walkthrough or a reset never deletes it:
+ * Carries the visitor's own work into an event rebuilt at a story stage, so the walkthrough does not delete it:
  * challenges they published, and work they sent under their own key, with the decisions and meetings on it.
- * Work sent as the demo person belongs to the story and is rebuilt with it.
+ * Work sent as the demo person belongs to the story and is rebuilt with it. Reset (`resetDemo`) does not use this:
+ * it clears the visitor's own work too.
  */
 export function withVisitorWork(fresh: StoreData, before: StoreData): StoreData {
   const seededChallenges = new Set(fresh.challenges.map((c) => c.id));
