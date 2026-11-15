@@ -18,7 +18,7 @@ interface CheckRun {
 export const VERIFIED_ON = "2026-11-15";
 
 /** `npm test`: unit tests next to the code under src/. */
-export const UNIT_TESTS: CheckRun = { command: "npm test", files: 141, tests: 2050, passed: 2050 };
+export const UNIT_TESTS: CheckRun = { command: "npm test", files: 141, tests: 2054, passed: 2054 };
 
 /** `npm run eval`: the eval suites under evals/ (the live-AI suite is skipped without a key). */
 export const EVAL_TESTS: CheckRun = { command: "npm run eval", files: 7, tests: 64, passed: 64 };
@@ -73,7 +73,7 @@ export const PRINTED: Readonly<Record<string, string>> = {
   "4 Consent and privacy › practice proof keeps no name": "HTTP 200; the given name in the store: nowhere",
   "4 Consent and privacy › decline keeps the name hidden": "HTTP 403 for a stranger; status after decline: declined, after a later accept: declined; name in responses: false",
   "4 Consent and privacy › Second look withdrawal reaches decided proofs": "work shown to the Second look employer after withdrawal: false; its decision kept: true",
-  "4 Consent and privacy › identity strings sent to a model": "0 of 48 checks found a planted string in 6 requests (draft, practice task, follow-ups; Claude and Gemini)",
+  "4 Consent and privacy › identity strings sent to a model": "0 of 96 checks found a planted string in 12 requests (draft, practice task, follow-ups; Claude and Gemini)",
   "4 Consent and privacy › city: slots and labels, never names": "0 names, contacts or keys in city responses, task leaderboards, share matches and the meeting export over 4 story stages, \"met\" included",
   "4 Consent and privacy › top proofs and shared work stay blind": "0 identity strings in the top list and the receiving queue; shared: HTTP 200; scores sent along: false",
   "5 Flow (API) › seed has 28 companies": "ok",

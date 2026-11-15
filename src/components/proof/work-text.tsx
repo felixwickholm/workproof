@@ -10,7 +10,7 @@ import { HIDDEN_TOKEN } from "./mark-hidden";
 export function BlindText({ text, className, bars }: { text: string; className?: string; bars?: boolean }) {
   const pieces = text.split(HIDDEN_TOKEN);
   return (
-    <p className={cx("whitespace-pre-wrap text-pretty", className)}>
+    <p className={cx("whitespace-pre-wrap text-pretty [overflow-wrap:anywhere]", className)}>
       {pieces.map((piece, i) => (
         <Fragment key={i}>
           {i > 0 ? (
