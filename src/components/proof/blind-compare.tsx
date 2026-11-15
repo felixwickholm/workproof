@@ -110,6 +110,8 @@ export function BlindCompare({
   const segments = useMemo(() => markHidden(original, blind), [original, blind]);
   const card = useRef<HTMLDivElement>(null);
   const glided = useRef(false);
+  /** Set once the person moves the slider: the opening glide stops and never overrides them. */
+  const moved = useRef(false);
 
   // Glide once, the first time the card is mostly in view; any touch of the handle stops it.
   useEffect(() => {
@@ -120,9 +122,11 @@ export function BlindCompare({
       ([entry]) => {
         if (!entry?.isIntersecting) return;
         observer.disconnect();
+        if (moved.current) return;
         glided.current = true;
         const start = performance.now();
         const tick = (now: number) => {
+          if (moved.current) return;
           const t = Math.min(1, (now - start) / GLIDE_MS);
           setPos(FROM + (rest - FROM) * (1 - Math.pow(1 - t, 3)));
           if (t < 1) frame = requestAnimationFrame(tick);
@@ -141,6 +145,7 @@ export function BlindCompare({
 
   const stopGlide = () => {
     glided.current = true;
+    moved.current = true;
   };
 
   const fromPointer = (e: PointerEvent<HTMLElement>) => {
