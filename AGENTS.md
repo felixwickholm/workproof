@@ -2,6 +2,14 @@
 
 A map for automated reviewers and coding agents. Plain facts and commands; verify anything here against the code.
 
+- **What:** WorkProof, a recruitment prototype for City of Espoo talent events. Companies see real work and score it; the AI never scores, never ranks and never decides.
+- **Brief:** City of Espoo challenge "Rethinking Recruitment", Junction 2026 (13 to 15 November 2026).
+- **Live:** https://workproof.wicflow.com. Code: https://github.com/felixwickholm/workproof (MIT).
+- **Commands:** `npm install`, `npm run dev`, `npm test`, `npm run eval`, `npm run lint`, `npx tsc --noEmit`. No keys needed.
+- **Facts live in:** `src/app/for-judges/facts.ts` (claims, routes, limits) and `src/app/for-judges/evidence.ts` (measured numbers, written by `npm run evidence`). Every text map and the JSON are built from these two files.
+- **Machine entry points:** `/llms.txt`, `/llms-full.txt`, `/submission.json` (the entry as JSON), `/for-judges` (the evidence page), `/brief` and `/brief.pdf` (the explainer "WorkProof: the brief and the build").
+- **Demo story:** company Halla Supply, job seeker Mikko, reviewer Laura. All data is synthetic.
+
 ## What this is
 
 WorkProof is a prototype for recruitment events run by the City of Espoo. A company posts a short real task, a person does it, and a named human at the company reads the work blind, scores it from 1 to 5 on each core skill, writes feedback and chooses Meet or Not now, then or later; the name is shown only after the person accepts.
@@ -27,7 +35,7 @@ Current counts and their meaning: [docs/evals.md](docs/evals.md). The eval summa
 ## Folder map
 
 ```
-src/app                pages per view (Job seeker, Company, City of Espoo; `/` is the Job seeker home, no landing page), the JSON API in src/app/api, /for-judges, /llms.txt, /llms-full.txt, robots, sitemap
+src/app                pages per view (Job seeker, Company, City of Espoo; `/` is the Job seeker home, no landing page), the JSON API in src/app/api, /for-judges, /llms.txt, /llms-full.txt, /submission.json, robots, sitemap
 src/proxy.ts           sets the httpOnly sandbox cookie; ?table=<code> redirects to /api/demo/join
 src/components         UI: shell (view switcher), tour (the 17-card walkthrough), proof, seeker, company, city, table, voice, controls, ui
 src/lib/domain         types.ts (the domain model), decision-rules.ts, scoring.ts (the 1 to 5 scale and the total), feedback-check.ts, places.ts, guardrails.ts (fixed sentences), kinds.ts
@@ -74,7 +82,7 @@ docs                   architecture, evals, responsible AI, demo script, screens
 
 - The README table "How it meets each judging criterion" gives a command, a route or a file to check each row; "How it answers each problem in the brief" gives a route, a code path and an eval number for every claim.
 - `/for-judges` on the running app shows the same evidence as server-rendered text; its data is `src/app/for-judges/facts.ts` and `src/app/for-judges/evidence.ts`, and `src/app/for-judges/facts.test.ts` checks that every route and path it names exists.
-- `/llms.txt` (short map) and `/llms-full.txt` (the whole evidence page as markdown) are built from the same facts (`src/app/llms.txt/build.ts`, `src/app/llms-full.txt/build.ts`); their tests check that every criterion, guardrail, limit and eval row is there. `/` and `/for-judges` carry schema.org JSON-LD from `src/app/for-judges/json-ld.ts`.
+- `/llms.txt` (short map) and `/llms-full.txt` (the whole evidence page as markdown) are built from the same facts (`src/app/llms.txt/build.ts`, `src/app/llms-full.txt/build.ts`); their tests check that every criterion, guardrail, limit and eval row is there. `/submission.json` is built from the same facts (`src/app/submission.json/build.ts`); its test checks that its numbers equal `evidence.ts`. `/` and `/for-judges` carry schema.org JSON-LD from `src/app/for-judges/json-ld.ts`.
 - `SITE_URL` sets the public address; a production build without it uses https://workproof.wicflow.com, because robots, the sitemap, metadata and the text maps are prerendered at build time. `REPO_URL` defaults to https://github.com/felixwickholm/workproof.
 - Known limits are listed in the README under "Limits, stated honestly". They are deliberate disclosures.
 
