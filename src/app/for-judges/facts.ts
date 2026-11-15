@@ -304,7 +304,7 @@ interface Guardrail {
 /** The rules the code never breaks, where each is enforced and which test checks it. Every path exists. */
 export const GUARDRAILS: readonly Guardrail[] = [
   {
-    rule: "Software never scores, ranks or rates a person. Only a named reviewer gives points, 1 to 5 per core skill, with a written reason. AI output that scores, ranks or judges a person never gets past the guard.",
+    rule: "Software never scores, ranks or rates a person. Only a named reviewer gives points, 1 to 5 per core skill, with a written reason. The AI has no scoring or decision step. The guard rejects AI output with a detected score, rank or judging phrase; eval 3a tests it with planted phrases.",
     enforced: ["src/lib/domain/scoring.ts", "src/lib/service/decisions.ts", "src/lib/guard/no-judgement.ts", "src/lib/ai/guarded.ts"],
     checked: ["evals/no-automated-decisions.eval.ts", "src/lib/domain/scoring.test.ts", "src/lib/guard/no-judgement.test.ts"],
   },

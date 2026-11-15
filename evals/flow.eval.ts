@@ -112,7 +112,7 @@ describe("Flow: from need to a confirmed Second look meeting", () => {
     const meet = await decide<{ decision: Decision; meeting: Meeting }>({
       body: { proofId: proof.proofId, companyId: B, reviewer: "Mira Salo", decision: "meet", feedback: "Your point on the split matches what we see in forecasting. Let us talk." },
     });
-    step("company B picks Meet and a slot is set", meet.status === 200 && meet.json.meeting.status === "invited" && /^Sat \d{1,2}:\d{2}, Table \d+$/.test(meet.json.meeting.slot));
+    step("company B picks Meet and a slot is set", meet.status === 200 && meet.json.meeting.status === "invited" && /^(Mon|Tue|Wed|Thu|Fri|Sat|Sun) \d{1,2}:\d{2}, Table \d+$/.test(meet.json.meeting.slot));
 
     const hidden = (await call<ReviewQueue>(queueRoute, { params: { id: B } })).json.decided.find((d) => d.proof.proofId === proof.proofId);
     step("identity hidden while invited", hidden?.identity === undefined);

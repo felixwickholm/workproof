@@ -46,7 +46,7 @@ On 13 November we asked City of Espoo staff if companies could judge people on a
 - **AI can do the task.** AI is allowed. Two follow-up questions ask about the person's own choices, and the meeting starts from the work.
 
 <!-- checks:start -->
-Checked on 2026-11-14 with `npm run evidence`: 2049 of 2049 unit tests and 64 of 64 eval tests pass; 0 of 79 planted identity details reached a reviewer; 70 of 70 planted judging phrases rejected by the guard.
+Checked on 2026-11-15 with `npm run evidence`: 2050 of 2050 unit tests and 64 of 64 eval tests pass; 0 of 79 planted identity details reached a reviewer; 70 of 70 planted judging phrases rejected by the guard.
 <!-- checks:end -->
 End to end (`npm run eval:e2e` on a production build): 150 of 150 steps, 14 November 2026.
 
@@ -166,9 +166,9 @@ More in [docs/architecture.md](docs/architecture.md).
 | End to end | `npm run eval:e2e` | The story through the real interface at 390x844; fails on any console error; needs the app running |
 
 <!-- evidence:start -->
-Measured on 2026-11-14 with `npm run evidence`, which runs both commands and copies their totals here:
+Measured on 2026-11-15 with `npm run evidence`, which runs both commands and copies their totals here:
 
-- `npm test`: 2049 of 2049 unit tests pass, in 141 files.
+- `npm test`: 2050 of 2050 unit tests pass, in 141 files.
 - `npm run eval`: 64 of 64 eval tests pass, in 7 files. The live-AI file is skipped without a key.
 
 | Suite | What is counted | Result | File |
