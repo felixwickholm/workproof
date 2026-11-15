@@ -65,6 +65,17 @@ export function stickyTop(): number {
   return bottom;
 }
 
+/** Height taken at the bottom of the screen by a footer marked `data-sticky-bottom` while it is pinned there. */
+export function stickyBottom(): number {
+  let taken = 0;
+  for (const bar of document.querySelectorAll<HTMLElement>("[data-sticky-bottom]")) {
+    if (getComputedStyle(bar).position !== "sticky") continue;
+    const r = bar.getBoundingClientRect();
+    if (r.height > 0 && r.top < window.innerHeight) taken = Math.max(taken, Math.min(r.height, window.innerHeight - r.top));
+  }
+  return taken;
+}
+
 /** A box on screen, with where the page's sticky bars end at the moment it was measured. */
 interface LiveBox extends Box {
   barBottom: number;

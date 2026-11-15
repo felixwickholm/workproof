@@ -156,7 +156,7 @@ export function ScorePanel({ proof, challenge, company, onScored, className }: P
       </div>
 
       {/* The summary: the total as it builds and the three buttons. From 900px it stays in view while the skills scroll past. */}
-      <div className="-mx-5 -mb-5 mt-8 rounded-b-card bg-surface px-5 pt-6 pb-5 min-[900px]:sticky min-[900px]:bottom-0 min-[900px]:-mx-7 min-[900px]:-mb-7 min-[900px]:px-7 min-[900px]:pb-7 min-[900px]:shadow-[0_-16px_24px_-20px_rgba(1,17,53,0.25)]">
+      <div data-sticky-bottom className="-mx-5 -mb-5 mt-8 rounded-b-card bg-surface px-5 pt-6 pb-5 min-[900px]:sticky min-[900px]:bottom-0 min-[900px]:-mx-7 min-[900px]:-mb-7 min-[900px]:px-7 min-[900px]:pb-7 min-[900px]:shadow-[0_-16px_24px_-20px_rgba(1,17,53,0.25)]">
         <div className="flex items-end justify-between gap-4">
           <p className="text-headline text-label">Total</p>
           <p aria-live="polite" className="tnum text-[40px] leading-[44px] font-normal text-label">

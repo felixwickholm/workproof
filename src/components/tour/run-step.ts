@@ -5,7 +5,7 @@ import type { StoryStage } from "@/lib/domain/types";
 import { CARD_HEIGHT_GUESS, PHONE_MAX, scrollFor, type Box } from "./placement";
 import { resolveRoute } from "./resolve-route";
 import type { TourAct, TourStep } from "./steps";
-import { stickyTop, visibleSize } from "./use-geometry";
+import { stickyBottom, stickyTop, visibleSize } from "./use-geometry";
 import { findShown, TARGET_TIMEOUT_MS, waitForTarget, waitUntilStill } from "./wait-for-target";
 
 interface StepContext {
@@ -47,7 +47,8 @@ export function setStage(stage: StoryStage, ctx: Pick<StepContext, "stage">): Pr
 export function bringIntoView(el: HTMLElement, ctx: Pick<StepContext, "cardHeight" | "reduce" | "jump">) {
   const r = el.getBoundingClientRect();
   const { width, height } = visibleSize();
-  const view = { width, height, top: stickyTop(), bottom: 0 };
+  // A pinned footer (the score total) hides what sits behind it, so the target must clear it too.
+  const view = { width, height, top: stickyTop(), bottom: stickyBottom() };
   const target: Box = { x: r.left, y: r.top + window.scrollY, width: r.width, height: r.height };
   const max = document.documentElement.scrollHeight - height;
   // On a phone the card docks over the lower part of the screen; budget its height there too.
