@@ -49,7 +49,7 @@ export function IdentityLine({ onSwitch, className }: { onSwitch: () => void; cl
     <p className={cx("text-subhead flex flex-wrap items-center gap-x-2 gap-y-1 text-label-2", className)}>
       {identity === "persona" ? (
         <>
-          <span>You are looking at {first}&apos;s account, a demo person.</span>
+          <span>Demo account: {first}.</span>
           <button type="button" onClick={() => change("me")} className="press font-medium text-label underline decoration-label-3 underline-offset-4 hover:decoration-label">
             Start as yourself
           </button>

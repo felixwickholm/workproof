@@ -23,8 +23,8 @@ export function SeekerHomeView() {
   const title = data ? greetingLine(data.greeting.firstName) : undefined;
 
   return (
-    <Screen greeting title={title} subtitle={data ? "Pick one or more roles. Their challenges come first." : undefined} page tone="grey">
-      <ShowMeButton view="seeker" className="rise -mt-4 mb-8 min-[900px]:-mt-6" />
+    <Screen greeting title={title} subtitle={data ? "Pick roles. Their challenges come first." : undefined} page tone="grey">
+      <ShowMeButton view="seeker" className="rise -mt-4 mb-5 min-[900px]:-mt-6 min-[900px]:mb-8" />
       {loading && !data ? (
         <HomeSkeleton />
       ) : error && !data ? (
@@ -40,7 +40,7 @@ function HomeBody({ home, onSwitch }: { home: SeekerHome; onSwitch: () => void }
   const notice = inviteNotice(home.invitations);
   return (
     <>
-      <div className="rise -mt-3 mb-8 flex flex-col gap-3 min-[900px]:-mt-5" style={riseAt(1)}>
+      <div className="rise -mt-2 mb-6 flex flex-col gap-3 min-[900px]:-mt-5 min-[900px]:mb-8" style={riseAt(1)}>
         <IdentityLine onSwitch={onSwitch} />
         {notice ? (
           <Link
