@@ -13,7 +13,7 @@ export const R = "(?![\\p{L}\\p{N}_])";
 export const CAP = "\\p{Lu}[\\p{L}\\p{N}&'’.-]{0,40}";
 
 /**
- * A legal form or country word that ends a company name: "Kaari Home Care Oy", "Stora Enso Oyj", "Nokia Finland".
+ * A legal form or country word that ends a company name: "Halla Supply Oy", "Stora Enso Oyj", "Nokia Finland".
  * Optional and in any case, so the whole name goes and no part of it is left for a reader.
  */
 const LEGAL_FORM_WORDS = ["Oyj", "Oy", "Ab", "Ltd", "Inc", "GmbH", "ASA", "LLC", "Corp", "Group", "Finland", "Suomi"];

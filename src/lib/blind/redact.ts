@@ -21,7 +21,7 @@ const MAX_REDACT_CHARS = LIMITS.answer;
 
 /**
  * One company by its distinctive first word, with as much of its full name as follows in any case:
- * "Kaari Home Care" hides whole, never leaving "Care" behind. A first word alone may take one more capitalised word ("Tuulos Labs").
+ * "Halla Supply" hides whole, never leaving "Supply" behind. A first word alone may take one more capitalised word ("Tuulos Labs").
  */
 function companyPattern(name: string): string | undefined {
   const parts = name.trim().split(/\s+/).map((part) => caseless(escape(part)));

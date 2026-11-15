@@ -32,7 +32,7 @@ export function looksLikeSoftware(name: string): boolean {
   return SOFTWARE_NAME.test(name);
 }
 
-/** Spaces and case do not make another person: "anna  koivisto" is Anna Koivisto. */
+/** Spaces and case do not make another person: "laura  niemi" is Laura Niemi. */
 export function sameReviewer(a: string, b: string): boolean {
   const plain = (name: string) => name.trim().replace(/\s+/g, " ").toLocaleLowerCase("fi");
   return plain(a) === plain(b);
