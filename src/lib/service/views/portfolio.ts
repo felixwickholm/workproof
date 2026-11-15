@@ -30,7 +30,7 @@ function labelled(
 const newestFirst = (a: PortfolioCard, b: PortfolioCard) =>
   b.submittedAt.localeCompare(a.submittedAt);
 
-export function prefsOf(
+function prefsOf(
   data: StoreData,
   talentId: string,
 ): PortfolioPrefs | undefined {
@@ -116,7 +116,7 @@ export function portfolioCards(
 }
 
 /** Plain counts over the cards given. An invitation counts only where its decision is visible. */
-export function factsOf(cards: readonly PortfolioCard[]): PortfolioFacts {
+function factsOf(cards: readonly PortfolioCard[]): PortfolioFacts {
   const responses = cards.flatMap((c) => c.responses);
   return {
     tasks: cards.length,
@@ -127,7 +127,7 @@ export function factsOf(cards: readonly PortfolioCard[]): PortfolioFacts {
 }
 
 /** Tasks per skill, most tasks first, then by name. It says where the person has shown work, never how well. */
-export function skillsOf(cards: readonly PortfolioCard[]): Portfolio["skills"] {
+function skillsOf(cards: readonly PortfolioCard[]): Portfolio["skills"] {
   const bySkill = new Map<
     string,
     { id: string; label: string; tasks: number }

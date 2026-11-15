@@ -5,7 +5,7 @@ import { eventChallenges } from "./event";
 import { impactOf, isScored, proofIdsOf, topTotalOf } from "./leaderboard";
 
 /** At least this many shared core skills before a proof may be offered to another company. */
-export const MIN_SHARED_SKILLS = 2;
+const MIN_SHARED_SKILLS = 2;
 
 function eventTask(data: StoreData, challengeId: string) {
   return findOrThrow(eventChallenges(data), (c) => c.id === challengeId, "Challenge");

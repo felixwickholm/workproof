@@ -6,7 +6,7 @@ import { cx } from "../ui/cx";
 import { MODES, type Mode } from "./modes";
 
 /** A menu row: 44px at least, so it is a full target under a finger too. */
-export const menuItem =
+const menuItem =
   "flex min-h-11 w-full items-center gap-3 rounded-[12px] px-3 text-left outline-none transition-colors duration-150 hover:bg-fill focus-visible:bg-fill focus-visible:outline-none disabled:text-label-3";
 
 /** Arrow keys move between a menu's items (and its chosen segment); Home and End jump to the ends. */

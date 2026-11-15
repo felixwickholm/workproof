@@ -44,7 +44,7 @@ export function createDesigner(
  * Every live model in order, each falling back to the next, and the scripted designer last, so a draft always comes back.
  * Each model has its own breaker; all share one budget of live calls.
  */
-export function createChain(chain: readonly LiveConfig[]): TaskDesigner {
+function createChain(chain: readonly LiveConfig[]): TaskDesigner {
   return chain.reduceRight<TaskDesigner>((next, config) => createDesigner(config, undefined, undefined, undefined, next), guarded(scriptedDesigner));
 }
 

@@ -9,7 +9,7 @@ export const STORY_SEEN_KEY = "workproof.storySeen";
 export const seenKey = (view: TourView) => `workproof.demoSeen.${view}`;
 
 /** The addresses of Mikko's home, where the app opens and the story starts by itself. */
-export const ENTRY_PATHS: readonly string[] = ["/", "/seeker"];
+const ENTRY_PATHS: readonly string[] = ["/", "/seeker"];
 
 /** `?tour=0` or `?tour=off`: open the app without the story, and remember that. */
 export const isOffParam = (value: string | null) => value === "0" || value === "off";

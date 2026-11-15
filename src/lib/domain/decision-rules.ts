@@ -33,7 +33,7 @@ export function looksLikeSoftware(name: string): boolean {
 }
 
 /** Spaces and case do not make another person: "laura  niemi" is Laura Niemi. */
-export function sameReviewer(a: string, b: string): boolean {
+function sameReviewer(a: string, b: string): boolean {
   const plain = (name: string) => name.trim().replace(/\s+/g, " ").toLocaleLowerCase("fi");
   return plain(a) === plain(b);
 }

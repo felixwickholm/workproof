@@ -29,7 +29,7 @@ export type AssistReply =
   | { kind: "draft"; draft: ChallengeDraft };
 
 /** Minutes for a bigger event challenge, done before the event. */
-export const EVENT_MINUTES_BIG = 120;
+const EVENT_MINUTES_BIG = 120;
 
 function words(text: string): number {
   return text.split(/\s+/).filter(Boolean).length;
@@ -61,7 +61,7 @@ function companyWords(messages: readonly AssistMessage[]): string {
 }
 
 /** True when the company asked for a bigger event challenge. */
-export function wantsBig(messages: readonly AssistMessage[]): boolean {
+function wantsBig(messages: readonly AssistMessage[]): boolean {
   return BIG_WORDS.test(messages.filter((m) => m.from === "company").map((m) => m.text).join("\n"));
 }
 
@@ -73,7 +73,7 @@ function workLine(said: string): string | undefined {
 }
 
 /** An example job description from the draft and the company's own words, when the model wrote none. Work and skills only. */
-export function exampleJobAd(draft: ChallengeDraft, role: string | undefined, said = ""): string {
+function exampleJobAd(draft: ChallengeDraft, role: string | undefined, said = ""): string {
   const skills = draft.coreSkills.map((s) => s.label);
   const list = skills.length > 1 ? `${skills.slice(0, -1).join(", ")} and ${skills.at(-1)}` : (skills[0] ?? "");
   const work = workLine(said);

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { cx } from "../ui/cx";
 
 /** The pages around the app. /llms.txt sits in the account menu's foot, next to the demo-data line. */
-export const SITE_LINKS = [
+const SITE_LINKS = [
   { href: "/how-it-works", label: "How it works" },
   { href: "/for-judges", label: "For judges" },
 ] as const;

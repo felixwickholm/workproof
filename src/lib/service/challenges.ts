@@ -50,7 +50,7 @@ export async function draftChallenge(need: string): Promise<ChallengeDraft> {
 }
 
 /** An event task takes 5 to 30 minutes, or about 2 hours for a bigger event challenge done before the event. */
-export const EVENT_MINUTES = { min: 5, max: 180 } as const;
+const EVENT_MINUTES = { min: 5, max: 180 } as const;
 
 export async function approveChallenge(input: { draft: ChallengeDraft; companyId: string; approvedBy: string }): Promise<Challenge> {
   return publish(input);
@@ -104,7 +104,7 @@ async function publish(input: { draft: ChallengeDraft; companyId: string; approv
  * of work and per job fact. Asks come first, so the core skills come from them. A listed line stays one wish.
  * Headings, the offer and contact lines never reach it. Lines that do not fit the need limit are left out whole.
  */
-export function adNeed(ad: JobAd): string {
+function adNeed(ad: JobAd): string {
   const lines = [ad.title];
   for (const item of [...ad.requirements, ...ad.duties, ...ad.facts]) {
     const line = `- ${item}`;

@@ -2,7 +2,7 @@ import { PEOPLE, PERSONA } from "@/lib/seed/people";
 import type { Account, Mode } from "./modes";
 
 /** The demo person's picture, when the seed gives one. The visitor sees it on their own account card only. */
-export function personaAvatar(): string | undefined {
+function personaAvatar(): string | undefined {
   const person = PEOPLE[PERSONA];
   return "avatar" in person && typeof person.avatar === "string" ? person.avatar : undefined;
 }

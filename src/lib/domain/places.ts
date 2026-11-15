@@ -10,7 +10,7 @@ export const MIN_PLACES = 5;
 export const MAX_PLACES = 30;
 
 /** Reading one proof and writing a short answer takes about this long. An estimate, stated as one. */
-export const READING_MINUTES_PER_PROOF = 4;
+const READING_MINUTES_PER_PROOF = 4;
 
 /** Clamps a requested number of places to the allowed range, or gives the default. */
 export function choosePlaces(requested?: number): number {

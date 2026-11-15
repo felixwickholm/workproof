@@ -21,7 +21,7 @@ export interface AdFetchDeps {
   resolve: (host: string) => Promise<string[]>;
 }
 
-export const defaultAdDeps: AdFetchDeps = {
+const defaultAdDeps: AdFetchDeps = {
   fetch: (input, init) => fetch(input, init),
   resolve: async (host) => (await lookup(host, { all: true })).map((a) => a.address),
 };

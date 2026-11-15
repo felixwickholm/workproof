@@ -9,7 +9,7 @@ import { FOLLOW_UP_ACTION } from "./ai-work";
 import { appendAudit, clock, findOrThrow, ServiceError } from "./support";
 
 /** Follow-up answers about the person's own choices: two for an event task, one for a practice task. */
-export const FOLLOW_UPS_NEEDED = { event: 2, taster: 1 } as const;
+const FOLLOW_UPS_NEEDED = { event: 2, taster: 1 } as const;
 
 /** Plain questions about the person's own choices, added by the server when the writer returns fewer than needed. */
 export const FALLBACK_QUESTIONS = ["Why did you choose this approach?", "What would you check first if you had more time?"] as const;
@@ -23,7 +23,7 @@ export const ANSWER_CHANGED = "Your answer changed after the follow-up questions
 /** What a submission sends for each follow-up: the answer, and the question only to check it, never to store it. */
 export type SentFollowUp = Omit<ExplainAnswer, "question"> & { question?: string };
 
-export function answerHash(answer: string): string {
+function answerHash(answer: string): string {
   return createHash("sha256").update(answer.trim()).digest("hex");
 }
 

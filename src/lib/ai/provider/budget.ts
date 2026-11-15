@@ -5,10 +5,10 @@
  */
 
 /** Live calls started per minute, all callers together. */
-export const LIVE_CALLS_PER_MINUTE = 60;
+const LIVE_CALLS_PER_MINUTE = 60;
 
 /** Live calls waiting for a reply at the same time. */
-export const LIVE_CALLS_AT_ONCE = 4;
+const LIVE_CALLS_AT_ONCE = 4;
 
 const WINDOW_MS = 60_000;
 

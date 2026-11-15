@@ -39,7 +39,7 @@ import type { SeedProof } from "./types";
 import { seedWriter } from "./writer";
 
 /** Everyone else's work at the event. The same at every story stage. */
-export const WORLD_PROOFS: readonly SeedProof[] = [
+const WORLD_PROOFS: readonly SeedProof[] = [
   ...ORDER_FORM_PROOFS,
   ...DATA_PROOFS,
   ...FINANCE_PROOFS,
@@ -54,7 +54,7 @@ export const WORLD_PROOFS: readonly SeedProof[] = [
 ];
 
 /** The proofs that exist at a story stage, oldest first, the way they arrived. */
-export function proofsAt(stage: StoryStage): SeedProof[] {
+function proofsAt(stage: StoryStage): SeedProof[] {
   const story = stageReached(stage, "sent") ? [MIKKO_STORY] : [];
   return [...WORLD_PROOFS, ...MIKKO_EARLIER, ...story].sort((a, b) => b.hoursAgo - a.hoursAgo);
 }
