@@ -11,7 +11,7 @@ import { LIMITS } from "@/lib/http/limits";
 /** What a company can start from in one tap. Each one is a full first message. */
 const STARTERS = [
   "Backend developer for our payments API",
-  "An AI developer to find what we should automate first in our order handling",
+  "A designer to make our order form easier to use",
   "Data analyst",
   "Customer service lead for a care home group",
 ] as const;

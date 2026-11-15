@@ -76,6 +76,10 @@ export const SKILL_CUES = {
   "automation-choice": ["automate", "manual work", "typed by hand", "repetitive"],
   "practical-plan": ["two weeks", "first version", "step by step plan"],
   "risk-sense": ["mistakes", "go wrong", "edge cases first"],
+  "finds-confusion": ["confusing", "people get stuck", "easier to use", "hard to use"],
+  "simple-design": ["fewer steps", "fewer fields", "easier form", "order form"],
+  "explains-choice": ["say why", "reasons", "explain each change"],
+  "customer-focus": ["our customers", "installers", "customer complaints"],
   "mixed-level-teaching": ["mixed classes", "different levels", "new pupils", "language learners"],
 } satisfies Record<SkillId, readonly string[]>;
 
@@ -119,4 +123,8 @@ export const WORK_CUES: Partial<Record<SkillId, readonly string[]>> = {
   "practical-plan": ["week 1", "week 2", "first week", "second week", "day", "pilot", "start with", "build"],
   "risk-sense": ["wrong", "risk", "check", "approve", "mistake", "fails", "go wrong", "a person"],
   "customer-discovery": ["ask", "asked", "contract", "deadline", "what they need", "customer"],
+  "finds-confusion": ["confusing", "confuses", "confused", "stuck", "unclear", "nobody knows", "complain", "calls", "guess"],
+  "simple-design": ["one page", "fewer", "remove", "merge", "first", "simple", "default", "search"],
+  "explains-choice": ["because", "so that", "that is why", "the reason"],
+  "customer-focus": ["installer", "installers", "on site", "customer", "phone", "van", "busy"],
 };

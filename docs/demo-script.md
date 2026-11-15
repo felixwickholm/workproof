@@ -8,9 +8,9 @@ There is no landing page. `/` opens the Job seeker home. The three views are Job
 
 All people and companies are invented. At the default story stage the event has 28 companies, 40 challenges, 80 pieces of work from 46 people, 48 scored by a person, 17 invited, 10 said yes, 6 talks held, 5 follow-ups agreed and 3 hires. These are the numbers the city view shows, marked "Demo data".
 
-**The people.** Mikko Lahtinen is the job seeker, an AI developer. Laura Niemi at Halla Supply is the company person. Sanna Mattila is the city person.
+**The people.** Mikko Lahtinen is the job seeker, a designer. Laura Niemi at Halla Supply is the company person. Sanna Mattila is the city person.
 
-**The story.** Halla Supply asks "What should we automate first?" Mikko picks the invoices, not the chatbot, says why, plans two weeks and names the risk. Laura reads the work without his name, gives 1 to 5 points for each skill and writes why. The work gets 9 of 10. She invites him, and sees his name only after he says yes.
+**The story.** Halla Supply asks "Make our order form easier to use". Mikko finds where installers get stuck, proposes a shorter form and gives a reason for each change. Laura reads the work without his name, gives 1 to 5 points for each skill and writes why. The work gets 9 of 10. She invites him, and sees his name only after he says yes.
 
 **The challenges.** 40 challenges, listed in the README under "Four formats, forty challenges". Each one looks like a job listing, with the company's logo and a picture of the work, and is done in one of four ways: Choose, Make, Fix or Read. The City of Espoo made the Kide Silicon challenge from the company's job ad. Kide Silicon has not opened it yet, and 20 people already did it.
 
@@ -34,9 +34,9 @@ The last card has three ways on: "Try it as Mikko", "Try it as Laura" and "See t
 Open `/?tour=0` before you start, so the walkthrough does not cover the screen. Each step says what to press, then what to say.
 
 **0:00 Job seeker home.** Point at "Hi Mikko. What work do you want?" and the role chips.
-Say: "This is Mikko. He is looking for work as an AI developer. Companies in Espoo post real challenges from their work." Press the chip "Data analyst". The list now starts with "For your roles".
+Say: "This is Mikko. He is looking for work as a designer. Companies in Espoo post real challenges from their work." Press the chip "Data analyst". The list now starts with "For your roles".
 
-**0:30 A challenge.** Press the challenge "Find the bug in this model test" (Tuulos Robotics).
+**0:30 A challenge.** Press the challenge "Find the mistake in a robot's AI test" (Tuulos Robotics).
 Say: "Each challenge looks like a job listing: the company, the work, the skills it scores." Press "Start challenge". On the work screen, point at "Start" and the "Voice coming soon" line.
 Say: "He types his work and a few lines on how he thinks. No camera. Voice is coming soon."
 
@@ -44,14 +44,14 @@ Say: "He types his work and a few lines on how he thinks. No camera. Voice is co
 Say: "Mikko did Halla Supply's challenge. Laura Niemi gave points for each skill and wrote why. 9 of 10. People score the work. The AI never does." Press "Say yes".
 Say: "Only now does Halla Supply see his name. If he said no, it never would."
 
-**2:00 Company.** Press the view switcher at the top left ("Job seeker") and choose "Company". `/employer` opens as Laura Niemi at Halla Supply. Press the row "What should we automate first?".
+**2:00 Company.** Press the view switcher at the top left ("Job seeker") and choose "Company". `/employer` opens as Laura Niemi at Halla Supply. Press the row "Make our order form easier to use".
 Say: "Top work: the best work first, by her own points, still without names." Point at Work K7: "K7 is Mikko Lahtinen. He said yes, so she can see his name."
 
 **2:40 Score one.** In the sidebar, press "Score work". The oldest waiting work opens (Work E7).
 Say: "Work waits in the order it came. Personal details are removed by rules before she reads it. She gives 1 to 5 points for each skill and says why. Then: Invite to the event, Not now, or Score only, decide later. A person decides every time."
 Do not send a score unless you want to; the buttons stay locked until every skill has points and a reason.
 
-**3:20 A new challenge.** In the sidebar, press "New challenge". Under "Who are you looking for?", press "AI developer", then "Draft my challenge".
+**3:20 A new challenge.** In the sidebar, press "New challenge". Under "Who are you looking for?", press the starter "A designer to make our order form easier to use", then "10 to 30 minutes".
 Say: "Laura tells the AI who she needs. The AI drafts a short challenge with the skills to score. She checks it, edits it and presses Approve and publish. Nothing goes live before that." If someone asks about job ads, point at "Start from your job ad" and the sample ads under "Try a sample ad".
 
 **4:00 City of Espoo.** Press the view switcher and choose "City of Espoo". `/city` opens as Sanna Mattila.

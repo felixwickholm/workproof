@@ -72,11 +72,11 @@ export async function runSeeker(journey) {
     await page.goto(`${BASE_URL}/seeker`);
     await visible(page.getByRole("heading", { level: 1, name: /What work do you want\?$/ })).waitFor({ timeout: 15_000 });
     for (const id of ["seeker-roles", "challenge-filters", "challenge-table", "challenge-row"]) await visible(page.locator(`[data-tour="${id}"]`)).waitFor();
-    // The demo person is an AI developer: his role is picked, its tile counts its challenges, and they come first.
-    const tile = visible(page.getByRole("button", { name: "AI developer", exact: true }));
+    // The demo person is a designer: his role is picked, its tile counts its challenges, and they come first.
+    const tile = visible(page.getByRole("button", { name: "Designer", exact: true }));
     expect((await tile.getAttribute("aria-pressed")) === "true", "the demo person's role is not picked");
     expect(/\d+ challenges?/.test(await tile.innerText()), "the role tile shows no challenge count");
-    await visible(page.getByRole("heading", { name: /^AI developer challenges/ })).waitFor();
+    await visible(page.getByRole("heading", { name: /^Designer challenges/ })).waitFor();
     // The invite and its score live in My work; the home only points there.
     expect((await page.locator('[data-tour="invitation"]').count()) === 0, "the invite card is still on the home");
     const filters = visible(page.getByRole("group", { name: "Filter challenges" }));
@@ -108,13 +108,13 @@ export async function runSeeker(journey) {
   });
 
   await suite.step("the chosen roles are remembered on this device", async () => {
-    await visible(page.getByRole("button", { name: "Designer", exact: true })).click();
+    await visible(page.getByRole("button", { name: "AI developer", exact: true })).click();
     await page.reload();
-    const designer = visible(page.getByRole("button", { name: "Designer", exact: true }));
-    await designer.waitFor({ timeout: 15_000 });
-    expect((await designer.getAttribute("aria-pressed")) === "true", "the picked role was forgotten after a reload");
-    expect(JSON.parse(await page.evaluate(() => localStorage.getItem("workproof.roles"))).includes("designer"), "the roles were not saved");
-    await designer.click();
+    const added = visible(page.getByRole("button", { name: "AI developer", exact: true }));
+    await added.waitFor({ timeout: 15_000 });
+    expect((await added.getAttribute("aria-pressed")) === "true", "the picked role was forgotten after a reload");
+    expect(JSON.parse(await page.evaluate(() => localStorage.getItem("workproof.roles"))).includes("ai-developer"), "the roles were not saved");
+    await added.click();
   });
 
   await suite.step("Start as yourself", async () => {

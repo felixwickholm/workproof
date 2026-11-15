@@ -38,7 +38,7 @@ export const EXTRA_CHALLENGES = [
     daysBeforeEvent: 6,
     need: "Data scientist for retail customer models",
     task: {
-      title: "Check a churn model before the client sees it",
+      title: "Check a forecast of which customers will leave",
       format: "read",
       proofKind: "writing",
       minutes: 12,
@@ -66,7 +66,7 @@ export const EXTRA_CHALLENGES = [
     daysBeforeEvent: 5,
     need: "AI engineer for an LLM support assistant",
     task: {
-      title: "Test a store assistant's answers",
+      title: "Test a shop chatbot's answers",
       format: "fix",
       proofKind: "writing",
       minutes: 10,
@@ -122,7 +122,7 @@ export const EXTRA_CHALLENGES = [
     daysBeforeEvent: 5,
     need: "Backend developer for patient visit notes",
     task: {
-      title: "Spot the risks in a visit-notes change",
+      title: "Spot the risks in a change to nurses' notes",
       format: "fix",
       proofKind: "writing",
       minutes: 10,
@@ -213,7 +213,7 @@ export const EXTRA_CHALLENGES = [
     daysBeforeEvent: 7,
     need: "Lawyer for data protection contracts",
     task: {
-      title: "Review a data processing agreement",
+      title: "Check a contract about customer data",
       format: "fix",
       proofKind: "writing",
       minutes: 12,
@@ -294,7 +294,7 @@ export const EXTRA_CHALLENGES = [
     daysBeforeEvent: 8,
     need: "Hardware test engineer for water sensors",
     task: {
-      title: "Find why a water sensor drifts",
+      title: "Find why a water sensor slowly goes wrong",
       format: "read",
       proofKind: "writing",
       minutes: 12,
@@ -358,7 +358,7 @@ export const EXTRA_CHALLENGES = [
     daysBeforeEvent: 7,
     need: "Accountant for cash flow forecasts",
     task: {
-      title: "Fix a cash-flow forecast before a loan decision",
+      title: "Fix a cash forecast before a bank loan",
       format: "fix",
       proofKind: "writing",
       minutes: 12,
@@ -388,7 +388,7 @@ export const EXTRA_CHALLENGES = [
     daysBeforeEvent: 5,
     need: "Security engineer for customer login",
     task: {
-      title: "Find the risks in a new login flow",
+      title: "Find the risks in a new login screen",
       format: "read",
       proofKind: "writing",
       minutes: 10,
@@ -415,7 +415,7 @@ export const EXTRA_CHALLENGES = [
     daysBeforeEvent: 8,
     need: "DevOps engineer for incident reviews",
     task: {
-      title: "Write up last night's outage for the customer",
+      title: "Explain last night's service outage to the customer",
       format: "read",
       proofKind: "writing",
       minutes: 12,
@@ -443,7 +443,7 @@ export const EXTRA_CHALLENGES = [
     daysBeforeEvent: 4,
     need: "Cloud architect for cost reduction",
     task: {
-      title: "Cut a cloud bill without losing uptime",
+      title: "Cut server costs without the service going down",
       format: "choose",
       proofKind: "writing",
       minutes: 10,
@@ -507,7 +507,7 @@ export const EXTRA_CHALLENGES = [
     daysBeforeEvent: 6,
     need: "Embedded robotics engineer for safe stops",
     task: {
-      title: "Make a pick robot stop safely",
+      title: "Make a warehouse robot stop safely",
       format: "fix",
       proofKind: "writing",
       minutes: 12,

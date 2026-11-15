@@ -18,7 +18,7 @@ interface CheckRun {
 export const VERIFIED_ON = "2026-11-14";
 
 /** `npm test`: unit tests next to the code under src/. */
-export const UNIT_TESTS: CheckRun = { command: "npm test", files: 139, tests: 2024, passed: 2024 };
+export const UNIT_TESTS: CheckRun = { command: "npm test", files: 141, tests: 2049, passed: 2049 };
 
 /** `npm run eval`: the eval suites under evals/ (the live-AI suite is skipped without a key). */
 export const EVAL_TESTS: CheckRun = { command: "npm run eval", files: 7, tests: 64, passed: 64 };

@@ -58,7 +58,7 @@ export function bringIntoView(el: HTMLElement, ctx: Pick<StepContext, "cardHeigh
 }
 
 /** What the story company tells the assistant, as its starter chip on the new challenge screen says it. */
-const STORY_START = /^\s*An AI developer to find what we should automate first/i;
+const STORY_START = /^\s*A designer to make our order form easier to use/i;
 /** The answer to the assistant's size question. */
 const STORY_SIZE = /^\s*10 to 30 minutes\s*$/i;
 

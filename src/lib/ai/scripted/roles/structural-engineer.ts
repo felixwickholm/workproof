@@ -31,7 +31,7 @@ export const structuralEngineer: RoleTemplate = {
   ],
   challenge: {
     minutes: 15,
-    title: "Sketch how to hold up this wall opening",
+    title: "Sketch a safe new door opening in this wall",
     format: "make",
     proofKind: "photo",
     brief:
