@@ -10,8 +10,7 @@ export const SECTION = "py-8 min-[1024px]:py-14";
 /** A section on the surface tone needs room inside its own band. */
 export const BAND = "py-12 min-[1024px]:py-16";
 
-/** The page's two type sizes above body text: display and section heading. */
-export const DISPLAY = "font-serif text-[46px] leading-[0.98] tracking-[-0.02em] min-[640px]:text-[72px] min-[1100px]:text-[96px]";
+/** The page's type size above body text for section headings. */
 export const HEADING = "font-serif text-[38px] leading-[1.02] tracking-[-0.015em] text-balance min-[640px]:text-[52px] min-[1100px]:text-[64px]";
 
 /** Marks a part of a section that rises into view once; `order` staggers the parts. */

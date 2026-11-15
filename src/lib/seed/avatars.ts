@@ -130,8 +130,3 @@ export function nameSlug(name: string): string {
 export function avatarOfName(name: string): string {
   return `/people/${nameSlug(name)}.svg`;
 }
-
-/** The picture of a job seeker, by opaque file id. */
-export function seekerAvatar(fileId: keyof typeof SEEKER_LOOKS & string): string {
-  return `/people/${fileId}.svg`;
-}
