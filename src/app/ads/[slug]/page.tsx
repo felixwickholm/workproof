@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/app/page-meta";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { SAMPLE_ADS, sampleAd } from "@/lib/seed/ads";
@@ -11,11 +12,8 @@ export function generateStaticParams(): { slug: string }[] {
 export async function generateMetadata({ params }: PageProps<"/ads/[slug]">): Promise<Metadata> {
   const ad = sampleAd((await params).slug);
   if (!ad) return {};
-  return {
-    title: `${ad.title}, ${ad.company} (sample job ad)`,
-    description: `Sample job ad for an invented company: ${ad.title}.`,
-    robots: { index: false },
-  };
+  const meta = pageMeta({ title: `${ad.title}, ${ad.company} (sample job ad)`, description: `Sample job ad for an invented company: ${ad.title}.` });
+  return { ...meta, robots: { index: false } };
 }
 
 /**

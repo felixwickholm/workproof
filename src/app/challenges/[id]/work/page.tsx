@@ -1,7 +1,11 @@
+import type { Metadata } from "next";
+import { pageMeta } from "@/app/page-meta";
 import { Suspense } from "react";
 import { Screen } from "@/components/ui/screen";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WorkFlow } from "./work-flow";
+
+export const metadata: Metadata = pageMeta({ title: "Do the challenge", description: "Do the challenge and write how you think. Then check what the company will read and answer two follow-up questions about your own choices." });
 
 export default function WorkPage({ params }: PageProps<"/challenges/[id]/work">) {
   return (

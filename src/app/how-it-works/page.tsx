@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageMeta } from "@/app/page-meta";
 import Link from "next/link";
 import { Check, X } from "lucide-react";
 import { Footer } from "./kit/footer";
@@ -14,12 +15,7 @@ import { StepFragment } from "./fragments";
 const description =
   "Companies see how well people do the real work before they meet them. How WorkProof works, in six steps. Demo data.";
 
-export const metadata: Metadata = {
-  title: "How it works",
-  description,
-  alternates: { canonical: "/how-it-works" },
-  openGraph: { title: "How WorkProof works", description, type: "article", siteName: "WorkProof", url: "/how-it-works" },
-};
+export const metadata: Metadata = pageMeta({ title: "How it works", description, path: "/how-it-works" });
 
 const SUB = "text-[19px] leading-[28px] text-pretty text-label-2 min-[640px]:text-[21px] min-[640px]:leading-[31px]";
 
