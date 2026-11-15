@@ -14,6 +14,27 @@ export const NAME = "WorkProof";
 /** The first paragraph, word for word the same as the submission text and the README. */
 export const SUMMARY = `WorkProof is for City of Espoo talent events. Companies see real work and score it; the AI never scores. A professional does a short real task from an Espoo company. A named person at the company scores the work from 1 to 5 on each of the task's skills, writes a reason, and chooses Meet or Not now. As a safeguard, the name stays hidden until the professional accepts. Tested: ${FIGURES.plantedReached} planted identity details reached a reviewer.`;
 
+/**
+ * Where a reader that is not a person starts, and the explainer. /brief and /brief.pdf are the
+ * explainer ("WorkProof: the brief and the build"); /submission.json is the entry as data.
+ */
+export const ENTRY_POINTS: readonly { path: string; title: string; what: string }[] = [
+  { path: "/brief", title: "WorkProof: the brief and the build", what: "The explainer as a web page: the City of Espoo brief, what we built for it, and how to check each claim" },
+  { path: "/brief.pdf", title: "WorkProof: the brief and the build (PDF)", what: "The same explainer as a PDF to download or print" },
+  { path: "/submission.json", title: "WorkProof: submission data", what: "The entry as JSON: problem, solution, the three views, AI use, measured numbers, links and limits" },
+  { path: "/for-judges", title: "Evidence for judges", what: "Each judging criterion with where to see it, where it is in the code and its test" },
+  { path: "/llms.txt", title: "WorkProof: short map", what: "A short plain-text map of the project with dated numbers" },
+  { path: "/llms-full.txt", title: "WorkProof: full text", what: "The whole evidence page as one markdown file" },
+];
+
+/** How a reviewer rates work, in the words the app uses (src/lib/domain/scoring.ts, src/components/company/score-panel.tsx). */
+export const RATING = {
+  scale: "1 to 5 points for each core skill of the task, given by a named reviewer",
+  total: "The total shows out of 10: the average points × 2",
+  reason: "A written reason of at least 4 words and 20 characters",
+  decisions: ["Invite to the event (recorded as Meet)", "Not now", "Score only, decide later"],
+} as const;
+
 /** The demo event at its default story stage, as the seed builds it (src/lib/seed). */
 export const DEMO_EVENT = { employers: 28, tasks: 40, proofs: 80 } as const;
 

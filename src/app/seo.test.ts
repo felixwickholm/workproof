@@ -43,7 +43,7 @@ describe("sitemap", () => {
   it("lists the start page, the evidence page and both text maps on the site address", () => {
     vi.stubEnv("SITE_URL", "https://workproof.example.org");
     const urls = sitemap().map((entry) => entry.url);
-    for (const url of ["", "/for-judges", "/llms.txt", "/llms-full.txt", "/how-it-works"]) expect(urls).toContain(`https://workproof.example.org${url}`);
+    for (const url of ["", "/for-judges", "/llms.txt", "/llms-full.txt", "/submission.json", "/how-it-works"]) expect(urls).toContain(`https://workproof.example.org${url}`);
     expect(new Set(urls).size).toBe(urls.length);
   });
 

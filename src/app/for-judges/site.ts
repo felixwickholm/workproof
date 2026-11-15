@@ -25,4 +25,6 @@ export const TEXT_MAPS = {
     { url: "/llms.txt", title: "WorkProof: short map" },
     { url: "/llms-full.txt", title: "WorkProof: full text" },
   ],
+  "application/json": [{ url: "/submission.json", title: "WorkProof: submission data" }],
+  "application/pdf": [{ url: "/brief.pdf", title: "WorkProof: the brief and the build" }],
 };
