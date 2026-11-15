@@ -18,7 +18,7 @@ interface CheckRun {
 export const VERIFIED_ON = "2026-11-14";
 
 /** `npm test`: unit tests next to the code under src/. */
-export const UNIT_TESTS: CheckRun = { command: "npm test", files: 139, tests: 2024, passed: 2024 };
+export const UNIT_TESTS: CheckRun = { command: "npm test", files: 141, tests: 2049, passed: 2049 };
 
 /** `npm run eval`: the eval suites under evals/ (the live-AI suite is skipped without a key). */
 export const EVAL_TESTS: CheckRun = { command: "npm run eval", files: 7, tests: 64, passed: 64 };
@@ -51,7 +51,7 @@ export const PRINTED: Readonly<Record<string, string>> = {
   "3 No automated decisions › (e) automated decisions": "0 automated decisions; 0 decision audit lines by a non-human",
   "3 No automated decisions › (f) decisions name a registered person": "refused: HTTP 400 for \"AI bot\", HTTP 403 for an unregistered name, HTTP 400 for a bot as reviewer; accepted after the explicit step: HTTP 200",
   "3 No automated decisions › (g) scores only from a registered person": "refused: HTTP 400 without scores, HTTP 400 with a skill missing, HTTP 400 from a software name; accepted: a named reviewer's 6 of 10",
-  "3 No automated decisions › (h) related parts carry no score": "0 numbers and 0 judging phrases in 34 marked sentences from 49 proofs",
+  "3 No automated decisions › (h) related parts carry no score": "0 numbers and 0 judging phrases in 28 marked sentences from 49 proofs",
   "3 No automated decisions › (i) portfolio shows own scores, never a rank": "7 cards newest first, 6 reviewer scores shown to the owner, 0 rank keys, skill bars as task counts; a link shows no name, contact or key, the score and decision only when shown, and stops when ended",
   "4 Consent and privacy › accept and confirm need the right party": "refused: HTTP 400 with no key, HTTP 403 with a wrong key, HTTP 403 for a guessed talent confirm, HTTP 403 for another company's confirm",
   "4 Consent and privacy › talent ids in public responses": "0 of 47 talent ids found in company and city responses",

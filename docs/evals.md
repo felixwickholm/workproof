@@ -14,7 +14,7 @@ Four kinds of checks. All but the end-to-end run need no server, no keys and no 
 <!-- evidence:start -->
 Measured on 2026-11-14 with `npm run evidence`, which runs both commands and copies their totals here:
 
-- `npm test`: 2024 of 2024 unit tests pass, in 139 files.
+- `npm test`: 2049 of 2049 unit tests pass, in 141 files.
 - `npm run eval`: 64 of 64 eval tests pass, in 7 files. The live-AI file is skipped without a key.
 
 The full table `npm run eval` printed in that run:
@@ -47,7 +47,7 @@ The full table `npm run eval` printed in that run:
 | 3 No automated decisions | (e) automated decisions | 0 automated decisions; 0 decision audit lines by a non-human |
 | 3 No automated decisions | (f) decisions name a registered person | refused: HTTP 400 for "AI bot", HTTP 403 for an unregistered name, HTTP 400 for a bot as reviewer; accepted after the explicit step: HTTP 200 |
 | 3 No automated decisions | (g) scores only from a registered person | refused: HTTP 400 without scores, HTTP 400 with a skill missing, HTTP 400 from a software name; accepted: a named reviewer's 6 of 10 |
-| 3 No automated decisions | (h) related parts carry no score | 0 numbers and 0 judging phrases in 34 marked sentences from 49 proofs |
+| 3 No automated decisions | (h) related parts carry no score | 0 numbers and 0 judging phrases in 28 marked sentences from 49 proofs |
 | 3 No automated decisions | (i) portfolio shows own scores, never a rank | 7 cards newest first, 6 reviewer scores shown to the owner, 0 rank keys, skill bars as task counts; a link shows no name, contact or key, the score and decision only when shown, and stops when ended |
 | 4 Consent and privacy | accept and confirm need the right party | refused: HTTP 400 with no key, HTTP 403 with a wrong key, HTTP 403 for a guessed talent confirm, HTTP 403 for another company's confirm |
 | 4 Consent and privacy | talent ids in public responses | 0 of 47 talent ids found in company and city responses |
