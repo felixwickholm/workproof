@@ -14,7 +14,7 @@ Four kinds of checks. All but the end-to-end run need no server, no keys and no 
 <!-- evidence:start -->
 Measured on 2026-11-15 with `npm run evidence`, which runs both commands and copies their totals here:
 
-- `npm test`: 2056 of 2056 unit tests pass, in 142 files.
+- `npm test`: 2057 of 2057 unit tests pass, in 142 files.
 - `npm run eval`: 64 of 64 eval tests pass, in 7 files. The live-AI file is skipped without a key.
 
 The full table `npm run eval` printed in that run:
