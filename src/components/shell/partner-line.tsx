@@ -8,13 +8,13 @@ const ESPOO_PATHS = [
 
 /**
  * "for [City of Espoo]": who the product is made for. Quiet and second to our own mark: the word "for"
- * in the caption size and the city's logo 24px high, in Espoo blue on light and white on dark (`--partner`).
+ * in the caption size and the city's logo 36px high, in Espoo blue on light and white on dark (`--partner`).
  */
 export function PartnerLine({ className }: { className?: string }) {
   return (
     <p className={cx("flex items-center gap-2", className)}>
       <span className="text-caption font-medium text-label-2">for</span>
-      <svg role="img" aria-label="City of Espoo" viewBox="0 0 151.721 77.617" className="h-6 w-auto text-(color:--partner)" fill="currentColor">
+      <svg role="img" aria-label="City of Espoo" viewBox="0 0 151.721 77.617" className="h-9 w-auto text-(color:--partner)" fill="currentColor">
         <title>City of Espoo</title>
         {ESPOO_PATHS.map((d) => (
           <path key={d.slice(0, 24)} d={d} />

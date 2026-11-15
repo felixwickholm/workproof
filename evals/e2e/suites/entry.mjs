@@ -53,7 +53,9 @@ export async function runEntry(browser, device, name) {
     await home();
     const brand = visible(page.getByRole("link", { name: "Business Espoo, WorkProof. Start page" }));
     await brand.waitFor();
-    expect((await brand.innerText()).trim().startsWith("Business Espoo"), "the brand does not start with Business Espoo");
+    // The Business Espoo logo comes first, then WorkProof.
+    const first = brand.locator("> *").first();
+    expect((await first.getAttribute("aria-label")) === "Business Espoo", "the brand does not start with the Business Espoo logo");
     const fonts = await page.evaluate(() => ({ body: getComputedStyle(document.body).fontFamily, h1: getComputedStyle(document.querySelector("h1")).fontFamily }));
     expect(fonts.body.includes("Work Sans"), `the body is set in ${fonts.body}, not Work Sans`);
     expect(fonts.h1.includes("Lato"), `the h1 is set in ${fonts.h1}, not Lato`);

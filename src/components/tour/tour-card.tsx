@@ -176,7 +176,12 @@ export function TourCard({
             exit={{ opacity: 0 }}
             transition={{ duration: reduce ? 0.12 : 0.2, ease: EASE_OUT }}
           >
-            <h2 id="tour-title" className="mt-4 text-[26px] leading-8 font-semibold tracking-[-0.015em] text-balance text-label min-[640px]:text-[28px] min-[640px]:leading-[34px]">
+            {step.view ? (
+              <p data-tour-view className="mt-4 inline-flex items-center rounded-full bg-accent px-3 py-1 text-[15px] leading-5 font-semibold text-accent-ink">
+                {step.view}
+              </p>
+            ) : null}
+            <h2 id="tour-title" className={cx(step.view ? "mt-2" : "mt-4", "text-[26px] leading-8 font-semibold tracking-[-0.015em] text-balance text-label min-[640px]:text-[28px] min-[640px]:leading-[34px]")}>
               {step.title}
             </h2>
             {step.body ? (

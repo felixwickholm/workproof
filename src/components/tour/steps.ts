@@ -32,6 +32,8 @@ export interface TourStep {
   /** The page reads no story data, so its stage is set while the step already shows. */
   stageInBackground?: boolean;
   mode: TourMode;
+  /** On the first card of a view: a line that says which view the story is in now. */
+  view?: string;
   /** The company the Company view acts as on this step, whatever company the visitor chose before. */
   company?: string;
 }
@@ -71,6 +73,7 @@ const myWork = `/my-work/${STORY_PROOF}`;
 export const storySteps: readonly TourStep[] = [
   {
     id: "s-mikko",
+    view: "The job seeker view",
     title: "This is Mikko. He is looking for a job.",
     body: "He picks the kind of work he wants.",
     route: home,
@@ -119,6 +122,7 @@ export const storySteps: readonly TourStep[] = [
   },
   {
     id: "c-laura",
+    view: "Now: the company view",
     title: "This is Laura at Halla Supply.",
     body: "She tells the AI who she needs.",
     route: "/company",
@@ -172,6 +176,7 @@ export const storySteps: readonly TourStep[] = [
   },
   {
     id: "y-hiring",
+    view: "Now: the City of Espoo view",
     title: "The city sees who is hiring now.",
     body: "WorkProof reads public job ads.",
     route: "/city",
