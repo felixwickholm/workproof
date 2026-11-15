@@ -456,10 +456,11 @@ describe("Eval 4: consent and privacy", () => {
         await call(followUpsRoute, { body: { challengeId: "ch-tuulos-ml", answer: `Split by grasp attempt. ${planted.join(". ")}.` } });
       }
       const found = bodies.flatMap((body) => parts.filter((part) => body.includes(part)));
-      const ok = bodies.length === 6 && found.length === 0;
+      // Each reply here is refused, and a refused reply is asked for once more: 3 calls × 2 models × 2 tries.
+      const ok = bodies.length === 12 && found.length === 0;
       record(EVAL, "identity strings sent to a model", `${found.length} of ${parts.length * bodies.length} checks found a planted string in ${bodies.length} requests (draft, practice task, follow-ups; Claude and Gemini)`, ok);
       expect(found).toEqual([]);
-      expect(bodies).toHaveLength(6);
+      expect(bodies).toHaveLength(12);
     });
   });
 

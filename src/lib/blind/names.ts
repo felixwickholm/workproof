@@ -272,3 +272,13 @@ function redactSignature(r: Redactor): void {
   }
   r.text = lines.join("\n");
 }
+
+/**
+ * "Mikko Lahtinen, mikko.lahtinen@…": once the contact or the surname is hidden, a capitalised word or two left
+ * right before it is the rest of the same name. Runs after every other rule.
+ */
+export function redactNameBeforeHidden(r: Redactor): void {
+  for (let pass = 0; pass < 2; pass++) {
+    r.replace(new RegExp(`(?<![\\p{L}\\p{N}])(\\p{Lu}\\p{Ll}{1,30}(?:\\s{1,3}\\p{Lu}\\p{Ll}{1,30})?)(?=\\s{1,3}${escape(HIDDEN)})`, "gu"), "names", looksLikeName);
+  }
+}

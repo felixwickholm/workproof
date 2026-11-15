@@ -122,3 +122,11 @@ describe("redact, second review", () => {
     expect(hidden("I applied to Tuulos last year.", { companies: ["Tuulos Robotics"] })).toBe("I applied to [hidden] last year.");
   });
 });
+
+describe("a name written next to its hidden contact", () => {
+  it("hides the first name too, not only the surname and the email", () => {
+    const { text } = redact("I would call the caretaker. Mikko Lahtinen, mikko.lahtinen@example.com");
+    expect(text).not.toMatch(/Mikko|Lahtinen|example/);
+    expect(text).toContain("call the caretaker");
+  });
+});

@@ -2,7 +2,7 @@ import type { RedactionReport } from "@/lib/domain/types";
 import { LIMITS } from "@/lib/http/limits";
 import { redactBackground } from "./background";
 import { redactContacts } from "./contacts";
-import { redactNames } from "./names";
+import { redactNameBeforeHidden, redactNames } from "./names";
 import { redactPersonal } from "./personal";
 import { caseless, escape, HIDDEN, L, LEGAL_FORM, R, Redactor } from "./redactor";
 
@@ -55,6 +55,7 @@ export function redact(input: string, known: KnownIdentity = {}): Redacted {
   redactCompanies(r, known.companies ?? []);
   redactBackground(r);
   redactPersonal(r);
+  redactNameBeforeHidden(r);
   // "[hidden] [hidden]" reads as two words of a name; one token is enough.
   r.text = r.text.replace(new RegExp(`${escapeToken}(?:[ \\t]+${escapeToken})+`, "g"), HIDDEN);
   return { text: r.text, report: r.report };
