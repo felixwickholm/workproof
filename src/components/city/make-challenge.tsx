@@ -79,8 +79,9 @@ export function HiringNow({ companies, challenges }: { companies: readonly Compa
   };
 
   return (
-    <Card tour="city-hiring-now" className="min-[900px]:p-8">
-      <div className="flex items-start justify-between gap-3">
+    <Card className="min-[900px]:p-8">
+      {/* The walkthrough points at the heading: the whole list is taller than a laptop screen leaves beside its card. */}
+      <div data-tour="city-hiring-now" className="flex items-start justify-between gap-3">
         <div>
           <h2 className="text-section text-label">Companies hiring right now</h2>
           <p className="text-subhead mt-1 text-pretty text-label-2">From public job ads. Pick one and WorkProof drafts a challenge from the ad.</p>

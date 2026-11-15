@@ -117,7 +117,8 @@ export async function runCity(journey) {
   });
 
   await suite.step("the city picks a company hiring now, makes a challenge from its sample ad and gets the invitation", async () => {
-    const hiring = page.locator('[data-tour="city-hiring-now"]');
+    // The walkthrough target is the card's heading; the ads list sits in the same card.
+    const hiring = page.locator('[data-tour="city-hiring-now"]').locator("xpath=..");
     await visible(hiring.getByText("Sample ads")).waitFor();
     const row = hiring.locator("li").filter({ has: page.getByRole("button", { name: "Make a challenge" }) }).first();
     const company = (await row.locator("p").first().innerText()).trim();
