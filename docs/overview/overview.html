@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WorkProof overview</title>
+<meta name="description" content="WorkProof for the City of Espoo: a two-page overview for the challenge partner. Junction 2026, Rethinking Recruitment, team Moonshot.">
+<!--
+  Source of public/workproof-overview.pdf (2 A4 pages). Every number comes from
+  src/app/for-judges/evidence.ts (npm run evidence, checked 2026-11-15) and the demo seed.
+  Print: Google Chrome headless, see the command in the header of public/for-agents.txt (section 12).
+  Colours and type follow docs/brief/brief.css (Business Espoo navy, system sans).
+-->
+<style>
+:root {
+  --ink: #0b1530;
+  --muted: #4a5468;
+  --line: #dfe3ea;
+  --wash: #f3f5f9;
+  --accent: #012169;
+  --accent-2: #2a4a9a;
+  --accent-wash: #eef2fa;
+  --good: #0f6b4a;
+  color-scheme: light;
+}
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: #fff; }
+body {
+  color: var(--ink);
+  font-family: "Helvetica Neue", Helvetica, Arial, "Liberation Sans", system-ui, sans-serif;
+  font-size: 9.6pt;
+  line-height: 1.42;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "clig" 0;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.page {
+  width: 210mm;
+  height: 297mm;
+  padding: 10mm 14mm 8mm;
+  position: relative;
+  overflow: hidden;
+  page-break-after: always;
+  break-after: page;
+  display: flex;
+  flex-direction: column;
+}
+.page:last-child { page-break-after: auto; break-after: auto; }
+h1, h2, h3 { color: var(--accent); margin: 0; line-height: 1.15; letter-spacing: -0.01em; }
+p { margin: 0 0 6px; }
+a { color: var(--accent); text-decoration: none; }
+code { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 0.9em; background: var(--wash); border-radius: 3px; padding: 0 3px; }
+
+/* Header and footer */
+.top { display: flex; justify-content: space-between; align-items: center; padding-bottom: 3.5mm; border-bottom: 1.5pt solid var(--accent); }
+.top img { height: 7.5mm; display: block; }
+.top .meta { text-align: right; font-size: 8pt; color: var(--muted); line-height: 1.35; }
+.top .meta strong { color: var(--accent); }
+.foot { margin-top: auto; padding-top: 3mm; border-top: 0.6pt solid var(--line); display: flex; justify-content: space-between; font-size: 7.4pt; color: var(--muted); }
+
+.eyebrow { font-size: 7.6pt; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent-2); margin: 0 0 2mm; }
+h1 { font-size: 19.5pt; font-weight: 700; margin: 4.5mm 0 2.5mm; letter-spacing: -0.02em; }
+.lede { font-size: 10pt; line-height: 1.42; color: var(--ink); margin: 0 0 3.5mm; max-width: 172mm; }
+h2 { font-size: 12.5pt; font-weight: 700; margin: 0 0 2.5mm; }
+.sec { margin-bottom: 3.6mm; }
+
+/* The loop */
+.loop { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2mm; }
+.step { background: var(--accent-wash); border-radius: 2.5mm; padding: 2.2mm 2.6mm 2.4mm; position: relative; }
+.step .n { display: inline-flex; width: 5mm; height: 5mm; border-radius: 50%; background: var(--accent); color: #fff; font-size: 7.4pt; font-weight: 700; align-items: center; justify-content: center; margin-bottom: 1.4mm; }
+.step b { display: block; color: var(--accent); font-size: 9pt; line-height: 1.2; margin-bottom: 1mm; }
+.step span { font-size: 7.7pt; color: var(--ink); line-height: 1.32; display: block; }
+.step.key { background: var(--accent); }
+.step.key b, .step.key span { color: #fff; }
+.step.key .n { background: #fff; color: var(--accent); }
+
+/* Brief answered */
+table.ans { width: 100%; border-collapse: collapse; font-size: 8.2pt; line-height: 1.3; }
+table.ans th { text-align: left; font-size: 7.4pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 700; padding: 0 3mm 1.6mm 0; border-bottom: 0.8pt solid var(--accent); }
+table.ans td { vertical-align: top; padding: 1.35mm 3mm 1.35mm 0; border-bottom: 0.6pt solid var(--line); }
+table.ans td:first-child { width: 33%; color: var(--muted); }
+table.ans td:first-child b { color: var(--ink); font-weight: 700; }
+table.ans td:last-child { padding-right: 0; }
+
+/* Roles */
+.roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+.role { border: 0.8pt solid var(--line); border-radius: 2.5mm; padding: 2.4mm 3mm 2.2mm; }
+.role .who { font-size: 7.2pt; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-2); margin-bottom: 0.8mm; }
+.role h3 { font-size: 10.5pt; margin-bottom: 1.6mm; }
+.role ul { margin: 0; padding-left: 3.4mm; font-size: 7.9pt; line-height: 1.3; }
+.role li { margin-bottom: 0.6mm; }
+.role .route { font-size: 7.6pt; color: var(--muted); margin-top: 1.4mm; }
+
+/* Screens */
+.shots { display: grid; grid-template-columns: 1.462fr 1.136fr; gap: 4mm; width: 154mm; }
+.shot { margin: 0; }
+.shot .frame { overflow: hidden; border: 0.8pt solid var(--line); border-radius: 2mm; background: #fff; }
+.shot img { display: block; width: 100%; height: auto; }
+.shot figcaption { font-size: 7.4pt; color: var(--muted); margin-top: 1.2mm; line-height: 1.3; }
+
+/* Trust */
+.trust { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 5mm; }
+.trust h3 { font-size: 9.6pt; margin-bottom: 1.2mm; }
+.trust ul { margin: 0; padding-left: 3.4mm; font-size: 8pt; line-height: 1.32; }
+.trust li { margin-bottom: 0.6mm; }
+.never li::marker { color: var(--accent); }
+
+/* Numbers */
+.nums { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2mm; }
+.num { background: var(--accent-wash); border-radius: 2.2mm; padding: 1.8mm 2.6mm 1.9mm; }
+.num b { display: block; font-size: 13pt; color: var(--accent); letter-spacing: -0.02em; line-height: 1.1; }
+.num span { display: block; font-size: 7.6pt; line-height: 1.28; margin-top: 0.8mm; }
+.num i { display: block; font-style: normal; font-size: 6.8pt; color: var(--muted); margin-top: 0.8mm; font-family: "SF Mono", Menlo, monospace; }
+.numnote { font-size: 7.4pt; color: var(--muted); margin-top: 1.6mm; }
+
+/* Try it */
+.try { display: grid; grid-template-columns: 25mm 1fr; gap: 5mm; align-items: center; background: var(--accent); color: #fff; border-radius: 3mm; padding: 3mm 5mm; }
+.try img { width: 25mm; height: 25mm; display: block; border-radius: 1.5mm; background: #fff; }
+.try h2 { color: #fff; margin-bottom: 1.4mm; }
+.try .url { font-size: 12pt; font-weight: 700; color: #fff; margin-bottom: 1.6mm; display: block; }
+.try ol { margin: 0; padding-left: 4mm; font-size: 8.3pt; line-height: 1.38; }
+.try li { margin-bottom: 0.6mm; }
+.try code { background: rgba(255,255,255,0.14); color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1 -->
+<section class="page">
+  <header class="top">
+    <img src="../../public/brand/lockup-light.svg" alt="WorkProof">
+    <div class="meta"><strong>For the City of Espoo</strong><br>Junction 2026 challenge "Rethinking Recruitment"<br>Team Moonshot</div>
+  </header>
+
+  <h1>At your talent events, companies see real work. A named person scores it. The AI never does.</h1>
+  <p class="lede">A professional does a short, real task from an Espoo company. A person at that company reads the work with known personal details removed, gives 1 to 5 points on each core skill, writes a reason and chooses who to meet. The name appears only after the professional says yes. The city sees every step, from challenge taken to hire.</p>
+
+  <div class="sec">
+    <p class="eyebrow">How it works</p>
+    <div class="loop">
+      <div class="step"><span class="n">1</span><b>Company sets a task</b><span>A job-ad link or one sentence becomes a short challenge with 3 to 5 core skills. A person approves it.</span></div>
+      <div class="step"><span class="n">2</span><b>People do the work</b><span>Before the event, from any phone or laptop. They write how they think and answer two questions about their own choices.</span></div>
+      <div class="step key"><span class="n">3</span><b>Read blind</b><span>Names, contacts, schools, places and past employers are removed by rules before anyone reads it.</span></div>
+      <div class="step"><span class="n">4</span><b>A person scores</b><span>1 to 5 per skill, with a written reason. Then Meet, Not now, or decide later.</span></div>
+      <div class="step"><span class="n">5</span><b>Yes, then the name</b><span>The person accepts and the company sees the name. Both sides confirm the talk. The city counts it.</span></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <p class="eyebrow">Your brief, answered</p>
+    <table class="ans">
+      <thead><tr><th>What the City of Espoo described</th><th>What WorkProof does</th></tr></thead>
+      <tbody>
+        <tr><td><b>Companies describe their needs late and vaguely.</b></td><td>The company pastes a job-ad link or writes one sentence. The assistant asks at most two short questions, then drafts the challenge. Ten wishes become 3 to 5 core skills; the rest are set aside with a reason.</td></tr>
+        <tr><td><b>CVs are written by AI and read by AI.</b></td><td>The company reads work done on its own task, plus the person's answers to two follow-up questions about their own choices. The first talk starts from that work.</td></tr>
+        <tr><td><b>Companies doubt the city's talent pool.</b></td><td>The city can make a challenge from a company's public job ad before the company joins. In the demo, Kide Silicon's challenge, made by the city, already holds 20 pieces of work.</td></tr>
+        <tr><td><b>Too many irrelevant approaches.</b></td><td>Each task takes 5 to 30 answers (12 by default), so a company can read them all. Work waits in arrival order. Every answer is work on that company's task.</td></tr>
+        <tr><td><b>Bias by nationality, language, school or career path.</b></td><td>Known personal details are removed by rules before review. Tasks cannot ask for protected attributes. A wish for a native speaker becomes "Ask for a language level, not a native speaker."</td></tr>
+        <tr><td><b>No automated decisions about people.</b></td><td>The AI drafts tasks and questions only. Every score and every decision carries the name of a person registered by the company and a written reason. The audit log counts 0 automated decisions.</td></tr>
+        <tr><td><b>The city wants to see impact, not sign-ups.</b></td><td>The city view counts each step: challenge taken, scored, invited, said yes, talked, follow-up agreed, hired. Per company, it shows the work still waiting for a reply.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sec" style="margin-bottom:0">
+    <p class="eyebrow">Three views, one event</p>
+    <div class="roles">
+      <div class="role">
+        <div class="who">Job seeker</div>
+        <h3>Show what you can do</h3>
+        <ul>
+          <li>Pick a challenge from an Espoo company. Choose, Make, Fix or Read.</li>
+          <li>Get points and a written reason from a person.</li>
+          <li>Accept or decline. A declined company never sees your name.</li>
+        </ul>
+        <div class="route">workproof.wicflow.com/</div>
+      </div>
+      <div class="role">
+        <div class="who">Company</div>
+        <h3>Meet people for their work</h3>
+        <ul>
+          <li>Paste a job ad or one sentence. Edit and approve the draft.</li>
+          <li>Read the work without names, in arrival order.</li>
+          <li>Score each skill 1 to 5, write why, invite.</li>
+        </ul>
+        <div class="route">workproof.wicflow.com/employer</div>
+      </div>
+      <div class="role">
+        <div class="who">City of Espoo</div>
+        <h3>Run events that lead to hires</h3>
+        <ul>
+          <li>Make a challenge for a company from its job ad.</li>
+          <li>Draft a reminder to a company with work waiting.</li>
+          <li>Export the list of talks. Slots and labels, never names.</li>
+        </ul>
+        <div class="route">workproof.wicflow.com/city</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="foot"><span>WorkProof · for City of Espoo talent events · all demo people and companies are invented</span><span>1 / 2</span></footer>
+</section>
+
+<!-- PAGE 2 -->
+<section class="page">
+  <header class="top">
+    <img src="../../public/brand/lockup-light.svg" alt="WorkProof">
+    <div class="meta"><strong>workproof.wicflow.com</strong><br>Code: github.com/felixwickholm/workproof (MIT)<br>Team Moonshot</div>
+  </header>
+
+  <div class="sec" style="margin-top:3.5mm">
+    <p class="eyebrow">What people see</p>
+    <div class="shots">
+      <figure class="shot">
+        <div class="frame"><img src="review-crop.png" alt="Score work: Work K7 with personal details shown as hidden, the reviewer's points per skill, a total of 9.0 of 10 and her written words"></div>
+        <figcaption><b>Company.</b> Laura at Halla Supply reads Work K7. His name, a past client, where he lives and his school show as "hidden". She gives points per skill and writes why: 9.0 of 10.</figcaption>
+      </figure>
+      <figure class="shot">
+        <div class="frame"><img src="city-crop.png" alt="City of Espoo: from challenge to hire, 80 took a challenge, 48 scored, 17 invited, 10 said yes, 6 talked, 5 follow-ups, 3 hired"></div>
+        <figcaption><b>City of Espoo.</b> From challenge to hire, for one event: 80 pieces of work, 48 scored, 17 invited, 10 said yes, 6 talks, 5 follow-ups, 3 hires. Demo data.</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>Why the proof is trustworthy and fair</h2>
+    <div class="trust">
+      <div>
+        <h3>The AI helps. It never judges.</h3>
+        <ul>
+          <li><b>Does:</b> drafts a task from a company's need, and writes two follow-up questions about the person's own choices.</li>
+          <li><b>Never:</b> scores, ranks, rates or recommends a person, and never decides Meet or Not now.</li>
+          <li>A guard checks every AI output in English, Finnish and Swedish and rejects scores, ranks, verdicts and protected attributes.</li>
+          <li>Text reaches a model only after the blind rules have run. A built-in task designer works with no model at all, so the event never depends on one service.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>People decide, with a name and a reason.</h3>
+        <ul>
+          <li>A decision without the reviewer's points, a name from the company's list and at least 4 words of feedback is refused by the server.</li>
+          <li>Work waits in arrival order. The only other order is a task's top work, by the reviewers' own totals.</li>
+          <li>The name reaches a company only after the person accepts. The city sees counts and labels, never names.</li>
+          <li>Second look: with the person's consent, unanswered work can reach a second company with the same skills.</li>
+        </ul>
+      </div>
+      <div style="grid-column: 1 / -1">
+        <h3>Built for the EU AI Act and GDPR</h3>
+        <ul>
+          <li>The AI's role is kept to drafting tasks and questions: it does not evaluate, filter, rank or profile candidates (AI Act Annex III point 4, Article 6(3)). Human oversight (Art. 14), an audit log (Art. 12) and AI labels are built in. No voice or face analysis (Art. 5).</li>
+          <li>GDPR Article 22: no decision is based solely on automated processing. Data minimisation by design: no account, no profile, the person's key stays in their browser, photos are stripped of metadata. All demo data is synthetic.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>What is proven</h2>
+    <div class="nums">
+      <div class="num"><b>2,057 of 2,057</b><span>unit tests pass, in 142 files</span><i>npm test</i></div>
+      <div class="num"><b>64 of 64</b><span>eval tests pass, in 7 suites</span><i>npm run eval</i></div>
+      <div class="num"><b>0 of 79</b><span>planted identity details reached a reviewer</span><i>npm run eval</i></div>
+      <div class="num"><b>70 of 70</b><span>judging phrases rejected by the guard</span><i>npm run eval</i></div>
+      <div class="num"><b>0</b><span>automated decisions in the audit log</span><i>npm run eval</i></div>
+      <div class="num"><b>28 of 28</b><span>steps from task to a confirmed meeting, follow-up and hire</span><i>npm run eval</i></div>
+      <div class="num"><b>0 of 47</b><span>talent ids found in company and city responses</span><i>npm run eval</i></div>
+      <div class="num"><b>143 of 143</b><span>browser steps on a phone screen against the live site</span><i>npm run eval:e2e</i></div>
+    </div>
+    <p class="numnote">Unit and eval counts: <code>npm run evidence</code>, 15 November 2026 (commit 4cdd054). End-to-end run on live build 31a2bbe, 15 November 2026. Each number has a command anyone can run; no keys needed.</p>
+  </div>
+
+  <div class="try">
+    <img src="qr-tour.svg" alt="QR code for https://workproof.wicflow.com/?tour=1">
+    <div>
+      <h2>Try it in two minutes</h2>
+      <span class="url">workproof.wicflow.com</span>
+      <ol>
+        <li>Open the link. A 17-card walkthrough tells Mikko's story across all three views (the QR code starts it).</li>
+        <li>On a phone, open <code>/try</code>: a 2-minute task, then see what a company would read.</li>
+        <li>Open <code>/for-judges</code> for each claim with a route, a file and a test. No sign-in.</li>
+      </ol>
+    </div>
+  </div>
+
+  <footer class="foot"><span>WorkProof · Junction 2026 · Team Moonshot · numbers from src/app/for-judges/evidence.ts</span><span>2 / 2</span></footer>
+</section>
+
+</body>
+</html>

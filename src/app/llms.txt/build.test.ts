@@ -37,6 +37,7 @@ describe("buildLlmsTxt", () => {
 
   it("links the full text first and the repository documents last", () => {
     expect(text).toContain("- [Full text](https://workproof.example.org/llms-full.txt): ");
+    expect(text).toContain("- [Briefing for agents](https://workproof.example.org/for-agents.txt): ");
     const withRepo = buildLlmsTxt("https://a.example.org", "https://github.com/felixwickholm/workproof");
     expect(withRepo).toContain("- [Source code](https://github.com/felixwickholm/workproof): ");
     expect(withRepo).toContain("(https://github.com/felixwickholm/workproof/tree/main/AGENTS.md)");

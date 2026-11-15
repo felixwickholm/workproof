@@ -49,6 +49,7 @@ export function buildLlmsTxt(origin: string, repo?: string): string {
     "## Start here",
     "",
     `- [Full text](${site}/llms-full.txt): everything below in one markdown file, with every criterion, guardrail and eval row`,
+    `- [Briefing for agents](${site}/for-agents.txt): one long plain-text file: the brief, architecture, design decisions, a requirement map, evidence and how to verify each claim`,
     ...ENTRY_POINTS.filter((e) => !["/llms.txt", "/llms-full.txt", "/for-judges"].includes(e.path)).map((e) => `- [${e.title}](${site}${e.path}): ${e.what}`),
     ...CHECK_PATH.map((step) => `- [${step.path}](${site}${step.path}): ${step.what}`),
     `- [Evidence for judges](${site}/for-judges): criteria table, evals, limits, architecture, data and privacy`,

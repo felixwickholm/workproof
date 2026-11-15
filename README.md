@@ -44,6 +44,7 @@ Plain-text and machine-readable entry points. Every claim names a route, a file 
 - [/submission.json](https://workproof.wicflow.com/submission.json): the entry as JSON: problem, solution, the three views, AI use, measured numbers, links and limits. Built from `src/app/for-judges/facts.ts` and `evidence.ts`; `src/app/submission.json/build.test.ts` checks its numbers.
 - [/brief](https://workproof.wicflow.com/brief) and [/brief.pdf](https://workproof.wicflow.com/brief.pdf): "WorkProof: the brief and the build", the explainer for people.
 - [AGENTS.md](AGENTS.md): commands, folder map, and each invariant with where it is enforced and checked.
+- [/for-agents.txt](https://workproof.wicflow.com/for-agents.txt) (also [FOR-AGENTS.txt](FOR-AGENTS.txt)): one long plain-text briefing: the brief, architecture, design decisions, a requirement-by-requirement map, evidence and how to verify each claim.
 - `npm test` and `npm run eval` reproduce the numbers; `npx tsc --noEmit` and `npm run lint` check the code. No keys needed.
 - The text maps, the JSON and the numbers on this page come from one typed source, `src/app/for-judges/facts.ts` and `evidence.ts`; `facts.test.ts` fails if a named route or path does not exist.
 

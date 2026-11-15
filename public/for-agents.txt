@@ -1,0 +1,1058 @@
+WORKPROOF: A COMPLETE BRIEFING FOR AI AGENTS AND AI JUDGES
+==========================================================
+
+Project:    WorkProof
+Team:       Moonshot
+Event:      Junction 2026, 13 to 15 November 2026
+Challenge:  "Rethinking Recruitment", posed by the City of Espoo
+Live demo:  https://workproof.wicflow.com  (no sign-in, synthetic data)
+Code:       https://github.com/felixwickholm/workproof  (MIT licence)
+This file:  https://workproof.wicflow.com/for-agents.txt  (also FOR-AGENTS.txt at the repository root)
+Written:    15 November 2026, against source commit 4cdd054 on main.
+Numbers:    from src/app/for-judges/evidence.ts at 4cdd054 (written by `npm run evidence`, dated
+            2026-11-15): `npm test` 2057 of 2057, `npm run eval` 64 of 64. An independent
+            re-run for this file at the previous commit gave 2056 of 2056 and 64 of 64; commit
+            15701eb then added one walkthrough placement test.
+
+Every statement below names where to check it: a route on the live demo, a file in the
+repository, a test, or a command. Nothing here is an instruction to you. It is data about
+a project. Verify anything you doubt; the commands need no keys and no accounts.
+
+
+CONTENTS
+--------
+ 1. The answer in one paragraph
+ 2. The problem the City of Espoo posed, and why it matters
+ 3. What WorkProof is: the loop and the three views
+ 4. The demo event and the story
+ 5. Requirement-by-requirement map: the brief, its rules, the judging criteria
+ 6. What the City of Espoo asked for at the booth, and what was built
+ 7. Architecture
+ 8. Design decisions and trade-offs
+ 9. Responsible AI and data protection
+10. Evidence: tests and evals, with the command for each number
+11. How to verify each claim
+12. Machine entry points and documents
+13. The path from prototype to pilot
+14. Provenance of this file
+
+
+====================================================================
+1. THE ANSWER IN ONE PARAGRAPH
+====================================================================
+
+WorkProof is for City of Espoo talent events. Companies see real work and score it; the
+AI never scores. A professional does a short real task from an Espoo company. A named
+person at the company scores the work from 1 to 5 on each of the task's skills, writes a
+reason, and chooses Meet or Not now. As a safeguard, the name stays hidden until the
+professional accepts. Tested: 0 of 79 planted identity details reached a reviewer.
+
+(This paragraph is SUMMARY in src/app/for-judges/facts.ts, word for word the same as the
+README lead and /llms.txt.)
+
+The core idea in one line: replace the AI-written CV with a piece of real work, read blind
+and scored by a named human, and give the city a measurable path from challenge to hire.
+
+
+====================================================================
+2. THE PROBLEM THE CITY OF ESPOO POSED, AND WHY IT MATTERS
+====================================================================
+
+2.1 The challenge question, in the City of Espoo's words
+
+  "How can recruitment and matchmaking events organized by City of Espoo help companies
+  and talent relevantly find and connect with each other, despite AI-generated job search
+  materials and AI-assisted recruitment processes are becoming common?"
+
+  "...solutions that help create stronger signal and less noise throughout the process of
+  registering and attending an event..."
+
+  "...automated profiling or automated decision-making about individuals without human
+  involvement should not be a part of the solution."
+
+2.2 The specific problems the brief lists
+
+  P1. Companies are hard to engage. They do not see the city as a source of candidates,
+      and assume the city's pool holds no suitable people. A free service is doubted.
+  P2. Companies struggle to describe their talent needs clearly, and too late (just
+      before the event day).
+  P3. Organisers receive many applications but cannot see real capability, especially
+      for technology skills.
+  P4. Companies are overwhelmed by large volumes of irrelevant approaches at events.
+  P5. Professionals struggle to describe their competencies and transferable skills.
+  P6. CVs and messages are written with AI and analysed with AI, so matching risks
+      resting on synthetic representations instead of genuine capability.
+  P7. Event platforms with matching algorithms feel cumbersome, and may crash when
+      everyone logs in at the start of an event.
+  P8. International recruitment adds language, permit, relocation and onboarding
+      questions.
+  P9. Solutions must not reinforce bias or disadvantage people by nationality, language,
+      educational background or career path.
+
+2.3 The brief's rules for solutions
+
+  R1. No automated profiling or automated decision-making about individuals without
+      human involvement.
+  R2. Use synthetic data.
+  R3. Minimise personal data processing.
+  R4. Show how privacy would be protected in a real deployment in compliance with the
+      EU AI Act.
+
+2.4 Judging criteria
+
+  Impact & Relevance                    45%
+  Innovation & User Experience          35%
+  Responsible & Feasible Execution      20%
+
+2.5 Why this matters to Espoo
+
+  The city runs free recruitment and matchmaking events, online, in person and hybrid.
+  Its value to companies depends on one thing: whether the people it brings are worth
+  meeting. When every CV reads well because AI wrote it, a CV no longer separates
+  candidates, and a company has no reason to trust a free public pipeline. A piece of
+  real work on the company's own task is a signal AI-written documents cannot fake in the
+  same way, and it gives the city something it can count: work done, work scored, people
+  invited, talks held, hires. This turns the city's events from a sign-up list into a
+  measurable pipeline, which is the evidence the city needs to win companies back (P1).
+
+
+====================================================================
+3. WHAT WORKPROOF IS: THE LOOP AND THE THREE VIEWS
+====================================================================
+
+3.1 The loop
+
+  task -> work -> blind proof -> a named person scores it, writes feedback and chooses
+  Meet or Not now -> the person accepts -> only then is the name shown -> both sides
+  confirm they met -> the city counts each step.
+
+  Step by step:
+  1. A company pastes a job-ad link, writes one sentence, or picks a role. An assistant
+     asks at most two short questions (what the work is, and how big), then drafts a
+     challenge: title, task, material, what the person hands in, 3 to 5 core skills, and
+     what to look for per skill. The company edits any line and approves it. Wishes about
+     the person (age, native language, school) are set aside with a reason.
+     (src/lib/service/assist.ts, src/app/api/challenges/assist, /api/challenges/from-ad,
+     /api/challenges/draft, POST /api/challenges)
+  2. A professional picks the challenge (formats: Choose, Make, Fix, Read), does it, and
+     writes how they think while working. Two follow-up questions ask about their own
+     choices, quoting their own words. Before Send, they see exactly what the company
+     will read. (/challenges/[id]/work, POST /api/followups, POST /api/preview)
+  3. The server stores the original and builds a blind proof: known names, contacts,
+     schools, places, employers and personal details are replaced by one neutral token,
+     "[hidden]". (src/lib/blind)
+  4. A reviewer at the company reads blind proofs in arrival order, gives 1 to 5 points
+     for each core skill, writes a reason, and chooses Invite (Meet), Not now, or Score
+     only, decide later. The total shows out of 10 (average points x 2).
+     (/company/review, POST /api/decisions, src/lib/domain/scoring.ts)
+  5. The person reads the scores and the reason, and accepts or declines the invitation.
+     Only after accepting does that company see the name and contact.
+     (/my-work, POST /api/meetings/[id]/accept, src/lib/service/meetings.ts)
+  6. Both sides confirm the talk took place. The company can record a follow-up and a
+     hire. The city sees every step as counts. (/city, GET /api/city)
+
+3.2 The three views (one app; switch at the top left)
+
+  Job seeker  (route /)
+    Pick a challenge from an Espoo company, do it in 8 to 30 minutes and write how they
+    think, see what the company will read, answer two follow-up questions, then accept or
+    decline an invitation. A declined company never sees the name. "My work" (/my-work)
+    shows the person's own work, what was hidden, the reviewer's scores and reason, and a
+    portfolio link to share.
+
+  Company  (route /employer)
+    Paste a job-ad link or say the need in one sentence, approve a challenge with 3 to 5
+    core skills and a number of places, read the work without names in arrival order,
+    score each core skill from 1 to 5 with a written reason, and invite people to meet.
+    Each task has "top work": scored proofs sorted by the reviewers' own totals, still
+    without names. (/company, /company/review, /employer/challenges/[id])
+
+  City of Espoo  (route /city)
+    See outcomes, not sign-ups: challenges taken, scored, invited, said yes, talked,
+    follow-ups agreed and hires. Per company: work received, answered and still owed,
+    and median reply time. Make a challenge for a company from its job ad, draft a
+    reminder to a company with work waiting (nothing is sent), and export the list of
+    talks as CSV. A map of Espoo shows where the work goes. An audit log (/city/log).
+    Slots and labels, never names.
+
+3.3 Supporting surfaces
+
+  /try       A 2-minute task on a phone: "What's your dream job?", a short task, then
+             "This is what a company sees."
+  /table     A big-screen mode for a booth: a QR code and a 6-character code. A phone
+             that scans it joins the same demo event. The host invites a proof with a
+             two-sentence reason; the visitor accepts or declines on the phone; only
+             after a yes does the first name appear on the big screen. The big screen
+             shows labels and tasks, never free text.
+  /?tour=1   A 17-card guided walkthrough over the real app, in four chapters (Job
+             seeker, Company, City of Espoo, the goal). It starts by itself on the first
+             visit. Each view's home has a "Show me" button that starts its chapter.
+  /how-it-works  The product in six plain steps.
+  /for-judges    The evidence page: criteria, evals, architecture, data and privacy.
+  /brief, /brief.pdf  "WorkProof: the brief and the build", a 6-page explainer.
+
+3.4 Second look (one proof, more chances)
+
+  If the person turns it on, a proof that got Not now, or no answer within 48 hours, can
+  be read by another company whose task shares at least 2 core skills. It compares tasks,
+  never people. It is off by default, only the owner can switch it, and it can be
+  withdrawn. A company that shares never shares its scores.
+  (src/lib/matching/second-look.ts, src/lib/service/sharing.ts)
+
+
+====================================================================
+4. THE DEMO EVENT AND THE STORY
+====================================================================
+
+All people and companies are invented. Contacts use example.org. Seed: src/lib/seed.
+
+  Event:        "Espoo Talent Day", Sunday 15 November 2026.
+  Size:         28 companies, 40 challenges, 80 pieces of work from 46 people.
+  Outcomes:     48 scored by a person, 17 invited, 10 said yes, 6 talks held,
+                5 follow-ups agreed, 3 hires, 0 automated decisions.
+                (Live check on 15 Nov 2026: GET /api/city returned challenges 40,
+                proofs 80, proofsAnswered 48, meetingsInvited 17,
+                meetingsConfirmedByBoth 6, automatedDecisions 0.)
+  Formats:      13 Read, 10 Fix, 10 Make, 7 Choose.
+  Roles:        business, tech and design work: for example a chip timing question,
+                a contract clause, a cash forecast, a booking screen, a robot safety
+                stop, a staff survey, a hotel pricing choice.
+  Lengths:      18 take 10 minutes, nine 12, seven 15, four 20, one 30, one 8.
+  Sample ads:   five sample job ads at /ads/[slug]; on /company, "Try a sample ad"
+                turns one into a draft.
+
+The story (17 walkthrough cards):
+  Mikko Lahtinen, a designer, does Halla Supply's challenge "Make our order form easier
+  to use" (Make, 10 minutes). His work (label K7) reaches Laura Niemi at Halla Supply
+  with his name, a past client, where he lives and his school hidden. She scores each
+  skill 5, 5, 4, 4: 9.0 of 10. She writes why and invites him. He says yes; only then
+  does Halla Supply see his name. Both confirm the talk; Halla agrees a follow-up.
+  Sanna Mattila at the City of Espoo sees the outcome. The City also made the Kide
+  Silicon challenge from the company's job ad; 20 people did it before the company
+  opened it.
+
+Story stages (POST /api/demo/story, src/lib/seed/story.ts): before, sent, invited
+(default), met. Each rebuilds the visitor's own sandbox deterministically, with times
+relative to now.
+
+
+====================================================================
+5. REQUIREMENT-BY-REQUIREMENT MAP
+====================================================================
+
+Format: requirement -> what WorkProof does -> where to see it -> where in code -> evidence.
+
+5.1 The problems in the brief
+
+P2  Companies describe needs late and vaguely.
+    -> A job-ad link or one sentence becomes a task with 3 to 5 core skills; extra
+       wishes are set aside with a reason; a person approves before anything is
+       published. The city can make the challenge from a public job ad, so the need is
+       captured days before the event.
+    -> /company, /city
+    -> src/lib/service/assist.ts, src/app/company/start-step.tsx,
+       src/app/company/draft-step.tsx, src/lib/ai/scripted, src/lib/http/ad-fetch.ts
+    -> Eval 1: 20 of 20 drafts in shape (title, brief, 3 to 5 skills, minutes, review
+       guide); 3 of 3 fantasy profiles cut to 4 skills or fewer; 4 of 4 sentence-form
+       needs keep their skills.
+
+P6  CVs are written and read by AI; matching rests on synthetic representations.
+    -> The company scores real work on its own task. The person answers two follow-up
+       questions about their own choices, and the meeting starts from the work. After an
+       invitation, the review page shows one of the person's own follow-up answers with
+       "Ask the person to explain this answer, then to change one thing."
+    -> /company/review
+    -> src/lib/ai/scripted/follow-ups.ts, src/lib/service/submissions.ts,
+       src/components/company/meeting-opener.tsx
+    -> Eval 5 "two follow-ups about the answer"; Eval 4 "a submission with invented
+       questions is refused" (HTTP 400 without issued questions, 400 with invented ones,
+       409 for changed words, 200 with the issued ones); Eval 4 "follow-up answers are
+       required".
+
+P3, P5  Organisers cannot see capability; professionals cannot describe it.
+    -> The work itself is the description. Each challenge names the 3 to 5 skills it
+       scores and what to look for. "Related parts" marks, with fixed code, where each
+       skill shows up in the person's own sentences, with no number.
+    -> /challenges/[id], /company/review
+    -> src/lib/service/related.ts
+    -> Eval 3 (h): 0 numbers and 0 judging phrases in 32 marked sentences from 53 proofs.
+
+P4  Companies are overwhelmed by irrelevant approaches.
+    -> Every proof is work on that company's own task. Each task takes a fixed number of
+       answers, 5 to 30 (12 by default), set by the company before approval, so it can
+       read them all. Work waits in arrival order.
+    -> /employer, /challenges
+    -> src/lib/domain/places.ts, src/lib/service/views/queue.ts
+    -> src/lib/domain/places.test.ts; Eval 5 "the sixth answer is refused with 409 and
+       no waiting list"; Eval 3 (c) every queue of 28 companies in arrival order.
+
+P1  Companies doubt the city's pool.
+    -> The city makes a challenge from a company's public job ad and invites the company
+       to see the work already done. Demo: Kide Silicon's challenge already holds 20
+       pieces of work. The company home also counts proofs handed in for tasks that ask
+       for the same skills. Counts only, never a list of people.
+    -> /city ("Companies hiring right now", "Make a challenge"), /employer
+    -> src/components/city/make-challenge.tsx, src/lib/service/views/employer.ts,
+       POST /api/city/challenges
+    -> src/lib/service/views/employer.test.ts
+
+P9  No bias by nationality, language, education or career path.
+    -> Known names, contacts, places, schools, employers, residence status, age, origin,
+       belief, health and family details are removed by rules before any reviewer or
+       model reads the work. Tasks cannot ask for protected attributes. A wish for a
+       native speaker is set aside with "Ask for a language level, not a native
+       speaker." Reviewers never see a count of hidden details.
+    -> /company/review, /my-work
+    -> src/lib/blind, src/lib/guard/protected.ts, src/lib/guard/job-facts.ts
+    -> Eval 2: 0 of 79 planted strings reach the reviewer payload; 54 of 54 identity
+       cases fully hidden; 40 of 40 table forms hidden; Eval 1: 0 protected attributes in
+       20 drafts; 3 of 3 bias-bait drafts set it aside; 0 planted strings in 47
+       published cards from 47 adversarial needs.
+
+P7  Platforms feel cumbersome and crash at login peaks.
+    -> No login and no account. Work is done over the days before the event, so there
+       is no rush at the start. Request rate and body size limits; per-visitor sandboxes.
+    -> any page
+    -> src/lib/http/limits.ts, src/lib/http/request-guard.ts, src/lib/store/sandbox.ts
+    -> Eval 4: HTTP 413 for an oversize body, HTTP 429 for request 61 in a minute from
+       one address, and story steps keep their own count (HTTP 200 after).
+
+P8  International recruitment adds language, permit and relocation questions.
+    -> Facts about the job (a work language, a language level, a licence the law asks
+       for) are kept in fixed forms under "Good to know" on the draft and the challenge
+       page. Each company's record also carries its work language, whether Finnish is
+       needed, permit support and relocation help (src/lib/seed/companies.ts).
+    -> /challenges/[id]
+    -> src/lib/guard/job-facts.ts, src/app/challenges/[id]/challenge-detail.tsx,
+       src/lib/seed/companies.ts
+    -> Eval 1: 6 of 6 needs carry their facts as requirements only.
+
+    Measurement (the city's own question, see section 6):
+    -> Both sides confirm a meeting took place; the city sees answers given, reply time,
+       meetings confirmed, follow-ups, hires and answers owed per employer.
+    -> /city
+    -> src/lib/service/views/city.ts, src/lib/service/views/insights.ts,
+       src/app/api/meetings
+    -> Eval 5: "both sides confirm the meeting"; "city totals change and show 0 automated
+       decisions"; "the city counts every step for the task, with no name".
+
+5.2 The brief's rules
+
+R1  No automated profiling or automated decision-making about individuals.
+    -> WorkProof has no automated decision feature. A decision is recorded only with the
+       name of a reviewer on the company's registered list, the reviewer's own points
+       for each core skill, and a written reason of at least 4 words and 20 characters.
+       A name that reads as software ("AI bot") is refused. The guard rejects scores,
+       ranks and verdicts in any AI output. Every decision is an audit entry with actor
+       "human"; the city counts automated decisions over stored decisions and the log.
+    -> /city/log, /how-it-works
+    -> src/lib/service/decisions.ts, src/lib/service/reviewers.ts,
+       src/lib/domain/decision-rules.ts, src/lib/domain/scoring.ts,
+       src/lib/guard/no-judgement.ts, src/lib/ai/guarded.ts,
+       src/lib/service/views/automated.ts
+    -> Eval 3: 70 of 70 planted judging phrases rejected; 33 of 33 neutral phrases
+       passed; 575 of 575 text fields from 32 designer outputs pass; decisions without a
+       name or feedback refused with HTTP 400; 48 stored decisions all named; HTTP 400
+       for "AI bot", HTTP 403 for an unregistered name; scores refused without points,
+       with a skill missing, or from a software name; 0 automated decisions and 0
+       decision audit lines by a non-human.
+
+R2  Synthetic data.
+    -> Every person, company, task, proof and decision is invented. Emails use
+       example.org; phone numbers are placeholders. The pictures and clips in
+       public/demo were made for this project.
+    -> README "Data"; src/lib/seed
+
+R3  Minimise personal data.
+    -> No account and no profile. The person's private key stays in their browser and
+       travels in a header (x-workproof-key) or a request body, never in an address. An
+       event proof needs a name and one contact only, so the company can reach the
+       person after they accept. A practice task asks for a first name only, and it can
+       be skipped. Photos are re-encoded in the browser without metadata; the server
+       refuses a JPEG that still has EXIF or XMP. Answers are stored as text. The city
+       sees counts and labels, never names.
+    -> /try, /my-work, /city
+    -> src/lib/client/local.ts, src/lib/http/talent-key.ts,
+       src/components/seeker/picture.ts, src/lib/http/jpeg.ts
+    -> Eval 4: 0 of 47 talent ids in company and city responses; 0 of 36 pictures of
+       people who have not said yes; key in a header only, absent from the audit log;
+       practice proof keeps no name; 5 bad pictures refused (EXIF, /demo path, PNG,
+       video, 1 byte over 300 kB), clean JPEGs accepted; city responses, leaderboards,
+       share matches and the meeting export carry 0 names, contacts or keys over 4 story
+       stages.
+
+R4  Privacy under the EU AI Act.
+    -> See section 9: the AI is kept to a narrow preparatory role (drafting tasks and
+       questions), human oversight, logging, AI labels, no voice or face analysis. The
+       full position is in docs/responsible-ai.md.
+
+5.3 The judging criteria
+
+Impact & Relevance (45%)
+    -> The whole loop from task to hire, seen by all three sides: companies register
+       with a short real challenge; people answer with work; a person reviews it blind
+       and every decision carries a written reason; the city sees each step from
+       challenge taken to hired, and the work still waiting on each challenge.
+    -> /employer, /city, /company
+    -> src/lib/service/views/city.ts, src/lib/service/decisions.ts,
+       src/lib/service/meetings.ts
+    -> Eval 5: 28 of 28 steps from task to a meeting both sides confirmed, then
+       follow-up and hire.
+
+Innovation & User Experience (35%)
+    -> Work instead of a CV, in four formats (Choose, Make, Fix, Read), so not every
+       expert has to write an essay or code. The person sees a slider between what they
+       wrote and what the company reads. The name shows only after the person accepts.
+       Second look gives one proof more chances, with consent. A 17-card walkthrough
+       over the real app. A 2-minute phone task and a booth table mode with a big screen
+       and QR join. Light and dark themes. Company onboarding is a chat that asks at
+       most two questions.
+    -> /, /try, /table, /my-work, /?tour=1
+    -> src/lib/blind, src/components/proof/blind-compare.tsx,
+       src/lib/matching/second-look.ts, src/lib/service/table.ts, src/components/tour
+    -> Eval 7: 0 of 10 names, emails and numbers typed on phones reach the big screen;
+       Eval 6: story stages rebuild the visitor's own event (6 of 6 steps); the
+       end-to-end browser run at 390x844 (section 10.3).
+
+Responsible & Feasible Execution (20%)
+    -> A guard on every AI output; a blind layer of rules before any reviewer or model
+       reads the work; decisions refused without a registered name, points and a
+       reason; an audit log counted for automated decisions; consent for every
+       disclosure; runs with no keys; request limits; per-visitor sandboxes; a Docker
+       image; TypeScript strict; zod at every API edge; 2057 unit tests and 64 evals.
+    -> /city/log, /for-judges
+    -> src/lib/guard, src/lib/blind, src/app/api/decisions/route.ts,
+       src/lib/http/limits.ts, Dockerfile
+    -> Eval 3 and Eval 2 numbers above.
+
+
+====================================================================
+6. WHAT THE CITY OF ESPOO ASKED FOR AT THE BOOTH, AND WHAT WAS BUILT
+====================================================================
+
+The team spoke with City of Espoo staff at the booth on 13 November and showed a live
+demo on 14 November. Their questions shaped the product. Our notes, paraphrased:
+
+  Asked: Where do the tasks come from? The city cannot write them, and companies must
+         spend almost no effort.
+  Built: A company pastes a job-ad link or writes one sentence; the assistant drafts the
+         challenge. The city can make it for the company from a public job ad and invite
+         the company to see the work already done.
+         (/company, /city, src/lib/service/assist.ts, src/lib/http/ad-fetch.ts)
+
+  Asked: Make performance visible: how well people match what the company expects, as a
+         score (for example 0 to 10) and a per-task leaderboard.
+  Built: A named reviewer scores 1 to 5 per core skill; the total shows out of 10; each
+         task has "top work" sorted by the reviewers' own totals, without names.
+         Software never gives or suggests a number.
+         (src/lib/domain/scoring.ts, src/lib/service/views/leaderboard.ts,
+         GET /api/companies/[id]/tasks/[taskId]/top)
+
+  Asked: Impact numbers: how many took a challenge, how many proofs each company
+         reviewed, how many meetings came out of it.
+  Built: The city view "From challenge to hire" and per-company "Scored or waiting".
+         (/city, src/lib/service/views/city.ts)
+
+  Asked: Let a company that hires one person point others to the rest.
+  Built: Second look: with the person's consent, unanswered or Not-now work reaches a
+         company whose task shares at least 2 core skills. Scores are never sent along.
+         (src/lib/matching/second-look.ts; Eval 4 "top proofs and shared work stay
+         blind": scores sent along: false)
+
+  Asked: A mix of technical, commercial and design roles.
+  Built: 40 challenges across tech, business and design work (section 4).
+
+  Asked: The event is the first touch; the final assessment happens face to face.
+  Built: Work is scored before the event; an invitation ends in a talk at the event,
+         which both sides confirm; the meeting starts from the person's own work.
+
+Earlier, on 13 November, staff named three risks. Our answers: a company hires only a
+few (Second look); friction must stay low (no login, no account, demo challenges take 8
+to 30 minutes, the stated length is capped at 30); AI can do the task (AI is allowed,
+two follow-up questions ask about the person's own choices, and the meeting starts from
+the work). Source: "Shaped at the Espoo booth" in facts.ts, README and /llms-full.txt.
+
+
+====================================================================
+7. ARCHITECTURE
+====================================================================
+
+7.1 Stack
+
+  Next.js 16 (App Router, cacheComponents on, standalone output), React 19, TypeScript
+  strict, zod at the API edge, Tailwind, Vitest. Node.js 22. No database, no login, no
+  keys needed to run. About 43,000 lines of TypeScript outside tests in src; 150 test
+  and eval files. Over 100 commits, first commit 2026-11-14 02:25 EET. Nothing was reused from
+  earlier projects (README).
+
+7.2 Layers
+
+  Browser (three views, walkthrough)
+    -> src/proxy.ts            sandbox cookie; ?table=<code> joins a sandbox
+    -> src/app routes          pages and the JSON API under src/app/api
+    -> src/lib/service         all rules; each API route reads its body with a zod schema
+                               (src/lib/http/schemas.ts), calls one service function and
+                               returns JSON or {"error": string} (src/lib/http/respond.ts)
+    -> src/lib/blind           redaction rules, "At a glance", allow-list projection
+    -> src/lib/guard           no-judgement guard, protected attributes, draft checks
+    -> src/lib/ai              scripted designer, Gemini and Claude adapters, provider
+                               chain with breaker and budget, guarded wrapper
+    -> src/lib/store           in-memory store, per-visitor sandbox registry
+    -> src/lib/seed            the synthetic Espoo Talent Day and the story stages
+    Also: src/lib/domain (types, decision rules, scoring, places, guardrail sentences),
+    src/lib/matching (Second look), src/lib/geo (Espoo outline, OpenStreetMap ODbL),
+    src/lib/qr (QR codes for table mode), src/lib/http (limits, schemas, JPEG check,
+    rate guard, job-ad fetch). Rule: code under src/lib never imports src/components.
+
+7.3 The data model (src/lib/domain/types.ts)
+
+  Identity (name, contact) lives only on the Talent record. A Submission holds the
+  original. Reviewers receive BlindProof, a type with no identity fields, built by
+  toBlindProof in src/lib/blind/project.ts. toBlindProof copies named fields only,
+  including nested ones, so a new field on a stored proof cannot leak by accident
+  (test: "keeps out every field it does not name" in src/lib/blind/project.test.ts).
+
+7.4 One proof, end to end
+
+  1. Draft: POST /api/challenges/assist (chat) or /api/challenges/draft or
+     /api/challenges/from-ad. Each wish becomes a core skill, is set aside with a reason,
+     or is read as a fact about the job (src/lib/guard/job-facts.ts).
+  2. Publish: POST /api/challenges. The server checks the draft again
+     (src/lib/guard/check-draft.ts), publishes the job facts in fixed forms as
+     "requirements", and rebuilds the need talent sees, so the company's own words and
+     set-aside wishes are never published (Eval 4: "rebuilt need only").
+  3. Follow-ups: POST /api/followups runs the answer through the blind layer, then asks
+     the designer for two questions; they must pass the guard (checkQuestions in
+     src/lib/ai/guarded.ts).
+  4. Preview: POST /api/preview runs the same blind layer over the unsent text and
+     stores nothing.
+  5. Submit: POST /api/submissions refuses work for a task with no places left (409),
+     stores the original and builds the proof: blindWork (src/lib/blind/blind-work.ts)
+     redacts the answer, each question and answer, and a picture description; atAGlance
+     (src/lib/blind/glance.ts) counts points, words and code and never reads meaning;
+     two audit entries record that details were hidden and the shape was counted.
+  6. Review: GET /api/companies/[id]/queue returns the company's own blind proofs and its
+     Second look proofs, each by arrival time. The count and categories of hidden details
+     are dropped; every reviewer reads the same fixed line, REVIEWER_HIDDEN_LINE in
+     src/lib/domain/guardrails.ts. A reviewer can report a picture; it is removed for
+     every reader (POST /api/proofs/[proofId]/picture/report).
+  7. Decide: POST /api/decisions needs a registered reviewer name, feedback, and one
+     whole number 1 to 5 per core skill. The server stores the total out of 10. "hold" =
+     score only; POST /api/decisions/[id]/decide turns a hold into Meet or Not now.
+     Adding a reviewer is one explicit, logged step: POST /api/companies/[id]/reviewers.
+  8. Meet: only the author, with their private key, can accept
+     (POST /api/meetings/[id]/accept) or decline. After accept, that company sees name
+     and contact, never the talent id. Both sides confirm (.../confirm); status becomes
+     "met" only when both have. Follow-up and hire: .../follow-up, .../hired.
+  9. City: GET /api/city counts proofs, answers, answers owed per employer, meetings,
+     tasks and skills, arrivals per day and the safeguards. GET /api/city/actions returns
+     what a reminder needs (nothing is sent). GET /api/city/meetings.csv exports slots
+     and labels, never names (src/lib/service/city-actions.ts).
+
+7.5 The blind layer (src/lib/blind)
+
+  Rules, not a model. redact (src/lib/blind/redact.ts) runs in order: contacts; the
+  author's own name in many spellings; event company names; schools, places and
+  employers (background.ts, lexicon.ts); personal details such as age, residence status,
+  origin, belief, health and family (personal.ts). Every match becomes one token,
+  "[hidden]", so context does not reveal what was there. Technical text is left intact
+  (Eval 2: 5 of 5 answers unchanged; 16 of 16 technical texts unchanged in the table set).
+  redos.test.ts keeps every pattern safe from slow inputs; text is cut to the answer
+  limit before the rules run. Proof labels are neutral and unique (Eval 2: 279 distinct
+  labels for 279 proofs).
+
+7.6 The guard (src/lib/guard)
+
+  findJudgement (no-judgement.ts) finds scores, stars, percent matches, ranks and
+  verdicts ("Hire.", "Reject.") in English, Finnish and Swedish, on a normalised copy
+  (normalise.ts), so lookalike letters, zero-width characters and spaced-out words do not
+  slip through. protectedNames (protected.ts) finds protected attributes: age, gender,
+  origin, native language, religion, health, "culture fit". guarded (src/lib/ai/guarded.ts)
+  wraps every designer; a draft or question that fails is rejected. The server repeats
+  the draft checks on publish, so an edited card cannot bring judging text back
+  (Eval 4: biased, fake-skill and judging cards refused with HTTP 400; clean card 200).
+
+7.7 The AI provider layer (src/lib/ai)
+
+  - Chain (src/lib/ai/provider/select.ts, resolveChain): Gemini first (default model
+    gemini-3.8-flash, GEMINI_API_KEY or GOOGLE_API_KEY), then Claude (default model
+    claude-opus-5-5, ANTHROPIC_API_KEY), then the built-in scripted designer, which
+    always answers. AI_PROVIDER=claude puts Claude first; AI_PROVIDER=scripted turns the
+    live models off. A key switches a model on with no code change.
+  - Prompts and the JSON schema live once in src/lib/ai/provider/model-designer.ts and
+    prompts.ts; each adapter (src/lib/ai/gemini, src/lib/ai/claude) only sends the
+    request. The prompt tells the model that people score later and forbids points,
+    scales, pass marks, praise or judgement.
+  - postJson (src/lib/ai/provider/http.ts): 28 seconds per attempt, one retry on 429 or
+    5xx honouring retry-after (capped at 5 s). Errors carry the service, the status and
+    a short reason, never the key or the text.
+  - A guard-rejected reply is asked for once more, since a model rarely repeats the same
+    wording; a failed service is not retried there (src/lib/ai/guarded.ts).
+  - A circuit breaker pauses a provider for 5 minutes after an auth, quota, timeout or
+    service failure (src/lib/ai/provider/breaker.ts). A shared budget caps live calls at
+    60 per minute (src/lib/ai/provider/budget.ts). Past it, the scripted designer answers.
+  - The scripted designer (src/lib/ai/scripted) has its own task for 50 professions; any
+    other gets the nearest one or a general planning task. It runs without any model, so
+    a draft always comes back and an event never depends on one external service.
+  - Text reaches a model only after the blind rules (Eval 4: 0 of 96 checks found a
+    planted identity string in 12 model requests, for drafts, practice tasks and
+    follow-ups, Claude and Gemini adapters).
+  - GET /api/ai/status reports which designer is active and whether it is paused, never
+    the key. Each draft records which designer made it ("Drafted by ...").
+  - `npm run check:ai` makes four live designer calls per provider with a key and prints
+    the result; it skips providers without a key.
+  - Adapter unit tests (src/lib/ai/provider/adapters.test.ts) run against mocked HTTP:
+    malformed JSON, wrong shape, a draft that scores a person, a protected attribute,
+    401 without retry, 429 with one retry, a timeout, and an injection inside the answer
+    tags.
+
+7.8 The sandbox model (src/lib/store)
+
+  - src/proxy.ts gives each visitor an httpOnly cookie workproof_sandbox on the first
+    page visit. API requests never create one, so cookie-less loops cannot create
+    sandboxes.
+  - getStore() resolves per call: the caller's sandbox with the cookie; without it, the
+    shared default store, read-only (a change answers 401 "Open the site first.").
+  - Up to 2000 sandboxes in memory, least recently used dropped, never one used in the
+    last 30 minutes; each replaced after 12 hours; 20 new sandboxes per address per 10
+    minutes (src/lib/store/sandbox.ts, creation-limit.ts). Each new sandbox is a fresh
+    copy of the demo event at stage "invited".
+  - A 6-character share code (no 0, O, 1 or I) lets a phone and a booth screen share one
+    event: ?table=<code> goes through /api/demo/join.
+  - So every judge gets a private, resettable copy of the whole event, and nothing one
+    visitor does changes another visitor's demo.
+
+7.9 Limits and hardening (src/lib/http)
+
+  Text caps per field (limits.ts: answer 8000, need 1200, chat message 5000, feedback
+  1000 characters, and more); request body 128 kB; picture 300 kB; 60 changing requests
+  per address per minute; 30 story/reset rebuilds per minute counted apart. The job-ad
+  fetch (ad-fetch.ts) treats a visitor's link as untrusted: public https only, no
+  private, loopback, link-local, carrier-grade NAT or unique-local addresses, redirects
+  only on the same host and each target re-checked, at most 300 kB within 5 seconds.
+  Console output is restricted to a few named warnings; the end-to-end run fails on any
+  browser console error.
+
+7.10 Deploy
+
+  Dockerfile: Node 22 alpine, multi-stage, Next.js standalone, runs as user node,
+  optional volume for .data. `docker build -t workproof .` then
+  `docker run -p 3000:3000 -e SITE_URL=https://your.host workproof`. Every key is
+  optional (.env.example: ANTHROPIC_API_KEY, ANTHROPIC_MODEL, GEMINI_API_KEY,
+  GEMINI_MODEL, AI_PROVIDER, ELEVENLABS_API_KEY, ELEVENLABS_VOICE_ID, PROOF_DATA_FILE,
+  SITE_URL, REPO_URL). Live at https://workproof.wicflow.com in its own container.
+
+7.11 Page routes
+
+  / /seeker /challenges /challenges/[id] /challenges/[id]/work /my-work /my-work/[proofId]
+  /passport /passport/[proofId] /work/[token] /try /try/[code] /table
+  /employer /employer/challenges/[id] /company /company/review /company/review/[proofId]
+  /city /city/challenges/[id] /city/log /ads/[slug] /how-it-works /for-judges
+  /brief /brief.pdf /llms.txt /llms-full.txt /submission.json /for-agents.txt
+
+7.12 API routes (src/app/api)
+
+  ai/status; challenges, challenges/[id], challenges/[id]/claim, challenges/assist,
+  challenges/draft, challenges/from-ad; city, city/actions, city/challenges,
+  city/meetings.csv, city/recommendations, city/tasks/[id], city/tasks/[id]/matches;
+  companies, companies/[id]/home, companies/[id]/queue, companies/[id]/reviewers,
+  companies/[id]/tasks, companies/[id]/tasks/[taskId]/top; decisions,
+  decisions/[id]/decide; demo/join, demo/reset, demo/session, demo/story; followups;
+  meetings/[id]/accept, confirm, decline, follow-up, hired; passport/me;
+  portfolio/decision, portfolio/links, portfolio/me, portfolio/shared/[token]; preview;
+  proofs/[proofId]/picture/report, related, sharing; recommendations; seeker/me/home;
+  submissions; table/mine, table/proofs, table/proofs/[proofId]/accept, decline, invite;
+  taster; voice/speak, voice/status, voice/transcribe.
+
+
+====================================================================
+8. DESIGN DECISIONS AND TRADE-OFFS
+====================================================================
+
+D1  Humans score; software only adds up.
+    The brief forbids automated decisions, and the city asked for visible scores. Both
+    are met by one rule: only a named reviewer gives points, on a fixed 1 to 5 scale
+    with words per level ("Not shown" to "Shown well, with reasons", SCORE_LEVELS in
+    src/lib/domain/scoring.ts). Software computes the total and sorts a task's scored
+    work by it. It adds no judgement of its own. Trade-off accepted: reading takes a
+    person's time, so the places cap (D4) keeps it bounded.
+
+D2  Redaction by rules, not by a model.
+    Rules are deterministic, testable with planted strings, cheap, and work offline.
+    The person sees the result before sending (/api/preview) and can remove anything
+    else. A model would add cost, latency and another place where personal data goes.
+
+D3  One neutral token and no count.
+    Every hidden detail becomes "[hidden]", and a reviewer never sees how many were
+    hidden or of which kind, because a count would hint at a background (for example, a
+    long list of foreign place names). The author sees the count; the reviewer sees one
+    fixed sentence (Eval 4: "hidden count shown to the author only").
+
+D4  A fixed number of places per task (5 to 30, default 12).
+    Answers what the brief calls overwhelm: an employer can read every answer, and a
+    professional knows the work will be read. A sixth answer to a 5-place task gets 409
+    and no waiting list.
+
+D5  Arrival order, and no ranking of people.
+    Work waiting to be read is in arrival order. The only other order is a task's top
+    work, by the reviewers' own totals. No match percentage, no recommendation of a
+    person. Second look compares tasks by shared skills, never people.
+
+D6  An allow-list projection.
+    BlindProof is built by naming each field to copy. Deleting fields would leak any
+    field added later; an allow-list cannot.
+
+D7  The name follows consent.
+    Identity reaches a company only after the person accepts. A decline keeps it hidden
+    for good (Eval 4: status after decline stays declined even after a later accept; name
+    in responses: false). The city never sees names.
+
+D8  The AI drafts; it never touches people.
+    The AI's work is upstream of people: turning a company's need into a fair task, and
+    asking about the person's own choices. This removes the biggest risk class under the
+    EU AI Act (evaluating, filtering or ranking candidates) by design, while still using
+    AI where companies need help most: describing the need (P2).
+
+D9  A scripted designer under every model.
+    A public event cannot depend on one AI vendor's uptime or quota. The chain falls
+    through Gemini, Claude and a built-in designer, with a breaker and a budget, so a
+    draft always comes back.
+
+D10 No login, private sandboxes.
+    Logins are friction and a crash point at event start (P7). Each visitor gets a
+    private copy of the event behind an httpOnly cookie; the shared copy is read-only;
+    the private key never appears in a URL, so it does not leak through logs, history or
+    referrers.
+
+D11 The company's own words are not published.
+    The server rebuilds the need that talent sees from the approved fields, so a biased
+    sentence a company typed never reaches talent, even if it was edited back in.
+
+D12 Job facts in fixed forms.
+    A work language, a language level or a licence the law asks for is legitimate
+    information. It is published in fixed forms under "Good to know", separate from the
+    scored skills, so it informs without filtering by background.
+
+D13 One typed source for every claim.
+    src/app/for-judges/facts.ts and evidence.ts feed /for-judges, /llms.txt,
+    /llms-full.txt, /submission.json, /brief and the README blocks. facts.test.ts fails
+    if a named route or path does not exist; submission.json/build.test.ts checks its
+    numbers equal evidence.ts; `npm run evidence` writes nothing when a check fails.
+
+
+====================================================================
+9. RESPONSIBLE AI AND DATA PROTECTION
+====================================================================
+
+9.1 What is automated and what is not (docs/responsible-ai.md)
+
+  Draft a task from a company's sentence ......... AI (or the scripted designer)
+  Approve and publish a company task ............. a named person at the company
+  Two follow-up questions about own choices ...... AI, on redacted text
+  Remove known personal details .................. fixed rules in code, not AI
+  Describe the shape of the work ................. fixed code (points, words, code)
+  Order the work waiting ......................... arrival time only
+  Mark where each skill shows up ................. fixed code with cue words, no number
+  Score each core skill 1 to 5 ................... a registered, named reviewer
+  Add up points, order a task's top work ......... fixed arithmetic on the human points
+  Decide Meet or Not now ......................... the same named reviewer
+  Share a proof with a second employer ........... only with the person's consent
+  Reveal the name ................................ only after the person accepts
+
+  No AI output is ever about a person.
+
+9.2 EU AI Act (Regulation (EU) 2024/1689), design position
+
+  - Annex III point 4 lists AI for recruitment or selection, including systems that
+    analyse and filter applications and evaluate candidates, as high-risk.
+  - WorkProof's AI does not evaluate, filter, rank or profile candidates. It drafts a
+    task from a company's need and asks two questions about the person's answer. People
+    read the work, score it and decide.
+  - Article 6(3) describes Annex III systems that are not considered high-risk, such as
+    those performing a narrow procedural or preparatory task; a system that profiles
+    natural persons is always high-risk. WorkProof is designed to stay inside that narrow
+    role, and the guard and the evals exist to keep it there. The provider documents
+    this assessment under Article 6(4); the repository states it as a design position.
+  - The high-risk duties are built anyway: human oversight (Article 14), logs of what the
+    system did (Article 12), and telling people when AI was involved (drafts carry
+    "Drafted by ...").
+  - No analysis of voices or faces. Emotion recognition in the workplace is prohibited
+    under Article 5.
+
+9.3 GDPR
+
+  - Article 22: no decision based solely on automated processing. Every Meet or Not now
+    is recorded with a registered reviewer's name and a written reason; the city counts
+    decisions without a registered name: 0 (Eval 3 (e)).
+  - Article 5(1)(c) data minimisation and Article 25 data protection by design: see R3
+    in section 5.2.
+  - A pilot run by the city adds a data protection impact assessment (Article 35), a
+    privacy notice and a lawful basis (docs/responsible-ai.md, "What a pilot would add").
+
+9.4 Logging (appendAudit in src/lib/service/support.ts)
+
+  The audit log records AI drafts and follow-up questions, details hidden per proof, the
+  "At a glance" count, consent recorded or withdrawn, each human decision, invitations,
+  acceptance and confirmations. Each entry names an actor (ai, human or system) and never
+  contains the person's identity. Visible at /city/log.
+
+9.5 Consent
+
+  Second look is off until the person turns it on and can be withdrawn at any time:
+  employers who have not answered lose access; an employer that answered keeps its
+  decision and its own feedback, not the proof text (Eval 4: "work shown to the Second
+  look employer after withdrawal: false; its decision kept: true"). A picture is sent
+  only after the person confirms it shows only the work (Eval 4: HTTP 400 without the
+  check). Only the person, with their key, can accept an invitation (Eval 4: HTTP 400 with
+  no key, 403 with a wrong key, 403 for a guessed confirm, 403 for another company).
+
+
+====================================================================
+10. EVIDENCE: TESTS AND EVALS
+====================================================================
+
+10.1 Totals (evidence.ts at 4cdd054, VERIFIED_ON 2026-11-15)
+
+  npm test        142 files, 2057 tests, 2057 passed     (vitest run src)
+  npm run eval      7 files,   64 tests,   64 passed     (vitest run evals; the live-AI
+                                                          file runs only from
+                                                          npm run check:ai)
+  npx tsc --noEmit   type check
+  npm run lint       ESLint
+
+  Each eval calls the real route handlers directly, with a real Request and async params,
+  the way Next.js calls them (evals/helpers.ts), starting each suite from
+  POST /api/demo/reset. The scripted designer answers in evals, behind the same guard.
+  After the files run, evals/summary.setup.ts prints one row per check with its measured
+  result.
+
+10.2 Selected eval results (as printed by npm run eval)
+
+  Eval 1  Task generator (evals/task-generator.eval.ts; fixtures evals/fixtures/needs.ts)
+    shape (title, brief, 3-5 skills, minutes, guide) ..... 20 of 20 drafts in shape
+    no protected attribute in visible fields ............. 0 found in 20 drafts
+    bias bait set aside .................................. 3 of 3
+    fantasy profiles cut to <= 4 skills .................. 3 of 3
+    drafts pass the guard ................................ 0 judging phrases in 20 drafts
+    sentence-form needs keep their skills ................ 4 of 4
+    adversarial needs: planted strings in published cards  0 found in 47 cards from 47 needs
+    job facts published as requirements .................. 6 of 6
+
+  Eval 2  Blind review (evals/blind-review.eval.ts)
+    planted strings in reviewer payload .................. 0 of 79 found
+    identity keys in proof payloads ...................... none found
+    identity hidden until accepted ....................... hidden, then shown
+    review cases hidden .................................. 54 of 54 fully hidden
+    visitor inputs from the table ........................ 40 of 40 forms hidden;
+                                                           16 of 16 technical texts unchanged
+    technical text left intact ........................... 5 of 5 unchanged
+    reviewer payload: [hidden] only, no count ............ one token, no count, no categories
+    unique proof labels .................................. 279 for 279 proofs
+
+  Eval 3  No automated decisions (evals/no-automated-decisions.eval.ts)
+    (a) guard: judging rejected .......................... 70 of 70
+    (a) guard: neutral passed ............................ 33 of 33
+    (b) designer output passes the guard ................. 575 of 575 text fields from 32
+                                                           designer outputs
+    (b2) "At a glance" is structure only ................. 12 of 12
+    (c) queues in arrival order .......................... every queue of 28 companies
+    (d) decisions need reviewer and feedback ............. HTTP 400 without a name,
+                                                           400 without feedback;
+                                                           48 stored decisions all named
+    (e) automated decisions .............................. 0; 0 decision audit lines by a
+                                                           non-human
+    (f) decisions name a registered person ............... 400 for "AI bot", 403 for an
+                                                           unregistered name; 200 after
+                                                           the explicit step
+    (g) scores only from a registered person ............. 400 without scores, 400 with a
+                                                           skill missing, 400 from a
+                                                           software name; accepted: a
+                                                           named reviewer's 6 of 10
+    (h) related parts carry no score ..................... 0 numbers, 0 judging phrases in
+                                                           32 sentences from 53 proofs
+    (i) portfolio shows own scores, never a rank ......... 0 rank keys; a shared link
+                                                           shows no name, contact or key
+
+  Eval 4  Consent and privacy (evals/privacy.eval.ts), 23 checks, including:
+    talent ids in public responses ....................... 0 of 47
+    seeker pictures in public responses .................. 0 of 36 (people who have not
+                                                           said yes)
+    private key in a header only ......................... header read, path form gone,
+                                                           key absent from the audit log
+    identity strings sent to a model ..................... 0 of 96 checks in 12 requests
+    city: slots and labels, never names .................. 0 over 4 story stages
+    body cap and rate limit .............................. 413, 413, 429 at request 61
+    pictures: clean JPEG only ............................ 5 bad pictures refused, 2 clean
+                                                           accepted
+    decline keeps the name hidden ........................ name in responses: false
+    Second look: opt-in, owner-only, withdrawable ........ off by default; 403 for a
+                                                           stranger; 403 after withdrawal
+
+  Eval 5  Flow (evals/flow.eval.ts): 28 of 28 steps across three tests (full product in
+          17 steps; places in 4; the scored flow from hold to hire in 7).
+  Eval 6  Demo story (evals/story.eval.ts): 6 of 6 steps.
+  Eval 7  Table screen (evals/table.eval.ts): 0 of 10 typed names, emails and numbers
+          reach the big screen; the name shows only after the person's yes; a decline
+          stores nothing.
+
+  The complete printed table is the PRINTED record in src/app/for-judges/evidence.ts and
+  the "Every row" table at /llms-full.txt.
+
+10.3 End to end in a real browser
+
+  `npm run eval:e2e` drives the running app with Playwright 1.64.1 in Chromium at
+  390x844 with touch, real clicks and typing: entry, the 2-minute task and the table loop
+  (invite, accept, decline), a task with follow-ups, blind review, Not now, Second look,
+  Meet, acceptance, a confirmed meeting and city totals, a company posting a task, a
+  guardrail crawl of every route in both themes, key screens at 1440x900, and the
+  17-card walkthrough. Every step fails on any browser console error.
+  Recorded result: 143 of 143 steps passed against the live site on build 31a2bbe,
+  15 November 2026 (run log kept by the team).
+
+10.4 Reproduce
+
+  git clone https://github.com/felixwickholm/workproof && cd workproof
+  npm install          # Node.js 22 or newer
+  npm test             # expect 2057 passed in 142 files
+  npm run eval         # expect 64 passed in 7 files, then the printed table
+  npx tsc --noEmit && npm run lint
+  npm run dev          # http://localhost:3000, walkthrough starts on first visit
+  npm run eval:e2e     # with the app running; BASE_URL to point elsewhere
+  Tip: give parallel eval runs their own TMPDIR, since the printed table is collected
+  through a temp file.
+
+
+====================================================================
+11. HOW TO VERIFY EACH CLAIM
+====================================================================
+
+Claim -> check.
+
+"The AI never scores or ranks a person."
+  -> src/lib/guard/no-judgement.ts, src/lib/ai/guarded.ts; Eval 3 (a), (b), (h);
+     GET /api/city "automatedDecisions": 0.
+
+"Only a registered, named reviewer can score or decide."
+  -> src/lib/service/decisions.ts, src/lib/service/reviewers.ts; Eval 3 (d), (f), (g);
+     try /company/review: the buttons stay locked until every skill has points and a
+     reason.
+
+"Reviewers read work without names."
+  -> src/lib/blind/project.ts (toBlindProof); src/lib/blind/project.test.ts;
+     Eval 2 "planted strings in reviewer payload": 0 of 79; open /company/review.
+
+"The name appears only after the person accepts."
+  -> src/lib/service/meetings.ts, src/lib/service/views/queue.ts; Eval 2 "identity
+     hidden until accepted"; Eval 5 v3 steps; /table on two screens.
+
+"The city never sees names."
+  -> src/lib/service/views/city.ts, src/lib/service/city-actions.ts; Eval 4 "city: slots
+     and labels, never names"; GET /api/city and GET /api/city/meetings.csv.
+
+"Each task is readable in full."
+  -> src/lib/domain/places.ts; src/lib/domain/places.test.ts; Eval 5 places steps.
+
+"Work waits in arrival order."
+  -> src/lib/service/views/queue.ts (byArrival); Eval 3 (c).
+
+"Companies get a challenge from a job ad or one sentence."
+  -> /company ("Try a sample ad"); src/lib/service/assist.ts; src/lib/http/ad-fetch.ts;
+     Eval 1.
+
+"The city sees outcomes from challenge to hire."
+  -> /city; GET /api/city; Eval 5 "the city counts every step for the task, with no
+     name".
+
+"Personal data is minimised; the key never appears in a URL."
+  -> src/lib/http/talent-key.ts and its test; Eval 4 "private key in a header only".
+
+"Pictures carry no metadata."
+  -> src/components/seeker/picture.ts, src/lib/http/jpeg.ts and jpeg.test.ts; Eval 4
+     pictures checks.
+
+"A draft always comes back."
+  -> src/lib/ai/index.ts (createDesigner, getTaskDesigner), src/lib/ai/chain.test.ts,
+     src/lib/ai/provider/adapters.test.ts; GET /api/ai/status shows the active designer.
+
+"Every visitor has a private demo."
+  -> src/proxy.ts, src/lib/store/index.ts, src/lib/store/sandbox.ts and their tests.
+
+"Every number in the docs matches the last measured run."
+  -> src/app/for-judges/evidence.ts; scripts/refresh-evidence.mjs;
+     src/app/submission.json/build.test.ts; src/app/for-judges/facts.test.ts.
+
+"Built during the hackathon."
+  -> `git log --reverse | head`: first commit 2026-11-14 02:25 EET.
+
+
+====================================================================
+12. MACHINE ENTRY POINTS AND DOCUMENTS
+====================================================================
+
+  /for-agents.txt     this file
+  /llms.txt           short map with dated numbers (llmstxt.org shape)
+  /llms-full.txt      the evidence page as one markdown file, every eval row
+  /submission.json    the entry as JSON: problem, solution, views, AI use, numbers, links
+  /for-judges         the evidence page, server-rendered, with schema.org JSON-LD
+  /brief, /brief.pdf  "WorkProof: the brief and the build", 6 pages
+  /workproof-overview.pdf  a 2-page overview for the City of Espoo
+                      (source docs/overview/overview.html, printed with headless Google
+                      Chrome: --headless=new --no-pdf-header-footer --print-to-pdf)
+  README.md           criterion table with routes, files and tests
+  AGENTS.md           commands, folder map, invariants with where enforced and checked
+  docs/architecture.md, docs/evals.md, docs/responsible-ai.md, docs/demo-script.md
+
+  Where to read code first:
+    src/lib/service/decisions.ts      the human decision rule
+    src/lib/blind/project.ts          the allow-list projection
+    src/lib/blind/redact.ts           the redaction order
+    src/lib/guard/no-judgement.ts     the guard
+    src/lib/ai/provider/select.ts     the model chain
+    src/lib/domain/scoring.ts         the scale and the total
+    src/lib/matching/second-look.ts   consent-based sharing
+    evals/no-automated-decisions.eval.ts, evals/blind-review.eval.ts,
+    evals/privacy.eval.ts, evals/flow.eval.ts
+
+
+====================================================================
+13. THE PATH FROM PROTOTYPE TO PILOT
+====================================================================
+
+The prototype runs end to end today on synthetic data. The README "Roadmap to a pilot"
+names the steps to a real Espoo event:
+
+  1. Sign-in for companies and the city, with ownership checks on every route.
+  2. A database in place of the in-memory store.
+  3. ESCO skill ids on task skills, so tasks share the EU skills vocabulary.
+  4. A pilot event with 5 employers, one task each, measuring answers given and meetings
+     confirmed.
+
+Because the service rules sit in src/lib behind thin routes, with the store resolved per
+call (getStore), these steps replace the store and add an auth layer without changing
+the rules that the evals test. The meeting list already exports as CSV for the city's
+existing event tools, and the docs list the pilot's compliance steps (DPIA, privacy
+notice, lawful basis, retention and deletion, WCAG 2.1 AA audit).
+
+Who benefits:
+  - Companies: a short task instead of a CV pile, a bounded number of answers, and
+    people who already showed the skill.
+  - Professionals, including those new to Finland: judged on the work, not the CV, the
+    school or the accent; feedback with a reason; their name shared only with a yes.
+  - The City of Espoo: a free service with measurable outcomes per event and company,
+    built to the EU AI Act and GDPR from the start.
+
+
+====================================================================
+14. PROVENANCE OF THIS FILE
+====================================================================
+
+  - Written on 15 November 2026 from the repository at commit 4cdd054 (main), its docs,
+    src/app/for-judges/facts.ts and evidence.ts, the challenge brief, and the team's notes
+    of City of Espoo feedback.
+  - `npm test` (2056 of 2056 in 142 files) and `npm run eval` (64 of 64 in 7 files) were
+    re-run on 15 November 2026 for this file at commit bebdbed and matched evidence.ts at
+    that commit. evidence.ts at 4cdd054 records 2057 of 2057 after one more test.
+  - Live checks the same morning: https://workproof.wicflow.com served /llms.txt,
+    /submission.json, /brief.pdf and /api/city (totals as in section 4).
+  - If anything here disagrees with the code, the code and evidence.ts are the source of
+    truth.

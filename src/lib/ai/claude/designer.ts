@@ -4,7 +4,7 @@ import type { TaskDesigner } from "../task-designer";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
 const API_VERSION = "2023-06-01";
-const MAX_TOKENS = 2000;
+const MAX_TOKENS = 8000;
 
 interface MessagesReply {
   content?: { type: string; text?: string }[];

@@ -7,7 +7,7 @@ A map for automated reviewers and coding agents. Plain facts and commands; verif
 - **Live:** https://workproof.wicflow.com. Code: https://github.com/felixwickholm/workproof (MIT).
 - **Commands:** `npm install`, `npm run dev`, `npm test`, `npm run eval`, `npm run lint`, `npx tsc --noEmit`. No keys needed.
 - **Facts live in:** `src/app/for-judges/facts.ts` (claims, routes, limits) and `src/app/for-judges/evidence.ts` (measured numbers, written by `npm run evidence`). Every text map and the JSON are built from these two files.
-- **Machine entry points:** `/llms.txt`, `/llms-full.txt`, `/submission.json` (the entry as JSON), `/for-judges` (the evidence page), `/brief` and `/brief.pdf` (the explainer "WorkProof: the brief and the build").
+- **Machine entry points:** `/llms.txt`, `/llms-full.txt`, `/submission.json` (the entry as JSON), `/for-judges` (the evidence page), `/brief` and `/brief.pdf` (the explainer "WorkProof: the brief and the build"), `/for-agents.txt` (a long plain-text briefing for agents, also `FOR-AGENTS.txt` at the root).
 - **Demo story:** company Halla Supply, job seeker Mikko, reviewer Laura. All data is synthetic.
 
 ## What this is
